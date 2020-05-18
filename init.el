@@ -19,10 +19,10 @@
        ;;japanese
 
        :completion
-       company           ; the ultimate code completion backend
+       (company +tng)           ; the ultimate code completion backend
        ;;helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
-       ivy               ; a search engine for love and life
+       (ivy +fuzzy +prescient +icons)               ; a search engine for love and life
 
        :ui
        ;;deft              ; notational velocity for Emacs
@@ -46,8 +46,8 @@
        vc-gutter         ; vcs diff in the fringe
        vi-tilde-fringe   ; fringe tildes to mark beyond EOB
        ;;window-select     ; visually switch windows
-       workspaces        ; tab emulation, persistence & separate workspaces
-       ;;zen               ; distraction-free coding or writing
+       ;; workspaces        ; tab emulation, persistence & separate workspaces
+       ;; ;;zen               ; distraction-free coding or writing
 
        :editor
        (evil +everywhere); come to the dark side, we have cookies
@@ -129,7 +129,7 @@
        json              ; At least it ain't XML
        ;;(java +meghanada) ; the poster child for carpal tunnel syndrome
        javascript        ; all(hope(abandon(ye(who(enter(here))))))
-       julia             ; a better, faster MATLAB
+       (julia)             ; a better, faster MATLAB
        ;;kotlin            ; a better, slicker Java(Script)
        ;;latex             ; writing papers in Emacs has never been so fun
        ;;lean
@@ -175,4 +175,4 @@
 
        :config
        ;;literate
-       (default +bindings +smartparens))
+       (default +bindings )) ;; +smartparens

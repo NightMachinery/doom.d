@@ -51,6 +51,11 @@
 (package! blacken)
 ;; (package! elpy)
 (package! lispyville)
-(package! dimmer)
+;; (package! dimmer)
 (package! google-translate)
 (package! move-text)
+(package! rg)
+(package! git-link)
+
+(unpin! julia-mode julia-repl)
+;; (package! lsp-julia :recipe (:host github :repo "non-jedi/lsp-julia"))

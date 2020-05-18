@@ -1,8 +1,32 @@
+;; See http://oremacs.com/lispy/ for lispy's reference.
+;;;
 (defun night/eval-line ()
   (interactive)
   (save-mark-and-excursion
     (my-select-current-line)
     (command-execute 'eval-region)))
+
+(defun night/backward-up-sexp (arg)
+  (interactive "p")
+  (let ((ppss (syntax-ppss)))
+    (cond ((elt ppss 3)
+           (goto-char (elt ppss 8))
+           (night/backward-up-sexp (1- arg)))
+          ((backward-up-list arg)))))
+
+(defun night/select-current-sexp (arg)
+  (interactive "p")
+  (night/backward-up-sexp arg)
+  (mark-sexp)
+  (setq deactivate-mark nil))
+
+(defun night/eval-current-sexp (arg)
+  (interactive "p")
+  (save-mark-and-excursion
+    (night/select-current-sexp arg)
+    (command-execute 'eval-region)))
+
+
 ;;
 (defun my-lisp-init ()
   (interactive)
@@ -21,36 +45,43 @@
 (lispyville-set-key-theme '(operators c-w
                                       ;; additional
                                       ))
-
+(eval-after-load "lispy"
+  `(progn
+     ;; replace a local binding
+     (lispy-define-key lispy-mode-map "U" 'lispy-wrap-round)))
 (progn
- (lispyville--define-key '(insert)
-   "U" #'lispy-wrap-round
-   "\"" #'lispy-doublequote) ;;Otherwise would escape doublequotes in Strings automagically.
+  (lispyville--define-key '(insert)
+    ;; "U" #'lispy-wrap-round
+    "\"" #'lispy-doublequote) ;;Otherwise would escape doublequotes in Strings automagically.
 
- ( comment (lispyville--define-key '(normal visual)
-             "P" #'lispy-paste) )
- (lispyville--define-key '(normal visual motion)
-   "H" #'lispyville-backward-sexp
-   "L" #'lispyville-forward-sexp
-   (kbd "M-h") #'lispyville-beginning-of-defun
-   (kbd "M-l") #'lispyville-end-of-defun
-   ;; reverse of lispy-flow
-   "{" #'lispyville-previous-opening
-   "}" #'lispyville-next-closing
-   ;; like lispy-flow
-   ;; "8" #'lispyville-next-opening
-   ;; "7" #'lispyville-previous-closing
-   ;; like lispy-left and lispy-right
-   "(" #'lispyville-backward-up-list
-   ")" #'lispyville-up-list)
- (add-hook 'lispy-mode-hook #'lispyville-mode)
- (add-hook 'emacs-lisp-mode-hook #'my-lisp-init)
- (add-hook 'clojure-mode-hook  #'my-lisp-init)
- (add-hook 'scheme-mode-hook #'my-lisp-init)
- (defun conditionally-enable-lispy ()
-   (when (eq this-command 'eval-expression)
-     (lispy-mode 1)))
- (add-hook 'minibuffer-setup-hook 'conditionally-enable-lispy))
+  ( comment (lispyville--define-key '(normal visual)
+              "P" #'lispy-paste) )
+  (lispyville--define-key '(normal visual motion)
+    "H" #'lispyville-backward-sexp
+    "L" #'lispyville-forward-sexp
+    (kbd "M-h") #'lispyville-beginning-of-defun
+    (kbd "M-l") #'lispyville-end-of-defun
+    ;; reverse of lispy-flow
+    "{" #'lispyville-previous-opening
+    "}" #'lispyville-next-closing
+    ;; like lispy-flow
+    ;; "8" #'lispyville-next-opening
+    ;; "7" #'lispyville-previous-closing
+    ;; like lispy-left and lispy-right
+    "(" #'lispyville-backward-up-list
+    ")" #'lispyville-up-list)
+  (add-hook 'lispy-mode-hook #'lispyville-mode)
+  (add-hook 'emacs-lisp-mode-hook #'my-lisp-init)
+  (add-hook 'clojure-mode-hook  #'my-lisp-init)
+  (add-hook 'scheme-mode-hook #'my-lisp-init)
+  (defun conditionally-enable-lispy ()
+    (when (eq this-command 'eval-expression)
+      (lispy-mode 1)))
+  (add-hook 'minibuffer-setup-hook 'conditionally-enable-lispy))
 
 ;;; keys
-;; (map! :localleader "z e w" #'night/eval-line)
+(after! elisp-mode
+  (map! :localleader
+        :map emacs-lisp-mode-map
+        "e c" #'night/eval-current-sexp
+        "e l" #'night/eval-line))

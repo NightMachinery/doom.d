@@ -1,3 +1,6 @@
 [submodule "gitmodules/osx-clipboard-mode"]
 	path = gitmodules/osx-clipboard-mode
 	url = https://github.com/joddie/osx-clipboard-mode
+[submodule "gitmodules/radian"]
+	path = gitmodules/radian
+	url = https://github.com/raxod502/radian

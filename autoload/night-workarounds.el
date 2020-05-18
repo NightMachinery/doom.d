@@ -1,6 +1,9 @@
 ;;; ~/doom.d/night-workarounds.el -*- lexical-binding: t; -*-
 
-
+(remove-hook 'doom-load-theme-hook #'solaire-global-mode)
+(after! solaire-mode (progn
+                       (turn-off-solaire-mode)
+                       (solaire-global-mode -1)))
 (comment (progn
   (spacemacs/toggle-smartparens-globally-off)
   (remove-hook 'prog-mode-hook #'smartparens-mode)
