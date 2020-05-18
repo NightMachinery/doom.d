@@ -1,5 +1,6 @@
 ;;; ~/doom.d/night-gui.el -*- lexical-binding: t; -*-
 
+(setq frame-resize-pixelwise t)
 (setq frame-alpha-lower-limit 0)
 (defun night/invisible-til-keypress  (&optional frame)
   (interactive)

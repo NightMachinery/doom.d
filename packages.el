@@ -53,3 +53,4 @@
 (package! lispyville)
 (package! dimmer)
 (package! google-translate)
+(package! move-text)

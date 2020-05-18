@@ -1,6 +1,10 @@
 
 ;; (evilem-default-keybindings e")      ; #easymotion
 
+;; (evil-define-minor-mode-key 'motion 'visual-line-mode "j" 'evil-next-visual-line)
+;; (evil-define-minor-mode-key 'motion 'visual-line-mode "k" 'evil-previous-visual-line)
+(setq evil-want-abbrev-expand-on-insert-exit nil)
+(setq evil-emacs-state-cursor '("chartreuse3" (bar . 2)))
 (setq evil-cross-lines t)
 (setq evil-move-beyond-eol t)
 (setq evil-move-cursor-back nil)

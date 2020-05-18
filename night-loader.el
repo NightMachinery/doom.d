@@ -8,5 +8,5 @@
 ;;;
 
 (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
-(mapcar #'load-night '("macros" "basic" "doom-keybindings" "gui"))
+(mapcar #'load-night '("macros" "basic" "doom-keybindings" "gui" "macos-gui"))
 (mapcar #'load (directory-files nightal-dir 't "\.el$" 't))
