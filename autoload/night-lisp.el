@@ -49,10 +49,15 @@
   `(progn
      ;; replace a local binding
      (lispy-define-key lispy-mode-map "U" 'lispy-wrap-round)))
+
 (progn
   (lispyville--define-key '(insert)
-    ;; "U" #'lispy-wrap-round
-    "\"" #'lispy-doublequote) ;;Otherwise would escape doublequotes in Strings automagically.
+    "\""
+    #'lispy-doublequote
+    ;; #'(lambda ()
+    ;;     (interactive)
+    ;;     (insert "\""))
+    ) ;;Otherwise would escape doublequotes in Strings automagically.
 
   ( comment (lispyville--define-key '(normal visual)
               "P" #'lispy-paste) )

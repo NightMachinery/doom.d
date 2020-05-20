@@ -9,6 +9,6 @@
 (setq nightal-dir (concat (getenv "DOOMDIR") "/" "autoload"))
 ;;;
 
-(mapcar #'load-night '("doom" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
+(mapcar #'load-night '("doom" "macros" "basic" "doom-keybindings" "gui" "macos-gui" "python"))
 (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
 (mapcar #'load (directory-files nightal-dir 't "\.el$" 't))

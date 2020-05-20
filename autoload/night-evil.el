@@ -33,7 +33,6 @@
            )
 
 ;;; keys
-(after! evil-mode
+(after! evil
   (map!
-   :ng "C-u" #'universal-argument
    :ng "C-e" #'doom/forward-to-last-non-comment-or-eol))
