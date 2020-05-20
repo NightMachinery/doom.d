@@ -83,7 +83,7 @@
 
   ;; Prevent non-matching input (which will dismiss the completions
   ;; menu), but only if the user interacts explicitly with Company.
-  (setq company-require-match #'company-explicit-action-p)
+  ;; (setq company-require-match #'company-explicit-action-p)
 
   ;; Company appears to override our settings in `company-active-map'
   ;; based on `company-auto-complete-chars'. Turning it off ensures we

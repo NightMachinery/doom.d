@@ -7,6 +7,7 @@
     (command-execute 'eval-region)))
 
 (defun night/backward-up-sexp (arg)
+  ;; TODO doesn't work if you're on ( of sexp
   (interactive "p")
   (let ((ppss (syntax-ppss)))
     (cond ((elt ppss 3)
