@@ -15,11 +15,22 @@
   (recentf-cleanup)
   (tramp-cleanup-all-buffers)
   (tramp-cleanup-all-connections))
-(defun scp-borg-evil-lord ()
+(defun night/scp-borg-evil-lord ()
   (interactive)
   (find-file-existing "/scp:mary@198.143.181.104:/home/mary/code/uniborg/stdplugins/evil_lord.py"))
-(defun ssh-eva ()
+(defun night/ssh-eva ()
   (interactive)
   (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))
+
+(defun night/ssh-eva-current ()
+  (interactive)
+  ;; s-replace from s.el
+  (find-file-existing (concat "/ssh:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (buffer-file-name)))))
+
 (setq tramp-ssh-controlmaster-options
       "-o ControlMaster=auto -o ControlPath='tramp.%%C' -o ControlPersist=yes")
+
+;;;
+(map! :leader
+      ;; remote
+      "z r" #'night/ssh-eva-current)
