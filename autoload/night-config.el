@@ -18,4 +18,5 @@
 (setq confirm-kill-emacs nil)
 (+global-word-wrap-mode 't) ;; does (global-visual-line-mode 't) itself
 (global-auto-revert-mode)
+(global-display-line-numbers-mode)
 (save-place-mode 1)

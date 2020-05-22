@@ -91,3 +91,6 @@
         :map emacs-lisp-mode-map
         "e c" #'night/eval-current-sexp
         "e l" #'night/eval-line))
+
+;; TODO https://github.com/hchbaw/eval-sexp-fu.el/blob/master/eval-sexp-fu.el
+;; `v a f` selects correctly, we just need to script it.

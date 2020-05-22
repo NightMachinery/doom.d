@@ -56,6 +56,7 @@
 (package! google-translate)
 (package! move-text)
 (package! rg)
+(package! deadgrep)
 (package! git-link)
 
 (unpin! julia-mode julia-repl)
