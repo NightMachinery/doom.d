@@ -19,10 +19,6 @@
 (map! :map counsel-ag-map
       "=" #'ivy-call-and-recenter
       "C-l" #'ivy-call-and-recenter)
-(defun night/search-notes ()
-  (interactive)
-  (night/search-dir (getenv "nightNotes")))
-(night/set-leader-keys "z n" #'night/search-notes)
 
 (after! deadgrep
   (map! :map deadgrep-mode-map
