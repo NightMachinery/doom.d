@@ -7,5 +7,7 @@
 
 (defun night/browse-notes ()
   (interactive)
-  (dired (getenv "nightNotes")))
+  (counsel-find-file (getenv "nightNotes"))
+  ;; (dired (getenv "nightNotes"))
+)
 (night/set-leader-keys " z ." #'night/browse-notes)
