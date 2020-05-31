@@ -53,5 +53,5 @@
   (defun dotfiles--deadgrep--find-file-wrapper (orig-fun &rest args)
     (save-match-data
       (apply orig-fun args)))
-  (advice-add 'deadgrep--find-file :around # 'dotfiles--deadgrep--find-file-wrapper)
+  (advice-add 'deadgrep--find-file :around #'dotfiles--deadgrep--find-file-wrapper)
   )
