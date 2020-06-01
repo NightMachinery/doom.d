@@ -9,6 +9,8 @@
   (interactive)
   ;; (counsel-find-file (getenv "nightNotes"))
   (counsel-file-jump "" (getenv "nightNotes"))
+  ;; fzf seems slower, but it supports fzf syntax and is async
+  ;; (counsel-fzf "" (getenv "nightNotes"))
   ;; (dired (getenv "nightNotes"))
 )
 (night/set-leader-keys " z ." #'night/browse-notes)

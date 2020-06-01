@@ -16,7 +16,7 @@
 
 (setq-default ivy-calling nil)            ;; t makes ivy follow its results but it's slow: https://github.com/abo-abo/swiper/issues/2577
 ;;
-(map! :map counsel-ag-map
+(map! :map ivy-minibuffer-map ;; counsel-ag-map
       "=" #'ivy-call-and-recenter
       "C-l" #'ivy-call-and-recenter)
 

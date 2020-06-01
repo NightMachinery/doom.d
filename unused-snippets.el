@@ -1,4 +1,12 @@
 ;;; ~/doom.d/unused-snippets.el -*- lexical-binding: t; -*-
+(defun my-ivy-switch-file-search ()
+  "Switch to counsel-file-jump, preserving current input."
+  (interactive)
+  (let ((input (ivy--input)))
+    (ivy-quit-and-run (counsel-file-jump))))
+
+(define-key ivy-minibuffer-map (kbd "M-s r") 'my-ivy-switch-file-search)
+;;;
   (setq company-global-modes '(not tuareg-mode org-mode)) ;  python-mode
 
 (spacemacs/set-leader-keys "oi" '(lambda () (interactive "")
