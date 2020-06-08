@@ -9,7 +9,11 @@
                 vc-ignore-dir-regexp
                 tramp-file-name-regexp))
   ;; Bug in Spacemacs https://github.com/syl20bnr/spacemacs/issues/11514
-  (remove-hook 'python-mode-hook 'spacemacs//init-eldoc-python-mode))
+  ;; (remove-hook 'python-mode-hook 'spacemacs//init-eldoc-python-mode)
+  )
+
+(night/ssh-pre)
+
 (defun night/tramp-refresh ()
   (interactive)
   (recentf-cleanup)
