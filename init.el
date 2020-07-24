@@ -22,7 +22,7 @@
        (company +tng)           ; the ultimate code completion backend
        ;;helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
-       (ivy +fuzzy +prescient +icons)               ; a search engine for love and life
+       (ivy +fuzzy +icons)                ; +prescient seriously messes up ordering ; a search engine for love and life
 
        :ui
        ;;deft              ; notational velocity for Emacs
@@ -141,7 +141,7 @@
        ;;nix               ; I hereby declare "nix geht mehr!"
        ;;ocaml             ; an objective camel
        org               ; organize your plain life in plain text
-       perl              ; write code no one else can comprehend
+       raku              ; write code no one else can comprehend
        ;;php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional
