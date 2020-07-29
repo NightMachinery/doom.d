@@ -20,3 +20,4 @@
 (global-auto-revert-mode)
 (global-display-line-numbers-mode)
 (save-place-mode 1)
+(setq recentf-max-saved-items nil)

@@ -58,6 +58,7 @@
 (package! rg)
 (package! deadgrep)
 (package! git-link)
+(package! neuron-mode)
 
 (unpin! julia-mode julia-repl)
 (when (package! eglot)
