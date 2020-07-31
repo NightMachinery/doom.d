@@ -20,4 +20,9 @@
 (global-auto-revert-mode)
 (global-display-line-numbers-mode)
 (save-place-mode 1)
-(setq recentf-max-saved-items nil)
+
+(after! recentf
+  ;; (customize-set-value recentf-auto-cleanup 3600) ; doesn't work
+  (setq recentf-auto-cleanup 3600)
+  (setq recentf-max-saved-items 5000)
+  )

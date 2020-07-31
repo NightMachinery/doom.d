@@ -14,3 +14,11 @@
   ;; (dired (getenv "nightNotes"))
 )
 (night/set-leader-keys " z ." #'night/browse-notes)
+
+(defun night/unt ()
+  (interactive)
+  (let ((link (current-kill 0)))
+    (insert (shell-command-to-string (concat "brishz.dash unt " (shell-quote-argument link))))
+    ))
+
+;; (message (shell-command-to-string "brishz.dash unt"))
