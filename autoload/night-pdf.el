@@ -3,9 +3,13 @@
 (defun night/disable-line-numbers ()
   (interactive)
   (display-line-numbers-mode -1)
+  )
+(defun night/pdf-hook-fn ()
+  (interactive)
+  (night/disable-line-numbers)
   (pdf-view-fit-width-to-window)  ;; you can also just press W
   )
-(add-hook 'pdf-view-mode-hook #'night/disable-line-numbers)
+(add-hook 'pdf-view-mode-hook #'night/pdf-hook-fn)
 
 (setq-default night/pdf-scroll-step 30)
 
