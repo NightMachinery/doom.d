@@ -1,4 +1,4 @@
-(load "~/.private-config.el")
+(load "~/.private-config.el" t)
 ;;;
 (defun load-path-gitmodules (file)
   (add-to-list 'load-path (concat (getenv "DOOMDIR") "/" "gitmodules/" file)))
