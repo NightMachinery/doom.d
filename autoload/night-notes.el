@@ -44,10 +44,16 @@
                  (message "%s" cmd)
                  (shell-command-to-string cmd)))
          )
-    (dolist (line (split-string text "\n"))
-      (insert line "\n")
-      (dotimes (i my-column)
-        (insert " ")))
+    (let ((lines (split-string text "\n")))
+
+
+      (dolist (line lines)
+        (progn (if (not (string= "" line)) ; so as to not insert the last empty line
+                   (progn (insert line "\n")
+                          (dotimes (i my-column)
+                            (insert " ")))
+                 )))
+      )
     (save-buffer)
     ))
 

@@ -31,10 +31,18 @@
   ;; s-replace from s.el
   (find-file-existing (concat "/ssh:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (buffer-file-name)))))
 
+(defun night/webdav-eva-current ()
+  (interactive)
+  ;; s-replace from s.el
+  (find-file-existing (concat (s-replace (getenv "HOME") "/Volumes" (buffer-file-name))))
+  (message "%s" (current-buffer)))
+
 (setq tramp-ssh-controlmaster-options
       "-o ControlMaster=auto -o ControlPath='tramp.%%C' -o ControlPersist=yes")
 
 ;;;
 (map! :leader
       ;; remote
-      "z r" #'night/ssh-eva-current)
+      ;; "z r" #'night/ssh-eva-current
+      "z r" #'night/webdav-eva-current
+      )
