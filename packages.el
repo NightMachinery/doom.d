@@ -60,6 +60,7 @@
 (package! git-link)
 (package! neuron-mode)
 (package! nov)
+(package! hungry-delete)
 
 (unpin! julia-mode julia-repl)
 (when (package! eglot)

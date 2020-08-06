@@ -38,22 +38,16 @@
   (let* (
          (my-column (current-column))
          (link (current-kill 0))
-         ;; (cmd (concat "brishzr.dash unt " (shell-quote-argument link)))
          (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf unt"))))
          (text (progn
                  (message "%s" cmd)
                  (shell-command-to-string cmd)))
          )
     (let ((lines (split-string text "\n")))
-
-
       (dolist (line lines)
         (progn (if (not (string= "" line)) ; so as to not insert the last empty line
-                   (progn (insert line "\n")
-                          (dotimes (i my-column)
-                            (insert " ")))
-                 )))
-      )
+                   (insert line "\n" (make-string my-column ?\s)) ; ?\s is the character for space.
+                 ))))
     (save-buffer)
     ))
 
