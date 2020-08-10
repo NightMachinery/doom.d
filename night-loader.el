@@ -1,4 +1,3 @@
-(load "~/.private-config.el" t)
 ;;;
 (defun load-path-gitmodules (file)
   (add-to-list 'load-path (concat (getenv "DOOMDIR") "/" "gitmodules/" file)))
@@ -9,6 +8,12 @@
 (setq nightal-dir (concat (getenv "DOOMDIR") "/" "autoload"))
 ;;;
 
-(mapcar #'load-night '("doom" "macros" "basic" "doom-keybindings" "gui" "macos-gui" "python"))
-(load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
-(mapcar #'load (directory-files nightal-dir 't "\.el$" 't))
+
+(defun night/load-config ()
+  (interactive)
+  (mapcar #'load-night '("doom" "macros" "basic" "doom-keybindings" "gui" "macos-gui" "python"))
+  (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
+  (mapcar #'load (directory-files-recursively nightal-dir "\.el$"))
+  (load "~/.private-config.el" t)
+  )
+(night/load-config)
