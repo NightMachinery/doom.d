@@ -1,4 +1,5 @@
-
+;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
+;;;
 (setq org-image-actual-width 600) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
 ;;;
 (defun night/org-paste-clipboard-image ()
