@@ -23,6 +23,7 @@
 
 (after! recentf
   ;; (customize-set-value recentf-auto-cleanup 3600) ; doesn't work
+  (customize-set-variable recentf-auto-cleanup 3600)
   (setq recentf-auto-cleanup 3600)
   (setq recentf-max-saved-items 5000)
   )
