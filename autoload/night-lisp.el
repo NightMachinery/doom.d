@@ -54,10 +54,10 @@
 (progn
   (lispyville--define-key '(insert)
     "\""
-    #'lispy-doublequote
-    ;; #'(lambda ()
-    ;;     (interactive)
-    ;;     (insert "\""))
+    ;; #'lispy-doublequote
+    #'(lambda ()
+        (interactive)
+        (insert "\""))
     ) ;;Otherwise would escape doublequotes in Strings automagically.
 
   ( comment (lispyville--define-key '(normal visual)
