@@ -76,6 +76,8 @@
   ;; one. Also, don't display metadata in the echo area. (This
   ;; conflicts with ElDoc.)
   (setq company-frontends '(company-pseudo-tooltip-frontend))
+  (setq company-backends '(company-capf company-dabbrev-code company-yasnippet)) ; probably useless here, gets overridden
+
 
   ;; Show quick-reference numbers in the tooltip. (Select a completion
   ;; with M-1 through M-0.)
@@ -99,7 +101,7 @@
   ;; Make the `company-dabbrev' backend fully case-sensitive, to
   ;; improve the UX when working with domain-specific words that have
   ;; particular casing.
-  (setq company-dabbrev-ignore-case nil)
+  ;; (setq company-dabbrev-ignore-case nil)
   (setq company-dabbrev-downcase nil)
 
   ;; When candidates in the autocompletion tooltip have additional
@@ -107,3 +109,47 @@
   ;; right-hand side. This usually makes it look neater.
   (setq company-tooltip-align-annotations t)
   )
+
+;;;
+
+;;; Doesn't work, gets overrided by sth (prob doom)
+;; (defun night/set-general-completion-backends()
+;;     (interactive)
+;;   (set (make-local-variable 'company-backends)
+;;        '((
+;;           ;; company-shell
+;;           company-files                 ; files & directory
+;;           company-keywords              ; keywords
+;;           ;; company-capf
+;;           company-yasnippet
+;;           ;; company-abbrev
+;;           company-dabbrev-code
+;;           ))
+;;        ))
+(defun night/sh-hook-fn()
+  (interactive)
+(set-company-backend! 'sh-mode #'company-dabbrev-code)
+  )
+(add-hook 'sh-mode-hook #'night/sh-hook-fn)
+
+
+(progn (setq +company-backend-alist
+             '(
+               ;; (julia-mode
+               ;;  company-dabbrev-code ; default
+               ;;  )
+               ;;; useless here, gets overridden
+               ;; (sh-mode
+               ;;  ;; company-shell
+               ;;  company-dabbrev-code
+               ;;  company-files           ; files & directory
+               ;;  company-keywords        ; keywords
+               ;;  ;; company-capf
+               ;;  company-yasnippet
+               ;;  ;; company-abbrev
+               ;;  )
+               (text-mode company-dabbrev company-yasnippet company-ispell)
+               (prog-mode company-capf company-dabbrev-code company-yasnippet)
+               (conf-mode company-capf company-dabbrev-code company-yasnippet))))
+(set-company-backend! 'sh-mode #'company-dabbrev-code) ; useless here, gets overridden
+;;;

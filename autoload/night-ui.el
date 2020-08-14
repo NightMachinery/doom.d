@@ -6,7 +6,7 @@
   (interactive)
   (font-lock-add-keywords
    ;; [:punct:]
-   nil '(("\\B\\(@[^][[:space:]();,\n]+\\)" 1 'special-comment t))))
+   nil '(("\\B\\(@[^][[:space:](){};,\n]+\\)" 1 'special-comment t))))
 ;;; tests
 ;; jas (@wsw aws) hi@gmail.com
 ;;a@a

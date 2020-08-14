@@ -19,7 +19,7 @@
        ;;japanese
 
        :completion
-       (company +childframe  +tng)           ; the ultimate code completion backend
+       (company +tng)            ;; don't use +childframe ; the ultimate code completion backend
        ;;helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
        (ivy +fuzzy +icons)                ; +prescient seriously messes up ordering ; a search engine for love and life
