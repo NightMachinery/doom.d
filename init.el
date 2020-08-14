@@ -19,7 +19,7 @@
        ;;japanese
 
        :completion
-       (company +tng)           ; the ultimate code completion backend
+       (company +childframe  +tng)           ; the ultimate code completion backend
        ;;helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
        (ivy +fuzzy +icons)                ; +prescient seriously messes up ordering ; a search engine for love and life
@@ -79,9 +79,9 @@
        :checkers
        syntax              ; tasing you for every semicolon you forget
        ;; spell             ; tasing you for misspelling mispelling
-       ;; ;;grammar           ; tasing grammar mistake every you make
+       ;;grammar           ; tasing grammar mistake every you make
 
-       ;; :tools
+       :tools
        ;;ansible
        ;;debugger          ; FIXME stepping through code, to help you add bugs
        ;;direnv
@@ -90,7 +90,7 @@
        ;;ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)     ; run code, run (also, repls)
        gist              ; interacting with github gists
-       lookup              ; navigate your code and its documentation
+       (lookup +dictionary +docsets +offline)              ; navigate your code and its documentation
        ;; lsp
        macos             ; MacOS-specific commands
        magit             ; a git porcelain for Emacs

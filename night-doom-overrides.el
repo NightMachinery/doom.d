@@ -1,5 +1,6 @@
-;;; ~/doom.d/night-doom.el -*- lexical-binding: t; -*-
-
+(after! smartparens (smartparens-global-mode -1))
+(remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
+;;;
 (defun doom-quit-p (&optional prompt)
   "Prompt the user for confirmation when killing Emacs.
 
@@ -8,7 +9,6 @@ are open."
   (or 't (not (ignore-errors (doom-real-buffer-list)))
       (yes-or-no-p (format "››› %s" (or prompt "Quit Emacs?")))
       (ignore (message "Aborted"))))
-
 ;;;
 (general-with-eval-after-load "snippets"
   ;;; Useful for org files. They start with a snippet from the beginning which is very unintuitive.
@@ -21,5 +21,4 @@ are open."
     "Go to the end of the current field."
     (interactive)
     (evil-end-of-line)))
-
 ;;;
