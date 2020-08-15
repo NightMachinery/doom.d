@@ -128,7 +128,7 @@
 ;;        ))
 (defun night/sh-hook-fn()
   (interactive)
-(set-company-backend! 'sh-mode #'company-dabbrev-code)
+  (set-company-backend! 'sh-mode '(company-dabbrev-code company-files))
   )
 (add-hook 'sh-mode-hook #'night/sh-hook-fn)
 
