@@ -1,3 +1,6 @@
+(when (display-graphic-p)
+  (doom-adjust-font-size 2)
+  )
 
 ;; red: #a12a2a
 (defface special-comment '((t (:foreground "#3437eb" :weight bold))) "This is just a doc string")
