@@ -60,8 +60,9 @@
         (insert "\""))
     ) ;;Otherwise would escape doublequotes in Strings automagically.
 
-  ( comment (lispyville--define-key '(normal visual)
-              "P" #'lispy-paste) )
+  (lispyville--define-key '(normal visual)
+    "p" #'lispy-paste)
+
   (lispyville--define-key '(normal visual motion)
     "H" #'lispyville-backward-sexp
     "L" #'lispyville-forward-sexp

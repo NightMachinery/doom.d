@@ -1,7 +1,16 @@
 ;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
 (after! org
+  ;; (setq org-src-tab-acts-natively nil) ; doesn't fix the completion TAB problem
+  (defun night/org-save-hook-fn ()
+    (interactive)
+    (when (string= "org-mode" major-mode)
+      ;; (org-html-export-to-html)
+      (org-babel-tangle)
+      ))
+  (add-hook 'after-save-hook #'night/org-save-hook-fn)
 ;;;
-  (setq org-image-actual-width 700) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
+  (setq org-image-actual-width '(700)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
+  ;; (setq org-image-actual-width '(fill-column))
 ;;;
   (defun night/org-paste-clipboard-image ()
     "Paste the image in the clipboard at point."
@@ -34,4 +43,4 @@
         :nvi "lp" #'night/org-paste-clipboard-image
         )
 ;;;
-)
+  )

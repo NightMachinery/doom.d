@@ -148,8 +148,11 @@
                ;;  company-yasnippet
                ;;  ;; company-abbrev
                ;;  )
+               (org-mode company-capf company-dabbrev-code company-yasnippet)
                (text-mode company-dabbrev company-yasnippet company-ispell)
                (prog-mode company-capf company-dabbrev-code company-yasnippet)
                (conf-mode company-capf company-dabbrev-code company-yasnippet))))
 (set-company-backend! 'sh-mode #'company-dabbrev-code) ; useless here, gets overridden
 ;;;
+
+(provide 'night-completion)

@@ -11,7 +11,7 @@
    ;; [:punct:]
    nil '(("\\B\\(@[^][[:space:](){};,\n]+\\)" 1 'special-comment t))))
 ;;; tests
-;; jas (@wsw aws) hi@gmail.com
+;; jas (@wsw aws) @hi+  hi@gmail.com
 ;;a@a
 ;;@hi
 ;;;

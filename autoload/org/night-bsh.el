@@ -1,9 +1,21 @@
 ;;; night-bsh.el ---                                 -*- lexical-binding: t; -*-
 
-(add-to-list 'org-src-lang-modes '("zsh" . sh))
-(add-to-list 'org-src-lang-modes '("bsh.dash" . sh))
-(add-to-list 'org-babel-shell-names "bsh.dash")
-(org-babel-shell-initialize)
+(require 'ob-shell)
+
+(progn (add-to-list 'org-src-lang-modes '("zsh" . sh))
+  (add-to-list 'org-src-lang-modes '("bsh.dash" . sh))
+  (add-to-list 'org-babel-shell-names "bsh.dash")
+  (org-babel-shell-initialize))
+
+(comment
+ (defadvice org-babel-sh-evaluate (around set-shell activate)
+   "Add header argument :shcmd that determines the shell to be called."
+   (let* ((org-babel-sh-command (or (cdr (assoc :shcmd params)) org-babel-sh-command shell-file-name))
+          (shell-file-name org-babel-sh-command)
+          )
+     ad-do-it
+     ))
+ )
 
 (comment
 
