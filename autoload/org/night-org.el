@@ -1,5 +1,6 @@
 ;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
 (after! org
+  (setq org-startup-with-inline-images t)
   ;; (setq org-src-tab-acts-natively nil) ; doesn't fix the completion TAB problem
   (defun night/org-save-hook-fn ()
     (interactive)
