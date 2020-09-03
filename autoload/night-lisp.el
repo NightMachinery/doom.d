@@ -38,8 +38,9 @@
     (lispy-mode 1)
     ;; lispyville is automatically started as well.
     (global-set-key (kbd "M-O") nil)
+    (unbind-key "M-DEL" lispy-mode-map)
     (unbind-key "M-O" lispy-mode-map)
-    (unbind-key "M-O" lispy-mode-map-evilcp)
+    (unbind-key "M-O" lispy-mode-map-evilcp) ; Probably redundant
     (unbind-key "M-O" lispy-mode-map-lispy)
     ))
 ;; (lispy-set-key-theme '(lispy c-digits))
