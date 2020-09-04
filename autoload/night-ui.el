@@ -9,7 +9,7 @@
   (interactive)
   (font-lock-add-keywords
    ;; [:punct:]
-   nil '(("\\B\\(@[^][[:space:](){};,\n]+\\)" 1 'special-comment t))))
+   nil '(("\\B\\(@[^][[:space:](){};,\n\"]+\\)" 1 'special-comment t))))
 ;;; tests
 ;; jas (@wsw aws) @hi+ maddah_ali@sharif.edu hi@gmail.com
 ;;a@a
