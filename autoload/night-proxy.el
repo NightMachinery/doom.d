@@ -1,10 +1,12 @@
 ;;; ~/doom.d/autoload/night-proxy.el -*- lexical-binding: t; -*-
 
 ;; (setq url-proxy-services nil)
-(progn (setq url-proxy-services
-       '(("no_proxy" . "^\\(localhost\\|10.*\\)")
-         ("http" . "127.0.0.1:1087")
-         ("https" . "127.0.0.1:1087"))))
+;;; I think you can just set the env vars instead. If not, uncomment this block:
+;; (progn (setq url-proxy-services
+;;        '(("no_proxy" . "^\\(localhost\\|10.*\\)")
+;;          ("http" . "127.0.0.1:1087")
+;;          ("https" . "127.0.0.1:1087"))))
+;;;
 
 ;;;
 ;; proxychains did not work for me on macOS
