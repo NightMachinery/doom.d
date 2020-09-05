@@ -70,3 +70,4 @@
 (package! eglot-jl)
 ;; (when (package! eglot)
 ;;   (package! eglot-jl))
+(package! fzf)
