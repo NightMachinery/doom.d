@@ -17,6 +17,7 @@
 ;;@hi j
 ;;;
 (after! hl-todo
+  ;; The syntax class of the characters at either end has to be `w' (which means word) in `hl-todo--syntax-table'.
   (modify-syntax-entry ?@ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?+ "w" hl-todo--syntax-table)
   (setq hl-todo-highlight-punctuation ":"
