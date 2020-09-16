@@ -71,3 +71,4 @@
 ;; (when (package! eglot)
 ;;   (package! eglot-jl))
 (package! fzf)
+(package! org-drill)
