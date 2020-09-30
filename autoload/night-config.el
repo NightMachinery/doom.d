@@ -19,6 +19,7 @@
 (global-auto-revert-mode)
 (global-display-line-numbers-mode)
 (save-place-mode 1)
+(setq large-file-warning-threshold 50000000)
 
 ;;;
 (defun night/generic-hook-fn ()

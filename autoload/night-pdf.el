@@ -29,5 +29,4 @@
   )
 (add-hook 'pdf-view-mode-hook #'night/pdf-hook-fn)
 
-(setq-default night/pdf-scroll-step 30)
-
+(setq-default night/pdf-scroll-step 20)
