@@ -3,6 +3,7 @@
 ;;;
 ;; The new API is very limited and can only insert #+BEGIN_X and #+END_X
 (require 'org-tempo)
+(add-to-list 'org-structure-template-alist '("ez" . "example zsh"))
 ;; (add-to-list 'org-structure-template-alist '("sj" . "src julia"))
 (add-to-list 'org-structure-template-alist '("sj" . "src jupyter-julia :session j1 :wrap example"))
 (add-to-list 'org-structure-template-alist '("sz" . "src bsh.dash :results verbatim :exports both :wrap example"))

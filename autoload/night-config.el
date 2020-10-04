@@ -20,6 +20,7 @@
 (global-display-line-numbers-mode)
 (save-place-mode 1)
 (setq large-file-warning-threshold 50000000)
+(setq tab-always-indent t)
 
 ;;;
 (defun night/generic-hook-fn ()
