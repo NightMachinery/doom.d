@@ -20,7 +20,7 @@
   (interactive)
   (mapcar #'load-night '("doom-overrides" "macros" "basic" "doom-keybindings" "gui" "macos-gui" "python"))
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
-  (with-eval-after-load 'pdf-view
+  (progn ;; with-eval-after-load 'pdf-view
     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el"))
   (mapcar #'load (directory-files-recursively nightal-dir "\.el$"))
   (load "~/.private-config.el" t))
