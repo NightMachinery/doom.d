@@ -24,7 +24,7 @@
                   ;; (my-buffer (current-buffer))
                   )
              (async-start (lambda () (let* (
-                                            (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf unt"))))
+                                            (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt"))))
                                             (text (shell-command-to-string cmd))
                                             )
                                        text
@@ -39,7 +39,7 @@
   (let* (
          (my-column (current-column))
          (link (current-kill 0))
-         (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf unt"))))
+         (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt"))))
          (text (progn
                  (message "%s" cmd)
                  (shell-command-to-string cmd)))
@@ -52,7 +52,13 @@
     (save-buffer)
     ))
 
-(night/set-leader-keys " z l" #'night/unt)
+;;;
+;; (night/set-leader-keys " z l" #'night/unt)
+(map! :map org-mode-map
+      :localleader
+      :nvi "lu" #'night/unt
+      )
+;;;
 ;; (message "%s" (shell-command-to-string "brishz.dash unt"))
 ;; (message "%s" (progn (setenv  "brishzr_in" "haki") (shell-command-to-string "echo $brishzr_in")))
 ;;; 

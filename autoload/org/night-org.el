@@ -1,5 +1,11 @@
 ;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
 (after! org
+  (setcdr org-link-abbrev-alist
+        `(
+          ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
+          ("cellar" . ,(concat (getenv "cellar") "/"))
+          ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
+          ("orgdir" . ,(concat  org-directory "/"))))
   (add-to-list 'org-modules 'org-protocol)
 ;;;
   ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
