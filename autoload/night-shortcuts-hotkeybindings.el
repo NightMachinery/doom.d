@@ -12,6 +12,9 @@
 ;; (night/set-leader-keys "z w" 'fixup-whitespace)
 ;; (global-set-key (kbd "M-DEL") 'doom/backward-kill-to-bol-and-indent)
 (global-set-key (kbd "M-DEL") 'fixup-whitespace)
+;; the mac GUI uses backspace for the del key :|
+(map! :nvig                             ; this is necessary as evil binds they key in its insert state
+      "M-<backspace>" #'fixup-whitespace)
 ;; (global-set-key (kbd "M-DEL") 'cycle-spacing) ; cycles between original indent, just one space, and no space.
 ; Use C-DEL to delete with more control
 ;;;
