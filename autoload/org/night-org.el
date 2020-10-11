@@ -50,7 +50,9 @@
         (call-process "import" nil nil nil filename))
                                         ; insert into file if correctly taken
     (if (file-exists-p filename)
-        (insert (concat "[[file:" filename "]]"))))
+        (insert (concat "[[file:" filename "]]")))
+    (org-redisplay-inline-images)
+    )
 
   (map! :map org-mode-map
         :localleader

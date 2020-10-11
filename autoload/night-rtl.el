@@ -3,7 +3,7 @@
 (setq night/persian-font "B Nazanin") ;; "IranNastaliq"
 
 (defun night/enable-bidirectional ()
-  "interactive"
+  (interactive)
   (set-fontset-font
    "fontset-default"
    ;; http://www.gnu.org/software/emacs/manual/html_node/emacs/Modifying-Fontsets.html
@@ -17,4 +17,6 @@
    )
   (setq face-font-rescale-alist `((,night/persian-font . 1.50)))
   (setq bidi-paragraph-direction 'nil))
+
 (add-hook 'org-mode-hook 'night/enable-bidirectional)
+(add-hook 'markdown-mode-hook 'night/enable-bidirectional)

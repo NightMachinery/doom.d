@@ -72,3 +72,4 @@
 ;;   (package! eglot-jl))
 (package! fzf)
 (package! org-drill)
+(package! toc-org)
