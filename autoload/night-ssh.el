@@ -43,6 +43,6 @@
 ;;;
 (map! :leader
       ;; remote
-      ;; "z r" #'night/ssh-eva-current
-      "z r" #'night/webdav-eva-current
+      "z r" #'night/ssh-eva-current
+      ;; "z r" #'night/webdav-eva-current
       )
