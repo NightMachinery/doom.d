@@ -20,4 +20,6 @@
 ;;;
 (global-set-key (kbd "C-a") 'evil-beginning-of-line)
 (global-set-key (kbd "C-e") 'evil-end-of-line)
-;;; 
+;;;
+(map! :n
+      "J" #'counsel-dash-at-point)      ; originally joined the two lines.

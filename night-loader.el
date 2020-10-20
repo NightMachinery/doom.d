@@ -18,7 +18,7 @@
 
 (defun night/load-config ()
   (interactive)
-  (mapcar #'load-night '("doom-overrides" "macros" "basic" "doom-keybindings" "gui" "macos-gui" "python"))
+  (mapcar #'load-night '("doom-overrides" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
   (progn ;; with-eval-after-load 'pdf-view
     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el"))
