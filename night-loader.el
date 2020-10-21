@@ -18,6 +18,8 @@
 
 (defun night/load-config ()
   (interactive)
+  (require 'f)
+  (require 'dash)
   (mapcar #'load-night '("doom-overrides" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
   (load-gitmodules "fzf.el/fzf.el")
