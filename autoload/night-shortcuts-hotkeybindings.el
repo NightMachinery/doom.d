@@ -23,3 +23,5 @@
 ;;;
 (map! :n
       "J" #'counsel-dash-at-point)      ; originally joined the two lines.
+(map! :leader
+      "f r" #'night/fzf-recentf)

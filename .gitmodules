@@ -7,3 +7,6 @@
 [submodule "gitmodules/pdf-continuous-scroll-mode.el"]
 	path = gitmodules/pdf-continuous-scroll-mode.el
 	url = https://github.com/dalanicolai/pdf-continuous-scroll-mode.el
+[submodule "gitmodules/fzf.el"]
+	path = gitmodules/fzf.el
+	url = https://github.com/NightMachinary/fzf.el
