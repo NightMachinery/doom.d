@@ -54,6 +54,9 @@
     (org-redisplay-inline-images)
     )
 
+  (setq org-blank-before-new-entry '((heading . nil)
+    (plain-list-item . nil)))
+
   (map! :map org-mode-map
         :localleader
         :nvi "lp" #'night/org-paste-clipboard-image

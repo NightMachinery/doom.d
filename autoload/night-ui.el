@@ -12,7 +12,7 @@
             ;; [:punct:]
             nil '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'special-comment t)))))
 ;;; tests
-;; jas (@wsw aws) @hi+ maddah_ali@sharif.edu hi@gmail.com TODO @ XXXX @ja
+;; jas (@wsw aws) @hi+ @hi? maddah_ali@sharif.edu hi@gmail.com TODO @ XXXX @ja
 ;;a@a
 ;;@hi j
 ;;;
@@ -20,6 +20,7 @@
   ;; The syntax class of the characters at either end has to be `w' (which means word) in `hl-todo--syntax-table'.
   (modify-syntax-entry ?@ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?+ "w" hl-todo--syntax-table)
+  (modify-syntax-entry ?? "w" hl-todo--syntax-table)
   (setq hl-todo-highlight-punctuation ":"
         hl-todo-keyword-faces
         `(
