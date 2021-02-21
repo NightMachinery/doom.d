@@ -31,6 +31,11 @@
   ;; s-replace from s.el
   (find-file-existing (concat "/ssh:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (buffer-file-name)))))
 
+(defun night/scp-eva-current ()
+  (interactive)
+  ;; s-replace from s.el
+  (find-file-existing (concat "/scp:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (buffer-file-name)))))
+
 (defun night/webdav-eva-current ()
   (interactive)
   ;; s-replace from s.el

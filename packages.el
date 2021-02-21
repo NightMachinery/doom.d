@@ -73,3 +73,4 @@
 ;; (package! fzf)
 (package! org-drill)
 (package! toc-org)
+(package! org-fragtog)
