@@ -29,12 +29,12 @@
 (defun night/ssh-eva-current ()
   (interactive)
   ;; s-replace from s.el
-  (find-file-existing (concat "/ssh:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (buffer-file-name)))))
+  (find-file-existing (concat "/ssh:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (s-replace "/Users/evar/Base/_Code" "/home/eva/code" (buffer-file-name))))))
 
 (defun night/scp-eva-current ()
   (interactive)
   ;; s-replace from s.el
-  (find-file-existing (concat "/scp:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (buffer-file-name)))))
+  (find-file-existing (concat "/scp:eva@82.102.11.148:" (s-replace (getenv "HOME") "/home/eva" (s-replace "/Users/evar/Base/_Code" "/home/eva/code" (buffer-file-name))))))
 
 (defun night/webdav-eva-current ()
   (interactive)
@@ -48,6 +48,7 @@
 ;;;
 (map! :leader
       ;; remote
-      "z r" #'night/ssh-eva-current
+      "z r" #'night/scp-eva-current
+      ;; "z r" #'night/ssh-eva-current
       ;; "z r" #'night/webdav-eva-current
       )
