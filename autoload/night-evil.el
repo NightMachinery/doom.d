@@ -1,6 +1,6 @@
 ;;; ~/doom.d/night-evil.el -*- lexical-binding: t; -*-
 
-;; (evilem-default-keybindings e")      ; #easymotion
+;; (evilem-default-keybindings "s")      ; #easymotion
   (setq evil-want-fine-undo t)
 
 ;; (evil-define-minor-mode-key 'motion 'visual-line-mode "j" 'evil-next-visual-line)

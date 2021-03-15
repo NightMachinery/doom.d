@@ -28,9 +28,15 @@
 (defun night/scp-eva ()
   (interactive)
   (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
+;;;
 (defun night/scp-zii ()
   (interactive)
   (dired "/scp:zii@51.178.215.202:/home/zii/"))
+(defun night/scp-zii-current ()
+  (interactive)
+  ;; s-replace from s.el
+  (find-file-existing (concat "/scp:zii@51.178.215.202:" (s-replace (getenv "HOME") "/home/zii" (s-replace "/Users/evar/Base/_Code" "/home/zii/code" (buffer-file-name))))))
+;;;
 (defun night/ssh-eva-current ()
   (interactive)
   ;; s-replace from s.el

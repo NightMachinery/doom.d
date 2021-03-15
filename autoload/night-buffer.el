@@ -5,7 +5,9 @@
   (interactive
    (list (read-buffer "buffer1: " (current-buffer))
          (read-buffer "buffer2: " (current-buffer))))
-  (ediff-buffers-internal buffer-A buffer-B nil nil 'ediff-buffers))
+  ;; ediff might not be loaded, I don't know how it is loaded, but playing around with its commands does load it ...
+  ;; (ediff-buffers-internal buffer-A buffer-B nil nil 'ediff-buffers)
+  (ediff-buffers buffer-A buffer-B))
 
 (defun night/yank-buffer-filename ()
   "Copy the current buffer's path to the kill ring."

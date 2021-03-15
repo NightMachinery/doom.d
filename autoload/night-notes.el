@@ -7,12 +7,14 @@
 
 (defun night/browse-notes ()
   (interactive)
-  ;; (counsel-find-file (getenv "nightNotes"))
-  ;; (counsel-file-jump "" (getenv "nightNotes")) ; we used this one before using fzf
-  (counsel-fzf "" (getenv "nightNotes") "")
-  ;; fzf seems slower, but it supports fzf syntax and is async
-  ;; (counsel-fzf "" (getenv "nightNotes"))
-  ;; (dired (getenv "nightNotes"))
+  (let ((default-directory "/"))
+    ;; (counsel-find-file (getenv "nightNotes"))
+    ;; (counsel-file-jump "" (getenv "nightNotes")) ; we used this one before using fzf
+    (counsel-fzf "" (getenv "nightNotes") "")
+    ;; fzf seems slower, but it supports fzf syntax and is async
+    ;; (counsel-fzf "" (getenv "nightNotes"))
+    ;; (dired (getenv "nightNotes"))
+    )
   )
 (night/set-leader-keys " z ." #'night/browse-notes)
 
@@ -37,6 +39,7 @@
 (defun night/unt ()
   (interactive)
   (let* (
+         (default-directory "/")
          (my-column (current-column))
          (link (current-kill 0))
          (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt"))))
