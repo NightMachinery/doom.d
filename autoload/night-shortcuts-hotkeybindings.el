@@ -28,4 +28,5 @@
 (map! :leader
             "f r" #'night/fzf-recentf
             "t d" #'tab-close
+            "t D" #'tab-close-other
       )
