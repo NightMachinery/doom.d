@@ -1,4 +1,6 @@
 ;;;
+;; See ~/doom.d/autoload/night-unimpaired.el
+;;;
 (defun night/tmp-buffer ()
   (interactive)
   (find-file "~/tmp/tmp.txt"))
@@ -24,4 +26,6 @@
 (map! :n
       "J" #'counsel-dash-at-point)      ; originally joined the two lines.
 (map! :leader
-      "f r" #'night/fzf-recentf)
+            "f r" #'night/fzf-recentf
+            "t d" #'tab-close
+      )

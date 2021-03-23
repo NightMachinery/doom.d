@@ -15,6 +15,7 @@
   (evil-paste-after 1))
 
 ;;;
+;; =g t=, =g T= for navigating tabs
 ;; (define-key evil-normal-state-map (kbd "[ o") 'evil-unimpaired/next-frame)
 ;; (define-key evil-normal-state-map (kbd "] o") 'evil-unimpaired/previous-frame)
 (define-key evil-normal-state-map (kbd "[ p") 'evil-unimpaired/paste-above)

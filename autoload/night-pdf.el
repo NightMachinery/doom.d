@@ -1,11 +1,10 @@
 ;;; ~/doom.d/autoload/night-pdf.el -*- lexical-binding: t; -*-
 
-(progn
-  (defun night/disable-line-numbers ()
-    (interactive)
-    (display-line-numbers-mode -1)
-    )
-  (defun night/pdf-hook-fn ()
+(defun night/disable-line-numbers ()
+  (interactive)
+  (display-line-numbers-mode -1)
+  )
+(defun night/pdf-hook-fn ()
     (interactive)
   ;;;
     (pdf-continuous-scroll-mode)
@@ -48,6 +47,8 @@
                                    ))
 
     )
+
+(progn
   (add-hook 'pdf-view-mode-hook #'night/pdf-hook-fn)
 
   (setq-default night/pdf-scroll-step 20)
