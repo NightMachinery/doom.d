@@ -154,5 +154,14 @@
                (conf-mode company-capf company-dabbrev-code company-yasnippet))))
 (set-company-backend! 'sh-mode #'company-dabbrev-code) ; useless here, gets overridden
 ;;;
-
+(defun night/simple-completions ()
+  (interactive)
+  (setq company-backends '(company-capf company-dabbrev-code company-yasnippet))
+  )
+;;;
+;; C-z is overridden by others, use M-x for now
+;; (after! company-try-hard
+;;   (global-set-key (kbd "C-z") #'company-try-hard)
+;;   (define-key company-active-map (kbd "C-z") #'company-try-hard))
+;;;
 (provide 'night-completion)

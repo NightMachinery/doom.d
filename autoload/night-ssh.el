@@ -2,6 +2,7 @@
 
 (defun night/ssh-pre ()
   (interactive)
+  (night/load-tramp-theme)
   ;; https://www.gnu.org/software/emacs/manual/html_node/tramp/Frequently-Asked-Questions.html
   (setq remote-file-name-inhibit-cache nil)
   (setq vc-ignore-dir-regexp
@@ -28,6 +29,46 @@
 (defun night/scp-eva ()
   (interactive)
   (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
+;;;
+(after! tramp-theme
+  (setq tramp-theme-face-remapping-alist '((nil "^root$" (fringe (:inherit fringe :inverse-video t)))
+                                           (".*" "eva" (default (:background "mintcream")))
+                                           ("^foo$" nil (dired-directory (:background "Red")))
+                                           ("^foo$" nil (eshell-prompt (:foreground "White")))
+                                           ("^bar$" nil (default (:background "Green")))
+                                           ("^bar$" nil (dired-directory (:background "Green"))))
+        )
+  )
+(defun night/load-tramp-theme ()
+  (interactive)
+  (load-theme 'tramp t t)
+  ;; (load-theme night-theme t)
+  (enable-theme 'tramp)
+  ;; (enable-theme 'tramp)
+)
+;; @bug this doesn't work. I am calling it in ssh-pre for now ...
+;; (add-hook 'after-init-hook #'night/load-tramp-theme)
+;;;
+;; https://emacs.stackexchange.com/questions/64090/change-company-backends-for-tramp-buffers
+(defun night/tramp-enter ()
+  (interactive)
+  (night/simple-completions)
+  ;; (enable-theme 'doom-one-light)
+  )
+(defun night/tramp-exit ()
+  (interactive)
+  ;; (disable-theme 'doom-one-light)
+  )
+;; This fired all the time, so it's unusable:
+;; (add-hook
+;;  'buffer-list-update-hook
+;;  (lambda ()
+;;    (if (and (not (window-minibuffer-p))
+;;             (file-remote-p default-directory))
+;;        (progn
+;;          (message default dir: %s" default-directory)
+;;          (night/tramp-enter))
+;;      (night/tramp-exit))))
 ;;;
 (defun night/scp-zii ()
   (interactive)

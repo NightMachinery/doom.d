@@ -74,3 +74,5 @@
 (package! org-drill)
 (package! toc-org)
 (package! org-fragtog)
+(package! company-try-hard)
+(package! tramp-theme)
