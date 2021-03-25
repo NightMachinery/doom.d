@@ -10,12 +10,13 @@
   (let ((default-directory "/"))
     ;; (counsel-find-file (getenv "nightNotes"))
     ;; (counsel-file-jump "" (getenv "nightNotes")) ; we used this one before using fzf
-    (counsel-fzf "" (getenv "nightNotes") "")
+    (let ((counsel-fzf-cmd "env fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=nightNotes fzf_mru.sh --tiebreak=end,length -f \"%s\""))
+      ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
+      (counsel-fzf "" (getenv "nightNotes") ""))
     ;; fzf seems slower, but it supports fzf syntax and is async
     ;; (counsel-fzf "" (getenv "nightNotes"))
     ;; (dired (getenv "nightNotes"))
-    )
-  )
+    ))
 (night/set-leader-keys " z ." #'night/browse-notes)
 
 ;;;
