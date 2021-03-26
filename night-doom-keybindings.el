@@ -12,3 +12,9 @@
 (comment (map!
   :ng "M-x" #'night/fzf-M-x ;; #'execute-extended-command
   ))
+;;;
+(define-key input-decode-map "\e[1;10A" [S-M-up])
+(define-key input-decode-map "\e[1;10B" [S-M-down])
+(define-key input-decode-map "\e[1;10C" [S-M-right])
+(define-key input-decode-map "\e[1;10D" [S-M-left])
+;;;

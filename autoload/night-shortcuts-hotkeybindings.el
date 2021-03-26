@@ -24,7 +24,9 @@
 (global-set-key (kbd "C-e") 'evil-end-of-line)
 ;;;
 (map! :n
-      "J" #'counsel-dash-at-point)      ; originally joined the two lines.
+      "J" #'counsel-dash-at-point ; originally joined the two lines.
+      (:prefix "g"
+       :n "s l" #'link-hint-open-link))
 (map! :leader
             "f r" #'night/fzf-recentf
             "t d" #'tab-close

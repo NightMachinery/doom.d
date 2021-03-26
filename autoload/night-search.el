@@ -9,13 +9,27 @@
 (defun night/search-dir (arg)
   "Conduct a text search in files under the given folder."
   (let ((default-directory arg))
-    (call-interactively
-     (cond ((featurep! :completion ivy)  #'+ivy/project-search-from-cwd)
-           ((featurep! :completion helm) #'+helm/project-search-from-cwd)
-           (#'rgrep)))))
+    (progn
+      (setq ivy-calling-tmp ivy-calling)
+      (setq-default ivy-calling t)
+      (call-interactively
+       (cond ((featurep! :completion ivy) #'+ivy/project-search-from-cwd)
+             ((featurep! :completion helm) #'+helm/project-search-from-cwd)
+             (#'rgrep)))
+      (setq-default ivy-calling ivy-calling-tmp)
+      )
+    ))
 
-(setq-default ivy-calling nil)            ;; t makes ivy follow its results but it's slow: https://github.com/abo-abo/swiper/issues/2577
-;;
+;;;
+;; (setq-default ivy-calling t)
+(setq-default ivy-calling nil)
+;; t makes ivy follow its results but it had some issues for me before:
+;; - flickering (seems solved) https://github.com/abo-abo/swiper/issues/2577
+;; - breaks my fzf-M-x
+;; - has some occasional bugs, e.g., when scrolling quickly
+;; - makes emacs hang-y when it tries to preview a bad (e.g., big) file
+;; Reemeber that we have mapped `=` to ivy-call
+;;;
 (map! :map ivy-minibuffer-map ;; counsel-ag-map
       "=" #'ivy-call-and-recenter
       "C-l" #'ivy-call-and-recenter)

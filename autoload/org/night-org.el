@@ -1,17 +1,19 @@
 ;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
 (after! org
   (setcdr org-link-abbrev-alist
-        `(
-          ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
-          ("cellar" . ,(concat (getenv "cellar") "/"))
-          ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
-          ("orgdir" . ,(concat  org-directory "/"))))
+          `(
+            ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
+            ("cellar" . ,(concat (getenv "cellar") "/"))
+            ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
+            ("orgdir" . ,(concat  org-directory "/"))))
   (add-to-list 'org-modules 'org-protocol)
 ;;;
   (add-hook 'org-mode-hook 'org-fragtog-mode) ; https://github.com/io12/org-fragtog
   ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
   (setq org-startup-with-latex-preview t)
   (setq org-preview-latex-default-process 'dvisvgm)
+;;;
+  (setq org-return-follows-link t)
 ;;;
   (setq org-babel-min-lines-for-block-output 0) ; If number of lines of output is equal to or exceeds thisvalue, the output is placed in a #+begin_example...#+end_exampleblock.
   (setq org-startup-with-inline-images t)
@@ -56,7 +58,7 @@
     )
 
   (setq org-blank-before-new-entry '((heading . nil)
-    (plain-list-item . nil)))
+                                     (plain-list-item . nil)))
 
   (map! :map org-mode-map
         :localleader
