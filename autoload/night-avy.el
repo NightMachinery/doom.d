@@ -8,9 +8,12 @@
   (defun night/avy-goto-closing-paren ()
     (interactive)
     (avy-jump "[])}]"))
-  ;;;
+;;;
   (defun night/avy-goto-org-header ()
     (interactive)
-    (when (avy-jump "^\*+ ")
-      (org-back-to-heading)))
+    ;; https://github.com/abo-abo/avy/issues/320
+    (let ((avy-text ""))
+      (when (avy-jump "^\*+ ")
+        ;; (when avy-text (forward-char (length avy-text)))
+        )))
   )

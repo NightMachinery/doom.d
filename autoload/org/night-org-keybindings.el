@@ -15,5 +15,8 @@
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode
    :localleader
-   "sr" #'avy-org-refile-as-child
+   "rs" #'avy-org-refile-as-child
+   ;; "sr" #'avy-org-refile-as-child
+   "rf" #'+org/refile-to-file
+   "rF" #'night/org-refile-to-new-file
    ))
