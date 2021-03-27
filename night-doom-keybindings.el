@@ -13,8 +13,14 @@
   :ng "M-x" #'night/fzf-M-x ;; #'execute-extended-command
   ))
 ;;;
-(define-key input-decode-map "\e[1;10A" [S-M-up])
-(define-key input-decode-map "\e[1;10B" [S-M-down])
-(define-key input-decode-map "\e[1;10C" [S-M-right])
-(define-key input-decode-map "\e[1;10D" [S-M-left])
+(defun night/setup-input-decode ()
+  (progn (define-key input-decode-map "\e[1;10A" [S-M-up])
+         (define-key input-decode-map "\e[1;10B" [S-M-down])
+         (define-key input-decode-map "\e[1;10C" [S-M-right])
+         (define-key input-decode-map "\e[1;10D" [S-M-left])))
+
+(night/setup-input-decode)
+
+;;* input-decode-map is reset for each terminal instance.
+(add-hook 'tty-setup-hook #'night/setup-input-decode)
 ;;;

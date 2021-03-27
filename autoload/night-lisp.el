@@ -58,8 +58,7 @@
     ;; #'lispy-doublequote
     #'(lambda ()
         (interactive)
-        (insert "\""))
-    ) ;;Otherwise would escape doublequotes in Strings automagically.
+        (insert "\""))) ;;Otherwise would escape doublequotes in Strings automagically.
 
   (lispyville--define-key '(normal visual)
     "p" #'lispy-paste)
@@ -70,14 +69,22 @@
     (kbd "M-h") #'lispyville-beginning-of-defun
     (kbd "M-l") #'lispyville-end-of-defun
     ;; reverse of lispy-flow
-    "{" #'lispyville-previous-opening
+    "{" #'lispyville-previous-closing
     "}" #'lispyville-next-closing
     ;; like lispy-flow
     ;; "8" #'lispyville-next-opening
     ;; "7" #'lispyville-previous-closing
     ;; like lispy-left and lispy-right
+;;;
     "(" #'lispyville-backward-up-list
-    ")" #'lispyville-up-list)
+    ")" #'lispyville-up-list
+    )
+  (map! :map lispyville-mode-map
+        ;; :n
+        ;; "g s 9" #'lispy-ace-paren
+        ;; :n
+        ;; "g s 0" #'lispy-ace-symbol      ; bound to Q by lispy
+        )
   (add-hook 'lispy-mode-hook #'lispyville-mode)
   (add-hook 'emacs-lisp-mode-hook #'my-lisp-init)
   (add-hook 'clojure-mode-hook  #'my-lisp-init)

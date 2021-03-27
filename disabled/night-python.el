@@ -33,7 +33,7 @@
 
 (general-with-eval-after-load 'night-completion
   (set-company-backend! 'python-mode  ;; 'elpy-mode
-    '(elpy-company-backend :with company-files company-yasnippet)))
+    '(elpy-company-backend :with company-files company-dabbrev company-capf company-yasnippet)))
 
 
 (defun night/pip-install-me ()

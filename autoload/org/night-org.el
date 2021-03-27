@@ -1,5 +1,7 @@
 ;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
 (after! org
+  (require 'org-element)
+  ;;;
   (setcdr org-link-abbrev-alist
           `(
             ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
@@ -59,10 +61,42 @@
 
   (setq org-blank-before-new-entry '((heading . nil)
                                      (plain-list-item . nil)))
+;;;
+  (defun night/org-refile-to-new-file (&optional x)
+    "Cut the subtree currently being edited and create a new file
+from it.
 
-  (map! :map org-mode-map
-        :localleader
-        :nvi "lp" #'night/org-paste-clipboard-image
-        )
+If called with the universal argument, prompt for new filename,
+otherwise use the subtree title."
+    (interactive "P")
+    (org-back-to-heading)
+    (let* ((header-name (concat (org-element-property :title
+                                                      (org-element-at-point)) ".org"))
+           (filename (cond
+                      (t ;; current-prefix-arg
+                       (expand-file-name
+                        (read-file-name "(@warn saves both files) New file name: " nil nil nil header-name)))
+                      (t
+                       (expand-file-name
+                        header-name
+                        default-directory)
+                       ))))
+      (org-cut-subtree)
+      (save-buffer)
+      (let ((new-buffer (find-file-noselect filename)))
+        (with-current-buffer new-buffer
+          (org-mode)
+          (end-of-buffer)
+          (newline)
+          (yank)
+          (save-buffer)
+          )
+        (switch-to-buffer new-buffer))
+;;;
+      ;; (find-file-noselect filename)
+      ;; (with-temp-file filename
+      ;;   (org-mode)
+      ;;   (yank))
+      ))
 ;;;
   )

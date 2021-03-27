@@ -24,11 +24,20 @@
 (global-set-key (kbd "C-e") 'evil-end-of-line)
 ;;;
 (map! :n
-      "J" #'counsel-dash-at-point ; originally joined the two lines.
+      "J" #'counsel-dash-at-point       ; originally joined the two lines.
       (:prefix "g"
-       :n "s l" #'link-hint-open-link))
+       :n
+       "s l" #'link-hint-open-link)
+      :n
+      "g s 9" #'night/avy-goto-opening-paren
+      :n
+      "g s 0" #'night/avy-goto-closing-paren
+      :n
+      "g s s" #'avy-goto-char
+      :n
+      "g s SPC" #'avy-goto-char-2       ; check its default binding if you want to unbind this
+      )
 (map! :leader
             "f r" #'night/fzf-recentf
             "t d" #'tab-close
-            "t D" #'tab-close-other
-      )
+            "t D" #'tab-close-other)

@@ -1,35 +1,5 @@
 ;;; ~/doom.d/night-ssh.el -*- lexical-binding: t; -*-
 
-(defun night/ssh-pre ()
-  (interactive)
-  (night/load-tramp-theme)
-  ;; https://www.gnu.org/software/emacs/manual/html_node/tramp/Frequently-Asked-Questions.html
-  (setq remote-file-name-inhibit-cache nil)
-  (setq vc-ignore-dir-regexp
-        (format "\\(%s\\)\\|\\(%s\\)"
-                vc-ignore-dir-regexp
-                tramp-file-name-regexp))
-  ;; Bug in Spacemacs https://github.com/syl20bnr/spacemacs/issues/11514
-  ;; (remove-hook 'python-mode-hook 'spacemacs//init-eldoc-python-mode)
-  )
-
-(night/ssh-pre)
-
-(defun night/tramp-refresh ()
-  (interactive)
-  (recentf-cleanup)
-  (tramp-cleanup-all-buffers)
-  (tramp-cleanup-all-connections))
-(defun night/scp-eva-borg ()
-  (interactive)
-  (find-file-existing "/scp:eva@82.102.11.148:/home/eva/code/betterborg/stdplugins/"))
-(defun night/ssh-eva ()
-  (interactive)
-  (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))
-(defun night/scp-eva ()
-  (interactive)
-  (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
-;;;
 (after! tramp-theme
   (setq tramp-theme-face-remapping-alist '((nil "^root$" (fringe (:inherit fringe :inverse-video t)))
                                            (".*" "eva" (default (:background "mintcream")))
@@ -48,6 +18,43 @@
 )
 ;; @bug this doesn't work. I am calling it in ssh-pre for now ...
 ;; (add-hook 'after-init-hook #'night/load-tramp-theme)
+;;;
+(defun night/ssh-pre ()
+  (interactive)
+  (night/load-tramp-theme)
+  ;; https://www.gnu.org/software/emacs/manual/html_node/tramp/Frequently-Asked-Questions.html
+  (setq remote-file-name-inhibit-cache nil)
+  ;;;
+  ;; completely disabled anaconda-mode instead
+  ;; (add-hook 'python-mode-hook #'turn-off-anaconda-eldoc-mode)
+  ;;;
+  (setq vc-ignore-dir-regexp
+        (format "\\(%s\\)\\|\\(%s\\)"
+                vc-ignore-dir-regexp
+                tramp-file-name-regexp))
+  ;; Bug in Spacemacs https://github.com/syl20bnr/spacemacs/issues/11514
+  ;; (remove-hook 'python-mode-hook 'spacemacs//init-eldoc-python-mode)
+  )
+
+(night/ssh-pre)
+
+(defun night/tramp-refresh ()
+  (interactive)
+  (recentf-cleanup)
+  (tramp-cleanup-all-buffers)
+  (tramp-cleanup-all-connections))
+(defun night/scp-eva-borg ()
+  (interactive)
+  (find-file-existing "/scp:eva@82.102.11.148:/home/eva/code/betterborg/stdplugins/"))
+(defun night/ssh-eva-borg ()
+  (interactive)
+  (find-file-existing "/ssh:eva@82.102.11.148:/home/eva/code/betterborg/stdplugins/"))
+(defun night/ssh-eva ()
+  (interactive)
+  (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))
+(defun night/scp-eva ()
+  (interactive)
+  (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
 ;;;
 ;; https://emacs.stackexchange.com/questions/64090/change-company-backends-for-tramp-buffers
 (defun night/tramp-enter ()

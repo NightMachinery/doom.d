@@ -76,3 +76,6 @@
 (package! org-fragtog)
 (package! company-try-hard)
 (package! tramp-theme)
+;;;
+(disable-packages! anaconda-mode)
+;;;
