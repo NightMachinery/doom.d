@@ -20,8 +20,23 @@
 ;; (global-set-key (kbd "M-DEL") 'cycle-spacing) ; cycles between original indent, just one space, and no space.
 ; Use C-DEL to delete with more control
 ;;;
-(global-set-key (kbd "C-a") 'evil-beginning-of-line)
-(global-set-key (kbd "C-e") 'evil-end-of-line)
+(evil-define-motion evil-beginning-of-line-or-visual-line (count)
+  "Move the cursor to the first character of the current screen
+line if `visual-line-mode' is active and
+`evil-respect-visual-line-mode' is non-nil.  If COUNT is given,
+move COUNT - 1 screen lines forward first."
+  :type inclusive
+  (if (and (fboundp 'beginning-of-visual-line)
+           evil-respect-visual-line-mode
+           visual-line-mode)
+      (beginning-of-visual-line count)
+    (evil-beginning-of-line)))
+
+;; @bug https://github.com/emacs-evil/evil/pull/1440
+;; when that bug gets resolved, we can bind these to evil-end-of-line directly if we so wish
+;; note that =g 0=, =g j, etc already act on physical lines
+(global-set-key (kbd "C-a") 'evil-beginning-of-line-or-visual-line)
+(global-set-key (kbd "C-e") 'evil-end-of-line-or-visual-line)
 ;;;
 (map! :n
       "J" #'counsel-dash-at-point       ; originally joined the two lines.
@@ -35,7 +50,12 @@
       :n
       "g s s" #'avy-goto-char
       :n
-      "g s SPC" #'avy-goto-char-2       ; check its default binding if you want to unbind this
+      "g s SPC" #'avy-goto-char-2 ; check its default binding if you want to unbind this
+      ;;;
+      :n
+      "0" #'evil-beginning-of-line-or-visual-line
+      :n
+      "$" #'evil-end-of-line-or-visual-line
       )
 (map! :leader
             "f r" #'night/fzf-recentf
