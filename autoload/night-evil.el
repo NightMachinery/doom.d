@@ -31,8 +31,3 @@
                    (define-key map "N" #'evil-snipe-repeat-reverse)
                    map))
            )
-
-;;; keys
-(after! evil
-  (map!
-   :ng "C-e" #'doom/forward-to-last-non-comment-or-eol))

@@ -55,4 +55,5 @@
 ;; they are implemented.
 
 ;; #spacemacs config imported
+(setq evil-respect-visual-line-mode nil)
 (load! "night-loader.el")
