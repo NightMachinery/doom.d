@@ -1,7 +1,7 @@
 ;;; Don't name this file org.el, emacs will think it's the actual org mode and things will break.
 (after! org
   (require 'org-element)
-  ;;;
+;;;
   (setcdr org-link-abbrev-alist
           `(
             ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
@@ -14,6 +14,8 @@
   ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
   (setq org-startup-with-latex-preview t)
   (setq org-preview-latex-default-process 'dvisvgm)
+;;;
+  (setq org-cycle-separator-lines 1)
 ;;;
   (setq org-return-follows-link t)
 ;;;

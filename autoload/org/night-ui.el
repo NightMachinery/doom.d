@@ -1,7 +1,9 @@
 ;;; autoload/org/night-ui.el -*- lexical-binding: t; -*-
 
 (after! org
+;; (set-face-attribute 'org-level-1 nil :box  `(:line-width 30 :color ,(face-background 'default)))
   (defun night/modify-org-done-face ()
+    (interactive)
     (setq org-fontify-done-headline t)
     (set-face-attribute 'org-done nil :strike-through "black")
     (set-face-attribute 'org-headline-done nil
