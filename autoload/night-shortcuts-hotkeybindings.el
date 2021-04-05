@@ -36,12 +36,16 @@ move COUNT - 1 screen lines forward first."
   ;; @bug https://github.com/emacs-evil/evil/pull/1440
   ;; when that bug gets resolved, we can bind these to evil-end-of-line directly if we so wish
   ;; note that =g 0=, =g j, etc already act on physical lines
-  (global-set-key (kbd "C-a") 'evil-beginning-of-line-or-visual-line)
-  (global-set-key (kbd "C-e") 'evil-end-of-line-or-visual-line) ; @alt: doom/forward-to-last-non-comment-or-eol
+  (global-set-key (kbd "C-a") #'evil-first-non-blank)
+  (global-set-key (kbd "C-e") #'evil-end-of-line-or-visual-line)
   ;; We might need to set these via map! :ng as well
 ;;;
   (map! :n
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
+        :nvig
+        "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
+        :nvig
+        "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol
         (:prefix "g"
          :n
          "s l" #'link-hint-open-link)
@@ -61,8 +65,7 @@ move COUNT - 1 screen lines forward first."
         :nv
         "j" #'evil-next-line
         :nv
-        "k" #'evil-previous-line
-        )
+        "k" #'evil-previous-line)
   (map! :leader
         "f r" #'night/fzf-recentf
         "t d" #'tab-close
