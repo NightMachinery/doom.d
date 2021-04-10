@@ -10,7 +10,10 @@
 (setq evil-cross-lines t)
 (setq evil-move-beyond-eol t)
 (setq evil-move-cursor-back nil)
-
+;;;
+(define-key evil-operator-state-map (kbd "j") #'evil-next-line)
+(define-key evil-operator-state-map (kbd "k") #'evil-previous-line)
+;;;
 
 (comment   (setq evil-snipe-override-local-mode-map
                  (let ((map (make-sparse-keymap)))

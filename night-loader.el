@@ -27,5 +27,6 @@
   (load "~/.private-config.el" t)
   (progn ;; with-eval-after-load 'pdf-view
     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el"))
+  (night/brishz "bell-sc2-evo-perfection")
   )
 (night/load-config)
