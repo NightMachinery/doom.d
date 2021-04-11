@@ -1,6 +1,7 @@
 ;;; autoload/org/night-org-keybindings.el -*- lexical-binding: t; -*-
 
-(after! org
+(after! (org evil-org evil)
+  ;; (night/brishz "bell-lm-strawberryjuice")
   (map! :map org-mode-map
         :localleader
         :nvi "lp" #'night/org-paste-clipboard-image)

@@ -5,12 +5,33 @@
 ;; red: #a12a2a
 (defface special-comment '((t (:foreground "#3437eb" :weight bold))) "This is just a doc string")
 
+;; white-green background: #e9f2eb
+(defface zsh-macro '((t (:foreground "#1adb51" :background "#e9f1f2" :weight bold))) "This is just a doc string")
+
 (defun night/highlight-atsign ()
   "DEPRECATED: We now customize hl-todo instead."
   (interactive)
   (progn (font-lock-add-keywords
             ;; [:punct:]
             nil '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'special-comment t)))))
+
+(defun night/highlight-atsign-zsh ()
+  (interactive)
+  (progn (font-lock-add-keywords 'sh-mode
+             '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
+
+(defun night/highlight-org ()
+  (interactive)
+  (progn
+    ;; (font-lock-add-keywords 'org-mode
+    ;;                         '(("^.*\\B@great\\B.*$" 1 'zsh-macro t)))
+    (font-lock-add-keywords 'org-mode
+                            '(("^.*\\(@great\\|:great:\\).*$" . 'zsh-macro)))
+    )
+  )
+
+(night/highlight-atsign-zsh)
+(night/highlight-org)
 ;;; tests
 ;; jas (@wsw aws) @hi+ @hi? maddah_ali@sharif.edu hi@gmail.com TODO @ XXXX @ja
 ;;a@a

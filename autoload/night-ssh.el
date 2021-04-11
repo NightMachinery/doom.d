@@ -16,12 +16,10 @@
   (enable-theme 'tramp)
   ;; (enable-theme 'tramp)
 )
-;; @bug this doesn't work. I am calling it in ssh-pre for now ...
-;; (add-hook 'after-init-hook #'night/load-tramp-theme)
 ;;;
 (defun night/ssh-pre ()
   (interactive)
-  (night/load-tramp-theme)
+  ;; (night/load-tramp-theme)
   ;; https://www.gnu.org/software/emacs/manual/html_node/tramp/Frequently-Asked-Questions.html
   (setq remote-file-name-inhibit-cache nil)
   ;;;

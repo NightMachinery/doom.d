@@ -11,6 +11,7 @@
                         :foreground "light gray"))
   (night/modify-org-done-face)
 
+
   (progn
     (face-spec-set 'org-level-5 ;; originally copied from org-level-8
       (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist
