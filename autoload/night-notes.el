@@ -43,19 +43,39 @@
          (default-directory "/")
          (my-column (current-column))
          (link (current-kill 0))
-         (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt"))))
+         (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt")))) ; @placeholder use brishzr
          (text (progn
                  (message "%s" cmd)
-                 (shell-command-to-string cmd)))
-         )
-    (let ((lines (split-string text "\n")))
-      (dolist (line lines)
-        (progn (if (not (string= "" line)) ; so as to not insert the last empty line
-                   (insert line "\n" (make-string my-column ?\s)) ; ?\s is the character for space.
-                 ))))
+                 (shell-command-to-string cmd))))
+    (let ((lines (split-string text "\n" t "\s+")))
+      (let ((link (car lines))
+            (meta (cdr lines))
+            (i 0))
+        (insert-for-yank link)
+        (dolist (line meta)
+          (progn (if (not (string= "" line)) ; so as to not insert the last empty line
+                     (progn
+                       (setq i (+ i 1))
+                       (cond
+                        ((= i 1)
+                         (org-insert-subheading nil))
+                        (t
+                         (org-insert-heading nil)))
+                       (insert-for-yank line)
+                       ;; (insert line "\n" (make-string my-column ?\s))
+                                        ; ?\s is the character for space.
+                       ))))))
     (save-buffer)
+    ;; (night/brishz  "awaysh" "ot-play-beeps1" "3")
+    (night/brishz "awaysh" "tts-glados1-cached" "link, inserted")
     ))
 
+(defun night/tmp ()
+  (interactive)
+  (dolist (i '(1 2 3))
+    (org-insert-subheading nil)
+    (insert-for-yank "hello"))
+  )
 ;;;
 ;; (night/set-leader-keys " z l" #'night/unt)
 (map! :map org-mode-map

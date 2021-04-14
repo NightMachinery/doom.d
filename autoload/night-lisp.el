@@ -42,6 +42,10 @@
     (unbind-key "M-O" lispy-mode-map)
     (unbind-key "M-O" lispy-mode-map-evilcp) ; Probably redundant
     (unbind-key "M-O" lispy-mode-map-lispy)
+    (unbind-key "M-<left>" lispy-mode-map)
+    (unbind-key "M-<left>" lispy-mode-map-lispy)
+    (unbind-key "M-<right>" lispy-mode-map)
+    (unbind-key "M-<right>" lispy-mode-map-lispy)
     ))
 ;; (lispy-set-key-theme '(lispy c-digits))
 (lispyville-set-key-theme '(operators c-w

@@ -43,6 +43,8 @@ move COUNT - 1 screen lines forward first."
   (map! :n
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig
+        "C-s" #'save-buffer
+        :nvig
         "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
         :nvig
         "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol
