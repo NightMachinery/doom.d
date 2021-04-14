@@ -9,6 +9,7 @@
 
 (after! (ivy  counsel)
   (defun night/ivy--directory-out ()
+    (interactive)
     (let (dir)
       (when (and
              ;; instead of ivy--directory: (not as good) (ivy-state-current ivy-last)
@@ -16,16 +17,20 @@
         (ivy--cd dir)
         (ivy--exhibit))))
 
+  (defun night/ivy--directory-enter ()
+    (interactive)
+    (ivy--directory-enter)
+    )
+
   (define-key counsel-find-file-map (kbd "<left>")
-    (lambda ()
-      (interactive)
-      (night/ivy--directory-out)
-      ))
+    #'night/ivy--directory-out)
   (define-key counsel-find-file-map (kbd "<right>")
-    (lambda ()
-      (interactive)
-      (ivy--directory-enter)
-      ))
+    #'night/ivy--directory-enter)
+  (define-key ivy-minibuffer-map (kbd "<left>")
+    #'night/ivy--directory-out)
+  (define-key ivy-minibuffer-map (kbd "<right>")
+    #'night/ivy--directory-enter)
+
   ;;;
   (defun night/ivy-mark-toggle ()
     "Mark/unmark the selected candidate."

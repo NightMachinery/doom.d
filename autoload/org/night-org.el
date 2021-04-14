@@ -81,18 +81,16 @@ otherwise use the subtree title."
                       (t
                        (expand-file-name
                         header-name
-                        default-directory)
-                       ))))
+                        default-directory)))))
       (org-cut-subtree)
       (save-buffer)
       (let ((new-buffer (find-file-noselect filename)))
         (with-current-buffer new-buffer
           (org-mode)
           (end-of-buffer)
-          (newline)
+          (or (bobp) (newline))
           (yank)
-          (save-buffer)
-          )
+          (save-buffer))
         (switch-to-buffer new-buffer))
 ;;;
       ;; (find-file-noselect filename)

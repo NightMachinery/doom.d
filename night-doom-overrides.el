@@ -22,3 +22,23 @@ are open."
     (interactive)
     (evil-end-of-line)))
 ;;;
+(defun doom/move-this-file (new-path &optional force-p)
+  "Move current buffer's file to NEW-PATH.
+
+If FORCE-P, overwrite the destination file if it exists, without confirmation."
+  (interactive
+   (list (read-file-name "Move file to: ")
+         current-prefix-arg))
+  (unless (and buffer-file-name (file-exists-p buffer-file-name))
+    (user-error "Buffer is not visiting any file"))
+  (let ((old-path (buffer-file-name (buffer-base-buffer)))
+        (new-path (expand-file-name new-path)))
+    (when (directory-name-p new-path)
+      (setq new-path (concat new-path (f-filename old-path)))
+      )
+    (make-directory (file-name-directory new-path) 't)
+    (rename-file old-path new-path (or force-p 1))
+    (set-visited-file-name new-path t t)
+    (doom--update-files old-path new-path)
+    (message "File moved to %S" (abbreviate-file-name new-path))))
+;;;

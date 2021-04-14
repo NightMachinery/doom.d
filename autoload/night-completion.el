@@ -148,15 +148,23 @@
                ;;  company-yasnippet
                ;;  ;; company-abbrev
                ;;  )
-               (org-mode company-capf company-dabbrev-code company-yasnippet)
-               (text-mode company-dabbrev company-yasnippet company-ispell)
+               (org-mode company-capf company-files (company-dabbrev company-ispell) company-yasnippet)
+               (text-mode company-capf company-files (company-dabbrev company-ispell) company-yasnippet)
                (prog-mode company-capf company-dabbrev-code company-yasnippet)
                (conf-mode company-capf company-dabbrev-code company-yasnippet))))
 (set-company-backend! 'sh-mode #'company-dabbrev-code) ; useless here, gets overridden
 ;;;
 (defun night/simple-completions ()
   (interactive)
-  (setq company-backends '(company-capf company-dabbrev-code company-yasnippet))
+  (setq company-backends '(company-capf company-files (company-dabbrev-code company-keywords) company-yasnippet))
+  )
+(defun night/text-completions ()
+  (interactive)
+  (setq company-backends '(company-capf company-files (company-dabbrev company-ispell) company-yasnippet))
+  )
+(defun tmp/test-completions ()
+  (interactive)
+  (setq company-backends '(company-capf company-files (company-dabbrev company-ispell)))
   )
 ;;;
 ;; C-z is overridden by others, use M-x for now

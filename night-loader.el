@@ -28,6 +28,6 @@
   (progn ;; with-eval-after-load 'pdf-view
     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el"))
   (mapcar #'load-night '("last"))
-  (night/brishz "bell-sc2-evo-perfection")
+  (night/brishz 'awaysh 'eval "sleep 5 ; bell-sc2-evo-perfection")
   )
 (night/load-config)
