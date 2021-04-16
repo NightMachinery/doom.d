@@ -5,20 +5,35 @@
   (night/search-dir (getenv "nightNotes")))
 (night/set-leader-keys "z n" #'night/search-notes)
 
-(defun night/browse-notes ()
+;;;
+(defun night/browse-dir (dir)
   (interactive)
   (let ((default-directory "/"))
-    ;; (counsel-find-file (getenv "nightNotes"))
-    ;; (counsel-file-jump "" (getenv "nightNotes")) ; we used this one before using fzf
-    (let ((counsel-fzf-cmd "env fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=nightNotes fzf_mru.sh --tiebreak=end,length -f \"%s\""))
+    ;; (counsel-find-file dir)
+    ;; (counsel-file-jump "" dir) ; we used this one before using fzf
+    (let ((counsel-fzf-cmd (concat "env fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir) " fzf_mru.sh --tiebreak=end,length -f \"%s\"")))
       ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
-      (counsel-fzf "" (getenv "nightNotes") ""))
+      (counsel-fzf "" dir ""))
     ;; fzf seems slower, but it supports fzf syntax and is async
-    ;; (counsel-fzf "" (getenv "nightNotes"))
-    ;; (dired (getenv "nightNotes"))
+    ;; (counsel-fzf "" dir)
+    ;; (dired dir)
     ))
+
+(defun night/browse-notes ()
+  (interactive)
+  (night/browse-dir (getenv "nightNotes"))
+  )
 (night/set-leader-keys " z ." #'night/browse-notes)
 
+(defun night/browse-NIGHTDIR ()
+  (interactive)
+  (night/browse-dir (getenv "NIGHTDIR"))
+  )
+
+(defun night/browse-DOOMDIR ()
+  (interactive)
+  (night/browse-dir (getenv "DOOMDIR"))
+  )
 ;;;
 (comment (defun night/unt-async ()
            (interactive)

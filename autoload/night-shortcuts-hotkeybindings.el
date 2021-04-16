@@ -44,29 +44,29 @@ move COUNT - 1 screen lines forward first."
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig
         "C-s" #'save-buffer
-        :nvig
+        :nvoig
         "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
-        :nvig
+        :nvoig
         "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol
         (:prefix "g"
          :n
          "s l" #'link-hint-open-link)
-        :n
+        :nvo
         "g s 9" #'night/avy-goto-opening-paren
-        :n
+        :nvo
         "g s 0" #'night/avy-goto-closing-paren
-        :n
+        :nvo
         "g s s" #'avy-goto-char
-        :n
+        :nvo
         "g s SPC" #'avy-goto-char-2 ; check its default binding if you want to unbind this
 ;;;
-        :nv
+        :nvo
         "0" #'evil-beginning-of-line-or-visual-line
-        :nv
+        :nvo
         "$" #'evil-end-of-line-or-visual-line
-        :nv
+        :nvo                            ; the operator hotkeys are also set in night-evil.el
         "j" #'evil-next-line
-        :nv
+        :nvo
         "k" #'evil-previous-line)
   (map! :leader
         "f r" #'night/fzf-recentf

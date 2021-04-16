@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: assert
+# key: as
+# uuid: sh-assert
+# --
+assert $0 @RET

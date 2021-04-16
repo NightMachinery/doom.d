@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: #+begin_source julia block
+# key: <sj
+# uuid: <sj
+# --
+#+begin_src jupyter-julia :session j1 :wrap example
+`%`$0
+#+end_src

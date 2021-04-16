@@ -2,13 +2,36 @@
 (after! org
   (require 'org-element)
 ;;;
+  ;; (setq org-cycle-emulate-tab 'exc-hl-bol) ; @weirdFeature
+;;;
   (setcdr org-link-abbrev-alist
           `(
+            ("DOOMDIR" . ,(concat (getenv "DOOMDIR") "/"))
             ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
             ("cellar" . ,(concat (getenv "cellar") "/"))
             ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
             ("orgdir" . ,(concat  org-directory "/"))))
   (add-to-list 'org-modules 'org-protocol)
+  ;; https://orgmode.org/manual/Link-Abbreviations.html
+  ;; If you need special abbreviations just for a single Org buffer, you can define them in the file with:
+  ;; #+LINK: google    http://www.google.com/search?q=%s
+
+
+  (defun org-nightNotes-complete-link ()
+    (concat "nightNotes:" (night/browse-notes))
+    )
+  ;; @bug setting these completion functions causes these link types to appear twice in the =\ l l= list
+  (org-link-set-parameters "nightNotes" :complete #'org-nightNotes-complete-link)
+
+  (defun org-NIGHTDIR-complete-link ()
+    (concat "NIGHTDIR:" (night/browse-NIGHTDIR))
+    )
+  (org-link-set-parameters "NIGHTDIR" :complete #'org-NIGHTDIR-complete-link)
+
+  (defun org-DOOMDIR-complete-link ()
+    (concat "DOOMDIR:" (night/browse-DOOMDIR))
+    )
+  (org-link-set-parameters "DOOMDIR" :complete #'org-DOOMDIR-complete-link)
 ;;;
   (add-hook 'org-mode-hook 'org-fragtog-mode) ; https://github.com/io12/org-fragtog
   ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
