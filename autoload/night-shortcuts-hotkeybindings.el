@@ -70,6 +70,6 @@ move COUNT - 1 screen lines forward first."
         "k" #'evil-previous-line)
   (map! :leader
         "f r" #'night/fzf-recentf
-        "t d" #'tab-close
-        "t D" #'night/close-other-tabs)
+        "t d" #'night/tab-close
+        "t D" #'night/tab-close-others)
   )
