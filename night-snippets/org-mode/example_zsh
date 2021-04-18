@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <ez
+# uuid: <ez
+# --
+#+begin_example zsh
+`%`$0
+#+end_example

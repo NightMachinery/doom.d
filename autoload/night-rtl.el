@@ -1,6 +1,7 @@
 ;;; autoload/night-rtl.el -*- lexical-binding: t; -*-
 
 (setq night/persian-font "B Nazanin") ;; "IranNastaliq"
+;; (setq night/persian-font "Courier New")
 
 (defun night/enable-bidirectional ()
   (interactive)

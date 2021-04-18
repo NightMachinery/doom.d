@@ -1,8 +1,8 @@
 ;;; autoload/night-yasnippet.el -*- lexical-binding: t; -*-
 
 (after! yasnippet
-  ;; (add-to-list 'yas-snippet-dirs (concat (getenv "DOOMDIR") "/" "night-snippets/"))
-  (setq yas-snippet-dirs (list (concat (getenv "DOOMDIR") "/" "night-snippets/")))
+  (setq +snippets-dir (concat (getenv "DOOMDIR") "/" "night-snippets/"))
+  (setq yas-snippet-dirs (list +snippets-dir))
   ;; having too many snippets is bad. We can use the function =+snippets/find-for-current-mode= to see what is available from where.
   ;; Elements appearing earlier in the list override later elements'
   ;; snippets.

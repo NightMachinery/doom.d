@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <sz
+# uuid: <sz
+# --
+#+begin_src bsh.dash :results verbatim :exports both :wrap example
+`%`$0
+#+end_src

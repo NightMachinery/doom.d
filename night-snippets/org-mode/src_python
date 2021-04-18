@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <sp
+# uuid: <sp
+# --
+#+begin_src python :session p1 :results value :exports both :wrap example
+`%`$0
+#+end_src

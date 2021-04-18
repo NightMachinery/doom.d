@@ -170,7 +170,7 @@
 ;;;
 ;; https://stackoverflow.com/questions/2087225/about-the-fix-for-the-interference-between-company-mode-and-yasnippet
 (define-key company-active-map "\t" 'night/company-yasnippet-or-completion)
-(define-key company-active-map "TAB" 'night/company-yasnippet-or-completion)
+(define-key company-active-map (kbd "TAB") 'night/company-yasnippet-or-completion)
 (defun night/company-yasnippet-or-completion ()
   (interactive)
   (let ((yas-fallback-behavior nil))
@@ -183,35 +183,36 @@
     (define-key map (kbd "TAB") #'ivy-next-line)
     (define-key map (kbd "<tab>") #'ivy-next-line)
     map))
-(defun counsel-company ()
-  "Complete using `company-candidates'."
-  (interactive)
-  (company-mode 1)
-  (unless company-candidates
-    (company-complete))
-  (let ((len (cond ((let (l)
-                      (and company-common
-                           (string= company-common
-                                    (buffer-substring
-                                     (- (point) (setq l (length company-common)))
-                                     (point)))
-                           l)))
-                   (company-prefix
-                    (length company-prefix)))))
-    (when len
-      (setq ivy-completion-beg (- (point) len))
-      (setq ivy-completion-end (point))
-      (cond
-       ((= (length company-candidates) 1)
-        (ivy-completion-in-region-action (car company-candidates))
-        )
-       (t
-        ;; (message "candidate length %s" (length company-candidates))
-        (ivy-read "Candidate: " company-candidates
-                  :action #'ivy-completion-in-region-action
-                  :caller 'counsel-company
-                  :keymap counsel-company-map
-                  ))))))
+(after! (ivy counsel)
+  (defun counsel-company ()
+    "Complete using `company-candidates'."
+    (interactive)
+    (company-mode 1)
+    (unless company-candidates
+      (company-complete))
+    (let ((len (cond ((let (l)
+                        (and company-common
+                             (string= company-common
+                                      (buffer-substring
+                                       (- (point) (setq l (length company-common)))
+                                       (point)))
+                             l)))
+                     (company-prefix
+                      (length company-prefix)))))
+      (when len
+        (setq ivy-completion-beg (- (point) len))
+        (setq ivy-completion-end (point))
+        (cond
+         ((= (length company-candidates) 1)
+          (ivy-completion-in-region-action (car company-candidates))
+          )
+         (t
+          ;; (message "candidate length %s" (length company-candidates))
+          (ivy-read "Candidate: " company-candidates
+                    :action #'ivy-completion-in-region-action
+                    :caller 'counsel-company
+                    :keymap counsel-company-map
+                    )))))))
 ;;;
 ;; C-z is overridden by others, use M-x for now
 ;; (after! company-try-hard

@@ -18,6 +18,7 @@
 
 (defun night/load-config ()
   (interactive)
+  (message "%s" "night/load-config started ...")
   (require 'f)
   (require 'dash)
   (mapcar #'load-night '("brish" "doom-overrides" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
@@ -28,6 +29,6 @@
   (progn ;; with-eval-after-load 'pdf-view
     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el"))
   (mapcar #'load-night '("last"))
-  (night/brishz 'awaysh 'eval "sleep 5 ; bell-sc2-evo-perfection")
+  (night/brishz 'awaysh 'eval "sleep 10 ; bell-sc2-evo-perfection")
   )
 (night/load-config)

@@ -3,6 +3,7 @@
 (after! tramp-theme
   (setq tramp-theme-face-remapping-alist '((nil "^root$" (fringe (:inherit fringe :inverse-video t)))
                                            (".*" "eva" (default (:background "mintcream")))
+                                           (".*" "zii" (default (:background "honeydew")))
                                            ("^foo$" nil (dired-directory (:background "Red")))
                                            ("^foo$" nil (eshell-prompt (:foreground "White")))
                                            ("^bar$" nil (default (:background "Green")))
