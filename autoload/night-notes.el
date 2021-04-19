@@ -13,8 +13,7 @@
     ;; (counsel-file-jump "" dir) ; we used this one before using fzf
 
     ;;;
-    ;; @surprise I have forcefully set the Kitty env var, as Emacs can't really access its parent's env. This doesn't matter for our non-interactive use case anyway.
-    (let ((counsel-fzf-cmd (concat "env KITTY_WINDOW_ID=y fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir) " fzf_mru.sh --tiebreak=end,length -f \"%s\"")))
+    (let ((counsel-fzf-cmd (concat "env FORCE_NONINTERACTIVE=y fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir) " fzf_mru.sh --tiebreak=end,length -f \"%s\"")))
       ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
       (counsel-fzf "" dir ""))
     ;;;

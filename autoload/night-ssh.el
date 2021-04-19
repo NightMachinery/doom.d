@@ -1,9 +1,13 @@
 ;;; ~/doom.d/night-ssh.el -*- lexical-binding: t; -*-
 
 (after! tramp-theme
-  (setq tramp-theme-face-remapping-alist '((nil "^root$" (fringe (:inherit fringe :inverse-video t)))
+  (setq tramp-theme-face-remapping-alist '(;; (nil "^root$" (fringe (:inherit fringe :inverse-video t)))
+                                           (nil "^root$" (default (:background "lavenderblush")))
+                                           (nil "^root$" (hl-line (:background "mistyrose") hl-line))
                                            (".*" "eva" (default (:background "mintcream")))
+                                           (".*" "eva" (hl-line (:background "azure") hl-line))
                                            (".*" "zii" (default (:background "honeydew")))
+                                           (".*" "zii" (hl-line (:background "azure") hl-line))
                                            ("^foo$" nil (dired-directory (:background "Red")))
                                            ("^foo$" nil (eshell-prompt (:foreground "White")))
                                            ("^bar$" nil (default (:background "Green")))
