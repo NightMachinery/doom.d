@@ -15,7 +15,10 @@
 (setq nightal-dir (concat (getenv "DOOMDIR") "/" "autoload"))
 ;;;
 
-
+(defun night/server-p ()
+  ;; (not (equalp user-login-name "evar"))
+  (not (eq system-type 'darwin))
+  )
 (defun night/load-config ()
   (interactive)
   (message "%s" "night/load-config started ...")
@@ -27,7 +30,8 @@
   (mapcar #'load (directory-files-recursively nightal-dir "\.el$"))
   (load "~/.private-config.el" t)
   (progn ;; with-eval-after-load 'pdf-view
-    (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el"))
+    (when (not (night/server-p))
+     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")))
   (mapcar #'load-night '("last"))
   (night/brishz 'awaysh 'eval "sleep 10 ; bell-sc2-evo-perfection")
   )
