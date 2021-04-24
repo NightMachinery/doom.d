@@ -84,7 +84,9 @@
     (org-redisplay-inline-images)
     )
 
-  (setq org-blank-before-new-entry '((heading . nil)
+  (setq org-blank-before-new-entry '(
+                                     (heading . nil)
+                                     ;; (heading . auto) ;; auto also adds newlines for subheadings which sucks
                                      (plain-list-item . nil)))
 ;;;
   (defun night/org-refile-to-new-file (&optional x)
