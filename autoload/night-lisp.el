@@ -57,12 +57,15 @@
      (lispy-define-key lispy-mode-map "U" 'lispy-wrap-round)))
 
 (progn
-  (lispyville--define-key '(insert)
-    "\""
-    ;; #'lispy-doublequote
-    #'(lambda ()
-        (interactive)
-        (insert "\""))) ;;Otherwise would escape doublequotes in Strings automagically.
+;;;
+;; This has the problem that the unpaired "s will then be undeletable
+;;   (lispyville--define-key '(insert)
+;;     "\""
+;;     ;; #'lispy-doublequote
+;;     #'(lambda ()
+;;         (interactive)
+;;         (insert "\""))) ;;Otherwise would escape doublequotes in Strings automagically.
+;;;
 
   (lispyville--define-key '(normal visual)
     "p" #'lispy-paste)
@@ -88,6 +91,13 @@
         ;; "g s 9" #'lispy-ace-paren
         ;; :n
         ;; "g s 0" #'lispy-ace-symbol      ; bound to Q by lispy
+        ;;;
+        ;; don't work :| lispyville--define-key didn't work either
+        ;; this is beacuse they have used `[remap evil-delete-char] #'lispyville-delete-char-or-splice`
+        ;; :nmv
+        ;; "x" #'evil-delete-char
+        ;; :nmv
+        ;; "X" #'evil-delete-backward-char
         )
   (add-hook 'lispy-mode-hook #'lispyville-mode)
   (add-hook 'emacs-lisp-mode-hook #'my-lisp-init)

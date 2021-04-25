@@ -61,7 +61,10 @@
           ;; above. Here we make sure that they definitely invoke
           ;; `company-manual-begin' even if a minor mode binds M-TAB
           ;; directly.
-          ("M-TAB" . #'company-manual-begin))
+          ;; ("M-TAB" . #'company-manual-begin)
+          ("M-TAB" . #'counsel-company)
+          ("<prior>" . #'counsel-company) ;; PgUp
+          )
 
   :config
 

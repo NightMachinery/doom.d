@@ -47,6 +47,8 @@
                                         ;(package! builtin-package :recipe (:branch "develop"))
 
 (package! solarized-theme)
+(package! prism
+  :recipe (:host github :repo "alphapapa/prism.el"))
 (package! zoom)
 (package! blacken)
 (package! elpy)
@@ -76,6 +78,7 @@
 (package! org-fragtog)
 (package! company-try-hard)
 (package! tramp-theme)
+(package! vlf)
 ;; (package! evil-better-visual-line) ; @todo fork this and reverse its behavior? Just disable evil-respect-visual...?
 ;;;
 (disable-packages! anaconda-mode)

@@ -85,9 +85,12 @@
     )
 
   (setq org-blank-before-new-entry '(
-                                     (heading . nil)
+                                     (heading . t)
+                                     ;; (heading . nil)
                                      ;; (heading . auto) ;; auto also adds newlines for subheadings which sucks
-                                     (plain-list-item . nil)))
+                                     (plain-list-item . t)
+                                     ;; (plain-list-item . nil)
+                                     ))
 ;;;
   (defun night/org-refile-to-new-file (&optional x)
     "Cut the subtree currently being edited and create a new file
