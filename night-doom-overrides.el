@@ -43,7 +43,7 @@ If FORCE-P, overwrite the destination file if it exists, without confirmation."
     (doom--update-files old-path new-path)
     (message "File moved to %S" (abbreviate-file-name new-path))))
 ;;;
-(defun +org--insert-item (direction)
+(defun +org--insert-item (direction &optional level)
   (let ((context (org-element-lineage
                   (org-element-context)
                   '(table table-row headline inlinetask item plain-list)
@@ -77,7 +77,7 @@ If FORCE-P, overwrite the destination file if it exists, without confirmation."
       ;; Otherwise, add a new heading, carrying over any todo state, if
       ;; necessary.
       (_
-       (let ((level (or (org-current-level) 1)))
+       (let ((level (or level (org-current-level) 1)))
          ;; I intentionally avoid `org-insert-heading' and the like because they
          ;; impose unpredictable whitespace rules depending on the cursor
          ;; position. It's simpler to express this command's responsibility at a

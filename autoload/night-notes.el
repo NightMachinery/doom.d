@@ -76,9 +76,13 @@
                        (setq i (+ i 1))
                        (cond
                         ((= i 1)
-                         (org-insert-subheading nil))
+                         ;; (org-insert-subheading nil)
+                         (+org--insert-item 'below (+ (or (org-current-level) 1) 1))
+                         )
                         (t
-                         (org-insert-heading nil)))
+                         ;; (org-insert-heading nil)
+                         (+org--insert-item 'below)
+                         ))
                        (insert-for-yank line)
                        ;; (insert line "\n" (make-string my-column ?\s))
                                         ; ?\s is the character for space.
@@ -91,7 +95,8 @@
 (defun night/tmp ()
   (interactive)
   (dolist (i '(1 2 3))
-    (org-insert-subheading nil)
+    ;; (org-insert-subheading nil)
+    (+org--insert-item 'below)
     (insert-for-yank "hello"))
   )
 ;;;

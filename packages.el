@@ -79,6 +79,8 @@
 (package! company-try-hard)
 (package! tramp-theme)
 (package! vlf)
+(package! bug-hunter)
+(package! telega)
 ;; (package! evil-better-visual-line) ; @todo fork this and reverse its behavior? Just disable evil-respect-visual...?
 ;;;
 (disable-packages! anaconda-mode)

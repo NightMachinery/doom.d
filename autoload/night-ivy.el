@@ -53,5 +53,15 @@
   (define-key ivy-minibuffer-map (kbd "S-<down>") 'night/ivy-mark-toggle-down)
   ;; (define-key ivy-minibuffer-map (kbd "S-TAB") 'ivy-unmark)
   ;; (define-key ivy-minibuffer-map (kbd "<backtab>") 'ivy-unmark)
+
+  (defun night/ivy-set-to-sel ()
+    (interactive)
+    (save-excursion (when (not (eq ?/ (char-before)))
+                      (zap-up-to-char -1 ?/)
+                      ;; needs (require 'misc)
+                      ))
+    (insert (ivy-state-current ivy-last))
+    )
+  (define-key ivy-minibuffer-map (kbd "M-<right>") 'night/ivy-set-to-sel)
   ;;;
   )

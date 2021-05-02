@@ -41,3 +41,6 @@
 (add-hook 'after-change-major-mode-hook #'night/generic-hook-fn)
 ;;;
 (setq bidi-paragraph-direction nil)
+;;
+(setq garbage-collection-messages t)
+;;
