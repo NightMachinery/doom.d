@@ -20,8 +20,8 @@
           (((class color) (min-colors 8)) (:foreground "green")))))
     (face-spec-set 'org-level-6 ;; originally copied from org-level-8
       (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist
-        '((((class color) (min-colors 16) (background light)) (:foreground "brightcyan"))
-          (((class color) (min-colors 16) (background dark)) (:foreground "brightcyan"))
+        '((((class color) (min-colors 16) (background light)) (:foreground "darkcyan"))
+          (((class color) (min-colors 16) (background dark)) (:foreground "darkcyan"))
           (((class color) (min-colors 8)) (:foreground "green")))))
     (face-spec-set 'org-level-7 ;; originally copied from org-level-8
       (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist

@@ -15,7 +15,10 @@
 (setq-default adaptive-wrap-extra-indent 4)
 (setq pop-up-frames nil) ;;Default is true.
 (setq confirm-kill-emacs nil)
+;;;
 (+global-word-wrap-mode 't) ;; does (global-visual-line-mode 't) itself
+(global-visual-line-mode 't)            ;; let's enable it anyway
+;;;
 (global-auto-revert-mode)
 (global-display-line-numbers-mode)
 (save-place-mode 1)
@@ -41,6 +44,4 @@
 (add-hook 'after-change-major-mode-hook #'night/generic-hook-fn)
 ;;;
 (setq bidi-paragraph-direction nil)
-;;
-(setq garbage-collection-messages t)
 ;;

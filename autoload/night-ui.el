@@ -2,8 +2,13 @@
   (doom-adjust-font-size 2)
   )
 
-;; red: #a12a2a
-(defface special-comment '((t (:foreground "#3437eb" :weight bold))) "This is just a doc string")
+;;;
+;; How to make the highlights re-use the original background color? https://github.com/tarsius/hl-todo/issues/60 ; did not work:
+;; :background "unspecified"
+;; :inherit t
+(defface special-comment '((t (:inherit t :foreground "#3437eb" :weight bold))) "This is just a doc string")
+
+;;;
 
 ;; white-green background: #e9f2eb
 (defface zsh-macro '((t (:foreground "#1adb51" :background "#e9f1f2" :weight bold))) "This is just a doc string")

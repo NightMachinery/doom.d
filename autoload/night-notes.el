@@ -77,7 +77,7 @@
                        (cond
                         ((= i 1)
                          ;; (org-insert-subheading nil)
-                         (+org--insert-item 'below (+ (or (org-current-level) 1) 1))
+                         (night/+org--insert-item 'below (+ (or (org-current-level) 1) 1))
                          )
                         (t
                          ;; (org-insert-heading nil)
