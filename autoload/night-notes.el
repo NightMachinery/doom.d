@@ -59,6 +59,7 @@
   (interactive)
   (let* (
          (default-directory "/")
+         (was-normal (evil-normal-state-p))
          (my-column (current-column))
          (link (current-kill 0))
          (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt")))) ; @placeholder use brishzr
@@ -88,6 +89,8 @@
                                         ; ?\s is the character for space.
                        ))))))
     (save-buffer)
+    (when was-normal
+     (evil-normal-state t))
     ;; (night/brishz  "awaysh" "ot-play-beeps1" "3")
     (night/brishz "awaysh" "tts-glados1-cached" "link, inserted")
     ))

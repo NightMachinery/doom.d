@@ -49,6 +49,8 @@
 (package! solarized-theme)
 (package! prism
   :recipe (:host github :repo "alphapapa/prism.el"))
+(package! org-super-links
+  :recipe (:repo "toshism/org-super-links" :type git :host github :branch "develop"))
 (package! zoom)
 (package! blacken)
 (package! elpy)
