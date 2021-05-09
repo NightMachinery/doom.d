@@ -37,6 +37,18 @@
   (interactive)
   (night/browse-dir (getenv "DOOMDIR"))
   )
+
+(defun night/browse-HOME ()
+  (interactive)
+  (let (
+        (default-directory "/")
+        (dir (getenv "HOME"))
+        (counsel-fzf-cmd (concat "env FZF_DEFAULT_COMMAND='fd -uu --max-depth=3' " counsel-fzf-cmd))
+        )
+    ;; (night/browse-dir dir)
+    (counsel-fzf "" dir "")
+    )
+  )
 ;;;
 (comment (defun night/unt-async ()
            (interactive)
