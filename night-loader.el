@@ -19,20 +19,31 @@
   ;; (not (equalp user-login-name "evar"))
   (not (eq system-type 'darwin))
   )
+
+(defun night/load-last ()
+  ;; autoloaded functions can still get loaded after this; Use:
+  ;; (advice-add 'original-function :override #'something-fixed)
+  ;;;
+  (mapcar #'load-night '("doom-overrides" "last")))
+
 (defun night/load-config ()
   (interactive)
   (message "%s" "night/load-config started ...")
   (require 'f)
   (require 'dash)
-  (mapcar #'load-night '("brish" "doom-overrides" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
+  (mapcar #'load-night '("brish" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
   (load-gitmodules "fzf.el/fzf.el")
   (mapcar #'load (directory-files-recursively nightal-dir "\.el$"))
   (load "~/.private-config.el" t)
   (progn ;; with-eval-after-load 'pdf-view
     (when (not (night/server-p))
-     (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")))
-  (mapcar #'load-night '("last"))
+      (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")))
+
+  ;; (add-hook 'doom-after-init-modules-hook #'night/load-last)
+  (night/load-last)
+
+
   (night/brishz 'awaysh 'eval "sleep 10 ; bell-sc2-evo-perfection")
   )
 (night/load-config)
