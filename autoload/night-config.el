@@ -45,3 +45,5 @@
 ;;;
 (setq bidi-paragraph-direction nil)
 ;;
+(setq +word-wrap--major-mode-indent-var 'standard-indent) ;; @workaround @upstreamBug
+;;

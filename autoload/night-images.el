@@ -9,7 +9,7 @@
       ((bfn buffer-file-name))
     (when (and
            (not window-system)
-           (member-ignore-case (file-name-extension bfn) '("png" "apng" "jpg" "jpeg" "gif")))
+           (member-ignore-case (or (file-name-extension bfn) "") '("png" "apng" "jpg" "jpeg" "gif")))
         ;; (night/yank-buffer-filename)
         (kill-current-buffer)
         (message "buf: %s, cmd: %s" bfn this-command)

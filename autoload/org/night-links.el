@@ -1,6 +1,6 @@
 ;;; autoload/org/night-links.el -*- lexical-binding: t; -*-
 
-(after! org
+(after! (org evil-org evil)
   (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
 
   (defun night/org-description-formatter (link desc)

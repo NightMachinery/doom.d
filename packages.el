@@ -84,6 +84,7 @@
 (package! bug-hunter)
 (package! telega)
 (package! disk-usage)
+(package! dired+)
 ;; (package! evil-better-visual-line) ; @todo fork this and reverse its behavior? Just disable evil-respect-visual...?
 ;;;
 (disable-packages! anaconda-mode)

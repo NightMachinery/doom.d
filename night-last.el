@@ -9,3 +9,6 @@
 
 ;; (night/load-tramp-theme) ; doesn't work
 ;;;
+(setq server-socket-dir (concat (getenv "HOME") "/tmp/.emacs-servers"))
+;; see also `server-name`
+;;;
