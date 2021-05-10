@@ -1,7 +1,8 @@
 ;;; autoload/org/night-links.el -*- lexical-binding: t; -*-
 
-(after! (org evil-org evil)
-  (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+(after! (org evil-org evil ol)
+  ;; (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+  (setq org-id-link-to-org-use-id 'create-if-interactive)
 
   (defun night/org-description-formatter (link desc)
     (let* (
@@ -10,34 +11,45 @@
                 (car (org-id-find (s-chop-prefix "id:" link)))
               link))
            (parent
-            (f-filename (f-dirname file))
+            (if file
+                (f-filename (f-dirname file))
+              nil
+              )
             )
-           (parent (or
-                    (cadr (s-match "^[^/]*:\\(.*\\)" parent))
-                    parent))            ;;  we can run this on file, as well, or `HOME:.xsh` links won't get their prefix stripped. But I think that's okay.
+           (parent (if parent
+                       (or
+                        (cadr (s-match "^[^/]*:\\(.*\\)" parent))
+                        parent)
+                     nil))            ;;  we can run this on file, as well, or `HOME:.xsh` links won't get their prefix stripped. But I think that's okay.
            (tail
             (cond
              ((or (equalp "." parent) (equalp "" parent))
               file
               )
-             (t (concat
-                 parent
-                 "/"
-                 (f-filename file))))))
+             ((and parent (not (equalp parent ""))) (concat
+                        parent
+                        "/"
+                        (f-filename file)))
+             (file (f-filename file))
+             (t "")
+             )))
       (message "%s" (concat link ", " desc ", " tail ", " file))
       (cond
-       ((equalp desc tail) desc)
-       (desc (concat tail ":" (or
-                               (cadr (s-match ".*:\\(.*\\)" desc))
-                               desc)))
-       (tail tail)
+       ((and (not (equalp desc "")) (equalp desc tail)) desc)
+       ((and (not (equalp desc "")) tail (not (equalp tail ""))) (concat tail ":" (or
+                                      (cadr (s-match ".*:\\(.*\\)" desc))
+                                      desc)))
+       ((and tail (not (equalp tail ""))) tail)
+       ((not (equalp desc "")) desc)
        (t link)
        )))
 
   ;; (cadr (s-match "^[^/]*:\\(.*\\)" "aJK:lol/as"))
+  ;; (org-id-find "124fa3e8-c032-4b80-9ede-d3caff9cec8a")
 
   (setq org-link-make-description-function #'night/org-description-formatter)
 
+  (require 'org-super-links)
   (after! org-super-links
     (setq org-super-links-backlink-prefix nil)
     (setq org-super-links-link-prefix nil)

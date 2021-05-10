@@ -1,4 +1,4 @@
-;;; autoload/org/night-dired.el -*- lexical-binding: t; -*-
+;;; autoload/night-dired.el -*- lexical-binding: t; -*-
 
 (after! dired+
   (unbind-key "M-DEL" dired-mode-map)
