@@ -1,14 +1,17 @@
 ;;;
-(setq gcmh-idle-delay 15
-      gcmh-high-cons-threshold (* 256 1024 1024) ; the first number will be in megabytes. doom's default was 16mb
+(setq
+ ;; beware large gc thresholds: https://emacs.stackexchange.com/questions/5351/optimizing-font-lock-performance?rq=1
+ ;;
+ gcmh-idle-delay 10
+ ;; gcmh-high-cons-threshold (* 256 1024 1024) ; the first number will be in megabytes. doom's default was 16mb
 ;;;
-      ;; one of these two should be nil
-      ;; gcmh-verbose t
-      ;; garbage-collection-messages nil
-      gcmh-verbose nil
-      garbage-collection-messages t
+ ;; one of these two should be nil
+ ;; gcmh-verbose t
+ ;; garbage-collection-messages nil
+ gcmh-verbose nil
+ garbage-collection-messages t
 ;;;
-      )
+ )
 ;;;
 (after! smartparens (smartparens-global-mode -1))
 (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
@@ -32,7 +35,21 @@ If FORCE-P, overwrite the destination file if it exists, without confirmation."
     (rename-file old-path new-path (or force-p 1))
     (set-visited-file-name new-path t t)
     (doom--update-files old-path new-path)
+
     (message "File moved to %S" (abbreviate-file-name new-path))))
+
+(defun night/update-files (&rest files)
+  (let ((org-files
+         (-filter #'(lambda (file)
+                      (equalp (f-ext file) "org")) files)))
+    (when org-files
+      (org-id-update-id-locations org-files t)))
+  ;; (dolist (file files)
+  ;;   )
+  )
+
+(advice-add #'doom--update-files :after #'night/update-files)
+
 ;;;
 (after! org
 
@@ -170,8 +187,10 @@ If on a:
   (advice-add '+org/dwim-at-point :override #'night/+org/dwim-at-point)
 
 
-  (defun night/+org--insert-item (direction &optional level)
-    (let ((context (org-element-lineage
+  (defun night/+org--insert-item (direction &optional level prefix)
+    (let (
+          (prefix (or prefix ""))
+          (context (org-element-lineage
                     (org-element-context)
                     '(table table-row headline inlinetask item plain-list)
                     t)))
@@ -184,6 +203,8 @@ If on a:
              (org-beginning-of-item)
            (org-end-of-item)
            (backward-char))
+
+         (insert prefix)
          (org-insert-item (org-element-property :checkbox context))
          ;; Handle edge case where current item is empty and bottom of list is
          ;; flush against a new heading.
@@ -196,9 +217,13 @@ If on a:
         ;; Add a new table row
         ((or `table `table-row)
          (pcase direction
-           ('below (save-excursion (org-table-insert-row t))
+           ('below (save-excursion
+                     (insert prefix)
+                     (org-table-insert-row t))
                    (org-table-next-row))
-           ('above (save-excursion (org-shiftmetadown))
+           ('above (save-excursion
+                     (insert prefix)
+                     (org-shiftmetadown))
                    (+org/table-previous-row))))
 
         ;; Otherwise, add a new heading, carrying over any todo state, if
@@ -218,10 +243,12 @@ If on a:
                   ;; Go to end of line before heading
                   (forward-char -1)
                   )
+                (insert prefix)
                 (insert "\n" (make-string level ?*) " ")
                 ))
              (`above
               (org-back-to-heading)
+              (insert prefix)
               (insert (make-string level ?*) " ")
               (save-excursion (insert "\n"))))
            (when-let* ((todo-keyword (org-element-property :todo-keyword context))

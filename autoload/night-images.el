@@ -10,7 +10,7 @@
     (when (and
            (not window-system)
            (member-ignore-case (or (file-name-extension bfn) "") '("png" "apng" "jpg" "jpeg" "gif")))
-        ;; (night/yank-buffer-filename)
+        (night/yank-buffer-filename)
         (kill-current-buffer)
         (message "buf: %s, cmd: %s" bfn this-command)
         (night/brishz "kitty-launch-icat" bfn)

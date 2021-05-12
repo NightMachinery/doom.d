@@ -13,6 +13,10 @@
    ;; "<S-tab>" 'org-force-cycle-archived ; is overrided ...
    "TAB" 'org-force-cycle-archived
    ;; (setq org-cycle-open-archived-trees t)  ;; https://emacs.stackexchange.com/questions/64067/expand-an-archived-subtree-with-just-tab/
+
+   :nvo
+   "g8" #'night/avy-goto-org-header
+
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode
    :localleader

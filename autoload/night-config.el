@@ -75,3 +75,6 @@
 
 ;; ;; (add-hook 'visual-line-mode-hook #'night/disable-word-wrap) ;; caused an infinite loop?
 ;;;
+(setq fast-but-imprecise-scrolling t)
+(setq jit-lock-defer-time 0)
+;;

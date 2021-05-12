@@ -112,7 +112,7 @@
        crystal           ; ruby at the speed of c
        ;;csharp            ; unity, .NET, and mono shenanigans
        data                     ; config/data formats
-       ;;(dart +flutter)   ; paint ui and not much else
+       (dart +flutter)   ; paint ui and not much else
        ;;elixir            ; erlang done right
        ;;elm               ; care for a cup of TEA?
        emacs-lisp                       ; drown in parentheses
@@ -136,7 +136,7 @@
        (lua)               ; one-based indices? one-based indices
        ;; (lua +lsp)       ; lua-language-server is very resource-heavy
        markdown          ; writing docs for people to ignore
-       ;;nim               ; python + lisp at the speed of c
+       nim               ; python + lisp at the speed of c
        ;;nix               ; I hereby declare "nix geht mehr!"
        ;;ocaml             ; an objective camel
        (org +dragndrop +pandoc +gnuplot +jupyter +noter +present +roam) ; organize your plain life in plain text

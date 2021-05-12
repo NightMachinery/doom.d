@@ -35,10 +35,12 @@
   (defun night/ivy-mark-toggle ()
     "Mark/unmark the selected candidate."
     (interactive)
-    (if (ivy--marked-p)
-        (ivy--unmark (ivy-state-current ivy-last))
-      (ivy--mark (ivy-state-current ivy-last)))
-    )
+    (let
+        ((s (ivy-state-current ivy-last)))
+      (when s (if (ivy--marked-p)
+                  (ivy--unmark s)
+                (ivy--mark s)))))
+
   (defun night/ivy-mark-toggle-up ()
     (interactive)
     (night/ivy-mark-toggle)

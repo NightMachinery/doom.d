@@ -11,14 +11,7 @@
 
 (night/set-leader-keys "z s" 'save-some-buffers)
 ;;;
-;; http://ergoemacs.org/emacs/emacs_shrink_whitespace.html
-;; (night/set-leader-keys "z w" 'fixup-whitespace)
-;; (global-set-key (kbd "M-DEL") 'doom/backward-kill-to-bol-and-indent)
-(global-set-key (kbd "M-DEL") 'fixup-whitespace)
-;; the mac GUI uses backspace for the del key :|
 (map!
- :nvig            ; this is necessary as evil binds they key in its insert state
- "M-<backspace>" #'fixup-whitespace
  :nvig
  "C-z" #'evil-undo
  :n
@@ -71,7 +64,7 @@ move COUNT - 1 screen lines forward first."
         "0" #'evil-beginning-of-line-or-visual-line
         :nvo
         "$" #'evil-end-of-line-or-visual-line
-        :nvo                            ; the operator hotkeys are also set in night-evil.el
+        :nvo                ; the operator hotkeys are also set in night-evil.el
         "j" #'evil-next-line
         :nvo
         "k" #'evil-previous-line)
@@ -79,4 +72,9 @@ move COUNT - 1 screen lines forward first."
         "f r" #'night/fzf-recentf
         "t d" #'night/tab-close
         "t D" #'night/tab-close-others)
+
+  (map! :map profiler-report-mode-map
+        :nvig "TAB" #'profiler-report-toggle-entry
+        :nvig "<tab>" #'profiler-report-toggle-entry
+        )
   )

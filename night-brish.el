@@ -5,7 +5,7 @@
    ((symbolp arg)
     (symbol-name arg))
    ((listp arg)
-    (comment only called from the macro as night/brishz flattens its arguments)
+    (comment only called from -z-helper as night/brishz flattens its arguments)
     (eval arg)
     )
    (t
@@ -51,8 +51,14 @@
               )))
       )))
 
+;; (defmacro z (&rest args)
+;;   (-concat (list 'night/brishz ) (mapcar #'night/h-brishz-arg (-flatten (mapcar #'night/h-brishz-arg args)))))
 (defmacro z (&rest args)
-  (-concat (list 'night/brishz ) (mapcar #'night/h-brishz-arg (-flatten (mapcar #'night/h-brishz-arg args)))))
+  (-concat (list '-z-helper (list 'quote args))))
+
+(defun -z-helper (args)
+  (night/brishz (mapcar #'night/h-brishz-arg (-flatten (mapcar #'night/h-brishz-arg args))))
+  )
 
 (defmacro zf (&rest args)
   (list 'split-string (append '(z) args) "\n" t)
@@ -63,6 +69,10 @@
 (defmacro mycomment (&rest a)
 t
 )
+
+(defun -z-test1 ()
+  (interactive)
+  (z ec (buffer-file-name)))
 ;;; tests:
 (mycomment
  (z ecn hi)
