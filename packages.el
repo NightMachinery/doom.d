@@ -85,7 +85,17 @@
 (package! telega)
 (package! disk-usage)
 (package! dired+)
+(package! poporg)
 ;; (package! evil-better-visual-line) ; @todo fork this and reverse its behavior? Just disable evil-respect-visual...?
+
+;;;
+;; (package! gerbil-mode
+;;   :recipe (:host github :repo "vyzo/gerbil"
+;;            :files ("etc/gerbil-mode.el")))
+
+;; (package! gambit-mode
+;;   :recipe (:host github :repo "gambit/gambit"
+;;            :files ("misc/gambit.el")))
 ;;;
 (disable-packages! anaconda-mode)
 ;;;

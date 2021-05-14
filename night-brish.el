@@ -70,14 +70,16 @@
 t
 )
 
+(defalias 'i 'identity)
+;;; tests:
 (defun -z-test1 ()
   (interactive)
   (z ec (buffer-file-name)))
-;;; tests:
 (mycomment
  (z ecn hi)
  (z "ecn" hi)
  (z ecerr moo)
+ (z ec (i gc-cons-percentage))
  (setq a (z ecerr moo))
 
  (z eval "arrN {1..20} >&2 ; echo -n Done';)'")
@@ -86,7 +88,6 @@ t
 
  (z du -h (zf ls -a))
 
- (z du -h (zf ls -a))
  (z rin (z arrN (z0 arr0 1 2 3)) prefixer -o ", ")
 
  )
