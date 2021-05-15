@@ -86,6 +86,16 @@
 (package! disk-usage)
 (package! dired+)
 (package! poporg)
+
+(package! memoize)
+
+(package! company-quickhelp) ;; uses pos-tip which only works in GUI
+(package! company-quickhelp-terminal)
+
+(package! company-box)
+
+(package! eldoc-box)                    ;; GUI-only: https://github.com/casouri/eldoc-box/issues/35
+
 ;; (package! evil-better-visual-line) ; @todo fork this and reverse its behavior? Just disable evil-respect-visual...?
 
 ;;;

@@ -31,6 +31,7 @@
   (message "%s" "night/load-config started ...")
   (require 'f)
   (require 'dash)
+  (require 'memoize)
   (mapcar #'load-night '("brish" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
   (load-gitmodules "fzf.el/fzf.el")

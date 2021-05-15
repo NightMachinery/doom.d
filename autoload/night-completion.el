@@ -224,4 +224,37 @@
 ;;   (global-set-key (kbd "C-z") #'company-try-hard)
 ;;   (define-key company-active-map (kbd "C-z") #'company-try-hard))
 ;;;
+;; company-quickhelp-terminal-mode was too buggy to use
+;; (require 'company-quickhelp)
+;; (company-quickhelp-mode)
+;; (with-eval-after-load 'company-quickhelp
+;;   (company-quickhelp-terminal-mode 1))
+
+;; (defun night/completion-begin ()
+;;   (interactive)
+;;   (company-cancel)
+;;   (company-manual-begin)
+;;   )
+
+;; (map!
+;;  :nviog
+;;  "C-j" #'night/completion-begin
+;;  ;; does NOT work with quickhelp, but manually invoking it via M-x does
+;;  )
+;;;
+(after! company
+
+  (when (window-system)                 ;; when GUI
+    (require 'company-box)
+    (setq company-box-backends-colors
+          '(
+            (company-capf . (:selected (:background "light steel blue" :foreground "black")))
+            (company-dabbrev . (:selected (:background "light steel blue" :foreground "black")))
+            (company-dabbrev-code . (:selected (:background "light steel blue" :foreground "black")))
+            (company-files . (:selected (:background "light steel blue" :foreground "black")))
+            (company-ispell . (:selected (:background "light steel blue" :foreground "black")))
+            (company-yasnippet . (:all "lime green" :selected (:background "lime green" :foreground "black")))))
+    (add-hook 'company-mode-hook 'company-box-mode))
+  )
+;;;
 (provide 'night-completion)
