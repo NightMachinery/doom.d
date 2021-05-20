@@ -12,13 +12,11 @@
     (progn
       (setq ivy-calling-tmp ivy-calling)
       (setq-default ivy-calling t)
-      (call-interactively
-       (cond ((featurep! :completion ivy) #'+ivy/project-search-from-cwd)
-             ((featurep! :completion helm) #'+helm/project-search-from-cwd)
-             (#'rgrep)))
-      (setq-default ivy-calling ivy-calling-tmp)
-      )
-    ))
+      (unwind-protect (call-interactively
+                       (cond ((featurep! :completion ivy) #'+ivy/project-search-from-cwd)
+                             ((featurep! :completion helm) #'+helm/project-search-from-cwd)
+                             (#'rgrep)))
+        (setq-default ivy-calling ivy-calling-tmp)))))
 
 ;;;
 ;; (setq-default ivy-calling t)

@@ -4,16 +4,11 @@
 ;;;
   ;; (setq org-cycle-emulate-tab 'exc-hl-bol) ; @weirdFeature
 ;;;
-  (add-hook 'org-mode-hook 'org-fragtog-mode) ; https://github.com/io12/org-fragtog
-  ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
-  (setq org-startup-with-latex-preview t)
-  (setq org-preview-latex-default-process 'dvisvgm)
-;;;
   (setq org-cycle-separator-lines 1)
 ;;;
   (setq org-return-follows-link t)
 ;;;
-  (setq org-babel-min-lines-for-block-output 0) ; If number of lines of output is equal to or exceeds thisvalue, the output is placed in a #+begin_example...#+end_exampleblock.
+  (setq org-babel-min-lines-for-block-output 0) ; If number of lines of output is equal to or exceeds this value, the output is placed in a #+begin_example...#+end_exampleblock.
   (setq org-startup-with-inline-images t)
   ;; (setq org-src-tab-acts-natively nil) ; doesn't fix the completion TAB problem
   (defun night/org-save-hook-fn ()

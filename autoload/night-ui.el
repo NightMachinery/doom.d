@@ -25,13 +25,16 @@
   (progn (font-lock-add-keywords 'sh-mode
              '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
 
+(setq night/great-tag-regex "^.*\\(@great\\|:great:\\).*$")
 (defun night/highlight-org ()
   (interactive)
   (progn
     ;; (font-lock-add-keywords 'org-mode
     ;;                         '(("^.*\\B@great\\B.*$" 1 'zsh-macro t)))
     (font-lock-add-keywords 'org-mode
-                            '(("^.*\\(@great\\|:great:\\).*$" . 'zsh-macro)))
+                            ;; '(("^.*\\(@great\\|:great:\\).*$" . 'zsh-macro))
+                            `((,night/great-tag-regex . 'zsh-macro))
+                            )
     )
   )
 
@@ -73,3 +76,18 @@
           ("@[^][[:space:](){};,\n\"=]+" special-comment)
           ))
   )
+;;;
+(defun night/hl-line-range-function ()
+  (cons (line-end-position) (line-beginning-position 2)))
+(defun night/hl-line-start-from-end ()
+  (setq hl-line-range-function #'night/hl-line-range-function)
+  ;; (setq hl-line-sticky-flag t)
+  ;; (setq global-hl-line-sticky-flag t)
+  )
+
+;;;
+(defun night/highlight-background ()
+  "Highlights the background of the hardcoded patterns on the current buffer. It does NOT react to new additions of the patterns in the buffer. The highlight also is kind of sticky. It uses overlays so ast least it's not overrided by hl-line, but then again, it erases the at-tags as they are not yet overlays ..."
+  (interactive)
+  (hlt-highlight-regexp-region nil nil night/great-tag-regex 'zsh-macro 1))
+;;;

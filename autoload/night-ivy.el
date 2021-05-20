@@ -26,11 +26,15 @@
     #'night/ivy--directory-out)
   (define-key counsel-find-file-map (kbd "<right>")
     #'night/ivy--directory-enter)
+;;;
+;; @ideal it's better to add these to the specific maps that need them, but I can't find what other map is used by, e.g., `read-file-name`
   (define-key ivy-minibuffer-map (kbd "<left>")
     #'night/ivy--directory-out)
   (define-key ivy-minibuffer-map (kbd "<right>")
     #'night/ivy--directory-enter)
 
+  (define-key ivy-minibuffer-map (kbd "S-<right>") 'forward-char)
+  (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)
 ;;;
   (defun night/ivy-mark-toggle ()
     "Mark/unmark the selected candidate."
@@ -74,24 +78,26 @@
     ;; (info-lookup 'symbol (ivy-state-current ivy-last) 'lisp-mode)
 ;;;
     ;; @todo doesn't work because the major mode is wrong in the counsel buffer (I think)
-    ;; (+lookup/documentation (ivy-state-current ivy-last))
+    (let ((cb (current-buffer))) ;; @idk how to get the main buffer
+      (with-current-buffer cb
+        (+lookup/documentation (ivy-state-current ivy-last))))
 ;;;
     ;; @todo doesn't work because of https://github.com/abo-abo/swiper/issues/2072#issuecomment-841639391
-    (let ((other-window-scroll-buffer))
-      (progn
-        (let* ((selected (ivy-state-current ivy-last))
-               (doc-buffer (or (company-call-backend 'doc-buffer selected)
-                               (user-error "No documentation available")))
-               start)
-          (when (consp doc-buffer)
-            (setq start (cdr doc-buffer)
-                  doc-buffer (car doc-buffer)))
-          (setq other-window-scroll-buffer (get-buffer doc-buffer))
-          (let ((win (display-buffer doc-buffer t)))
-            (set-window-start win (if start start (point-min)))))))
+    ;; (let ((other-window-scroll-buffer))
+    ;;   (progn
+    ;;     (let* ((selected (ivy-state-current ivy-last))
+    ;;            (doc-buffer (or (company-call-backend 'doc-buffer selected)
+    ;;                            (user-error "No documentation available")))
+    ;;            start)
+    ;;       (when (consp doc-buffer)
+    ;;         (setq start (cdr doc-buffer)
+    ;;               doc-buffer (car doc-buffer)))
+    ;;       (setq other-window-scroll-buffer (get-buffer doc-buffer))
+    ;;       (let ((win (display-buffer doc-buffer t)))
+    ;;         (set-window-start win (if start start (point-min)))))))
     )
 
-  (defun night/ivy-doc-popup ()
+  (defun night/ivy-sly-doc-popup ()
     (interactive)
     (let ((s (ivy-state-current ivy-last)))
       (message "ivy-doc s: %s" s)
@@ -101,8 +107,9 @@
       ;;  (i s))
       ))
 
-  (define-key counsel-company-map (kbd "C-j") #'night/ivy-doc-popup)
-  (define-key counsel-company-map (kbd "C-k") #'night/ivy-show-doc-buffer)
+  (define-key counsel-company-map (kbd "C-k") #'night/ivy-sly-doc-popup) ;; it might be worth it to activate this for commonlisp. It's not like the keybindings realestate in counsel-company-map is being used at all.
+
+  ;; (define-key counsel-company-map (kbd "C-k") #'night/ivy-show-doc-buffer)
 
 ;;;
   (defun night/popup-sly-describe-symbol (symbol-name)
@@ -133,11 +140,13 @@
                   ;; (sly-eval `(slynk:describe-function ,candidate))
                   (let* ((doc
                           (sly-eval `(slynk:describe-symbol ,candidate))))
-                    (night/brishz "sly-doc-oneline " (i doc)) ;; @todo1 @perf works but very slow
+                    (night/brishz "sly-doc-oneline" (i doc)) ;; @futureCron @todo1 @perf works but very slow
                     ;; doc
                     ))
                  ((equalp major-mode 'sh-mode)
                   (night/brishz "wh-docstring" (i candidate))
+                  ;; @futureCron is the slowdown worth it?
+                  ;; I think it should be possible to speed this up, but I don't really know what's the bottleneck. Perhaps if ivy-rich did this async ...
                   )
                  (t "Not implemented yet")
                  ))

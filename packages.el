@@ -20,7 +20,7 @@
 
 ;; To install a package directly from a particular repo, you'll need to specify
 ;; a `:recipe'. You'll find documentation on what `:recipe' accepts here:
-;; https://github.com/raxod502/straight.el#the-recipe-format
+;; @docs https://github.com/raxod502/straight.el#the-recipe-format
                                         ;(package! another-package
                                         ;  :recipe (:host github :repo "username/repo"))
 
@@ -46,9 +46,27 @@
 ;; our package manager can't deal with; see raxod502/straight.el#279)
                                         ;(package! builtin-package :recipe (:branch "develop"))
 
+;;;
+;; `doom-sync -u` is needed for the unpinnings to take effect
+(unpin! hl-todo)
+;;;
 (package! solarized-theme)
 (package! prism
   :recipe (:host github :repo "alphapapa/prism.el"))
+;;;
+;; this git repo was outdated, I am installing directly from emacswiki
+;; (package! highlight
+;;   ;; @example
+;;   :recipe (:host nil :repo "https://framagit.org/steckerhalter/highlight.el" :branch "master"))
+;;;
+(package! ov)                           ;; needed by our rainbow-mode
+(unpin! rainbow-mode)
+(package! rainbow-mode
+  ;; my fork uses overlays instead of text properties so that it is not erased by hl-line
+  :recipe (:host github :repo "NightMachinary/rainbow-mode")
+  :pin "nil")
+;; (package! rainbow-mode :recipe (:local-repo "path/to/repo"))
+;;;
 (package! org-super-links
   :recipe (:repo "toshism/org-super-links" :type git :host github :branch "develop"))
 (package! zoom)
@@ -88,6 +106,8 @@
 (package! poporg)
 
 (package! memoize)
+
+(package! xterm-color)
 
 (package! company-quickhelp) ;; uses pos-tip which only works in GUI
 (package! company-quickhelp-terminal)

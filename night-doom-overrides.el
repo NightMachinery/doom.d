@@ -269,3 +269,12 @@ If on a:
                  (not (evil-emacs-state-p)))
         (evil-insert 1)))))
 ;;;
+(defun night/equal-str (a b)
+  ;; (message "a: %s b: %s" a b)
+  (equalp (format "%s" a) (format "%s" b))
+  )
+
+(setq +file-templates-alist
+      (cl-remove 'emacs-lisp-mode +file-templates-alist :test 'night/equal-str :key 'car))
+;; @note you need to restart emacs for this change to take effect
+;;;

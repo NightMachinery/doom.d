@@ -45,6 +45,10 @@ move COUNT - 1 screen lines forward first."
         :nvig
         "C-s" #'save-buffer
         :nvoig
+        "S-<up>" #'night/scroll-halfpage-down ;; scroll commands use inverted terminology
+        :nvoig
+        "S-<down>" #'night/scroll-halfpage-up
+        :nvoig
         "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
         :nvoig
         "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol

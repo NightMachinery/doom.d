@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: title
+# key: <t
+# uuid: <t
+# --
+#+TITLE: ${1:`
+(file-name-base buffer-file-name)
+`}
+$0

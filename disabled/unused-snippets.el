@@ -39,3 +39,5 @@
  ;; fast, or hold down control to move 3x as fast. Perfect for trackpads.
  mouse-wheel-scroll-amount '(2 ((shift) . 4) ((control) . 6)))
 ;;;
+;; (set-face-attribute hl-line-face nil :foreground 'unspecified) ;;
+;;;

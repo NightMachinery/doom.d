@@ -1,16 +1,23 @@
-;;; autoload/night-brish.el -*- lexical-binding: t; -*-
+;;; autoload/night-brish.el -*- lexical-binding: nil; -*-
+;;; @todo2 z needs `lexical-binding: nil` on its users as well
 
-(defun night/h-brishz-arg (arg)
+(defun night/h-brishz-arg (arg &optional no-eval)
   (cond
    ((symbolp arg)
     (symbol-name arg))
    ((listp arg)
-    (comment only called from -z-helper as night/brishz flattens its arguments)
-    (eval arg)
+    (mycomment only called from -z-helper as night/brishz flattens its arguments)
+    (cond
+     (no-eval arg)
+     (t (user-error! "List encountered outside of the macro: %s" arg)))
     )
    (t
     (format "%s" arg)
     )))
+
+(defun night/h-brishz-arg-macro (arg)
+  (night/h-brishz-arg arg t)
+  )
 
 (defun night/brishz (&rest args)
   ;; @todo1 @perf add night/brishz-eval that uses elisp to make the HTTP requests
@@ -66,14 +73,11 @@
               (+popup/buffer)
               ))))))
 
-;; (defmacro z (&rest args)
-;;   (-concat (list 'night/brishz ) (mapcar #'night/h-brishz-arg (-flatten (mapcar #'night/h-brishz-arg args)))))
 (defmacro z (&rest args)
-  (-concat (list '-z-helper (list 'quote args))))
+  (-concat (list '-z-helper ) (mapcar #'night/h-brishz-arg-macro args)))
 
-(defun -z-helper (args)
-  (night/brishz (mapcar #'night/h-brishz-arg (-flatten (mapcar #'night/h-brishz-arg args))))
-  )
+(defun -z-helper (&rest args)
+  (s-trim-right (night/brishz (mapcar #'night/h-brishz-arg (-flatten args)))))
 
 (defmacro zf (&rest args)
   (list 'split-string (append '(z) args) "\n" t)
@@ -81,15 +85,13 @@
 (defmacro z0 (&rest args)
   (list 'split-string (append '(z) args) "\0" t)
   )
-(defmacro mycomment (&rest a)
-t
-)
 
 (defalias 'i 'identity)
 ;;; tests:
 (defun -z-test1 ()
   (interactive)
-  (z ec (buffer-file-name)))
+  (message "%s" (z ec (buffer-file-name))))
+
 (mycomment
  (z ecn hi)
  (z "ecn" hi)
