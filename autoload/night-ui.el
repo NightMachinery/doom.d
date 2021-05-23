@@ -17,13 +17,13 @@
   "DEPRECATED: We now customize hl-todo instead."
   (interactive)
   (progn (font-lock-add-keywords
-            ;; [:punct:]
-            nil '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'special-comment t)))))
+          ;; [:punct:]
+          nil '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'special-comment t)))))
 
 (defun night/highlight-atsign-zsh ()
   (interactive)
   (progn (font-lock-add-keywords 'sh-mode
-             '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
+                                 '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
 
 (setq night/great-tag-regex "^.*\\(@great\\|:great:\\).*$")
 (defun night/highlight-org ()
@@ -90,4 +90,29 @@
   "Highlights the background of the hardcoded patterns on the current buffer. It does NOT react to new additions of the patterns in the buffer. The highlight also is kind of sticky. It uses overlays so ast least it's not overrided by hl-line, but then again, it erases the at-tags as they are not yet overlays ..."
   (interactive)
   (hlt-highlight-regexp-region nil nil night/great-tag-regex 'zsh-macro 1))
+(defun night/hlt-set-current-face (&optional face)
+
+  (let ((face
+         (or face 'zsh-macro)))
+    (setq hlt-last-face face)
+    ;; (hlt-highlight-regexp-region 0 0 "" face 1)
+    )
+
+  (comment
+   (night/hlt-set-current-face 'special-comment)))
+
+(defun night/hlt-counsel-face ()
+  (interactive)
+  (night/hlt-set-current-face
+   ;; (counsel-faces)
+   (let* ((names (mapcar #'symbol-name (face-list)))
+          (counsel--faces-format
+           (format "%%-%ds %%s"
+                   (apply #'max 0 (mapcar #'string-width names)))))
+     (ivy-read "Face: " names
+               :require-match t
+               :history 'face-name-history
+               :preselect hlt-last-face
+               ;; :action counsel-describe-face-function
+               :caller 'counsel-faces))))
 ;;;

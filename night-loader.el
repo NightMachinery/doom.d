@@ -44,7 +44,7 @@
 
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
   (load-gitmodules "fzf.el/fzf.el")
-  (load-gitmodules "emacswiki/HighLight.el")
+  ;; (load-gitmodules "emacswiki/HighLight.el")
 
   (mapcar #'load (directory-files-recursively nightal-dir "\.el$"))
   (load "~/.private-config.el" t)

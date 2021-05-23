@@ -1,8 +1,13 @@
 ;;; ~/doom.d/autoload/night-notes.el -*- lexical-binding: t; -*-
 
-(defun night/search-notes ()
+(defun night/search-notes (&optional initial-query)
   (interactive)
-  (night/search-dir (getenv "nightNotes")))
+  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,md,zsh,txt}"))
+
+(defun night/agsi (&optional initial-query)
+  (interactive)
+  (night/search-dir :dir (getenv "NIGHTDIR") :query initial-query :args "--glob *"))
+
 (night/set-leader-keys "z n" #'night/search-notes)
 
 ;;;

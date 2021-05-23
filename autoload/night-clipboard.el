@@ -27,9 +27,9 @@
   (interactive)
   (insert-for-yank (z html2org)))
 ;;;
-(map!
- :map evil-org-mode-map
- :nv "P" #'night/paste-yank-html)       ;; @futureCron @tradeoff Is this upgrade worth the slowdown in 'P'? @update I limited it to only org, where it should be worth it.
+(after! (org evil-org) (map!
+                        :map evil-org-mode-map
+                        :nv "P" #'night/paste-yank-html))       ;; @futureCron @tradeoff Is this upgrade worth the slowdown in 'P'? @update I limited it to only org, where it should be worth it.
 (night/set-leader-keys "y y" #'night/paste-yank-html)
 
 (night/set-leader-keys "z c i" #'ns-yank-image-at-point-as-image)

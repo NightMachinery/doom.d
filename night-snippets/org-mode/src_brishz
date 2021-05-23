@@ -2,6 +2,6 @@
 # key: <sz
 # uuid: <sz
 # --
-#+begin_src bsh.dash :results verbatim :exports both :wrap example
+#+begin_src bsh.dash :results verbatim :exports both :wrap results
 `%`$0
 #+end_src

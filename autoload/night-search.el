@@ -6,16 +6,21 @@
 ;; this uses counsel-rg which in turn uses counsel-ag
 ;; TODO accept query
 ;; TODO This might only work in "project" dirs. We might need to wrap around counsel-rg directly.
-(defun night/search-dir (arg)
+(cl-defun night/search-dir (&key dir (args "") (query "") (prompt "> "))
   "Conduct a text search in files under the given folder."
-  (let ((default-directory arg))
+  (let ((default-directory dir)
+        )
     (progn
       (setq ivy-calling-tmp ivy-calling)
       (setq-default ivy-calling t)
-      (unwind-protect (call-interactively
-                       (cond ((featurep! :completion ivy) #'+ivy/project-search-from-cwd)
-                             ((featurep! :completion helm) #'+helm/project-search-from-cwd)
-                             (#'rgrep)))
+      (unwind-protect
+          (counsel-rg query dir args prompt)
+          ;;;
+          ;; (call-interactively
+          ;;  (cond
+          ;;   ((featurep! :completion ivy) #"+ivy/project-search-from-cwd)
+          ;;   ((featurep! :completion helm) #'+helm/project-search-from-cwd)
+          ;;   (#'rgrep)))
         (setq-default ivy-calling ivy-calling-tmp)))))
 
 ;;;

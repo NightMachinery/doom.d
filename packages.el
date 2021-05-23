@@ -53,6 +53,8 @@
 (package! solarized-theme)
 (package! prism
   :recipe (:host github :repo "alphapapa/prism.el"))
+(package! orgmdb
+  :recipe (:host github :repo "isamert/orgmdb.el"))
 ;;;
 ;; this git repo was outdated, I am installing directly from emacswiki
 ;; (package! highlight
@@ -70,6 +72,7 @@
 (package! org-super-links
   :recipe (:repo "toshism/org-super-links" :type git :host github :branch "develop"))
 (package! zoom)
+(package! sudoku)
 (package! blacken)
 (package! elpy)
 (package! pyvenv)

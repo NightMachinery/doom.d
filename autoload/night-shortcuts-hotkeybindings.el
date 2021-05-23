@@ -7,6 +7,12 @@
 
 (night/set-leader-keys "z t" #'night/tmp-buffer)
 ;;;
+(defun night/save-buffer ()
+  (interactive)
+  (save-buffer)
+  (evil-normal-state)                   ;; @futureCron was this a good @tradeoff ?
+  )
+;;;
 (global-set-key (kbd "H-C-M-e") 'insert-char)
 
 (night/set-leader-keys "z s" 'save-some-buffers)
@@ -43,7 +49,7 @@ move COUNT - 1 screen lines forward first."
   (map! :n
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig
-        "C-s" #'save-buffer
+        "C-s" #'night/save-buffer
         :nvoig
         "S-<up>" #'night/scroll-halfpage-down ;; scroll commands use inverted terminology
         :nvoig
@@ -71,11 +77,21 @@ move COUNT - 1 screen lines forward first."
         :nvo                ; the operator hotkeys are also set in night-evil.el
         "j" #'evil-next-line
         :nvo
-        "k" #'evil-previous-line)
+        "k" #'evil-previous-line
+        :nvo
+        "}" #'night/repeat-command
+        )
   (map! :leader
         "f r" #'night/fzf-recentf
+
         "t d" #'night/tab-close
-        "t D" #'night/tab-close-others)
+        "t D" #'night/tab-close-others
+
+        "s h h" #'hlt-highlight-regexp-region
+        "s h n" #'hlt-next-highlight
+        "s h N" #'hlt-previous-highlight
+        "s h p" #'hlt-previous-highlight
+        )
 
   (map! :map profiler-report-mode-map
         :nvig "TAB" #'profiler-report-toggle-entry

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <el
+# uuid: <el
+# --
+#+begin_example elisp
+`%`$0
+#+end_example
