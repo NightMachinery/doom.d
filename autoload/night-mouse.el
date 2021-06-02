@@ -1,35 +1,7 @@
 ;;; ~/doom.d/autoload/night-mouse.el -*- lexical-binding: t; -*-
 ;;; mac-port's smooth scrolling is the best one, but it still sucks.
 
-(defun night/scroll-halfpage-down ()
-  (interactive)
-  ;; (scroll-down 4)
-  (call-interactively #'evil-scroll-up)
-  (call-interactively #'evil-scroll-line-to-center))
-
-(defun night/scroll-halfpage-up ()
-  (interactive)
-  ;; (scroll-up 4)
-  (call-interactively #'evil-scroll-down)
-  (call-interactively #'evil-scroll-line-to-center))
-
-(defun night/scroll-down ()
-  (interactive)
-  (scroll-down 4))
-
-(defun night/scroll-up ()
-  (interactive)
-  (scroll-up 4))
-
-(defun night/scroll-right ()
-  (interactive)
-  (scroll-right 4))
-
-(defun night/scroll-left ()
-  (interactive)
-  (scroll-left 4))
-
-(progn
+(after! (night-scroll)
   (xterm-mouse-mode 1) ;; doom already does this I think
 
   (global-set-key (kbd "<wheel-right>") #'night/scroll-left)

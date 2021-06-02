@@ -1,6 +1,6 @@
 ;;; autoload/evil/night-text-objects.el -*- lexical-binding: t; -*-
 (use-package! exato                     ;; xml attributes text-object
-  :ensure t
+  ;; :ensure t
   :init
   (setq exato-key "x"))
 
