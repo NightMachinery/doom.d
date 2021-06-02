@@ -2,6 +2,7 @@
 # name: title
 # key: <t
 # uuid: <t
+# condition: (and (looking-back "^<t" nil))
 # --
 #+TITLE: ${1:`
 (file-name-base buffer-file-name)

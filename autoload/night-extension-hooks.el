@@ -1,13 +1,24 @@
 ;;; -*- lexical-binding: t; -*-
 
 ;;;
+(after! (ivy counsel)
+  (setq counsel-find-file-speedup-remote nil))
+
 (add-hook 'find-file-hook 'night/file-extension-actions)
 ;; @upstreamBug https://emacs.stackexchange.com/questions/14567/find-file-hook-but-only-if-file-is-selected
 
 (defun night/file-extension-actions ()
   (let*
       ((bfn buffer-file-name)
-       (ext (or (file-name-extension bfn) "")))
+       (ext (or (file-name-extension bfn) ""))
+       (remote (s-contains? "/scp:" bfn))
+       )
+    ;; (message "file opened: %s" bfn)
+    (when remote
+      ;; (z bell-sc2-become-primal)
+      ;; (z tts-glados1-cached "tramp, ready")
+      (z bell-sonic-fx-ready)
+      )
     (cond
      ((and
        (not window-system)
@@ -33,28 +44,4 @@
         (set-buffer-modified-p nil))
       ))))
 
-;;;
-(define-minor-mode scrollback-mode "A minor mode for browsing the termina's scrollback buffer." nil nil (make-sparse-keymap)
-
-  (with-demoted-errors (evil-insert-state) ;; workaround to activate its map
-    (evil-normal-state)
-    (make-local-variable 'hlt-max-region-no-warning)
-    (setq hlt-max-region-no-warning 999999999999999)
-    (night/hlt-set-current-face) ;; sets the current face for =hlt-highlight-regexp-region=
-
-    (xterm-color-colorize-buffer)
-    (set-buffer-modified-p nil)
-    (read-only-mode)
-    ))
-(map! :map scrollback-mode-map
-      :nvo "q" #'save-buffers-kill-terminal
-
-      :nvo "u" #'night/scroll-halfpage-down
-      :nvo "d" #'night/scroll-halfpage-up
-
-      :nvo "a" #'night/hlt-counsel-face
-      :nvo "s" #'hlt-highlight-regexp-region
-      :nvo "o" #'hlt-previous-highlight ;; @upstreamBug @todo2 these can hang if there is no highlight to be found
-      :nvo "p" #'hlt-next-highlight
-      )
 ;;;

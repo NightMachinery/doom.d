@@ -4,6 +4,7 @@
  ;; beware small thresholds as well -_-: emacs breaks as company continuously fills up its memory and gc throws them out
  ;;
  gcmh-idle-delay 15
+ gcmh-high-cons-threshold (* 32 1024 1024)
  ;; gcmh-high-cons-threshold (* 512 1024 1024)
  ;; gcmh-high-cons-threshold (* 256 1024 1024)
  ;; the first number will be in megabytes. doom's default was 16mb

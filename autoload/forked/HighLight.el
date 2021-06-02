@@ -2960,24 +2960,28 @@ When called non-interactively:
    value FACE ends."
     (interactive
      `(,@(hlt-region-or-buffer-limits)
-         ,(if (not hlt-auto-faces-flag)
-              nil                       ; Use `hlt-last-face'.
-            (save-excursion
-              (when (listp last-nonmenu-event) (mouse-set-point last-nonmenu-event))
-              (let* ((face  (get-char-property (point) hlt-face-prop))
-                     (face  (if (and (consp face)  (facep (car face)))
-                                (car face)
-                              face))    ; Use only 1st face at pt.
-                     (bg    (if (facep face) (face-background face) (cdr (assq 'background-color face))))
-                     (hlt   (equal face (get-char-property (point) 'hlt-highlight)))
-                     (bg/f  (or (and hlt (car (member face hlt-auto-face-backgrounds)))
-                                (and hlt (car (member bg   hlt-auto-face-backgrounds)))
-                                (car hlt-auto-face-backgrounds))))
-                (if (facep bg/f)
-                    bg/f
-                  `((background-color . ,bg/f)
-                    (foreground-color . ,hlt-auto-face-foreground))))))
-         ,current-prefix-arg nil nil nil))
+       ,(if (not hlt-auto-faces-flag)
+            nil                         ; Use `hlt-last-face'.
+          (save-excursion
+            (when (listp last-nonmenu-event) (mouse-set-point last-nonmenu-event))
+            (let* ((face  (get-char-property (point) hlt-face-prop))
+                   (face  (if (and (consp face)  (facep (car face)))
+                              (car face)
+                            face))      ; Use only 1st face at pt.
+                   (bg    (if (facep face) (face-background face) (cdr (assq 'background-color face))))
+                   (hlt   (equal face (get-char-property (point) 'hlt-highlight)))
+                   (bg/f  (or (and hlt (car (member face hlt-auto-face-backgrounds)))
+                              (and hlt (car (member bg   hlt-auto-face-backgrounds)))
+                              (car hlt-auto-face-backgrounds))))
+              (if (facep bg/f)
+                  bg/f
+                `((background-color . ,bg/f)
+                  (foreground-color . ,hlt-auto-face-foreground))))))
+       ,current-prefix-arg nil nil nil))
+
+    (when wrap-p
+      (message "hlt-next-highlight: you have enabled 'wrap-p'; This can cause an infinite loop if there is no highlight to be found."))
+
     (unless (and start  end) (let ((start-end  (hlt-region-or-buffer-limits)))
                                (setq start  (car start-end)
                                      end    (cadr start-end))))

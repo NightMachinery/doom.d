@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# key: @dup
+# uuid: @dup
+# --
+@duplicateCode/`(z uuidm)`$0

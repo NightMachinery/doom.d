@@ -36,6 +36,17 @@
   (define-key ivy-minibuffer-map (kbd "S-<right>") 'forward-char)
   (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)
 ;;;
+(defun night/ivy-halfpage-up ()
+    (interactive)
+    (ivy-previous-line 10))
+
+(defun night/ivy-halfpage-down ()
+    (interactive)
+    (ivy-next-line 10))
+
+  (define-key ivy-minibuffer-map (kbd "M-<up>") #'night/ivy-halfpage-up)
+  (define-key ivy-minibuffer-map (kbd "M-<down>") #'night/ivy-halfpage-down)
+;;;
   (defun night/ivy-mark-toggle ()
     "Mark/unmark the selected candidate."
     (interactive)

@@ -49,8 +49,12 @@
 ;;;
 ;; `doom-sync -u` is needed for the unpinnings to take effect
 (unpin! hl-todo)
-;;;
+;;; @themes
 (package! solarized-theme)
+(package! humanoid-themes)
+;;;
+(package! magit-section) ;; needed by doom
+;;;
 (package! prism
   :recipe (:host github :repo "alphapapa/prism.el"))
 (package! orgmdb
@@ -71,6 +75,13 @@
 ;;;
 (package! org-super-links
   :recipe (:repo "toshism/org-super-links" :type git :host github :branch "develop"))
+
+(package! targets
+  :recipe (:repo "noctuid/targets.el" :type git :host github))
+(package! exato)
+
+(package! org-web-tools)
+(package! helm-org-rifle)
 (package! zoom)
 (package! sudoku)
 (package! blacken)

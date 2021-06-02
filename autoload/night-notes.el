@@ -90,7 +90,7 @@
       (setq links-i (+ links-i 1))
       (let* (
              (my-column (current-column))
-             (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf @opts emacs y @ unt"))))
+             (cmd (concat "brishzr.dash " (shell-quote-argument (concat "ec " (shell-quote-argument link) " | inargsf serr @opts emacs y @ unt"))))
              (text (progn
                      (message "%s" cmd)
                      (shell-command-to-string cmd))))

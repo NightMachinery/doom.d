@@ -1,7 +1,9 @@
 (when (display-graphic-p)
   (doom-adjust-font-size 2)
   )
-
+;;;
+(after! highlight
+  (setq hlt-max-region-no-warning 999999999999999))
 ;;;
 ;; How to make the highlights re-use the original background color? https://github.com/tarsius/hl-todo/issues/60 ; did not work:
 ;; :background "unspecified"
@@ -25,7 +27,7 @@
   (progn (font-lock-add-keywords 'sh-mode
                                  '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
 
-(setq night/great-tag-regex "^.*\\(@great\\|:great:\\).*$")
+(setq night/great-tag-regex "^.*\\(@great\\|:great:\\|@forked\\|:forked:\\).*$")
 (defun night/highlight-org ()
   (interactive)
   (progn
@@ -112,7 +114,7 @@
      (ivy-read "Face: " names
                :require-match t
                :history 'face-name-history
-               :preselect hlt-last-face
-               ;; :action counsel-describe-face-function
+               ;; :preselect hlt-last-face
+               :preselect "hlt-regexp-level-5"
                :caller 'counsel-faces))))
 ;;;

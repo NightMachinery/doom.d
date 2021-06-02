@@ -3,6 +3,6 @@
 # key: f
 # uuid: f
 # --
-function ${1:name}() {
+function ${1:name} {
     `%`$0
 }

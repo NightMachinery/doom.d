@@ -132,11 +132,13 @@
       (my-select-current-line)
       (call-interactively #'night/brishz-eval-region))))
 
-(map! :map sh-mode-map
-      :localleader
-      "er" #'night/brishz-eval-region
-      "ee" #'night/brishz-eval-line
-      )
+(after!
+  (sh-script)
+  ;; (z bello)
+  (map! :map sh-mode-map
+        :localleader
+        "er" #'night/brishz-eval-region
+        "ee" #'night/brishz-eval-line))
 ;;;
 (defun night/brishz-doc-at-point ()
   "Show help for the symbol at point."

@@ -1,7 +1,10 @@
 ;;; autoload/org/night-org-keybindings.el -*- lexical-binding: t; -*-
 
 (after! (org evil-org evil)
-  ;; (night/brishz "bell-lm-strawberryjuice")
+  (defun night/insert-zero-width-space ()
+    (interactive)
+    (insert "\u200b"))
+
   (map! :map org-mode-map
         :localleader
         :nvi "lp" #'night/org-paste-clipboard-image)
