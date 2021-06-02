@@ -52,6 +52,8 @@
 ;;; @themes
 (package! solarized-theme)
 (package! humanoid-themes)
+;;; @experimental
+(package! dired-quick-sort)
 ;;;
 (package! magit-section) ;; needed by doom
 ;;;

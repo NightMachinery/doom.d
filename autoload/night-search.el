@@ -3,9 +3,7 @@
 (after! rg
   (rg-enable-menu))
 
-;; this uses counsel-rg which in turn uses counsel-ag
-;; TODO accept query
-;; TODO This might only work in "project" dirs. We might need to wrap around counsel-rg directly.
+;; @retired This might only work in "project" dirs. We might need to wrap around counsel-rg directly.
 (cl-defun night/search-dir (&key (dir nil) (args "") (query "") (prompt "> "))
   "Conduct a text search in files under the given folder."
   (interactive)

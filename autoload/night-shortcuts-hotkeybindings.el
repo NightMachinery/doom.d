@@ -124,6 +124,8 @@ move COUNT - 1 screen lines forward first."
         "s h N" #'hlt-previous-highlight
         "s h p" #'hlt-previous-highlight
         "s h f" #'night/hlt-counsel-face
+
+        "s d" #'night/search-dir        ;; overrides doom's default search pwd function
         )
 
   (map! :map profiler-report-mode-map

@@ -1,5 +1,5 @@
 ;;; autoload/evil/night-text-objects.el -*- lexical-binding: t; -*-
-(use-package! exato
+(use-package! exato                     ;; xml attributes text-object
   :ensure t
   :init
   (setq exato-key "x"))
@@ -16,7 +16,7 @@
 
   (targets-define-to shfun
                      ;; "function "
-                     "function .*\(\)\s+\{" ;; this makes the inner text objects work correctly, but it breaks the remote, next, last text objects
+                     "function .*\(?\)?\s+\{" ;; this makes the inner text objects work correctly, but it breaks the remote, next, last text objects
                      "^}\n" pair
                      :bind t :hooks (sh-mode-hook) :keys "f")
 
