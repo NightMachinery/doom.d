@@ -37,12 +37,14 @@
   (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)
 ;;;
 (defun night/ivy-halfpage-up ()
-    (interactive)
-    (ivy-previous-line 10))
+  (interactive)
+  (ivy-previous-line 10)
+  (minibuffer-recenter-top-bottom nil))
 
 (defun night/ivy-halfpage-down ()
-    (interactive)
-    (ivy-next-line 10))
+  (interactive)
+  (ivy-next-line 10)
+  (minibuffer-recenter-top-bottom nil))
 
   (define-key ivy-minibuffer-map (kbd "M-<up>") #'night/ivy-halfpage-up)
   (define-key ivy-minibuffer-map (kbd "M-<down>") #'night/ivy-halfpage-down)

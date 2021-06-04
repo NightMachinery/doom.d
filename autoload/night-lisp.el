@@ -26,9 +26,20 @@
   (save-mark-and-excursion
     (night/select-current-sexp arg)
     (command-execute 'eval-region)))
+;;;
+(defun night/goto-previous-paren ()
+  (interactive)
+  (goto-char (max 1 (- (point) 1)))
+  (lispyville-previous-closing)
+  (goto-char (+ (point) 1))
+  )
 
-
-;;
+(defun night/goto-next-paren ()
+  (interactive)
+  (goto-char (max 1 (- (point) 1)))
+  (lispyville-next-closing)
+  (goto-char (+ (point) 1)))
+;;;
 (defun my-lisp-init ()
   (interactive)
   (progn
@@ -58,13 +69,21 @@
 
 (progn
 ;;;
-;; This has the problem that the unpaired "s will then be undeletable
-;;   (lispyville--define-key '(insert)
-;;     "\""
-;;     ;; #'lispy-doublequote
-;;     #'(lambda ()
-;;         (interactive)
-;;         (insert "\""))) ;;Otherwise would escape doublequotes in Strings automagically.
+  (lispyville--define-key '(insert)
+;;;
+    ;; ;; This has the problem that the unpaired "s will then be undeletable
+    ;; "\""
+    ;; ;; #'lispy-doublequote
+    ;; #'(lambda ()
+    ;;     (interactive)
+    ;;     (insert "\""))
+    ;; ;;Otherwise would escape doublequotes in Strings automagically.
+;;;
+    ;; "[" #'night/avy-goto-opening-paren
+    ;; "]" #'night/avy-goto-closing-paren
+    "[" #'night/goto-previous-paren
+    "]" #'night/goto-next-paren
+    )
 ;;;
 
   (lispyville--define-key '(normal visual)
@@ -91,7 +110,7 @@
         ;; "g s 9" #'lispy-ace-paren
         ;; :n
         ;; "g s 0" #'lispy-ace-symbol      ; bound to Q by lispy
-        ;;;
+;;;
         ;; don't work :| lispyville--define-key didn't work either
         ;; this is beacuse they have used `[remap evil-delete-char] #'lispyville-delete-char-or-splice`
         ;; :nmv

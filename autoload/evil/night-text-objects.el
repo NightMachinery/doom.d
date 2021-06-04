@@ -20,6 +20,13 @@
                      "^}\n" pair
                      :bind t :hooks (sh-mode-hook) :keys "f")
 
+  ;;; this doesn't work when you're at the end of the line:
+  ;; (targets-define-to line
+  ;;                    "^\s*" ;; this makes the inner text objects work correctly, but it breaks the remote, next, last text objects
+  ;;                    "\s*$" pair
+  ;;                    :bind t :keys "l")
+  ;;;
+
   ;; (defun targets--shrink-inner (bounds)
   ;;   "Shrink RANGE by 1 character on each side."
   ;;   (cl-incf (car bounds))
@@ -28,3 +35,61 @@
   ;; (put 'my-thing 'targets-shrink-inner-op #'targets--shrink-inner)
 
   )
+
+(comment
+
+ (defmacro define-and-bind-text-object (key start-regex end-regex)
+   (let ((inner-name (make-symbol "inner-name"))
+         (outer-name (make-symbol "outer-name")))
+     `(progn
+        (evil-define-text-object ,inner-name (count &optional beg end type)
+          (evil-select-paren ,start-regex ,end-regex beg end type count nil))
+        (evil-define-text-object ,outer-name (count &optional beg end type)
+          (evil-select-paren ,start-regex ,end-regex beg end type count t))
+        (define-key evil-inner-text-objects-map ,key (quote ,inner-name))
+        (define-key evil-outer-text-objects-map ,key (quote ,outer-name)))))
+
+ ;; create "il"/"al" (inside/around) line text objects:
+ (define-and-bind-text-object "l" "^\\s-*" "\\s-*$")
+ )
+
+(after! evil
+  ;; @forked from https://github.com/emacsorphanage/evil-textobj-line
+  ;;;
+  (defgroup evil-textobj-line nil
+    "Text object line for Evil"
+    :group 'evil)
+
+  (defcustom evil-textobj-line-i-key ";"
+    "Keys for evil-inner-line"
+    :type 'string
+    :group 'evil-textobj-line)
+
+  (defcustom evil-textobj-line-a-key ";"
+    "Keys for evil-a-line"
+    :type 'string
+    :group 'evil-textobj-line)
+
+  (defun evil-line-range (count beg end type &optional inclusive)
+    (if inclusive
+        (evil-range (line-beginning-position) (line-end-position))
+      (let ((start (save-excursion
+                     (back-to-indentation)
+                     (point)))
+            (end (save-excursion
+                   (goto-char (line-end-position))
+                   (skip-syntax-backward " " (line-beginning-position))
+                   (point))))
+        (evil-range start end))))
+
+  (evil-define-text-object evil-a-line (count &optional beg end type)
+    "Select range between a character by which the command is followed."
+    (evil-line-range count beg end type t))
+  (evil-define-text-object evil-inner-line (count &optional beg end type)
+    "Select inner range between a character by which the command is followed."
+    (evil-line-range count beg end type))
+
+  (define-key evil-outer-text-objects-map evil-textobj-line-a-key 'evil-a-line)
+  (define-key evil-inner-text-objects-map evil-textobj-line-i-key 'evil-inner-line)
+
+  (provide 'evil-textobj-line))

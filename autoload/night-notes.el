@@ -8,6 +8,10 @@
   (interactive)
   (night/search-dir :dir (getenv "NIGHTDIR") :query initial-query :args "--glob *"))
 
+(defun night/search-doom (&optional initial-query)
+  (interactive)
+  (night/search-dir :dir (getenv "DOOMDIR") :query initial-query :args "--glob *"))
+
 (night/set-leader-keys "z n" #'night/search-notes)
 
 ;;;

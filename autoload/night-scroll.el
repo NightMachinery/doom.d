@@ -2,11 +2,11 @@
 
 (defun night/screen-center-ni (&rest args)
   ;; somehow the interactive version doesn't work with advice-add
-  (recenter nil))
+  (night/screen-center))
 
 (defun night/screen-center (&rest args)
   (interactive)
-  (recenter nil))
+  (ignore-errors (recenter nil)))
 
 (defun night/scroll-halfpage-down ()
   (interactive)

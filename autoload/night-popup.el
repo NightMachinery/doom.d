@@ -2,6 +2,8 @@
 
 (set-popup-rule! "^\\*lispy.*\\*$" :ignore nil :height 0.5)
 
+(set-popup-rule! "^\\*vc-diff*\\*$" :ignore nil :height 0.5)
+
 (set-popup-rule! "^\\*night-html-viewer\\*$" :ignore nil :height 0.7)
 ;;;
 (setq night/fullscreen-popups nil)

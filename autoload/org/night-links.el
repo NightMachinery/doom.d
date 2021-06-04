@@ -2,9 +2,18 @@
 
 (after! (org evil-org evil ol)
 ;;;
-;; this will cause the links to be displayed fully on startup:
-  (setq org-link-descriptive t)
-  (org-toggle-link-display)
+  (defun night/org-show-link-display ()
+    (interactive)
+    (setq org-link-descriptive t)
+    (org-toggle-link-display))
+
+  (defun night/org-hide-link-display ()
+    (interactive)
+    (setq org-link-descriptive nil)
+    (org-toggle-link-display))
+
+  (night/org-show-link-display) ;; this will cause the links to be displayed fully on startup:
+
 ;;;
   ;; (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (setq org-id-link-to-org-use-id 'create-if-interactive)
@@ -18,9 +27,7 @@
            (parent
             (if file
                 (f-filename (f-dirname file))
-              nil
-              )
-            )
+              nil))
            (parent (if parent
                        (or
                         (cadr (s-match "^[^/]*:\\(.*\\)" parent))
@@ -29,21 +36,24 @@
            (tail
             (cond
              ((or (equalp "." parent) (equalp "" parent))
-              file
-              )
+              file)
              ((and parent (not (equalp parent ""))) (concat
                                                      parent
                                                      "/"
                                                      (f-filename file)))
              (file (f-filename file))
-             (t "")
-             )))
+             (t "")))
+           (desc (string-trim-left desc "\*+")))
       (message "%s" (concat link ", " desc ", " tail ", " file))
       (cond
        ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
-       ((and desc (not (equalp desc "")) tail (not (equalp tail ""))) (concat tail ":" (or
-                                                                                   (cadr (s-match ".*:\\(.*\\)" desc))
-                                                                                   desc)))
+       ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
+        (let ((desc-tail (or
+                          (cadr (s-match ".*:\\(.*\\)" desc))
+                          desc)))
+          (if (not (equalp  desc-tail ""))
+              (concat tail ":" desc-tail)
+            tail)))
        ((and tail (not (equalp tail ""))) tail)
        ((and desc (not (equalp desc ""))) desc)
        (t link))))

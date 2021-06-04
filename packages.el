@@ -82,6 +82,9 @@
   :recipe (:repo "noctuid/targets.el" :type git :host github))
 (package! exato)
 
+(package! applescript-mode)
+(package! magit-vcsh)
+(package! smeargle)                     ;; Highlighting Regions by Last Updated Time
 (package! org-web-tools)
 (package! helm-org-rifle)
 (package! zoom)
@@ -110,6 +113,8 @@
 ;;   (package! eglot-jl))
 ;; (package! fzf)
 (package! org-drill)
+(package! org-ql)
+(package! helm-org-ql)
 (package! toc-org)
 (package! org-fragtog)
 (package! company-try-hard)

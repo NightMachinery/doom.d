@@ -118,3 +118,19 @@
                :preselect "hlt-regexp-level-5"
                :caller 'counsel-faces))))
 ;;;
+(defun night/zero-width-chars-hide (&optional global)
+  (interactive)
+  (when (not global)
+    (setq-local glyphless-char-display (copy-sequence glyphless-char-display)))
+  (set-char-table-range glyphless-char-display
+                        (char-from-name "ZERO WIDTH SPACE") 'zero-width))
+
+(defun night/zero-width-chars-show (&optional global)
+  (interactive)
+  (when (not global)
+    (setq-local glyphless-char-display (copy-sequence glyphless-char-display)))
+  (set-char-table-range glyphless-char-display
+                        (char-from-name "ZERO WIDTH SPACE") 'thin-space))
+
+(add-hook 'org-mode-hook #'night/zero-width-chars-hide)
+;;;
