@@ -28,9 +28,18 @@
 
      (t nil)))
 
+  (defun night/org-shiftright-final ()
+    (interactive)
+    (org-next-visible-heading 1))
+
+  (defun night/org-shiftleft-final ()
+    (interactive)
+    (org-next-visible-heading -1))
 
   (add-hook 'org-shiftleft-hook #'night/org-shiftleft)
   (add-hook 'org-shiftright-hook #'night/org-shiftright)
+  (add-hook 'org-shiftleft-final-hook #'night/org-shiftleft-final)
+  (add-hook 'org-shiftright-final-hook #'night/org-shiftright-final)
 ;;;
   (map! :map org-mode-map
         :localleader
@@ -55,6 +64,9 @@
 
    :nvo "C-<up>" #'org-backward-heading-same-level
    :nvo "C-<down>" #'org-forward-heading-same-level
+
+   :nvo "C-S-<left>" #'org-backward-heading-same-level
+   :nvo "C-S-<right>" #'org-forward-heading-same-level
 
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode

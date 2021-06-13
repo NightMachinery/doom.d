@@ -83,6 +83,15 @@
 (defun night/scp-zii ()
   (interactive)
   (dired "/scp:zii@51.178.215.202:/home/zii/"))
+
+(defun night/scp-behy-root ()
+  (interactive)
+  (dired "/scp:root@51.89.107.137:/root"))
+
+(defun night/scp-behy-walle ()
+  (interactive)
+  (dired "/scp:walle@51.89.107.137:/home/walle/"))
+
 (defun night/scp-zii-current ()
   (interactive)
   ;; s-replace from s.el

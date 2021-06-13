@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# code runs in the attached sly session (you might need to open a lisp file to start a session)
+# key: <sc
+# uuid: <sc
+# --
+#+begin_src lisp :results value :exports both :wrap example
+`%`$0
+#+end_src

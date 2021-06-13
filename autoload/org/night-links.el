@@ -18,45 +18,61 @@
   ;; (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (setq org-id-link-to-org-use-id 'create-if-interactive)
 
-  (defun night/org-description-formatter (link desc)
+  (defun night/org-title ()
+    "Returns the string used by default for the current org file's title."
+    (interactive)
     (let* (
-           (file
-            (if (s-starts-with? "id:" link t)
-                (car (org-id-find (s-chop-prefix "id:" link)))
-              link))
-           (parent
-            (if file
-                (f-filename (f-dirname file))
-              nil))
-           (parent (if parent
-                       (or
-                        (cadr (s-match "^[^/]*:\\(.*\\)" parent))
-                        parent)
-                     nil)) ;;  we can run this on file, as well, or `HOME:.xsh` links won't get their prefix stripped. But I think that's okay.
-           (tail
-            (cond
-             ((or (equalp "." parent) (equalp "" parent))
-              file)
-             ((and parent (not (equalp parent ""))) (concat
-                                                     parent
-                                                     "/"
-                                                     (f-filename file)))
-             (file (f-filename file))
-             (t "")))
-           (desc (string-trim-left desc "\*+")))
-      (message "%s" (concat link ", " desc ", " tail ", " file))
-      (cond
-       ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
-       ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
-        (let ((desc-tail (or
-                          (cadr (s-match ".*:\\(.*\\)" desc))
-                          desc)))
-          (if (not (equalp  desc-tail ""))
-              (concat tail ":" desc-tail)
-            tail)))
-       ((and tail (not (equalp tail ""))) tail)
-       ((and desc (not (equalp desc ""))) desc)
-       (t link))))
+           (bfn (buffer-file-name))
+           (fb (f-base bfn))
+           (parent (ignore-errors
+                     (f-base (f-dirname bfn)))))
+      (if (and parent
+               ;; (< 7 (length fb))
+               )
+          (concat parent "/" fb)
+        fb)))
+
+  (defun night/org-description-formatter (link desc)
+    (message "%s" (concat "night/org-description-formatter" " (beg): link=" link ", desc=" desc))
+    (with-demoted-errors "Error in night/org-description-formatter: %S"
+        (let* (
+               (file
+                (if (s-starts-with? "id:" link t)
+                    (car (org-id-find (s-chop-prefix "id:" link)))
+                  link))
+               (parent
+                (if file
+                    (f-filename (f-dirname file))
+                  nil))
+               (parent (if parent
+                           (or
+                            (cadr (s-match "^[^/]*:\\(.*\\)" parent))
+                            parent)
+                         nil)) ;;  we can run this on file, as well, or `HOME:.xsh` links won't get their prefix stripped. But I think that's okay.
+               (tail
+                (cond
+                 ((or (equalp "." parent) (equalp "" parent))
+                  file)
+                 ((and parent (not (equalp parent ""))) (concat
+                                                         parent
+                                                         "/"
+                                                         (f-filename file)))
+                 (file (f-filename file))
+                 (t "")))
+               (desc (when desc (string-trim-left desc "\*+"))))
+          (message "%s" (concat "night/org-description-formatter: " link ", " desc ", " tail ", " file))
+          (cond
+           ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
+           ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
+            (let ((desc-tail (or
+                              (cadr (s-match ".*:\\(.*\\)" desc))
+                              desc)))
+              (if (not (equalp  desc-tail ""))
+                  (concat tail ":" desc-tail)
+                tail)))
+           ((and tail (not (equalp tail ""))) tail)
+           ((and desc (not (equalp desc ""))) desc)
+           (t link)))))
 
   ;; (cadr (s-match "^[^/]*:\\(.*\\)" "aJK:lol/as"))
   ;; (org-id-find "124fa3e8-c032-4b80-9ede-d3caff9cec8a")

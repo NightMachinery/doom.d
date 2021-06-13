@@ -33,3 +33,8 @@
 (night/set-leader-keys "y y" #'night/paste-yank-html)
 
 (night/set-leader-keys "z c i" #'ns-yank-image-at-point-as-image)
+;;;
+(defun night/pbadd-current ()
+  (interactive)
+  (z pbadd (buffer-file-name)))
+;;;

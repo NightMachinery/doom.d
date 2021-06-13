@@ -15,4 +15,4 @@
                          (cons current-alpha current-alpha))))
 
 ;;;
-(night/set-leader-keys "z i" #'night/invisible-til-keypress)
+(night/set-leader-keys "z 0" #'night/invisible-til-keypress)

@@ -10,6 +10,4 @@
 
 ;; (night/load-tramp-theme) ; doesn't work
 ;;;
-(setq server-socket-dir (concat (getenv "HOME") "/tmp/.emacs-servers"))
-;; see also `server-name`
-;;;
+(defvar night-loaded t "Use night/loaded-p to check this. Shows if our whole config has loaded completely.")

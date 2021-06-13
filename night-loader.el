@@ -1,18 +1,5 @@
-;;; this needs to be first, otherwise any error in our config will reset recentf
-(require 'recentf)
-(after! recentf
-  ;; (customize-set-value 'recentf-auto-cleanup 3600) ; doesn't work
-  (customize-set-variable 'recentf-auto-cleanup 3600)
-  (setq recentf-auto-cleanup 3600)
-  (setq recentf-max-saved-items 5000)
-  (recentf-load-list)
-  )
-;;;
-(defmacro mycomment (&rest a)
-  t)
-(defmacro comment (&rest body)
-  "Comment out one or more s-expressions."
-  nil)
+(defun night/loaded-p ()
+  (and (boundp 'night-loaded) night-loaded))
 ;;;
 (defun load-path-gitmodules (file)
   (add-to-list 'load-path (concat (getenv "DOOMDIR") "/" "gitmodules/" file)))

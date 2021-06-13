@@ -5,6 +5,6 @@
 # condition: (and (looking-back "^<t" nil))
 # --
 #+TITLE: ${1:`
-(file-name-base buffer-file-name)
+(night/org-title)
 `}
 $0

@@ -3,11 +3,18 @@
 ;;; /doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
 
 (with-eval-after-load 'ivy
-  (push (cons #'swiper (cdr (assq t ivy-re-builders-alist)))
-        ivy-re-builders-alist)
-  (push (cons t #'ivy--regex-fuzzy) ivy-re-builders-alist))
+  (comment ;; someone else is already doing this!!
+   (when (not (boundp 'h-ivy-set-builders))
+     (push (cons #'swiper (cdr (assq t ivy-re-builders-alist)))
+           ivy-re-builders-alist)
+     (push (cons t #'ivy--regex-fuzzy) ivy-re-builders-alist)
+     (defvar h-ivy-set-builders t "A flag that shows that ivy-re-builders-alist has been set by us.")))
+  (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-plus))
+  )
 
 (after! (ivy  counsel ivy-rich)
+  (setq counsel-find-file-ignore-regexp nil) ;; @tradeoff @config
+
   (defun night/ivy--directory-out ()
     (interactive)
     (let (dir)
@@ -27,7 +34,7 @@
   (define-key counsel-find-file-map (kbd "<right>")
     #'night/ivy--directory-enter)
 ;;;
-;; @ideal it's better to add these to the specific maps that need them, but I can't find what other map is used by, e.g., `read-file-name`
+  ;; @ideal it's better to add these to the specific maps that need them, but I can't find what other map is used by, e.g., `read-file-name`
   (define-key ivy-minibuffer-map (kbd "<left>")
     #'night/ivy--directory-out)
   (define-key ivy-minibuffer-map (kbd "<right>")
@@ -36,15 +43,15 @@
   (define-key ivy-minibuffer-map (kbd "S-<right>") 'forward-char)
   (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)
 ;;;
-(defun night/ivy-halfpage-up ()
-  (interactive)
-  (ivy-previous-line 10)
-  (minibuffer-recenter-top-bottom nil))
+  (defun night/ivy-halfpage-up ()
+    (interactive)
+    (ivy-previous-line 10)
+    (minibuffer-recenter-top-bottom nil))
 
-(defun night/ivy-halfpage-down ()
-  (interactive)
-  (ivy-next-line 10)
-  (minibuffer-recenter-top-bottom nil))
+  (defun night/ivy-halfpage-down ()
+    (interactive)
+    (ivy-next-line 10)
+    (minibuffer-recenter-top-bottom nil))
 
   (define-key ivy-minibuffer-map (kbd "M-<up>") #'night/ivy-halfpage-up)
   (define-key ivy-minibuffer-map (kbd "M-<down>") #'night/ivy-halfpage-down)

@@ -34,8 +34,10 @@
       :nvo "s" #'hlt-highlight-regexp-region
       :nvo "x" #'hlt-highlight-regexp-region
 
-      :nvo "o" #'hlt-previous-highlight
-      :nvo "p" #'hlt-next-highlight
+      :nvo "," #'hlt-previous-highlight
+      :nvo "." #'hlt-next-highlight
+
+      :nvo "o" #'link-hint-open-link
       )
 ;;;
 

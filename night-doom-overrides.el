@@ -20,6 +20,8 @@
 (after! smartparens (smartparens-global-mode -1))
 (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
 ;;;
+(remove-hook 'kill-emacs-hook #'recentf-cleanup)
+;;;
 (defun doom/move-this-file (new-path &optional force-p)
   "Move current buffer's file to NEW-PATH.
 

@@ -174,6 +174,9 @@
   )
 ;;;
 ;; https://stackoverflow.com/questions/2087225/about-the-fix-for-the-interference-between-company-mode-and-yasnippet
+(after! lui
+  (setq lui-completion-function #'night/company-yasnippet-or-completion))
+
 (define-key company-active-map "\t" 'night/company-yasnippet-or-completion)
 (define-key company-active-map (kbd "TAB") 'night/company-yasnippet-or-completion)
 (defun night/company-yasnippet-or-completion ()
@@ -241,6 +244,11 @@
 ;;  "C-j" #'night/completion-begin
 ;;  ;; does NOT work with quickhelp, but manually invoking it via M-x does
 ;;  )
+;;;
+(defun night/disable-company-frontends ()
+  (interactive)
+  (make-local-variable 'company-frontends)
+  (setq company-frontends nil))
 ;;;
 (after! company
 

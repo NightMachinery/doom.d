@@ -12,12 +12,17 @@
   (interactive)
   (night/search-dir :dir (getenv "DOOMDIR") :query initial-query :args "--glob *"))
 
+(defun night/search-r_rational (&optional initial-query)
+  (interactive)
+  (night/search-dir :dir "/Volumes/hyper-diva/archives/reddit/rational/posts/" :query initial-query :args "--glob *"))
+
 (night/set-leader-keys "z n" #'night/search-notes)
 
 ;;;
-(defun night/browse-dir (dir)
+(defun night/browse-dir (&optional dir)
   (interactive)
-  (let ((default-directory "/"))
+  (let* ((dir (or dir default-directory "/"))
+        (default-directory dir))
     ;; (counsel-find-file dir)
     ;; (counsel-file-jump "" dir) ; we used this one before using fzf
 
@@ -126,7 +131,14 @@
     (when was-normal
       (evil-normal-state t))
     ;; (night/brishz  "awaysh" "ot-play-beeps1" "3")
-    (night/brishz "awaysh" "tts-glados1-cached" "link, inserted")))
+    (night/bell-link)))
+
+(defun night/bell-link ()
+  (night/brishz "awaysh" "tts-glados1-cached" "link, inserted"))
+
+(defun night/after-link (&rest args)
+  (save-buffer)
+  (night/bell-link))
 
 (defun night/tmp ()
   (interactive)

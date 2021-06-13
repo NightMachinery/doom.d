@@ -11,4 +11,7 @@
   (map! :map dired-mode-map
         :nv "Y" #'diredp-copy-abs-filenames-as-kill
         :nv "{" #'diredp-copy-abs-filenames-as-kill-recursive
-        ))
+        )
+
+  (remove-hook 'dired-mode-hook #'dired-omit-mode)
+  )

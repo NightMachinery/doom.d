@@ -3,6 +3,7 @@
 ;; (require 'web-mode)
 
 (after! web-mode
+  (add-to-list 'auto-mode-alist '("\\.forced_html\\'" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.gohtml\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.gotmpl\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))

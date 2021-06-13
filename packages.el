@@ -114,6 +114,7 @@
 ;; (package! fzf)
 (package! org-drill)
 (package! org-ql)
+(package! org-books)
 (package! helm-org-ql)
 (package! toc-org)
 (package! org-fragtog)

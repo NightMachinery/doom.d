@@ -27,14 +27,13 @@
   (progn (font-lock-add-keywords 'sh-mode
                                  '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
 
-(setq night/great-tag-regex "^.*\\(@great\\|:great:\\|@forked\\|:forked:\\).*$")
+(setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\).*$")
 (defun night/highlight-org ()
   (interactive)
   (progn
     ;; (font-lock-add-keywords 'org-mode
     ;;                         '(("^.*\\B@great\\B.*$" 1 'zsh-macro t)))
     (font-lock-add-keywords 'org-mode
-                            ;; '(("^.*\\(@great\\|:great:\\).*$" . 'zsh-macro))
                             `((,night/great-tag-regex . 'zsh-macro))
                             )
     )

@@ -30,7 +30,7 @@
 ;;;
 (defun night/tmp-buffer ()
   (interactive)
-  (find-file "~/tmp/tmp.txt"))
+  (find-file "~/tmp/tmp.org"))
 
 (night/set-leader-keys "z t" #'night/tmp-buffer)
 ;;;
@@ -125,11 +125,12 @@ move COUNT - 1 screen lines forward first."
         "s h p" #'hlt-previous-highlight
         "s h f" #'night/hlt-counsel-face
 
-        "s d" #'night/search-dir        ;; overrides doom's default search pwd function
+        "s d" #'night/search-dir ;; overrides doom's default search pwd function
         )
 
   (map! :map profiler-report-mode-map
         :nvig "TAB" #'profiler-report-toggle-entry
         :nvig "<tab>" #'profiler-report-toggle-entry
         )
+
   )

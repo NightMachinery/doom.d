@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <sl
+# uuid: <sl
+# --
+#+begin_src perl :results output :exports both :wrap example
+`%`$0
+#+end_src
