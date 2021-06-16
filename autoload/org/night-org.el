@@ -2,6 +2,8 @@
 (after! org
   (require 'org-element)
 ;;;
+  (add-hook 'org-mode-hook #'night/disable-company-frontends) ;; the tooltip frontend is buggy and moves the oorg headers indentations, which is visually distracting.
+;;;
   ;; (setq org-cycle-emulate-tab 'exc-hl-bol) ; @weirdFeature
 ;;;
   (setq org-cycle-separator-lines 1)

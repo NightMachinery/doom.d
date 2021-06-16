@@ -23,22 +23,23 @@
     ;; (setq emulation-mode-map-alists '((t scrollback-mode-map) general-maps-alist)) ;; doesn't seem to work
     ))
 
-(map! :map scrollback-mode-map
-      :nvo "q" #'save-buffers-kill-terminal
-      :nvo [remap quit-window] #'save-buffers-kill-terminal
+(after! (evil-repeat evil-snipe)
+  (map! :map scrollback-mode-map
+        :nvo "q" #'save-buffers-kill-terminal
+        :nvo [remap quit-window] #'save-buffers-kill-terminal
 
-      :nvo "u" #'night/scroll-halfpage-down
-      :nvo "d" #'night/scroll-halfpage-up
+        :nvo "u" #'night/scroll-halfpage-down
+        :nvo "d" #'night/scroll-halfpage-up
 
-      :nvo "a" #'night/hlt-counsel-face
-      :nvo "s" #'hlt-highlight-regexp-region
-      :nvo "x" #'hlt-highlight-regexp-region
+        :nvo "a" #'night/hlt-counsel-face
+        :nvo "s" #'hlt-highlight-regexp-region
+        :nvo "x" #'hlt-highlight-regexp-region
 
-      :nvo "," #'hlt-previous-highlight
-      :nvo "." #'hlt-next-highlight
+        :nvo "," #'hlt-previous-highlight
+        :nvo "." #'hlt-next-highlight
 
-      :nvo "o" #'link-hint-open-link
-      )
+        :nvo "o" #'link-hint-open-link
+        ))
 ;;;
 
 (provide 'scrollback-mode)

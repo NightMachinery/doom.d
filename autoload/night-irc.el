@@ -10,7 +10,7 @@
 
   (setq circe-server-send-unknown-command-p t)
 
-  (setq +irc-defer-notifications 600)   ;; @futureCron do we need to increase this?
+  (setq +irc-defer-notifications 1800)   ;; @futureCron do we need to increase this?
 
   (defun night/irc-set-watch-strings ()
     (when (not (boundp 'circe-notifications-watch-strings))
@@ -52,6 +52,7 @@
      ;; :sasl-password ,(getenv "IRC_PASS")
      :channels (
                 "#anime"
+                "##english"
                 "#bash"
                 "#clojure"
                 "#commonlisp"

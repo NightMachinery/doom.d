@@ -22,6 +22,8 @@
 ;;;
 (remove-hook 'kill-emacs-hook #'recentf-cleanup)
 ;;;
+(remove-hook 'text-mode-hook #'highlight-indent-guides-mode)
+;;;
 (defun doom/move-this-file (new-path &optional force-p)
   "Move current buffer's file to NEW-PATH.
 

@@ -20,12 +20,12 @@
   (interactive)
   (progn (font-lock-add-keywords
           ;; [:punct:]
-          nil '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'special-comment t)))))
+          nil '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'special-comment t)))))
 
 (defun night/highlight-atsign-zsh ()
   (interactive)
   (progn (font-lock-add-keywords 'sh-mode
-                                 '(("\\B\\(@[^][[:space:](){};,\n\"=]+\\)" 1 'zsh-macro t)))))
+                                 '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'zsh-macro t)))))
 
 (setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\).*$")
 (defun night/highlight-org ()
@@ -74,7 +74,7 @@
           ("BUG" error bold)
           ;; For warning about a problematic or misguiding code
           ("XXX" font-lock-constant-face bold)
-          ("@[^][[:space:](){};,\n\"=]+" special-comment)
+          ("@[^][[:space:](){};\n\"=]+" special-comment)
           ))
   )
 ;;;
