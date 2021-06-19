@@ -10,7 +10,9 @@
 
   (setq circe-server-send-unknown-command-p t)
 
+  (setq lui-max-buffer-size 40000)     ;; 40000 chars (about 600 lines worth in most channels)
   (setq +irc-defer-notifications 1800)   ;; @futureCron do we need to increase this?
+  (remove-hook 'circe-server-connected-hook #'+irc-init-circe-notifications-h) ;; completely disables the notifications, as we are getting nootifs via znc-push and thelounge
 
   (defun night/irc-set-watch-strings ()
     (when (not (boundp 'circe-notifications-watch-strings))
@@ -55,7 +57,7 @@
                 "##english"
                 "#bash"
                 "#clojure"
-                "#commonlisp"
+                "#commonlisp" "#lispcafe" "#quicklisp" "#clschool"
                 "#css"
                 "#devops"
                 "#docker"
@@ -139,7 +141,11 @@
     (when (eq major-mode 'circe-channel-mode)
       (message "%i entities are online on %s." (length (circe-channel-nicks)) (buffer-name))))
 ;;;
-  (add-hook 'circe-mode-hook #'night/disable-company-frontends)
+  (add-hook 'circe-mode-hook #'night/disable-flycheck) ;; used resources
+
+  ;; I am also using `company-global-modes' to disable it.
+  (add-hook 'circe-mode-hook #'night/disable-company) ;; used a LOT of resources
+  ;; (add-hook 'circe-mode-hook #'night/disable-company-frontends)
 
   ;; (add-hook 'circe-mode-hook #'night/circe-count-users)
 

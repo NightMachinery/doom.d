@@ -68,6 +68,7 @@
 
   :config
 
+  (setq company-global-modes '(not erc-mode message-mode help-mode gud-mode circe-mode)) ;; @overrides/doom
   ;; Make completions display twice as soon.
   (setq company-idle-delay 0.15)
 
@@ -195,32 +196,32 @@
   (defun counsel-company ()
     "Complete using `company-candidates'."
     (interactive)
-    (company-mode 1)
-    (unless company-candidates
-      (company-complete))
-    (let ((len (cond ((let (l)
-                        (and company-common
-                             (string= company-common
-                                      (buffer-substring
-                                       (- (point) (setq l (length company-common)))
-                                       (point)))
-                             l)))
-                     (company-prefix
-                      (length company-prefix)))))
-      (when len
-        (setq ivy-completion-beg (- (point) len))
-        (setq ivy-completion-end (point))
-        (cond
-         ((= (length company-candidates) 1)
-          (ivy-completion-in-region-action (car company-candidates))
-          )
-         (t
-          ;; (message "candidate length %s" (length company-candidates))
-          (ivy-read "Candidate: " company-candidates
-                    :action #'ivy-completion-in-region-action
-                    :caller 'counsel-company
-                    :keymap counsel-company-map
-                    )))))))
+
+    (when company-mode (unless company-candidates
+                         (company-complete))
+          (let ((len (cond ((let (l)
+                              (and company-common
+                                   (string= company-common
+                                            (buffer-substring
+                                             (- (point) (setq l (length company-common)))
+                                             (point)))
+                                   l)))
+                           (company-prefix
+                            (length company-prefix)))))
+            (when len
+              (setq ivy-completion-beg (- (point) len))
+              (setq ivy-completion-end (point))
+              (cond
+               ((= (length company-candidates) 1)
+                (ivy-completion-in-region-action (car company-candidates))
+                )
+               (t
+                ;; (message "candidate length %s" (length company-candidates))
+                (ivy-read "Candidate: " company-candidates
+                          :action #'ivy-completion-in-region-action
+                          :caller 'counsel-company
+                          :keymap counsel-company-map
+                          ))))))))
 ;;;
 ;; C-z is overridden by others, use M-x for now
 ;; (after! company-try-hard
@@ -245,6 +246,10 @@
 ;;  ;; does NOT work with quickhelp, but manually invoking it via M-x does
 ;;  )
 ;;;
+(defun night/disable-company ()
+  (interactive)
+  (company-mode -1))
+
 (defun night/disable-company-frontends ()
   (interactive)
   (make-local-variable 'company-frontends)

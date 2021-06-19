@@ -44,9 +44,14 @@
   )
 
 (night/server-name-set-auto)
+(defun night/server-alt1-p ()
+  (interactive)
+  (and (boundp 'server-name)
+       (s-ends-with-p "_alt1" server-name)))
+
 (when (not (server-running-p))
   (cond
-   ((s-ends-with-p "_alt1" server-name)
+   ((night/server-alt1-p)
     ;; (night/unadvice #'ivy--switch-buffer-action)
     (advice-add #'ivy--switch-buffer-action :after #'night/irc-maybe-show-count-ni))
    ;; @note +irc--ivy-switch-to-buffer-action will also call ivy--switch-buffer-action

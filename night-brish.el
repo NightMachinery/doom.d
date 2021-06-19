@@ -117,12 +117,29 @@
   (save-mark-and-excursion
     (let*
         ((code
-          (buffer-substring-no-properties beg end)
-          ))
-      (eros--eval-overlay
-       ;; (format "res: %s" code)
-       (s-trim-right (night/brishz-in-session "emacs" "eval" code))
-       end))))
+          (buffer-substring-no-properties beg end))
+         (result (s-trim-right (night/brishz-in-session "emacs" "eval" code))))
+      (if (< (length result) 50)
+          (eros--eval-overlay
+           ;; (format "res: %s" code)
+           result
+           end)
+        (progn
+          (comment (lispy-message result t))
+          (progn (let ((bn "*brishz-output*"))
+                     (ignore-errors (kill-buffer bn))
+                     (let ((b (get-buffer-create bn)))
+                       (with-current-buffer b
+                         (insert result)
+                         (goto-char (point-min))
+
+                         ;; (special-mode)
+                         (+word-wrap-mode)
+                         (read-only-mode)
+
+                         (pop-to-buffer b)
+                         (doom/toggle-line-numbers)
+                         )))))))))
 
 (defun night/brishz-eval-line ()
   (interactive)
@@ -132,13 +149,48 @@
       (my-select-current-line)
       (call-interactively #'night/brishz-eval-region))))
 
+(defun night/brishz-eval-cell ()
+  (interactive)
+  (if (use-region-p)
+      (call-interactively #'night/brishz-eval-region)
+    (save-mark-and-excursion
+      (-if-let* ((cell (night/cell-get))
+                 (beg (car cell))
+                 (end (cadr cell)))
+          (night/brishz-eval-region beg end)))))
+
+(defun night/region-get-regexp (opening closing)
+  (let ( (end (save-excursion ; using save-excursion because
+                                        ; we don't want to move the
+                                        ; point.
+                (re-search-forward closing nil t))) ; bound nil
+                                        ; no-error t
+         (beg (save-excursion (re-search-backward opening nil t))))
+    (when (and end beg)
+      (list beg end)
+      )))
+
+(defun night/cell-get ()
+  (let ((cell-marker "^\s*##+"))
+    (night/region-get-regexp cell-marker cell-marker)))
+
+(defun night/cell-select ()
+  (interactive)
+  (-if-let* ((cell (night/cell-get))
+             (beg (car cell))
+             (end (cadr cell)))
+      (progn (push-mark end)
+             (goto-char beg)
+             (activate-mark))))
+
 (after!
   (sh-script)
   ;; (z bello)
   (map! :map sh-mode-map
         :localleader
         "er" #'night/brishz-eval-region
-        "ee" #'night/brishz-eval-line))
+        "ee" #'night/brishz-eval-line
+        "ec" #'night/brishz-eval-cell))
 ;;;
 (defun night/brishz-doc-at-point ()
   "Show help for the symbol at point."

@@ -116,6 +116,8 @@ move COUNT - 1 screen lines forward first."
   (map! :leader
         "f r" #'night/fzf-recentf
 
+        "y o" #'poporg-dwim
+
         "t d" #'night/tab-close
         "t D" #'night/tab-close-others
 

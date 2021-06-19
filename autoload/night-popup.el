@@ -1,6 +1,13 @@
 ;;; night-popup.el ---                               -*- lexical-binding: t; -*-
 
+
+(set-popup-rule! "^\\*sly-desc.*\\*$" :ignore nil :height 0.6)
+
 (set-popup-rule! "^\\*lispy.*\\*$" :ignore nil :height 0.5)
+
+(set-popup-rule! "^\\*brishz.*\\*$" :ignore nil :height 0.5)
+
+(set-popup-rule! "^.*poporg.*$" :ignore nil :height 0.5)
 
 (set-popup-rule! "^\\*vc-diff*\\*$" :ignore nil :height 0.5)
 

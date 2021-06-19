@@ -61,6 +61,8 @@
   :recipe (:host github :repo "alphapapa/prism.el"))
 (package! orgmdb
   :recipe (:host github :repo "isamert/orgmdb.el"))
+(package! explain-pause-mode
+  :recipe (:host github :repo "lastquestion/explain-pause-mode"))
 ;;;
 ;; this git repo was outdated, I am installing directly from emacswiki
 ;; (package! highlight
