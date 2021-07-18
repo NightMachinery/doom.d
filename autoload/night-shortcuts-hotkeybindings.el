@@ -118,6 +118,10 @@ move COUNT - 1 screen lines forward first."
 
         "y o" #'poporg-dwim
 
+        "x" nil                         ;;  @doom unbinds doom/open-scratch-buffer
+        "x s" #'doom/open-scratch-buffer
+        "x d" #'fixup-whitespace
+
         "t d" #'night/tab-close
         "t D" #'night/tab-close-others
 
@@ -127,7 +131,7 @@ move COUNT - 1 screen lines forward first."
         "s h p" #'hlt-previous-highlight
         "s h f" #'night/hlt-counsel-face
 
-        "s d" #'night/search-dir ;; overrides doom's default search pwd function
+        "s d" #'night/search-dir ;; overrides @doom's default search pwd function
         )
 
   (map! :map profiler-report-mode-map

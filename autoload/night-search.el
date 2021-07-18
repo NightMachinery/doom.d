@@ -7,8 +7,10 @@
 (cl-defun night/search-dir (&key (dir nil) (args "") (query "") (prompt "> "))
   "Conduct a text search in files under the given folder."
   (interactive)
-  (let ((default-directory (or dir default-directory))
-        )
+  (let* ((default-directory (or dir
+                                ;; (counsel--git-root)
+                                default-directory))
+         (dir default-directory))
     (progn
       (setq ivy-calling-tmp ivy-calling)
       (setq-default ivy-calling t)

@@ -15,3 +15,8 @@
   "Remove all advices from symbol SYM."
   (interactive "aFunction symbol: ")
   (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
+
+;;;
+(require 'eredis)
+(setq redis-connection-0 (eredis-connect "localhost" 6379))
+;;;

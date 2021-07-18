@@ -131,6 +131,10 @@
 
 (package! memoize)
 
+(package! vimrc-mode)
+
+(package! eredis)
+
 (package! xterm-color)
 
 (package! company-quickhelp) ;; uses pos-tip which only works in GUI

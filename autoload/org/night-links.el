@@ -104,7 +104,8 @@
             ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
             ("cellar" . ,(concat (getenv "cellar") "/"))
             ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
-            ("orgdir" . ,(concat  org-directory "/"))))
+            ("orgdir" . ,(concat  org-directory "/"))
+            ("vol" . ,(concat  "/Volumes/"))))
   (add-to-list 'org-modules 'org-protocol)
   ;; https://orgmode.org/manual/Link-Abbreviations.html
   ;; If you need special abbreviations just for a single Org buffer, you can define them in the file with:
@@ -131,5 +132,10 @@
     (concat "HOME:" (night/browse-HOME))
     )
   (org-link-set-parameters "HOME" :complete #'org-HOME-complete-link)
+;;;
+  (after! (org-yt)
+    (defun org-yt-follow (video-id)
+      "Open youtube with VIDEO-ID."
+      (z awaysh mpv-notag --force-window=immediate (concat "https://youtu.be/" video-id))))
 ;;;
   )

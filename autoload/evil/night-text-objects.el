@@ -13,6 +13,8 @@
 
   (targets-define-to pipe "|" nil separator
                      :bind t :keys "|")
+  (targets-define-to cell "##+" nil separator
+                     :bind t :keys "C") ;; @seeAlso `night/cell-select'
 
   (targets-define-to shfun
                      ;; "function "

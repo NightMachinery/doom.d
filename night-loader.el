@@ -37,7 +37,8 @@
   (load "~/.private-config.el" t)
   (progn ;; with-eval-after-load 'pdf-view
     (when (not (night/server-p))
-      (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")))
+      ;; (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")
+   ))
 
   ;; (add-hook 'doom-after-init-modules-hook #'night/load-last)
   (night/load-last)

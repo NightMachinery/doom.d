@@ -41,7 +41,7 @@
                     (cl-decf level))
                    ("url"
                     (insert
-                     (format "%s %s\n"
+                     (format "%s %s\n\n"
                              (make-string level ?*)
                              (org-make-link-string
                               (alist-get 'url al)
