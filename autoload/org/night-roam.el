@@ -9,4 +9,7 @@
    )
 
   (setq +org-roam-open-buffer-on-find-file nil)
-  (setq org-roam-db-update-idle-seconds 600))
+  (setq org-roam-db-update-idle-seconds 600)
+
+  (provide 'night-roam)
+  )
