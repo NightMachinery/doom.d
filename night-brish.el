@@ -19,6 +19,13 @@
   (night/h-brishz-arg arg t)
   )
 
+(defvar *brishz-retcode* 0 "A global reply variable that holds the return code of the last invocation of night/brishz")
+
+(defun night/brishz? ()
+  "Whether the last night/brishz invocation returned zero."
+  (interactive)
+  (= *brishz-retcode* 0))
+
 (defun night/brishz (&rest args)
   ;; @todo1 @perf add night/brishz-eval that uses elisp to make the HTTP requests
   ;; then use it in night/ivy-docstring
@@ -49,7 +56,9 @@
       (push (night/h-brishz-arg arg) str-args))
 
     (with-output-to-string
-      (apply #'call-process "brishzq.zsh" nil (list standard-output error-file) nil (nreverse str-args))
+      (setq *brishz-retcode* (apply #'call-process "brishzq.zsh" nil (list standard-output error-file) nil (nreverse str-args))
+            ;; @singleThreaded Emacs Lisp has no real multithreading, so it is safe to store results inside private global variable.
+            )
 
 
       ;; display errors, stolen from emacs' `shell-command` function, stolen from https://emacs.stackexchange.com/questions/12450/capturing-stderr-of-subprocesses?noredirect=1&lq=1
@@ -82,9 +91,12 @@
 (defmacro zf (&rest args)
   (list 'split-string (append '(z) args) "\n" t)
   )
+
 (defmacro z0 (&rest args)
-  (list 'split-string (append '(z) args) "\0" t)
-  )
+  (list 'split-string (append '(z) args) "\0" t))
+
+(defmacro zb (&rest args)
+  (list 'progn (append '(z) args) '(night/brishz?)))
 
 (defalias 'i 'identity)
 ;;; tests:
@@ -93,6 +105,9 @@
   (message "%s" (z ec (buffer-file-name))))
 
 (mycomment
+ (zb true)
+ (zb false)
+
  (z ecn hi)
  (z "ecn" hi)
  (night/brishz-in-session "hi" "ec" "wow")
