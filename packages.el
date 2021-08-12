@@ -106,6 +106,8 @@
 (package! hungry-delete)
 (package! ob-tmux)
 
+(package! evil-tutor)
+
 (unpin! julia-mode julia-repl)
 (package! julia-mode)
 (package! julia-repl)
@@ -116,6 +118,7 @@
 ;; (package! fzf)
 (package! org-drill)
 (package! org-ql)
+
 (package! org-books)
 (package! helm-org-ql)
 (package! toc-org)
