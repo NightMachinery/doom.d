@@ -138,4 +138,26 @@
       "Open youtube with VIDEO-ID."
       (z awaysh mpv-notag --force-window=immediate (concat "https://youtu.be/" video-id))))
 ;;;
+(defun night/org-remove-link-to-desc-at-point ()
+    "Replace an org link by its description or if empty its address"
+    ;; Forked from https://emacs.stackexchange.com/questions/10707/in-org-mode-how-to-remove-a-link
+  (interactive)
+  (if (org-in-regexp org-link-bracket-re 1)
+      (save-excursion
+        (let ((remove (list (match-beginning 0) (match-end 0)))
+              (description
+               (if (match-end 2)
+                   (org-match-string-no-properties 2)
+                 (org-match-string-no-properties 1))))
+          (apply 'delete-region remove)
+          (insert description)))))
+
+(defun night/org-remove-link-to-desc (beg end)
+  (interactive "r")
+  (save-mark-and-excursion
+    (goto-char beg)
+    (while (re-search-forward org-link-bracket-re end t)
+      (goto-char (match-beginning 0))
+      (night/org-remove-link-to-desc-at-point))))
+;;;
   )

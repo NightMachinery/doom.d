@@ -180,6 +180,8 @@
 
 (define-key company-active-map "\t" 'night/company-yasnippet-or-completion)
 (define-key company-active-map (kbd "TAB") 'night/company-yasnippet-or-completion)
+;; This TAB key was buggy on some eOS machine. In the end, I bound a useless key to `global-map' for `night/company-yasnippet-or-completion'.
+
 (defun night/company-yasnippet-or-completion ()
   (interactive)
   (let ((yas-fallback-behavior nil))
