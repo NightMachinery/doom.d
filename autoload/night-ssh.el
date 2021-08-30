@@ -59,6 +59,10 @@
 (defun night/scp-eva ()
   (interactive)
   (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
+
+(defun night/scp-pari ()
+  (interactive)
+  (dired "/scp:paria@Parias-MacBook-Air.local:/home/paria/"))
 ;;;
 ;; https://emacs.stackexchange.com/questions/64090/change-company-backends-for-tramp-buffers
 (defun night/tramp-enter ()

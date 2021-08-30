@@ -96,7 +96,10 @@
   (list 'split-string (append '(z) args) "\0" t))
 
 (defmacro zb (&rest args)
-  (list 'progn (append '(z) args) '(night/brishz?)))
+  ;; (list 'progn (append '(z) args) '(night/brishz?))
+  ;; this method triggered a failure on BrishGarden
+  ;;;
+  (list 'equalp "0" (append '(z) (list "reval-retcode") args)))
 
 (defalias 'i 'identity)
 ;;; tests:
