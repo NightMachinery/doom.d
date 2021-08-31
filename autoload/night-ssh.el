@@ -16,7 +16,8 @@
   )
 (defun night/load-tramp-theme ()
   (interactive)
-  (if (zb isLocal)                      ;; the tramp theme broke emacs (black text was rendered red and other fun stuff) on SSH on our old laptop, so I am disabling it
+  (if (and (zb isLocal)
+           (zb isMe))                      ;; the tramp theme broke emacs (black text was rendered red and other fun stuff) on SSH on our old laptop, so I am disabling it
       (progn (load-theme 'tramp t t)
              ;; (load-theme night-theme t)
              (enable-theme 'tramp)
