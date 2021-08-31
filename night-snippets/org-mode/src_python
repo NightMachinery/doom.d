@@ -1,6 +1,7 @@
 # -*- mode: snippet -*-
 # key: <sp
 # uuid: <sp
+# @warn errors are not shown when using sessions
 # --
 #+begin_src python :session p1 :results value :exports both :wrap example
 `%`$0
