@@ -182,11 +182,11 @@
 (define-key company-active-map (kbd "TAB") 'night/company-yasnippet-or-completion)
 ;; This TAB key was buggy on my old eOS machine and the new M1 (perhaps emacs@28 is to blame?). In the end, I bound a these to `global-map' for `night/company-yasnippet-or-completion', too.
 (map!
- │ ;; :map undo-fu-mode-map
- │:nviog
- │ ;; C-/ seems to type C-_ on my config -_-
- │ "C-_" #'night/company-yasnippet-or-completion
- │ "C-/" #'night/company-yasnippet-or-completion)
+ ;; :map undo-fu-mode-map
+ :nviog
+ ;; C-/ seems to type C-_ on my config -_-
+ "C-_" #'night/company-yasnippet-or-completion
+ "C-/" #'night/company-yasnippet-or-completion)
 
 (defun night/company-yasnippet-or-completion ()
   (interactive)
