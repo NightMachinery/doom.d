@@ -45,7 +45,7 @@
 
 (defun night/tramp-refresh ()
   (interactive)
-  (recentf-cleanup)
+  ;; (recentf-cleanup) ;; takes too long
   (tramp-cleanup-all-buffers)
   (tramp-cleanup-all-connections))
 (defun night/scp-eva-borg ()
@@ -63,7 +63,10 @@
 
 (defun night/scp-pari ()
   (interactive)
-  (dired "/scp:paria@Parias-MacBook-Air.local:/home/paria/"))
+  (dired "/scp:paria@Parias-MacBook-Air.local:/home/paria/scripts/"))
+(defun night/ssh-pari ()
+  (interactive)
+  (dired "/ssh:paria@Parias-MacBook-Air.local:/home/paria/scripts/"))
 ;;;
 ;; https://emacs.stackexchange.com/questions/64090/change-company-backends-for-tramp-buffers
 (defun night/tramp-enter ()
