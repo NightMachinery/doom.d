@@ -265,7 +265,9 @@
 ;;;
 (after! company
 
-  (when (window-system)                 ;; when GUI
+  (when (and
+         nil ;; @futureCron company-box suddenly became buggy and caused weird visual effects like flashing to black. Since it used to work well, do try it later again.
+         (display-graphic-p))                 ;; when GUI
     (require 'company-box)
     (setq company-box-backends-colors
           '(

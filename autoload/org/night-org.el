@@ -33,7 +33,7 @@
            (make-temp-name
             (concat (file-name-nondirectory (buffer-file-name))
                     "_imgs/"
-                    (format-time-string "%Y%m%d_%H%M%S_")) ) ".png"))
+                    (format-time-string "%Y%m%d_%H%M%S_"))) ".png"))
     (unless (file-exists-p (file-name-directory filename))
       (make-directory (file-name-directory filename)))
                                         ; take screenshot
@@ -41,16 +41,25 @@
         ;; url-copy-file for downloading URLs
         ;; (call-process "pngpaste" nil nil nil filename)
         ;; @bug This always uses the png extension, while the file can be, e.g., jpg.
-        (call-process "brishzq.zsh" nil nil nil "saveas-img" (concat (file-name-directory (buffer-file-name)) "/" filename))
+        (call-process "brishzq.zsh" nil nil nil "pbpaste-image" (concat (file-name-directory (buffer-file-name)) "/" filename))
       ;; (call-process "screencapture" nil nil nil "-i" filename)
       )
     (if (eq system-type 'gnu/linux)
         (call-process "import" nil nil nil filename))
                                         ; insert into file if correctly taken
+
     (if (file-exists-p filename)
-        (insert (concat "[[file:" filename "]]")))
-    (org-redisplay-inline-images)
-    )
+        (let* (
+               (width-max 650) ;; 800, 850 are also possible, but big images slow emacs when scrolling
+               (width-orig (string-to-number (z img-width (i filename))))
+               (width-orig (/ width-orig 2.5))
+               (width (cond
+                       ((= width-orig 0) ;; parse error has happened
+                        500)
+                       ((<= width-orig width-max) width-orig)
+                       (t width-max))))
+          (insert (concat "#+ATTR_HTML: :width " (number-to-string (round width)) "\n[[file:" filename "]]\n"))))
+    (org-redisplay-inline-images))
 
   (setq org-blank-before-new-entry '(
                                      (heading . t)

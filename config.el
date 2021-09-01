@@ -82,6 +82,11 @@
 (cond
  ((s-ends-with-p "_alt1" server-name)
   (setq night-theme 'doom-nord-light))
+ ((display-graphic-p)
+  (setq night-theme 'doom-nord-light
+        ;; 'doom-ayu-light
+        ;; 'doom-one-light
+        ))
  (t
   (setq night-theme 'solarized-light)
   ;; (setq night-theme 'doom-solarized-light) ; subtly different
