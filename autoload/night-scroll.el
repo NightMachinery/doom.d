@@ -33,7 +33,18 @@
 ;;;
     ;; (evil-scroll-up 0)
 ;;;
-    (night/screen-center)
+    (let ((current-line (line-number-at-pos (point)))
+          (start-line (line-number-at-pos (window-start)))
+          (last-line (line-number-at-pos (window-end))))
+      (message "current-line: %s; start-line: %s; last-line: %s" current-line start-line last-line)
+      (cond
+       ((>= (+ 1 current-line)
+            last-line)
+        (ignore-errors (recenter -1)))
+       ((<= (+ 0 current-line)
+            start-line)
+        (ignore-errors (recenter 0)))
+       (t (night/screen-center))))
 
     ;; (ignore-errors (recenter 0))
     )
@@ -62,7 +73,18 @@
     ;; (evil-scroll-down 0)
     ;; using 4 caused even more buggy behavior when scrolling images
 ;;;
-    (night/screen-center)
+    (let ((current-line (line-number-at-pos (point)))
+          (start-line (line-number-at-pos (window-start)))
+          (last-line (line-number-at-pos (window-end))))
+      (message "current-line: %s; start-line: %s; last-line: %s" current-line start-line last-line)
+      (cond
+       ((>= (+ 1 current-line)
+            last-line)
+        (ignore-errors (recenter -1)))
+       ((<= (+ 0 current-line)
+            start-line)
+        (ignore-errors (recenter 0)))
+       (t (night/screen-center))))
     ;; recentering can cause the nasty behavior where the cursor is at just below the modeline and invisible, but not recentering can cause losing unseen content between scrolls
 
     ;; (ignore-errors (recenter 0)) ;; loses unseen content easily
