@@ -21,8 +21,9 @@
 ;;;
 (defun night/browse-dir (&optional dir)
   (interactive)
-  (let* ((dir (or dir default-directory "/"))
-        (default-directory dir))
+  (let* ((ivy-truncate-lines nil)
+         (dir (or dir default-directory "/"))
+         (default-directory dir))
     ;; (counsel-find-file dir)
     ;; (counsel-file-jump "" dir) ; we used this one before using fzf
 
@@ -112,7 +113,7 @@
                                        starting-level
                                        "\n"))
             (insert-for-yank link)
-            (if description
+            (if (and description meta)
                 (if quote
                     (progn
                       (insert (format  "\n#+BEGIN_QUOTE\n%s\n#+END_QUOTE\n" meta)))

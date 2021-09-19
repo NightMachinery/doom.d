@@ -12,8 +12,18 @@
   (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-plus))
   )
 
-(after! (ivy  counsel ivy-rich)
+(after! (ivy counsel ivy-rich)
   (setq counsel-find-file-ignore-regexp nil) ;; @tradeoff @config
+
+  ;;;
+  (setq ivy-truncate-lines t)
+  ;; @workaround turn this off using a local let bind on relevant functions
+
+  ;; (setq ivy-truncate-lines nil)
+  ;; otherwise, we can't see long paths
+  ;; @upstreamBug ivy-rich adds extra stuff that it assumes will be just truncated, so it doesn't play nicely with this:
+  ;;   https://github.com/Yevgnen/ivy-rich/issues/112
+  ;;;
 
   (defun night/ivy--directory-out ()
     (interactive)

@@ -41,8 +41,7 @@
       ;; (message "p1: %s" p)
       (xterm-color-colorize-buffer)
       ;; (message "p2: %s" p)
-      (goto-char p))
-    )
+      (goto-char p)))
 
   (defalias 'night/babel-ansi #'night/babel-ansi2)
   (add-hook 'org-babel-after-execute-hook 'night/babel-ansi)
@@ -88,4 +87,7 @@
       "Face used for level 9 headlines."
       :group 'org-faces)
     (setq org-level-faces (append org-level-faces (list 'org-level-9)))
-    (setq org-n-level-faces (length org-level-faces))))
+    (setq org-n-level-faces (length org-level-faces))
+    (when (display-graphic-p) ;; the current GUI theme doesn't differentiate between level 2 and 3 well, so I am just showing all the stars. It might be better this way anyway, even if the theme was fine.
+      (setq org-hide-leading-stars nil
+            org-indent-mode-turns-on-hiding-stars nil))))

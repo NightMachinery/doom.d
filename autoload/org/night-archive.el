@@ -53,6 +53,7 @@ if LOCATION is not given, the value of `org-archive-location' is used."
       (format (match-string 2 location)
               (file-name-nondirectory
                (buffer-file-name (buffer-base-buffer))))))
+
 (defadvice org-archive-subtree (around fix-hierarchy activate)
   (let* ((fix-archive-p (and (not current-prefix-arg)
                              (not (use-region-p))))
@@ -109,4 +110,6 @@ if LOCATION is not given, the value of `org-archive-location' is used."
               (widen)
               (org-end-of-subtree t t)
               (org-paste-subtree level tree-text))))))))
+
+(advice-add #'org-archive-subtree :after #'save-some-buffers)
 ;;;

@@ -63,10 +63,10 @@
 
 (defun night/scp-pari ()
   (interactive)
-  (dired "/scp:paria@Parias-MacBook-Air.local:/home/paria/scripts/"))
+  (dired "/scp:paria@Parias-MacBook-Air.local:/Users/paria/scripts/"))
 (defun night/ssh-pari ()
   (interactive)
-  (dired "/ssh:paria@Parias-MacBook-Air.local:/home/paria/scripts/"))
+  (dired "/ssh:paria@Parias-MacBook-Air.local:/Users/paria/scripts/"))
 ;;;
 ;; https://emacs.stackexchange.com/questions/64090/change-company-backends-for-tramp-buffers
 (defun night/tramp-enter ()

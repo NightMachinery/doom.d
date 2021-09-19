@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <ep
+# uuid: <ep
+# --
+#+begin_example python
+`%`$0
+#+end_example

@@ -64,6 +64,15 @@
 (package! explain-pause-mode
   :recipe (:host github :repo "lastquestion/explain-pause-mode"))
 ;;;
+(package! fuz
+  :recipe (:host github :repo "rustify-emacs/fuz.el"))
+(package! snails
+  :recipe (:build (:not compile) :host github :repo "manateelazycat/snails"))
+;;;
+(package! vundo                         ;; needs at least emacs@28
+  :recipe (:host github :repo "casouri/vundo"))
+
+;;;
 ;; this git repo was outdated, I am installing directly from emacswiki
 ;; (package! highlight
 ;;   ;; @example
@@ -83,6 +92,12 @@
 (package! targets
   :recipe (:repo "noctuid/targets.el" :type git :host github))
 (package! exato)
+
+;; (package! term-cursor
+;;   :recipe (:repo "h0d/term-cursor.el" :type git :host github))
+(package! evil-terminal-cursor-changer)
+
+(package! mips-mode)
 
 (package! applescript-mode)
 (package! magit-vcsh)
@@ -105,6 +120,7 @@
 (package! nov)
 (package! hungry-delete)
 (package! ob-tmux)
+(package! iscroll)
 
 (package! evil-tutor)
 

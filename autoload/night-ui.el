@@ -1,6 +1,33 @@
-(when (display-graphic-p)
-  (doom-adjust-font-size 2)
-  )
+(cond ((display-graphic-p)
+       (doom-adjust-font-size 2)
+
+       (setq evil-insert-state-cursor '(box "purple"))
+
+       ;; (setq evil-normal-state-cursor '(box "royalblue"))
+       ;; (setq evil-insert-state-cursor '((bar . 5) "yellow"))
+       )
+      (t
+       ;; [[nightNotes:subjects/software/tools, apps, utility/CLI/terminal emulators/escape codes/change cursor type.org][escape codes/change cursor type.org]]
+       ;;
+       ;; These do not support colors.
+       ;;
+       ;; (global-term-cursor-mode)
+       ;;
+       ;; https://github.com/7696122/evil-terminal-cursor-changer
+       ;;
+       ;; (setq evil-insert-state-cursor '(box "azure"))
+       ;; (setq evil-normal-state-cursor '(box "paleturquoise"))
+
+       ;; [[NIGHTDIR:configFiles/kitty/themes/night-solarized-light.conf][themes/night-solarized-light.conf]]
+       ;; (setq evil-insert-state-cursor '(box "azure"))
+       (setq evil-insert-state-cursor '(box "#f19618"
+                                            ;; orange
+                                            ))
+       (setq evil-normal-state-cursor '(box "#c7ceff"))
+
+       (require 'evil-terminal-cursor-changer)
+       (evil-terminal-cursor-changer-activate)
+       ))
 ;;;
 (after! highlight
   (setq hlt-max-region-no-warning 999999999999999))

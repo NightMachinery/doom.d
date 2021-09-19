@@ -23,12 +23,12 @@
                      :bind t :hooks (sh-mode-hook) :keys "f")
   ;; (symbol-function 'targets-inner-shfun)
 
-  ;;; this doesn't work when you're at the end of the line:
+;;; this doesn't work when you're at the end of the line:
   ;; (targets-define-to line
   ;;                    "^\s*" ;; this makes the inner text objects work correctly, but it breaks the remote, next, last text objects
   ;;                    "\s*$" pair
   ;;                    :bind t :keys "l")
-  ;;;
+;;;
 
   ;; (defun targets--shrink-inner (bounds)
   ;;   "Shrink RANGE by 1 character on each side."
