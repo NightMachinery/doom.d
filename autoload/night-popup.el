@@ -1,18 +1,30 @@
 ;;; night-popup.el ---                               -*- lexical-binding: t; -*-
 
+(set-popup-rule! "^\\*eldoc.*\\*$" :ttl 60 :width 0.3 :side 'right)
+;; (set-popup-rule! "^\\*eldoc.*\\*$" :ttl 60 :height 0.3)
 
-(after! (lispy sly)
-  (set-popup-rule! "^\\*sly-desc.*\\*$" :ignore nil :height 0.6)
+(set-popup-rule! "^\\*Help.*\\*$"  :height 0.5)
 
-  (set-popup-rule! "^\\*lispy.*\\*$" :ignore nil :height 0.5)
+(set-popup-rule! "^\\*brishz.*\\*$" :ignore nil :height 0.5)
 
-  (set-popup-rule! "^\\*brishz.*\\*$" :ignore nil :height 0.5)
+;; doesn't work, @idk why
+;; (set-popup-rule! "^\\*RE.Builder.*\\*$" :ignore nil :height 0.3)
 
-  (set-popup-rule! "^.*poporg.*$" :ignore nil :height 0.5)
+(set-popup-rule! "^.*poporg.*$" :ignore nil :height 0.5)
 
-  (set-popup-rule! "^\\*vc-diff*\\*$" :ignore nil :height 0.5)
+(set-popup-rule! "^\\*vc-diff*\\*$" :ignore nil :height 0.5)
 
-  (set-popup-rule! "^\\*night-html-viewer\\*$" :ignore nil :height 0.7))
+(set-popup-rule! "^\\*night-html-viewer\\*$" :ignore nil :height 0.7)
+
+(after! (eglot)
+  (set-popup-rule! "^\\*eglot.*\\*$" :ignore nil :height 0.5 :select t))
+(after! (julia-repl)
+  (set-popup-rule! "^\\*julia.*\\*$" :ignore nil :height 0.5)
+  )
+(after! (lispy)
+  (set-popup-rule! "^\\*lispy.*\\*$" :ignore nil :height 0.5))
+(after! (sly)
+  (set-popup-rule! "^\\*sly-desc.*\\*$" :ignore nil :height 0.6))
 ;;;
 (setq night/fullscreen-popups nil)
 (defun night/fullscreen-popups-disable ()

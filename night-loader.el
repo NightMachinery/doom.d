@@ -43,7 +43,7 @@
   ;; (add-hook 'doom-after-init-modules-hook #'night/load-last)
   (night/load-last)
 
-
+  (message "TERM: %s" (getenv "TERM"))
   (night/brishz 'awaysh 'eval "sleep 10 ; bell-sc2-evo-perfection")
   )
 (night/load-config)

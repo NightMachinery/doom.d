@@ -27,14 +27,75 @@
     (night/select-current-sexp arg)
     (command-execute 'eval-region)))
 ;;;
+(defun night/h-goto-paren-move-around ()
+  (let ((c (char-after)))
+    (cond
+     ;; ((equalp c ?\()
+     ;;  nil)
+     ((equalp c ?\))
+      (night/point-increment))
+     (t
+      (message "char: %s" (char-to-string c))))))
+
+(defun night/point-increment ()
+  ;; (interactive)
+  (goto-char (min (point-max) (+ (point) 1))))
+
+(defun night/point-decrement ()
+  ;; (interactive)
+  (goto-char (max 1 (- (point) 1))))
+
+(cl-defun night/h-goto-paren-gen (&key (count 1) ;; currently only supporting 1 and -1
+                                       (pattern "(\\|)")
+                                       (hook-after #'night/h-goto-paren-move-around))
+  (let ((repeat t))
+    (while repeat
+      (let (
+            (c (char-after (point)))
+            (c1 (char-after (+ (point) 1)))
+            (c_1 (char-after (- (point) 1)))
+            (c_2 (char-after (- (point) 2))))
+        (cond
+         ((<= count -1) (cond
+                         ((or
+                           (equalp c_1 ?\()
+                           (equalp c_2 ?\)))
+                          (night/point-decrement))
+                         (t
+                          (night/point-decrement)
+                          (search-backward-regexp pattern nil t)
+                          (funcall hook-after))))
+         ((>= count 1)
+          (cond
+           ((or (equalp c1 ?\()
+                (equalp c ?\)))
+            (night/point-increment))
+           (t
+            (night/point-increment)
+
+            (when (search-forward-regexp pattern nil t)
+              (night/point-decrement))
+            (funcall hook-after))))))
+      (when (not (or
+                  ;; (lispy--in-comment-p)
+                  (lispy--in-string-p)))
+        (setq repeat nil)))))
+
 (defun night/goto-previous-paren ()
+  (interactive)
+  (night/h-goto-paren-gen :count -1))
+
+(defun night/goto-next-paren ()
+  (interactive)
+  (night/h-goto-paren-gen :count 1))
+
+(defun night/goto-previous-closing-paren ()
   (interactive)
   (goto-char (max 1 (- (point) 1)))
   (lispyville-previous-closing)
-  (goto-char (+ (point) 1))
-  )
+  (goto-char (+ (point) 1)))
 
-(defun night/goto-next-paren ()
+(defun night/goto-next-closing-paren ()
   (interactive)
   (goto-char (max 1 (- (point) 1)))
   (lispyville-next-closing)

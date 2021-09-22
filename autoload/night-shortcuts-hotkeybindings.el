@@ -78,6 +78,8 @@ move COUNT - 1 screen lines forward first."
         :nvig
         "C-s" #'night/save-buffer
         :nvoig
+        "<next>" #'evil-avy-goto-char
+        :nvoig
         "S-<up>" #'night/scroll-halfpage-down ;; scroll commands use inverted terminology
         :nvoig
         "S-<down>" #'night/scroll-halfpage-up

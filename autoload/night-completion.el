@@ -20,9 +20,7 @@
          ;; ("<tab>" . #'company-complete-selection)
          ;; ("TAB" . #'company-complete-selection)
 
-         ;; When was the last time you used the C-s binding for
-         ;; searching candidates? It conflicts with buffer search,
-         ;; anyway.
+         ;; C-s was bound to company-search-candidates, which is pretty useless. I don't know what benefits unbinding it has, but it doesn't hurt.
          ("C-s" . nil)
 
          ;; The following are keybindings that only take effect if the
@@ -53,7 +51,11 @@
          ;; when the completions menu is open counts as an
          ;; interaction.
          ("<up>" . #'company-select-previous)
-         ("<down>" . #'company-select-next))
+         ("<down>" . #'company-select-next)
+
+         ("S-<up>" . #'scroll-other-window-down)
+         ("S-<down>" . #'scroll-other-window)
+         )
 
   :bind* (;; The default keybinding for `completion-at-point' and
           ;; `complete-symbol' is M-TAB or equivalently C-M-i. We
@@ -61,8 +63,8 @@
           ;; above. Here we make sure that they definitely invoke
           ;; `company-manual-begin' even if a minor mode binds M-TAB
           ;; directly.
-          ;; ("M-TAB" . #'company-manual-begin)
-          ("M-TAB" . #'counsel-company)
+          ("M-TAB" . #'company-manual-begin)
+          ;; ("M-TAB" . #'counsel-company)
           ("<prior>" . #'counsel-company) ;; PgUp
           )
 
@@ -187,6 +189,7 @@
  :map company-active-map
  :ig
  "TAB" #'night/company-yasnippet-or-completion
+ "<tab>" #'night/company-yasnippet-or-completion
  "\t" #'night/company-yasnippet-or-completion)
 (map!
  ;; :map undo-fu-mode-map
@@ -261,6 +264,49 @@
 ;;  ;; does NOT work with quickhelp, but manually invoking it via M-x does
 ;;  )
 ;;;
+;; the following will make a soft-wrapped doc popup show when browsing the completion candidates; Note that we do not need to be able to jump to this buffer, as we can just accept the completion and use =+lookup/documentation= on it. It would be nice to have a direct shortcut though.
+;;
+;; @todo0 use =scroll-other-window= instead?
+;;
+;; @helpme `company-doc-buffer` hides itself when I press any keys. How do I disable this autohiding? It makes it impossible to jump to the doc buffer when needed, and dismissing the window with ESC is easy enough anyway.
+
+(advice-add #'company-select-previous :after #'company-show-doc-buffer)
+(advice-add #'company-select-next :after #'company-show-doc-buffer)
+
+(map!
+ :map company-active-map
+ :ig
+ ;; "C-l" #'evil-window-next ;; @broken dismisses the popup, we probably need a doom-aware function
+ ;; > I want a function that focuses the popup buffer. I tried using evil-next-window, but this closes the popup before being able to select it.
+ )
+
+(defun company-show-doc-buffer (&rest dummy) ;; @monkeyPatched to make it usable with the advices
+  "Temporarily show the documentation buffer for the selection."
+  (interactive)
+  (let ((other-window-scroll-buffer)
+        (selection (or company-selection 0)))
+    (company--electric-do
+      (let* ((selected (nth selection company-candidates))
+             (doc-buffer (or (company-call-backend 'doc-buffer selected)
+                             (user-error "No documentation available")))
+             start)
+        (when (consp doc-buffer)
+          (setq start (cdr doc-buffer)
+                doc-buffer (car doc-buffer)))
+        (setq other-window-scroll-buffer (get-buffer doc-buffer))
+
+;;; @monkeyPatched
+        (with-current-buffer doc-buffer
+          (night/wrap-soft-enable)
+
+          ;; (message "company-doc-buffer-name: %s" doc-buffer) ;; usually "*Help*"
+          )
+;;;
+
+
+        (let ((win (display-buffer doc-buffer t)))
+          (set-window-start win (if start start (point-min))))))))
+;;;
 (defun night/disable-company ()
   (interactive)
   (company-mode -1))
@@ -268,23 +314,10 @@
 (defun night/disable-company-frontends ()
   (interactive)
   (make-local-variable 'company-frontends)
+  ;;; @experimental
+  ;; (make-local-variable 'company-active-map)
+  ;; (setq company-active-map (make-sparse-keymap))
+  ;;;
   (setq company-frontends nil))
-;;;
-(after! company
-
-  (when (and
-         nil ;; @futureCron company-box suddenly became buggy and caused weird visual effects like flashing to black. Since it used to work well, do try it later again.
-         (display-graphic-p))                 ;; when GUI
-    (require 'company-box)
-    (setq company-box-backends-colors
-          '(
-            (company-capf . (:selected (:background "light steel blue" :foreground "black")))
-            (company-dabbrev . (:selected (:background "light steel blue" :foreground "black")))
-            (company-dabbrev-code . (:selected (:background "light steel blue" :foreground "black")))
-            (company-files . (:selected (:background "light steel blue" :foreground "black")))
-            (company-ispell . (:selected (:background "light steel blue" :foreground "black")))
-            (company-yasnippet . (:all "lime green" :selected (:background "lime green" :foreground "black")))))
-    (add-hook 'company-mode-hook 'company-box-mode))
-  )
 ;;;
 (provide 'night-completion)

@@ -3,6 +3,8 @@
 (setq night/persian-font "B Nazanin") ;; "IranNastaliq"
 ;; (setq night/persian-font "Courier New")
 
+(setq default-input-method "farsi-isiri-9147")
+
 (defun night/enable-bidirectional ()
   (interactive)
 

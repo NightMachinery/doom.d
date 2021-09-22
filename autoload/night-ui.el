@@ -1,5 +1,6 @@
 (cond ((display-graphic-p)
-       (doom-adjust-font-size 2)
+       ;; (doom-adjust-font-size 2) ;; adjusting the GUI emacs font size
+       ;;;
 
        (setq evil-insert-state-cursor '(box "purple"))
 

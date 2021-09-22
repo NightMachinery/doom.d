@@ -64,10 +64,11 @@
 (package! explain-pause-mode
   :recipe (:host github :repo "lastquestion/explain-pause-mode"))
 ;;;
-(package! fuz
-  :recipe (:host github :repo "rustify-emacs/fuz.el"))
-(package! snails
-  :recipe (:build (:not compile) :host github :repo "manateelazycat/snails"))
+;; (package! fuz
+;;   :recipe (:host github :repo "rustify-emacs/fuz.el"))
+
+;; (package! snails
+;;   :recipe (:build (:not compile) :host github :repo "manateelazycat/snails"))
 ;;;
 (package! vundo                         ;; needs at least emacs@28
   :recipe (:host github :repo "casouri/vundo"))
@@ -124,16 +125,19 @@
 
 (package! evil-tutor)
 
-(unpin! julia-mode julia-repl)
+(unpin! julia-mode julia-repl eglot-jl)
 (package! julia-mode)
 (package! julia-repl)
 (package! eglot)
 (package! eglot-jl)
 ;; (when (package! eglot)
 ;;   (package! eglot-jl))
+
 ;; (package! fzf)
 (package! org-drill)
 (package! org-ql)
+
+(package! org-ref)
 
 (package! org-books)
 (package! helm-org-ql)
@@ -159,6 +163,7 @@
 (package! company-quickhelp) ;; uses pos-tip which only works in GUI
 (package! company-quickhelp-terminal)
 
+(unpin! company-box)
 (package! company-box)
 
 (package! eldoc-box)                    ;; GUI-only: https://github.com/casouri/eldoc-box/issues/35

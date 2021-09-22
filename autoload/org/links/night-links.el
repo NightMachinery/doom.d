@@ -2,15 +2,19 @@
 
 (after! (org evil-org evil ol)
 ;;;
-  (defun night/org-show-link-display ()
+  (cl-defun night/org-show-link-display (&key (hide nil) (default t))
     (interactive)
-    (setq org-link-descriptive t)
+    (when default
+      (setq-default org-link-descriptive hide))
+
+    (setq org-link-descriptive (not hide))
+    ;; will become buffer-local and toggled next
+
     (org-toggle-link-display))
 
-  (defun night/org-hide-link-display ()
+  (cl-defun night/org-hide-link-display (&key (default t))
     (interactive)
-    (setq org-link-descriptive nil)
-    (org-toggle-link-display))
+    (night/org-show-link-display :hide t :default default))
 
   (night/org-show-link-display) ;; this will cause the links to be displayed fully on startup:
 
@@ -34,8 +38,8 @@
            (preserve (lambda (str n)
                        (let* ((after
                                (replace-regexp-in-string
-                                (concat slash_or_marker n slash_or_marker)
-                                (concat magic_marker n "\\2") str)))
+                                (concat slash_or_marker "\\(" n "\\)" slash_or_marker)
+                                (concat magic_marker "\\2\\3") str)))
                          ;; (message "before: %s\nafter: %s" str after)
                          after)))
            (parent (cond
@@ -45,13 +49,19 @@
            (parent-2
             (or (ignore-errors ;; with-demoted-errors ;; ignore-errors
                   (--> bfn
-                    (funcall preserve it "resources")
+                    (funcall preserve it "resources?")
                     (funcall preserve it "learn")
-                    (funcall preserve it "cheatsheets")
-                    (funcall preserve it "gen")
-                    (funcall preserve it "general")
-                    (funcall preserve it "books")
-                    (funcall preserve it "papers")
+                    (funcall preserve it "cheatsheets?")
+                    (funcall preserve it "gen\\(?:eral\\)?")
+                    (funcall preserve it "books?")
+                    (funcall preserve it "papers?")
+                    (funcall preserve it "practical")
+                    (funcall preserve it "interactive")
+                    (funcall preserve it "libraries")
+                    (funcall preserve it "extensions?")
+                    (funcall preserve it "x")
+                    (funcall preserve it "todos?")
+                    (funcall preserve it "ideas?")
                     (prog1 (f-dirname it)
                       (message "it: %s" it))
                     (f-base it)

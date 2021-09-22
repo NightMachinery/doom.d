@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <seo
+# uuid: <seo
+# --
+#+begin_src elisp :results output :exports both :wrap example
+`%`(prin1 $0)
+#+end_src

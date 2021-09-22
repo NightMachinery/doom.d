@@ -51,8 +51,12 @@
 
 (global-visual-line-mode 't)
 
-
-;; this config seemed to make emacs hang:
+;;;
+(defun night/wrap-soft-enable ()
+  (interactive)
+  (night/with-messages-suppressed
+    (toggle-truncate-lines -1)))
+;;; this config seemed to make emacs hang:
 
 ;; (remove-hook 'text-mode-hook #'visual-line-mode)
 ;; (remove-hook 'text-mode-hook #'+word-wrap-mode)

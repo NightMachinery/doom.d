@@ -92,22 +92,38 @@
 
   (defun night/ivy-set-to-sel ()
     (interactive)
-    (save-excursion (when (not (eq ?/ (char-before)))
-                      (zap-up-to-char -1 ?/)
-                      ;; needs (require 'misc)
-                      ))
-    (insert (ivy-state-current ivy-last))
-    )
-  (define-key ivy-minibuffer-map (kbd "M-<right>") 'night/ivy-set-to-sel)
+    (let ((killed-line))
+      (while (and
+              (not (save-excursion (search-backward "/" (line-beginning-position) t)))
+              (not (= 1 (line-number-at-pos (point))))
+              (not (= (line-beginning-position) (point))))
+        ;; fix for when ivy's prompt becomes so long that it goes to the next line (ivy hard wraps its prompt)
+        (kill-whole-line)
+        (setq killed-line t))
+      (save-excursion (when (not (eq ?/ (char-before)))
+                        (ignore-errors (zap-up-to-char -1 ?/))))
+
+      (insert (ivy-state-current ivy-last))
+      (when killed-line
+        (save-excursion (insert "\n"))
+        ;; we need to compensate for the lines we have killed
+        )))
+  (define-key ivy-minibuffer-map (kbd "M-<right>") #'night/ivy-set-to-sel)
 ;;;
   (defun night/ivy-show-doc-buffer ()
-    "Temporarily show the documentation buffer for the selection."
+    "@broken"
     (interactive)
 ;;;
     ;; does not work
     ;; (info-lookup 'symbol (ivy-state-current ivy-last) 'lisp-mode)
+;;; some code snippets you might useful when trying to fix this:
+    ;; from /Users/evar/.emacs.d.doom/.local/straight/repos/company-mode/company-capf.el:142 :
+    ;; (let ((f (plist-get (nthcdr 4 company-capf--current-completion-data)
+    ;;                   :company-doc-buffer)))
+    ;; (when f (funcall f arg)))
 ;;;
     ;; @todo doesn't work because the major mode is wrong in the counsel buffer (I think)
+    ;; the key is getting the correct `company-capf--current-completion-data'
     (let ((cb (current-buffer))) ;; @idk how to get the main buffer
       (with-current-buffer cb
         (+lookup/documentation (ivy-state-current ivy-last))))
@@ -178,7 +194,7 @@
                   ;; @futureCron is the slowdown worth it?
                   ;; I think it should be possible to speed this up, but I don't really know what's the bottleneck. Perhaps if ivy-rich did this async ...
                   )
-                 (t "Not implemented yet")
+                 (t "Not implemented yet") ;; search for `:company-doc-buffer' to see how packages handle company's documentation/help
                  ))
            (doc (s-lines doc))
            (doc (s-join " ; " (or doc '("")))))

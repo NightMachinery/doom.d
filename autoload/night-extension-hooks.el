@@ -69,10 +69,15 @@ Use this to stop the audio files being played by org-mode links."
       ;; (z tts-glados1-cached "tramp, ready")
       (z bell-sonic-fx-ready))
     (when (equalp ext "org")
+      (kill-local-variable 'org-link-descriptive)
+      ;; [[file:~/.emacs.d.doom/.local/straight/repos/org/lisp/org.el::make-local-variable 'org-link-descriptive][newer org versions have make it a local var on all buffers, which we have undone here]]
+
       (when (s-contains? "..inline_links.." bfn)
         (make-local-variable 'buffer-invisibility-spec)
+
         (make-local-variable 'org-link-descriptive)
-        (night/org-hide-link-display))
+
+        (night/org-hide-link-display :default nil))
       (when (s-contains? "..startup.." bfn)
         ;; @securityRisk
         (night/org-execute-startup-block)))

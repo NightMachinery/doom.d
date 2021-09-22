@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <ecs
+# uuid: <ecs
+# --
+#+begin_example css
+`%`$0
+#+end_example
