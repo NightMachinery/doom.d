@@ -144,7 +144,10 @@
 (package! toc-org)
 (package! org-fragtog)
 (package! company-try-hard)
+
 (package! tramp-theme)
+(package! load-theme-buffer-local :recipe (:build (:not native-compile compile)))      ;; @noNativeComp
+
 (package! vlf)
 (package! bug-hunter)
 (package! telega)

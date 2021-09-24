@@ -6,6 +6,9 @@
 
 ;; (defface night/org-link-files '((t (:foreground "sienna4" :background "cornsilk" :weight bold))) "face for nightNotes links")
 ;; (org-link-set-parameters "file" :face 'night/org-link-files)
+  ;;;
+
+  (defface night/org-link-mouse-face '((t (:background "brightwhite" :weight bold))) "org links' mouse hover face")
 ;;;
   (defun org-activate-links (limit)
     "Add link properties to links.
@@ -42,7 +45,9 @@ This includes angle, plain, and bracket links."
                                     (_ 'org-link)))
                    (properties          ;for link's visible part
                     (list 'mouse-face (or (org-link-get-parameter type :mouse-face)
-                                          'highlight)
+                                          ;; 'highlight
+                                          'night/org-link-mouse-face ;; @monkeyPatched
+                                          )
                           'keymap (or (org-link-get-parameter type :keymap)
                                       org-mouse-map)
                           'help-echo (pcase (org-link-get-parameter type :help-echo)

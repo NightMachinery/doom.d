@@ -161,3 +161,19 @@
 
 (add-hook 'org-mode-hook #'night/zero-width-chars-hide)
 ;;;
+(defun night/theme-set-local-buffer (&optional theme)
+  "buggy, not recommended, but it still works"
+  (interactive)
+  (let ((theme (or theme
+                   'humanoid-light
+                   'doom-one)))
+    (require 'load-theme-buffer-local)
+    (load-theme-buffer-local theme (current-buffer))
+    (night/h-local-theme-workaround)))
+
+(defun night/h-local-theme-workaround ()
+  ;; @bug also disables our highlighting of at-tags, and I can't fix it even invoking `night/highlight-atsign'
+  ;; @bug it generally messes up some details of the main theme
+  (enable-theme night-theme) ;; @workaround for reseting the main theme to some random theme
+  )
+;;;

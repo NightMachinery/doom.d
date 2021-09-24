@@ -62,6 +62,8 @@
                     (funcall preserve it "x")
                     (funcall preserve it "todos?")
                     (funcall preserve it "ideas?")
+                    (funcall preserve it "CLIs?")
+                    (funcall preserve it "GUIs?")
                     (prog1 (f-dirname it)
                       (message "it: %s" it))
                     (f-base it)

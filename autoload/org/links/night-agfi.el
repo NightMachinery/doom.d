@@ -5,7 +5,9 @@
     (z awaysh agfi-ni (i path)))
   (org-link-set-parameters "agfi" :follow #'night/org-link-agfi-follow)
 
-  (defface night/org-link-face-agfi '((t (:foreground "blue4" :background "azure" :weight bold))) "face for nightNotes links")
+  (defface night/org-link-face-agfi '((t (:foreground "blue4"
+                                          ;; :background "azure"
+                                          :weight bold))) "face for nightNotes links")
   (org-link-set-parameters "agfi" :face 'night/org-link-face-agfi)
 
   )

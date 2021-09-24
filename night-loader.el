@@ -19,6 +19,7 @@
   ;; autoloaded functions can still get loaded after this; Use:
   ;; (advice-add 'original-function :override #'something-fixed)
   ;;;
+  ;; (mapcar #'load '("autoload/night-completion.el"))
   (mapcar #'load-night '("doom-overrides" "last")))
 
 (defun night/load-config ()

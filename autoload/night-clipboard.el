@@ -1,5 +1,29 @@
 ;;; ~/doom.d/night-clipboard.el -*- lexical-binding: t; -*-
+;;;
+(defun night/h-kill-skip-whitespace (orig-fn string &optional rest)
+  "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
+  (let* (
+         (string-raw (substring-no-properties string))
+         (space-p
+          (not (string-match-p "[^ \t\n\r]" string-raw))
+          ;; (or (equalp string-raw "")
+          ;;     (string-match-p "^\\(\s\\|\n\\)+$" string-raw) ;; '^', '$' are treated per line, so this won't work
+          ;;     )
+          ))
+    ;; (message "space-p: %s, isSpace: %s, string-raw: %s, string-cat: %s" space-p (zb isSpace (i string-raw)) string-raw (z reval-withstdin (i string-raw) cat -vte))
+    (cond
+     ((or
+       ;; t ;; disable this modification entirely
+       (not space-p))
+      (apply orig-fn string rest))
+     (t
+      ;; (message "skipped whitespace kill: %s" string-raw)
+      ;; (message "skipped whitespace kill")
 
+      ;; imitating the return value of `kill-new'
+      0))))
+(advice-add 'kill-new :around #'night/h-kill-skip-whitespace)
+;;;
 (defun ns-yank-image-at-point-as-image ()
   "Yank the image at point to the X11 clipboard as image/png."
   (interactive)

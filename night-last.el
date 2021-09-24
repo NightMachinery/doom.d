@@ -26,4 +26,22 @@
 
 ;; (night/load-tramp-theme) ; doesn't work
 ;;;
+(defun night/company-keybindings-enable ()
+  (interactive)
+  ;; This TAB key was buggy on my old eOS machine and the new M1 (perhaps emacs@28 is to blame?). In the end, I bound a these to `global-map' for `night/company-yasnippet-or-completion', too.
+  ;; Update: Using the below 'map!' snippet seems to have solved that problem.
+  ;; Update: I think after changing ="\t"=  to =(kbd "<tab>")=, the below snippet would not be necessary after all!
+  (map!
+   :map company-active-map
+   :ig
+   "TAB" #'night/company-yasnippet-or-completion
+   "<tab>" #'night/company-yasnippet-or-completion
+   "\t" #'night/company-yasnippet-or-completion))
+(night/company-keybindings-enable)
+(after! (org evil company)              ;; @workaround sth is overriding our keybindings, so I am using trial-and-error to re-enable the keybindings
+  (night/company-keybindings-enable))
+;;;
+(when (night/server-alt1-p)
+  (=irc))
+;;;
 (defvar night-loaded t "Use night/loaded-p to check this. Shows if our whole config has loaded completely.")

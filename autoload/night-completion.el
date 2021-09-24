@@ -1,5 +1,5 @@
 ;;; ~/doom.d/autoload/night-completion.el -*- lexical-binding: t; -*-
-
+;;;
 (use-package! company
 
   :bind (;; Remap the standard Emacs keybindings for invoking
@@ -180,17 +180,6 @@
 (after! lui
   (setq lui-completion-function #'night/company-yasnippet-or-completion))
 
-(define-key company-active-map (kbd "<tab>") 'night/company-yasnippet-or-completion)
-(define-key company-active-map (kbd "TAB") 'night/company-yasnippet-or-completion)
-;; This TAB key was buggy on my old eOS machine and the new M1 (perhaps emacs@28 is to blame?). In the end, I bound a these to `global-map' for `night/company-yasnippet-or-completion', too.
-;; Update: Using the below 'map!' snippet seems to have solved that problem.
-;; Update: I think after changing ="\t"=  to =(kbd "<tab>")=, the below snippet would not be necessary after all!
-(map!
- :map company-active-map
- :ig
- "TAB" #'night/company-yasnippet-or-completion
- "<tab>" #'night/company-yasnippet-or-completion
- "\t" #'night/company-yasnippet-or-completion)
 (map!
  ;; :map undo-fu-mode-map
  :nviog
@@ -270,8 +259,14 @@
 ;;
 ;; @helpme `company-doc-buffer` hides itself when I press any keys. How do I disable this autohiding? It makes it impossible to jump to the doc buffer when needed, and dismissing the window with ESC is easy enough anyway.
 
-(advice-add #'company-select-previous :after #'company-show-doc-buffer)
-(advice-add #'company-select-next :after #'company-show-doc-buffer)
+(defun night/company-doc-on-browsing-enable ()
+  "Advises `company-select-next' et al to show the doc buffer."
+  (interactive)
+  (advice-add #'company-select-previous :after #'company-show-doc-buffer)
+  (advice-add #'company-select-next :after #'company-show-doc-buffer))
+
+(when (not (display-graphic-p))
+  (night/company-doc-on-browsing-enable))
 
 (map!
  :map company-active-map
