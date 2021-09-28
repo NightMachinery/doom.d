@@ -109,7 +109,6 @@ if LOCATION is not given, the value of `org-archive-location' is used."
                   (cl-incf level)))
               (widen)
               (org-end-of-subtree t t)
-              (org-paste-subtree level tree-text))))))))
-
-(advice-add #'org-archive-subtree :after #'save-some-buffers)
+              (org-paste-subtree level tree-text)))))))
+  (save-some-buffers))
 ;;;

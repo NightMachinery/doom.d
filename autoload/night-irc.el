@@ -77,6 +77,7 @@
                 "#nim"
                 "#org-mode"
                 "#org-roam"
+                "#organice"             ;; @Matrix/#organice:matrix.org
                 "#python" "#django"
                 "#reddit-sysadmin"
                 "#slime"

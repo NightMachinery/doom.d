@@ -33,6 +33,10 @@
                    file-path))
                  (t (buffer-file-name))))
            (fb (f-base bfn))
+           (extension (f-ext bfn))
+           (fb (if (not (equalp extension "org"))
+            (concat fb "." extension)
+            fb))
            (magic_marker "MAGIC_2720091660_")
            (slash_or_marker (concat  "\\(" magic_marker "\\|/\\|$\\)"))
            (preserve (lambda (str n)
@@ -78,10 +82,14 @@
                ;; (< 7 (length fb))
                )
           (concat parent fb)
-        fb)))
+        fb
+        )))
   (comment
    (f-base "HOME:.zshrc")
    (f-base ".zshrc")
+   (f-base "hi.py")
+   (f-ext "hi.py")
+   (night/org-title "a/b/hi.py")
    (f-filename "HOME:.zshrc")
    (night/org-title "HOME:.zshrc")
    (night/org-title "HOME:b/.zshrc")
@@ -162,6 +170,11 @@
      "ld" #'org-super-links-delete-link
      ;; "la" #'org-super-links-quick-insert-drawer-link
      )
+
+    (advice-add #'org-super-links-insert-link :after #'night/save-some-buffers-ni)
+    (advice-add #'org-super-links-delete-link :after #'night/save-some-buffers-ni)
+    ;; (night/unadvice 'org-super-links-insert-link)
+    ;; (night/unadvice 'org-super-links-delete-link)
     )
 ;;;
   (setcdr org-link-abbrev-alist

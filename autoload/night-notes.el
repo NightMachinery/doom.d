@@ -190,3 +190,7 @@
 ;; (message "%s" (shell-command-to-string "brishz.dash unt"))
 ;; (message "%s" (progn (setenv  "brishzr_in" "haki") (shell-command-to-string "echo $brishzr_in")))
 ;;; 
+(defun night/notes-private-file-p (file)
+  (progn
+    (s-matches? "\\.\\{2\\}private\\.\\{2\\}" file)))
+;;;

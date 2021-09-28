@@ -41,3 +41,6 @@ the required text to the current buffer."
 
   (advice-add 'org-cliplink-insert-transformed-title :override #'night/org-cliplink-insert-transformed-title)
   )
+
+(defun night/save-some-buffers-ni (&rest dummy)
+  (save-some-buffers))

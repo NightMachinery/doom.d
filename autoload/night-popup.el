@@ -24,7 +24,8 @@
 (after! (lispy)
   (set-popup-rule! "^\\*lispy.*\\*$" :ignore nil :height 0.5))
 (after! (sly)
-  (set-popup-rule! "^\\*sly-desc.*\\*$" :ignore nil :height 0.6))
+  (set-popup-rule! "^\\*sly-desc.*\\*$" :ignore nil :height 0.6)
+  (set-popup-rule! "^\\*sly-apropos.*\\*$" :ignore nil :height 0.6 :select t))
 ;;;
 (setq night/fullscreen-popups nil)
 (defun night/fullscreen-popups-disable ()

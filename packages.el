@@ -100,6 +100,8 @@
 
 (package! mips-mode)
 
+(package! async-await)
+
 (package! applescript-mode)
 (package! magit-vcsh)
 (package! smeargle)                     ;; Highlighting Regions by Last Updated Time
@@ -143,6 +145,9 @@
 (package! helm-org-ql)
 (package! toc-org)
 (package! org-fragtog)
+
+(package! nndiscourse)
+
 (package! company-try-hard)
 
 (package! tramp-theme)

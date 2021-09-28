@@ -32,20 +32,35 @@
   "Move current buffer's file to NEW-PATH.
 
 If FORCE-P, overwrite the destination file if it exists, without confirmation."
-  ;; https://github.com/hlissner/doom-emacs/pull/4861/
   (interactive
    (list (read-file-name "Move file to: ")
          current-prefix-arg))
   (unless (and buffer-file-name (file-exists-p buffer-file-name))
     (user-error "Buffer is not visiting any file"))
-  (let ((old-path (buffer-file-name (buffer-base-buffer)))
-        (new-path (expand-file-name new-path)))
+  (let* ((old-path (buffer-file-name (buffer-base-buffer)))
+         (images-postfix "_imgs")
+         (old-path-images (concat old-path images-postfix))
+         (new-path (expand-file-name new-path)))
+
     (when (directory-name-p new-path)
-      (setq new-path (concat new-path (f-filename old-path)))
-      )
+      (setq new-path (concat new-path (f-filename old-path))))
     (make-directory (file-name-directory new-path) 't)
     (rename-file old-path new-path (or force-p 1))
     (set-visited-file-name new-path t t)
+
+    (when (f-dir-p old-path-images)
+      (let (;; (new-path-images (concat new-path images-postfix))
+            ;; @todo0 to use the new filename as well, we need to first rename the image links in the current file.
+
+            ;; just fix the dirname part, and continue using the old filename
+            (new-path-images (concat (f-dirname new-path) "/" (f-filename old-path) images-postfix)))
+        (when (not (f-equal-p old-path-images new-path-images))
+          (rename-file old-path-images new-path-images (or force-p 1))
+          (message "Also renamed the images directory:\n%s\n-> %s" old-path-images new-path-images)
+          (z tts-glados1-cached "Also renamed the images directory")
+          (doom--update-files old-path-images new-path-images ;; @redundant?
+                              ))))
+
     (doom--update-files old-path new-path)
 
     (message "File moved to %S" (abbreviate-file-name new-path))))
@@ -286,4 +301,67 @@ If on a:
 (setq +file-templates-alist
       (cl-remove 'emacs-lisp-mode +file-templates-alist :test 'night/equal-str :key 'car))
 ;; @note you need to restart emacs for this change to take effect
+;;;
+;; @userConfig
+(defun night/overrides-doom-modeline-buffer-file-name ()
+  "Propertized variable `buffer-file-name' based on `doom-modeline-buffer-file-name-style'."
+  (let* ((buffer-file-name (file-local-name (or (buffer-file-name (buffer-base-buffer)) "")))
+         (buffer-file-truename (file-local-name
+                                (or buffer-file-truename (file-truename buffer-file-name) "")))
+         (file-name
+          (pcase doom-modeline-buffer-file-name-style
+            ('auto
+             (if (doom-modeline-project-p)
+                 (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename nil nil 'hide)
+               (propertize "%b" 'face 'doom-modeline-buffer-file)))
+            ('truncate-upto-project
+             (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename 'shrink))
+            ('truncate-from-project
+             (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename nil 'shrink))
+            ('truncate-with-project
+             (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename 'shrink 'shink 'hide))
+            ('truncate-except-project
+             (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename 'shrink 'shink))
+            ('truncate-upto-root
+             (doom-modeline--buffer-file-name-truncate buffer-file-name buffer-file-truename))
+            ('truncate-all
+             (doom-modeline--buffer-file-name-truncate buffer-file-name buffer-file-truename t))
+            ('truncate-nil
+             (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename))
+            ('relative-to-project
+             (doom-modeline--buffer-file-name-relative buffer-file-name buffer-file-truename))
+            ('relative-from-project
+             (doom-modeline--buffer-file-name buffer-file-name buffer-file-truename nil nil 'hide))
+            ('file-name
+             (propertize (file-name-nondirectory buffer-file-name)
+                         'face 'doom-modeline-buffer-file))
+            ((or 'buffer-name _)
+             (propertize "%b" 'face 'doom-modeline-buffer-file))))
+;;; @monkeyPatched
+         (file-name (s-replace-regexp "^cellar/notes/" "~nt/" file-name))
+         (file-name
+          (or
+           (with-demoted-errors (let ((l (length file-name)))
+                                  (cond
+                                   ((> l 60)
+                                    (concat
+                                     (substring file-name 0 13)
+                                     "ɣ"
+                                     (substring file-name (- l 47) l)))
+                                   (t file-name))))
+           "error98128230124"))
+;;;
+         )
+    (propertize (if (string-empty-p file-name)
+                    (propertize "%b" 'face 'doom-modeline-buffer-file)
+                  file-name)
+                'mouse-face 'mode-line-highlight
+                'help-echo (concat buffer-file-truename
+                                   (unless (string= (file-name-nondirectory buffer-file-truename)
+                                                    (buffer-name))
+                                     (concat "\n" (buffer-name)))
+                                   "\nmouse-1: Previous buffer\nmouse-3: Next buffer")
+                'local-map mode-line-buffer-identification-keymap)))
+(advice-add 'doom-modeline-buffer-file-name :override #'night/overrides-doom-modeline-buffer-file-name)
+(setq doom-modeline-buffer-file-name-style 'relative-from-project)
 ;;;

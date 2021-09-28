@@ -130,7 +130,6 @@
  )
 ;;;
 (defun night/brishz-eval-region (beg end)
-  "Wrapper for `eval-last-sexp' that overlays results."
   (interactive "r")
   (save-mark-and-excursion
     (let*
