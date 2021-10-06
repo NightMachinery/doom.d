@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: timej
+# key: timej
+# uuid: timej
+# --
+[jalali:`(concat (z datej) (format-time-string "/%H:%M"))`]

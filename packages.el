@@ -64,6 +64,10 @@
 (package! explain-pause-mode
   :recipe (:host github :repo "lastquestion/explain-pause-mode"))
 ;;;
+(unpin! company-mode)
+(package! helm-company)
+(unpin! helm-company)
+;;;
 ;; (package! fuz
 ;;   :recipe (:host github :repo "rustify-emacs/fuz.el"))
 
@@ -140,6 +144,8 @@
 (package! org-ql)
 
 (package! org-ref)
+
+(package! org-vcard)
 
 (package! org-books)
 (package! helm-org-ql)

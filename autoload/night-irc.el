@@ -10,8 +10,8 @@
 
   (setq circe-server-send-unknown-command-p t)
 
-  (setq lui-max-buffer-size 40000)     ;; 40000 chars (about 600 lines worth in most channels)
-  (setq +irc-defer-notifications 1800)   ;; @futureCron do we need to increase this?
+  (setq lui-max-buffer-size 40000) ;; 40000 chars (about 600 lines worth in most channels)
+  (setq +irc-defer-notifications 1800) ;; @futureCron do we need to increase this?
   (remove-hook 'circe-server-connected-hook #'+irc-init-circe-notifications-h) ;; completely disables the notifications, as we are getting nootifs via znc-push and thelounge
 
   (defun night/irc-set-watch-strings ()
@@ -30,87 +30,88 @@
 
   (set-irc-server!
 
-   "irc.zii.lilf.ir"
-   ;; "irc.libera.chat"
-   ;; "chat.freenode.net"
+      "irc.zii.lilf.ir"
+    ;; "irc.libera.chat"
+    ;; "chat.freenode.net"
 
-   `(:tls t
-     :port 6635
-     ;; :port 6697
+    `(:tls t
+      :port 6635
+      ;; :port 6697
 
-     :user ,(getenv "ZNC_USER")
-     :pass ,(getenv "ZNC_PASS")
-     ;; :user ,(getenv "IRC_USER")
-     ;; :pass ,(getenv "IRC_PASS")
+      :user ,(getenv "ZNC_USER")
+      :pass ,(getenv "ZNC_PASS")
+      ;; :user ,(getenv "IRC_USER")
+      ;; :pass ,(getenv "IRC_PASS")
 
 
 
-     :nick ,(getenv "ZNC_USER")
-     :sasl-username ,(getenv "ZNC_USER")
-     :sasl-password ,(getenv "ZNC_IRC_PASS")
+      :nick ,(getenv "ZNC_USER")
+      :sasl-username ,(getenv "ZNC_USER")
+      :sasl-password ,(getenv "ZNC_IRC_PASS")
 
-     ;; :nick ,(getenv "IRC_NICK")
-     ;; :sasl-username ,(getenv "IRC_USER")
-     ;; :sasl-password ,(getenv "IRC_PASS")
-     :channels (
-                "##anime"
-                "##english"
-                "#bash"
-                "#clojure"
-                "#commonlisp" "#lispcafe" "#quicklisp" "#clschool" "#lispgames" "#slime" "#lispweb"
-                "#julia"
-                "#css"
-                "#devops"
-                "#docker"
-                "#emacs"
-                "#emacsconf"
-                "#evil-mode"
-                "#emacs-circe" "#znc"
-                "#fanfiction"
-                "#git"
-                "#go-nuts"
-                "#html"
-                "#javascript"
-                "#lesswrong"
-                "#lisp"
-                "#lw-prog"
-                "#nim"
-                "#org-mode"
-                "#org-roam"
-                "#organice"             ;; @Matrix/#organice:matrix.org
-                "#python" "#django"
-                "#reddit-sysadmin"
-                "#slime"
-                "#thelounge" "#thelounge-offtopic"
-                "#ubuntu" "#linux" "#debian" "#archlinux" "#cafelinux"
-                "#vim"
-                "#zsh" "#bash"
-                "#security"
-                "#lobsters" "##crustaceans"
-                "#regex"
-                "#perl" "#raku"
-                "#ruby" "#jruby"
-                "#erlang" "#elixir"
-                "#php"
-                "#lua"
-                "#awk"
-                "#sed"
-                "#pandoc"
+      ;; :nick ,(getenv "IRC_NICK")
+      ;; :sasl-username ,(getenv "IRC_USER")
+      ;; :sasl-password ,(getenv "IRC_PASS")
+      :channels (
+                 "##anime"
+                 "##english"
+                 "#bash"
+                 "#clojure"
+                 "#commonlisp" "#lispcafe" "#quicklisp" "#clschool" "#lispgames" "#slime" "#lispweb"
+                 "#julia"
+                 "#css"
+                 "#devops"
+                 "#docker"
+                 "#emacs"
+                 "#emacsconf"
+                 "#evil-mode"
+                 "#emacs-circe" "#znc"
+                 "#fanfiction"
+                 "#git"
+                 "#go-nuts"
+                 "#html"
+                 "#javascript"
+                 "#lesswrong"
+                 "#lisp"
+                 "#lw-prog"
+                 "#nim"
+                 "#org-mode"
+                 "#org-roam"
+                 "#organice" ;; @Matrix/#organice:matrix.org
+                 "#python" "#django"
+                 "#curl"
+                 "#reddit-sysadmin"
+                 "#slime"
+                 "#thelounge" "#thelounge-offtopic"
+                 "#ubuntu" "#linux" "#debian" "#archlinux" "#cafelinux"
+                 "#vim"
+                 "#zsh" "#bash"
+                 "#security"
+                 "#lobsters" "##crustaceans"
+                 "#regex"
+                 "#perl" "#raku"
+                 "#ruby" "#jruby"
+                 "#erlang" "#elixir"
+                 "#php"
+                 "#lua"
+                 "#awk"
+                 "#sed"
+                 "#pandoc"
 ;;;
-                "#git"
-                "#docker"
-                "#ffmpeg"
-                "##programming"
-                "#datahoarder"
-                "##math"
-                "##chat"
-                "#libera"
-                "##philosophy"
-                "#fsf"
-                ;; "##news"
-                "#bitcoin" "##crypto"
-                "##politics"
-                )))
+                 "#git"
+                 "#docker"
+                 "#ffmpeg"
+                 "##programming"
+                 "#datahoarder"
+                 "##math"
+                 "##chat"
+                 "#libera"
+                 "##philosophy"
+                 "#fsf"
+                 ;; "##news"
+                 "#bitcoin" "##crypto"
+                 "##politics"
+                 )))
 
 ;;;
   (defun night/irc-maybe-show-count ()
@@ -159,6 +160,8 @@
         "<RET>" #'lui-send-input)
 ;;;
   ;; (=irc)
+;;;
+  (provide 'night-irc)
   )
 ;;; @keybindings
 (night/set-leader-keys "z i" #'+irc/ivy-jump-to-channel)

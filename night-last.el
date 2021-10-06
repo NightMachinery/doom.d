@@ -7,6 +7,7 @@
 ;; (add-hook 'doom-customize-theme-hook #'night/load-tramp-theme)
 
 (add-hook 'doom-load-theme-hook #'night/load-tramp-theme) ; works ^_^
+;; (night/load-tramp-theme) ; doesn't work
 
 (defun night/terminfo-set ()
   (interactive)
@@ -23,8 +24,6 @@
     ))
 
 (add-hook 'doom-load-theme-hook #'night/terminfo-set)
-
-;; (night/load-tramp-theme) ; doesn't work
 ;;;
 (defun night/company-keybindings-enable ()
   (interactive)
@@ -40,8 +39,5 @@
 (night/company-keybindings-enable)
 (after! (org evil company)              ;; @workaround sth is overriding our keybindings, so I am using trial-and-error to re-enable the keybindings
   (night/company-keybindings-enable))
-;;;
-(when (night/server-alt1-p)
-  (=irc))
 ;;;
 (defvar night-loaded t "Use night/loaded-p to check this. Shows if our whole config has loaded completely.")

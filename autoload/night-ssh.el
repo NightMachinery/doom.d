@@ -11,9 +11,8 @@
                                            ("^foo$" nil (dired-directory (:background "Red")))
                                            ("^foo$" nil (eshell-prompt (:foreground "White")))
                                            ("^bar$" nil (default (:background "Green")))
-                                           ("^bar$" nil (dired-directory (:background "Green"))))
-        )
-  )
+                                           ("^bar$" nil (dired-directory (:background "Green"))))))
+
 (defun night/load-tramp-theme ()
   (interactive)
   (if (and

@@ -195,10 +195,13 @@ S: Stateful information"
 
 ;;; id -> json -> walk
 
-(defun hn/to-org-mode! (id)
-  "Main function (effectful).
-ID: Hacker News Story ID"
-  (let ((output (get-buffer-create (format "hn-%s" id))))
+(defun hn/to-org-mode! (id &optional dest)
+  "Downloads a Hacker News story by its ID, converts it to org-mode, and saves the result to `dest'."
+  (interactive "sid: \nFdest: ")
+  (message "hn/to-org-mode!: id: %s, dest: %s" id dest)
+  ;; (setq id "https://news.ycombinator.com/item?id=28689707")
+  (let* ((id (elt (s-match "\\?id=\\([[:digit:]]+\\)" id) 1))
+         (output (get-buffer-create (format "hn-%s.org" id))))
     (walk! (hn/json id)
            #'hn/format
            (lambda (r) (-map #'hn/json (hn/kids r)))
@@ -209,14 +212,12 @@ ID: Hacker News Story ID"
            1)
     (with-current-buffer output
       (org-mode)
-      (switch-to-buffer-other-window output))))
-
-(defun hn/hn (id)
-  "Main command.
-ID: Hacker News Story ID"
-  (interactive "sid: ")
-  (message "> %s" id)
-  (hn/to-org-mode! id))
+      (cond
+       (dest
+        (write-file dest)
+        (buffer-file-name))
+       (t
+        (switch-to-buffer-other-window output))))))
 
 ;;; TEST
 

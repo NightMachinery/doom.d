@@ -265,6 +265,12 @@
   (advice-add #'company-select-previous :after #'company-show-doc-buffer)
   (advice-add #'company-select-next :after #'company-show-doc-buffer))
 
+(defun night/company-doc-on-browsing-disable ()
+  "Removes all advices on `company-select-next' et al."
+  (interactive)
+  (night/unadvice 'company-select-previous)
+  (night/unadvice 'company-select-next))
+
 (when (not (display-graphic-p))
   (night/company-doc-on-browsing-enable))
 
@@ -314,5 +320,11 @@
   ;; (setq company-active-map (make-sparse-keymap))
   ;;;
   (setq company-frontends nil))
+;;;
+(autoload 'helm-company "helm-company")
+(eval-after-load 'company
+  '(progn
+     (define-key company-mode-map (kbd "C-:") 'helm-company)
+     (define-key company-active-map (kbd "C-:") 'helm-company)))
 ;;;
 (provide 'night-completion)

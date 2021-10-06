@@ -1,5 +1,8 @@
 ;;; tmp.el -*- lexical-binding: t; -*-
 ;;;
+(signal 'error (list "you're attempting to eval tmp.el; aborted"))
+(z bello)
+;;;
 (sly-eval `(slynk-backend:describe-symbol-for-emacs "mapcar"))
 (sly-eval `(cl:documentation 'mapcar 'function) :cl)
 
@@ -44,4 +47,11 @@ Version 2015-07-30"
    (lambda (result)
      (message "Async process done, result should be 222: %s" result)))
 ;;;
-;;
+(dired-mark-read-file-name "prompt: " (getenv "nightNotes") 'move nil nil)
+(expand-file-name "/usr/")
+;;;
+(org-books-get-details "https://www.goodreads.com/book/show/45280021-clean-agile")
+;;;
+(set-char-table-range glyphless-char-display
+                        (char-from-name "SOFT HYPHEN") 'zero-width)
+;;;

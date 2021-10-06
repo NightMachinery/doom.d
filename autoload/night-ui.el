@@ -176,4 +176,17 @@
   ;; @bug it generally messes up some details of the main theme
   (enable-theme night-theme) ;; @workaround for reseting the main theme to some random theme
   )
+
+(after! (counsel)
+  (defun counsel-load-theme-action (x)
+  "Disable current themes and load theme X."
+  (condition-case nil
+      (progn
+        (mapc #'disable-theme custom-enabled-themes)
+        (let ((theme (intern x)))
+          (setq night-theme theme)      ;; @monkeyPatched
+          (load-theme theme t))
+        (when (fboundp 'powerline-reset)
+          (powerline-reset)))
+    (error "Problem loading theme %s" x))))
 ;;;

@@ -86,9 +86,11 @@
 ;; `load-theme' function. This is the default:
 (cond
  ((s-ends-with-p "_alt1" server-name)
-  (setq night-theme 'doom-nord-light))
+  (setq night-theme 'doom-one-light))
  ((display-graphic-p)
-  (setq night-theme 'doom-nord-light
+  (setq night-theme 'doom-one-light
+        ;; 'humanoid-light
+        ;; 'doom-nord-light (has some bad color choices for orgmode)
         ;; 'doom-ayu-light
         ;; 'doom-one-light
         ))

@@ -182,7 +182,6 @@
   (add-hook 'lispy-mode-hook #'lispyville-mode)
   (add-hook 'emacs-lisp-mode-hook #'my-lisp-init)
   (add-hook 'lisp-mode-hook #'my-lisp-init)
-  (add-hook 'clojure-mode-hook  #'my-lisp-init)
   (add-hook 'scheme-mode-hook #'my-lisp-init)
   (defun conditionally-enable-lispy ()
     (when (eq this-command 'eval-expression)

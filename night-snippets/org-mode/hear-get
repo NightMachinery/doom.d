@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: hear-get
+# uuid: hear-get
+# key: <hg
+# --
+[[audiofile:`(z eval "hear-get | path-abbrev-to-music-dir")`]]

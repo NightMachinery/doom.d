@@ -22,6 +22,9 @@
   ;; (mapcar #'load '("autoload/night-completion.el"))
   (mapcar #'load-night '("doom-overrides" "last")))
 
+(defun night/load-truly-last ()
+  (mapcar #'load-night '("truly-last")))
+
 (defun night/load-config ()
   (interactive)
   (message "%s" "night/load-config started ...")
@@ -41,10 +44,10 @@
       ;; (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")
    ))
 
-  ;; (add-hook 'doom-after-init-modules-hook #'night/load-last)
+  (add-hook 'window-setup-hook #'night/load-truly-last)
   (night/load-last)
 
   (message "TERM: %s" (getenv "TERM"))
-  (night/brishz 'awaysh 'eval "sleep 10 ; bell-sc2-evo-perfection")
+  (night/brishz 'awaysh 'eval "sleep 20 ; bell-sc2-evo-perfection")
   )
 (night/load-config)

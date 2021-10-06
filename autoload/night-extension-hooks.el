@@ -68,7 +68,12 @@ Use this to stop the audio files being played by org-mode links."
       ;; (z bell-sc2-become-primal)
       ;; (z tts-glados1-cached "tramp, ready")
       (z bell-sonic-fx-ready))
-    (when (equalp ext "org")
+
+    (cond
+     ((member-ignore-case ext '("ol"))
+      (night/ol-follow))
+
+     ((member-ignore-case ext '("org"))
       (kill-local-variable 'org-link-descriptive)
       ;; [[file:~/.emacs.d.doom/.local/straight/repos/org/lisp/org.el::make-local-variable 'org-link-descriptive][newer org versions have make it a local var on all buffers, which we have undone here]]
 
@@ -81,9 +86,10 @@ Use this to stop the audio files being played by org-mode links."
       (when (s-contains? "..startup.." bfn)
         ;; @securityRisk
         (night/org-execute-startup-block)))
-    (cond
+
      ((member-ignore-case ext '("log" "ansitxt"))
       (scrollback-mode))
+
      ((member-ignore-case ext '("scrollback"))
       (with-demoted-errors
           (night/so-long-strong)

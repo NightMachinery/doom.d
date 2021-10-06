@@ -1,0 +1,5 @@
+# name: hear-get-alias1
+# key: hear-get
+# type: command
+# --
+(yas-expand-snippet (yas-lookup-snippet "hear-get"))

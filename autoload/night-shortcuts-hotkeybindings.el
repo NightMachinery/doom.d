@@ -89,7 +89,9 @@ move COUNT - 1 screen lines forward first."
         "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol
         (:prefix "g"
          :n
-         "s l" #'link-hint-open-link)
+         "s l" #'link-hint-open-link
+         :n
+         "l" #'org-open-at-point-global)
         :nvo
         "g s 9" #'night/avy-goto-opening-paren
         :nvo

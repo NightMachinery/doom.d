@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: timeb
+# key: timeb
+# condition: t
+# uuid: timeb
+# type: command
+# @todo3 make this work without using side-effects (i.e., return the correct string, not touch the buffer)
+# --
+(org-insert-time-stamp (current-time) t t)
