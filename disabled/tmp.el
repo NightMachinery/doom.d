@@ -55,3 +55,10 @@ Version 2015-07-30"
 (set-char-table-range glyphless-char-display
                         (char-from-name "SOFT HYPHEN") 'zero-width)
 ;;;
+(defun night/invisible-me ()
+  (interactive)
+  (add-text-properties 2 10 '(invisible t)))
+(map!
+ :n
+ "g -" #'night/invisible-me)
+;;;

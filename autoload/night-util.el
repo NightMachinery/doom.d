@@ -9,6 +9,10 @@
  (night/range 10)
  (night/range 5 10)
  (night/range 5 10 3))
+
+(defun night/empty-str-to-nil (str)
+  (when (and str (not (string= str "")))
+    str))
 ;;;
 (provide 'night-util)
 ;;; night-util.el ends here

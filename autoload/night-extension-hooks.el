@@ -85,7 +85,12 @@ Use this to stop the audio files being played by org-mode links."
         (night/org-hide-link-display :default nil))
       (when (s-contains? "..startup.." bfn)
         ;; @securityRisk
-        (night/org-execute-startup-block)))
+        (night/org-execute-startup-block))
+      (when (s-contains? "..org-highlighter.." bfn)
+        (night/org-link-highlighter-hide)
+        (scrollback-mode)
+        (message "org-highlighter activated")
+        ))
 
      ((member-ignore-case ext '("log" "ansitxt"))
       (scrollback-mode))

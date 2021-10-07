@@ -39,6 +39,14 @@
         :nvo "." #'hlt-next-highlight
 
         :nvo "o" #'link-hint-open-link
+
+
+        ;;; @duplicateCode/a31610096f2c63be7ae6d9e3736f7dfc
+        :nvo
+        "J" #'night/org-link-highlighter-forward
+        :nvo
+        "K" #'night/org-link-highlighter-backward
+        ;;;
         ))
 ;;;
 

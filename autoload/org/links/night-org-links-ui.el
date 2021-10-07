@@ -80,6 +80,18 @@ This includes angle, plain, and bracket links."
 
                   ;; (add-face-text-property start end face-property)
                   (add-face-text-property visible-start visible-end face-property)
+                  (cond
+                   ((and
+                     (equalp type "highlight")
+                     (not (string= path "")))
+                    (let* ((opts (s-split "," path))
+                           (fg (night/empty-str-to-nil (nth 0 opts)))
+                           (bg (night/empty-str-to-nil (nth 1 opts))))
+                        (add-face-text-property
+                         visible-start visible-end
+                         `(
+                           :foreground ,(or fg "green")
+                           :background ,(or bg "ghostwhite"))))))
 ;;;
 
                   (add-text-properties visible-start visible-end properties)

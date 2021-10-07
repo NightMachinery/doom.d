@@ -4,6 +4,7 @@
 ;;;
 ;; if you omit =:host=, ~SERVER~ will be used instead.
 (after! (circe doom-modeline-core)
+  (require 'irc)
   (require 'circe-notifications)
 
   (setq doom-modeline-irc nil)
@@ -27,6 +28,8 @@
       (add-to-list 'circe-notifications-watch-strings i)))
 
   (night/irc-set-watch-strings)
+
+  (setq irc-debug-log t)                ;; I don't think this will affect the performance of emacs much, and having the debug logs is nice.
 
   (set-irc-server!
 
@@ -83,7 +86,7 @@
                  "#reddit-sysadmin"
                  "#slime"
                  "#thelounge" "#thelounge-offtopic"
-                 "#ubuntu" "#linux" "#debian" "#archlinux" "#cafelinux"
+                 "#ubuntu" "#ubuntu-ir" "#linux" "#debian" "#archlinux" "#cafelinux"
                  "#vim"
                  "#zsh" "#bash"
                  "#security"
