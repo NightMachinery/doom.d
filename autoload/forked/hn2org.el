@@ -198,10 +198,10 @@ S: Stateful information"
 (defun hn/to-org-mode! (id &optional dest)
   "Downloads a Hacker News story by its ID, converts it to org-mode, and saves the result to `dest'."
   (interactive "sid: \nFdest: ")
-  (message "hn/to-org-mode!: id: %s, dest: %s" id dest)
   ;; (setq id "https://news.ycombinator.com/item?id=28689707")
   (let* ((id (elt (s-match "\\?id=\\([[:digit:]]+\\)" id) 1))
          (output (get-buffer-create (format "hn-%s.org" id))))
+    (message "hn/to-org-mode!: id: %s, dest: %s" id dest)
     (walk! (hn/json id)
            #'hn/format
            (lambda (r) (-map #'hn/json (hn/kids r)))

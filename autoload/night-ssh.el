@@ -16,6 +16,7 @@
 (defun night/load-tramp-theme ()
   (interactive)
   (if (and
+       ;; (not (night/server-alt1-p))
        ;; nil ;; the tramp theme is broken on emacs 28 (with or without native comp)(black text is rendered red and other fun stuff)(tested on MBP, Grayfur, and the old laptop)
        (zb isLocal)
        ;; (zb isMe)

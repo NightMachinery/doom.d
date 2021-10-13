@@ -60,7 +60,7 @@ Use this to stop the audio files being played by org-mode links."
 
 (defun night/file-extension-actions ()
   (let*
-      ((bfn buffer-file-name)
+      ((bfn (or buffer-file-name ""))
        (ext (or (file-name-extension bfn) ""))
        (remote (s-contains? "/scp:" bfn)))
     ;; (message "file opened: %s" bfn)
@@ -89,6 +89,9 @@ Use this to stop the audio files being played by org-mode links."
       (when (s-contains? "..org-highlighter.." bfn)
         (night/org-link-highlighter-hide)
         (scrollback-mode)
+        (night/org-link-highlighter-hotkeys-enable)
+        (org-show-all) ;; @userConfig no reason to hide stuff in a search buffer
+        (org-sticky-header-mode t)
         (message "org-highlighter activated")
         ))
 

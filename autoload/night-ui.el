@@ -42,6 +42,12 @@
 
 ;; white-green background: #e9f2eb
 (defface zsh-macro '((t (:foreground "#1adb51" :background "#e9f1f2" :weight bold))) "This is just a doc string")
+(defface urgent-face '((t (
+                           :foreground "black"
+                           ;; :background "hotpink"
+                           :background "mistyrose"
+                           ;; :background "orangered"
+                           :weight bold))) "")
 
 (defun night/highlight-atsign ()
   "DEPRECATED: We now customize hl-todo instead."
@@ -56,6 +62,7 @@
                                  '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'zsh-macro t)))))
 
 (setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\).*$")
+(setq night/urgent-tag-regex "^.*\\(@urgent\\|:urgent:\\).*$")
 (defun night/highlight-org ()
   (interactive)
   (progn
@@ -64,6 +71,11 @@
     (font-lock-add-keywords 'org-mode
                             `((,night/great-tag-regex . 'zsh-macro))
                             )
+    (font-lock-add-keywords 'org-mode
+                            `((,night/urgent-tag-regex
+                               .
+                               ;; 'dired-broken-symlink
+                               'urgent-face)))
     )
   )
 

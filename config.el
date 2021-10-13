@@ -85,17 +85,28 @@
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
 (cond
- ((s-ends-with-p "_alt1" server-name)
-  (setq night-theme 'doom-one-light))
+ (;; nil
+  (night/server-alt1-p)
+  ;; (setq night-theme 'doom-one-light)
+  ;; [[id:c0713162-d1bd-46fc-9ef4-f5495d7ff16f][doom/bugs, issues:@upstreamBug hlissner/doom-emacs#5629 {BUG} Some themes fail to build]]
+
+
+  (setq night-theme 'solarized-selenized-white)
+  ;; (setq night-theme 'tsdh-light)
+  ;; (setq night-theme 'solarized-light)
+  )
  ((display-graphic-p)
-  (setq night-theme 'doom-one-light
+  (setq night-theme
+        'solarized-selenized-white
+        ;; 'doom-one-light
         ;; 'humanoid-light
         ;; 'doom-nord-light (has some bad color choices for orgmode)
         ;; 'doom-ayu-light
         ;; 'doom-one-light
         ))
  (t
-  (setq night-theme 'solarized-light)
+  ;; (setq night-theme 'solarized-light)
+  (setq night-theme 'solarized-selenized-light)
   ;; (setq night-theme 'doom-solarized-light) ; subtly different
   ))
 (setq doom-theme night-theme)

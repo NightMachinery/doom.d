@@ -51,10 +51,10 @@
   (defun night/modify-org-done-face ()
     (interactive)
     (setq org-fontify-done-headline t)
-    (set-face-attribute 'org-done nil :strike-through "black")
+    ;; (set-face-attribute 'org-done nil :strike-through "black")
     (set-face-attribute 'org-headline-done nil
-                        :strike-through "black" ; doesn't work for me
-                        :foreground "light gray"))
+                        ;; :strike-through "black" ; doesn't work for me
+                        :foreground "cadetblue"))
   (night/modify-org-done-face)
 
 

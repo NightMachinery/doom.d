@@ -62,3 +62,14 @@ Version 2015-07-30"
  :n
  "g -" #'night/invisible-me)
 ;;;
+(setq a (list "1" "2" "3"))
+(cddr a)
+(s-join "," a)
+(s-join "," (s-split "," "hi,,,masked,"))
+;;;
+(defun doom-modeline--buffer-file-name ()
+  (progn "hi87"))
+;;;
+(require 'screenshot)
+(require 'posframe)
+;;;

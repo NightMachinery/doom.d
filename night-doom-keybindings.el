@@ -6,8 +6,9 @@
 (setq doom-localleader-key "\\")
 (setq doom-localleader-alt-key "M-\\")
 (map! :leader
-      :desc "M-x" "SPC" #'night/fzf-M-x
-      ;; :desc "M-x" "SPC" #'execute-extended-command
+      ;; :desc "M-x" "SPC" #'night/fzf-M-x
+
+      :desc "M-x" "SPC" #'execute-extended-command
       )
 (comment (map!
   :ng "M-x" #'night/fzf-M-x ;; #'execute-extended-command

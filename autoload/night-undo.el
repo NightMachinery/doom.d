@@ -3,6 +3,7 @@
 (after! undo-fu
   (setq undo-fu-ignore-keyboard-quit t))
 ;;;
+(require 'vundo)
 (after! (vundo)
 ;;;
   (map!

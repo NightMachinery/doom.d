@@ -32,11 +32,14 @@
     "Takes the URL, asynchronously retrieves the title and applies
 a custom TRANSFORMER which transforms the url and title and insert
 the required text to the current buffer."
-    (lexical-let ((transformer (or transformer 'org-cliplink-org-mode-link-transformer)))
+    (lexical-let ((transformer (or transformer 'org-cliplink-org-mode-link-transformer))
+                  (m (point-marker)))
         (org-cliplink-retrieve-title
          url
          (lambda (url title)
-           (insert (funcall transformer url title))
+           (save-excursion
+             (goto-char m)
+             (insert (funcall transformer url title)))
            (night/after-link)))))
 
   (advice-add 'org-cliplink-insert-transformed-title :override #'night/org-cliplink-insert-transformed-title)

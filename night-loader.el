@@ -29,6 +29,7 @@
   (interactive)
   (message "%s" "night/load-config started ...")
   (require 'f)
+  (require 'a)
   (require 'dash)
   (require 'memoize)
   (mapcar #'load-night '("brish" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))

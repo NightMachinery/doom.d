@@ -14,5 +14,10 @@
   (when (and str (not (string= str "")))
     str))
 ;;;
+(defun night/messages-get ()
+  (with-current-buffer "*Messages*"
+    ;; (print! "%s")
+    (buffer-substring-no-properties (point-min) (point-max))))
+;;;
 (provide 'night-util)
 ;;; night-util.el ends here

@@ -9,45 +9,47 @@
     (setq hlt-max-region-no-warning 999999999999999)
     (night/hlt-set-current-face) ;; sets the current face for =hlt-highlight-regexp-region=
 
-    (xterm-color-colorize-buffer)
-    (set-buffer-modified-p nil)
-    (read-only-mode)
+    (let* ((bfn (or buffer-file-name ""))
+           (ext (or (file-name-extension bfn) "")))
+      (cond
+       ((member-ignore-case ext '("org")) t)
+       (t (xterm-color-colorize-buffer)
+          (set-buffer-modified-p nil)
+          (read-only-mode))))
 
-;;; @retired keymap is shadowed by other maps
-    ;; (setq minor-mode-overriding-map-alist '(scrollback-mode-map))
-    ;; (setq overriding-local-map scrollback-mode-map) ;; overrides everything so we'll lose our general keybindings
-    (make-local-variable 'emulation-mode-map-alists)
-    ;; doesn't seem to work
-    (setq emulation-mode-map-alists (cons 'night-priority-map-alist emulation-mode-map-alists))
+;;;
+    (comment
+     ;; @retired keymap is shadowed by other maps anyways (probably the fault of evil maps doing unnatural hacks to get precedence)
+;;;
+     ;; (setq minor-mode-overriding-map-alist '(scrollback-mode-map))
+     ;; (setq overriding-local-map scrollback-mode-map) ;; overrides everything so we'll lose our general keybindings
+     (make-local-variable 'emulation-mode-map-alists)
+     ;; doesn't seem to work
+     (setq emulation-mode-map-alists (cons 'night-priority-map-alist emulation-mode-map-alists))
 
-    ;; (setq emulation-mode-map-alists '((t scrollback-mode-map) general-maps-alist)) ;; doesn't seem to work
+     ;; (setq emulation-mode-map-alists '((t scrollback-mode-map) general-maps-alist)) ;; doesn't seem to work
+     )
+;;;
+    (map! :map 'local
+          ;; https://github.com/noctuid/general.el#override-keymaps-and-buffer-local-keybindings
+          ;; forcefully overrides the keybindings
+;;;
+          :nvo "q" #'save-buffers-kill-terminal
+          :nvo [remap quit-window] #'save-buffers-kill-terminal
+
+          :nvo "u" #'night/scroll-halfpage-down
+          :nvo "d" #'night/scroll-halfpage-up
+
+          :nvo "a" #'night/hlt-counsel-face
+          :nvo "s" #'hlt-highlight-regexp-region
+          :nvo "x" #'hlt-highlight-regexp-region
+
+          :nvo "," #'hlt-previous-highlight
+          :nvo "." #'hlt-next-highlight
+
+          :nvo "o" #'link-hint-open-link
+          )
     ))
-
-(after! (evil-repeat evil-snipe)
-  (map! :map scrollback-mode-map
-        :nvo "q" #'save-buffers-kill-terminal
-        :nvo [remap quit-window] #'save-buffers-kill-terminal
-
-        :nvo "u" #'night/scroll-halfpage-down
-        :nvo "d" #'night/scroll-halfpage-up
-
-        :nvo "a" #'night/hlt-counsel-face
-        :nvo "s" #'hlt-highlight-regexp-region
-        :nvo "x" #'hlt-highlight-regexp-region
-
-        :nvo "," #'hlt-previous-highlight
-        :nvo "." #'hlt-next-highlight
-
-        :nvo "o" #'link-hint-open-link
-
-
-        ;;; @duplicateCode/a31610096f2c63be7ae6d9e3736f7dfc
-        :nvo
-        "J" #'night/org-link-highlighter-forward
-        :nvo
-        "K" #'night/org-link-highlighter-backward
-        ;;;
-        ))
 ;;;
 
 (provide 'scrollback-mode)

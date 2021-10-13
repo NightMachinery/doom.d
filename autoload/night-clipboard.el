@@ -4,17 +4,18 @@
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
   (let* (
          (string-raw (substring-no-properties string))
-         (space-p
-          (not (string-match-p "[^ \t\n\r]" string-raw))
+         (skip-p
+          (not (string-match-p "[^][ *-+_(){}\t\n\r]" ;; @note double backslashes are not needed or accepted here.
+                               string-raw))
           ;; (or (equalp string-raw "")
           ;;     (string-match-p "^\\(\s\\|\n\\)+$" string-raw) ;; '^', '$' are treated per line, so this won't work
           ;;     )
           ))
-    ;; (message "space-p: %s, isSpace: %s, string-raw: %s, string-cat: %s" space-p (zb isSpace (i string-raw)) string-raw (z reval-withstdin (i string-raw) cat -vte))
+    ;; (message "skip-p: %s, isSpace: %s, string-raw: %s, string-cat: %s" skip-p (zb isSpace (i string-raw)) string-raw (z reval-withstdin (i string-raw) cat -vte))
     (cond
      ((or
        ;; t ;; disable this modification entirely
-       (not space-p))
+       (not skip-p))
       (apply orig-fn string rest))
      (t
       ;; (message "skipped whitespace kill: %s" string-raw)

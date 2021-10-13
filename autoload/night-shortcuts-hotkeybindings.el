@@ -118,7 +118,9 @@ move COUNT - 1 screen lines forward first."
   (setq expand-region-reset-fast-key "c")
 
   (map! :leader
-        "f r" #'night/fzf-recentf
+        ;; "f r" #'night/fzf-recentf ;; somewhat slow
+        "f r" #'counsel-recentf
+        ;; "f r" #'helm-recentf ;; loses keys while it is not still open, and isn't fuzzy
 
         "y o" #'poporg-dwim
 

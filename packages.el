@@ -52,6 +52,33 @@
 ;;; @themes
 (package! solarized-theme)
 (package! humanoid-themes)
+(package! kaolin-themes)
+(package! spacemacs-theme)
+(package! apropospriate-theme)
+(package! darktooth-theme)
+(package! rebecca-theme)
+(package! solo-jazz-theme)
+(package! github-theme)
+(package! night-owl-theme)
+(package! colorless-themes)
+(package! leuven-theme)
+
+;; [[id:c0713162-d1bd-46fc-9ef4-f5495d7ff16f][doom/bugs, issues:@upstreamBug hlissner/doom-emacs#5629 {BUG} Some themes fail to build]]
+;; (package! soft-stone-theme
+;;   :recipe (:build (:not native-compile compile)))
+;; (package! jetbrains-darcula-theme)
+;; (package! doom-themes
+;;   :recipe (:build (:not native-compile compile)))
+
+(package! base16-theme)
+(package! anti-zenburn-theme)
+(package! moe-theme)                    ;; Optimized for terminal’s 256 color palettes
+(package! poet-theme)                   ;; Exclusively aimed at graphical emacs
+(package! zaiste-theme
+  :recipe (:host github :repo "zaiste/zaiste-emacs-theme"))
+
+(package! tramp-theme)
+(package! load-theme-buffer-local :recipe (:build (:not native-compile compile)))      ;; @noNativeComp
 ;;; @experimental
 (package! dired-quick-sort)
 ;;;
@@ -59,10 +86,25 @@
 ;;;
 (package! prism
   :recipe (:host github :repo "alphapapa/prism.el"))
+
 (package! orgmdb
   :recipe (:host github :repo "isamert/orgmdb.el"))
+
 (package! explain-pause-mode
   :recipe (:host github :repo "lastquestion/explain-pause-mode"))
+
+(package! teco-screenshot
+  ;; [[https://github.com/tecosaur/screenshot/issues/12][tecosaur/screenshot#12 `(require 'posframe)` makes the package unusable on the TUI]]
+  :recipe (:host github :repo "tecosaur/screenshot"))
+;;;
+(package! plz
+  :recipe (:host github :repo "alphapapa/plz.el"))
+(package! ement
+  :recipe (:host github :repo "alphapapa/ement.el"))
+;;;
+(package! gnus)
+;;;
+(package! ediprolog)
 ;;;
 (unpin! company-mode)
 (package! helm-company)
@@ -106,12 +148,15 @@
 
 (package! async-await)
 
+(package! org-sticky-header)
+
 (package! applescript-mode)
 (package! magit-vcsh)
 (package! smeargle)                     ;; Highlighting Regions by Last Updated Time
 (package! org-web-tools)
 (package! helm-org-rifle)
 (package! zoom)
+(package! embark)
 (package! sudoku)
 (package! blacken)
 (package! elpy)
@@ -130,6 +175,9 @@
 (package! iscroll)
 
 (package! evil-tutor)
+
+(package! orderless)
+(package! consult)
 
 (unpin! julia-mode julia-repl eglot-jl)
 (package! julia-mode)
@@ -155,9 +203,6 @@
 (package! nndiscourse)
 
 (package! company-try-hard)
-
-(package! tramp-theme)
-(package! load-theme-buffer-local :recipe (:build (:not native-compile compile)))      ;; @noNativeComp
 
 (package! vlf)
 (package! bug-hunter)

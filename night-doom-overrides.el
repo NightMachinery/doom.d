@@ -19,6 +19,7 @@
  gcmh-verbose nil
  garbage-collection-messages t
 ;;;
+ doom-modeline-window-width-limit 30    ;; @userConfig
  )
 ;;;
 (after! smartparens (smartparens-global-mode -1))
@@ -339,6 +340,7 @@ If on a:
              (propertize "%b" 'face 'doom-modeline-buffer-file))))
 ;;; @monkeyPatched
          (file-name (s-replace-regexp "^cellar/notes/" "~nt/" file-name))
+         ;; (file-name (s-replace-regexp "^doom.d/" "~dom/" file-name))
          (file-name
           (or
            (with-demoted-errors (let ((l (length file-name)))
@@ -362,6 +364,11 @@ If on a:
                                      (concat "\n" (buffer-name)))
                                    "\nmouse-1: Previous buffer\nmouse-3: Next buffer")
                 'local-map mode-line-buffer-identification-keymap)))
+
+(night/overrides-doom-modeline-buffer-file-name)
 (advice-add 'doom-modeline-buffer-file-name :override #'night/overrides-doom-modeline-buffer-file-name)
+;; This is ultimately where the modeline is constructed:
+;; [[doom:.local/straight/repos/doom-modeline/doom-modeline-segments.el::(doom-modeline-def-segment buffer-info]]
+
 (setq doom-modeline-buffer-file-name-style 'relative-from-project)
 ;;;

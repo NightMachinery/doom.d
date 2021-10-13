@@ -3,19 +3,71 @@
 ;;; /doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
 
 (with-eval-after-load 'ivy
-  (comment ;; someone else is already doing this!!
-   (when (not (boundp 'h-ivy-set-builders))
-     (push (cons #'swiper (cdr (assq t ivy-re-builders-alist)))
-           ivy-re-builders-alist)
-     (push (cons t #'ivy--regex-fuzzy) ivy-re-builders-alist)
-     (defvar h-ivy-set-builders t "A flag that shows that ivy-re-builders-alist has been set by us.")))
-  (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-plus))
-  )
+  ;; `ivy--regex-ignore-order's '!negation' is broken for me
+  (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-ignore-order)) ;; needed by `night/swiper-irc-me'
+  ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
+  ;; (add-to-list 'ivy-re-builders-alist '(counsel-rg . ivy--regex-ignore-order))
+
+  (if nil
+      ;; activate for all:
+      (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
+
+    ;; just replace the default option:
+    (setq ivy-re-builders-alist (a-assoc-1 ivy-re-builders-alist t 'orderless-ivy-re-builder)))
+  ;; @alt to orderless:
+  ;; - `ivy--regex-ignore-order'
+  ;; - Ivy has ivy-restrict-to-matches, bound to S-SPC, so you can get the effect of out of order matching without using ivy--regex-ignore-order: (@toFuture/1401/6 this might be faster?)
+  ;;  (define-key ivy-minibuffer-map (kbd "SPC") #'ivy-restrict-to-matches)
+  ;;  (define-key ivy-minibuffer-map (kbd "SPC") #'self-insert-command)
+
+  (progn
+    (defvar *orderless-no-fuzzy* nil)
+    (defun night/h-orderless-style-dispatcher (pattern index _total)
+      ;; makes `counsel-recentf' too slow
+      ;;
+      ;; you can bind `orderless-style-dispatchers' dynamically to override this for specific commands
+      (cond
+       ((string= "!" pattern) `(orderless-literal . ""))
+       ;; Without literal
+       ((string-prefix-p "!" pattern) `(orderless-without-literal . ,(substring pattern 1)))
+       ;; Character folding
+       ((string-prefix-p "%" pattern) `(char-fold-to-regexp . ,(substring pattern 1)))
+       ((string-suffix-p "%" pattern) `(char-fold-to-regexp . ,(substring pattern 0 -1)))
+       ;; Initialism matching
+       ((string-prefix-p "`" pattern) `(orderless-initialism . ,(substring pattern 1)))
+       ((string-suffix-p "`" pattern) `(orderless-initialism . ,(substring pattern 0 -1)))
+       ;; Literal matching
+       ((string-prefix-p "'" pattern) `(orderless-literal . ,(substring pattern 1)))
+       ((string-suffix-p "'" pattern) `(orderless-literal . ,(substring pattern 0 -1)))
+       ;; Flex matching
+       ((string-prefix-p "~" pattern) `(orderless-flex . ,(substring pattern 1)))
+       ((string-suffix-p "~" pattern) `(orderless-flex . ,(substring pattern 0 -1)))
+       ((and (not *orderless-no-fuzzy*)
+             (= _total 1)) 'orderless-flex)))
+    (defun night/h-orderless-regexp (pattern index _total)
+      'orderless-regexp)
+
+    (setq orderless-style-dispatchers '(night/h-orderless-style-dispatcher))
+
+    ;; @great this can support an essentially arbitrary query syntax:
+    ;;   https://github.com/oantolin/orderless#style-dispatchers
+    (setq orderless-matching-styles '(orderless-regexp orderless-literal orderless-initialism))
+    (comment
+     ;; fuzzy (orderless-flex) breaks `night/search-notes'
+     (setq orderless-matching-styles '(orderless-regexp orderless-literal orderless-initialism orderless-flex))))
+
+  (defun night/advice-orderless-no-fuzzy (orig-fn &rest args)
+    (let ((*orderless-no-fuzzy* t))
+      (apply orig-fn args)))
+  (advice-add 'counsel-rg :around #'night/advice-orderless-no-fuzzy)
+;;;
+  (comment
+   (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))))
 
 (after! (ivy counsel ivy-rich)
   (setq counsel-find-file-ignore-regexp nil) ;; @tradeoff @config
 
-  ;;;
+;;;
   (setq ivy-truncate-lines t)
   ;; @workaround turn this off using a local let bind on relevant functions
 
@@ -23,7 +75,15 @@
   ;; otherwise, we can't see long paths
   ;; @upstreamBug ivy-rich adds extra stuff that it assumes will be just truncated, so it doesn't play nicely with this:
   ;;   https://github.com/Yevgnen/ivy-rich/issues/112
-  ;;;
+
+  (defun night/counsel-recentf-advice (orig-fn)
+    (let ((ivy-truncate-lines nil)
+          ;; (orderless-style-dispatchers #'night/h-orderless-regexp)
+          (*orderless-no-fuzzy* t)
+          )
+      (funcall orig-fn)))
+  (advice-add #'counsel-recentf :around #'night/counsel-recentf-advice)
+;;;
 
   (defun night/ivy--directory-out ()
     (interactive)
