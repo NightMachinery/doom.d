@@ -28,7 +28,12 @@
     ;; (counsel-file-jump "" dir) ; we used this one before using fzf
 
     ;;;
-    (let ((counsel-fzf-cmd (concat "env FORCE_NONINTERACTIVE=y FZF_DEFAULT_COMMAND=\"fd --no-ignore --hidden --follow\" fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir) " fzf_mru.sh --tiebreak=end,length -f \"%s\"")))
+    (let ((counsel-fzf-cmd
+           (concat
+            "env FORCE_NONINTERACTIVE=y FZF_DEFAULT_COMMAND=\"fd --no-ignore --hidden --exclude=.git --follow\" fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir)
+            " fzf"
+            ;; " fzf_mru.sh"
+            " --tiebreak=end,length -f \"%s\"")))
       ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
       (counsel-fzf "" dir ""))
     ;;;

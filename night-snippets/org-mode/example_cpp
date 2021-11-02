@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <ecp
+# uuid: <ecp
+# --
+#+begin_example C++
+`%`$0
+#+end_example

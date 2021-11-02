@@ -61,7 +61,11 @@
                  "#bash"
                  "#clojure"
                  "#commonlisp" "#lispcafe" "#quicklisp" "#clschool" "#lispgames" "#slime" "#lispweb"
+                 "#racket" "#scheme" "#chicken"
                  "#julia"
+                 "#C++" "#C++-general" "#c++-basic" "#c++-social" "#geordi"
+                 "#boost"
+                 "#c" "#c-basic"
                  "##prolog" "#minikanren"
                  "#css"
                  "#devops"
@@ -73,12 +77,19 @@
                  "##bittorrent" "#libtorrent"
                  "#tor"
                  "#docker"
-                 "#emacs"
+                 "#emacs" "#emacs-social"
+                 "#spacemacs"
+                 "#emacs-doom"          ;; @todo3 bridge this with Matrix
+                 "#notmuch"
                  "#gnus"
                  "#emacsconf"
                  "#evil-mode"
                  "#emacs-circe" "#znc"
-                 "#gnu" "#gnuradio" "gnuplot" "gnupg" "#gnulinuxindia" "#gnugen"
+                 "#gnu" "#gnuradio" "#gnuplot" "#gnupg" "#gnulinuxindia" "#gnugen"
+                 "#imagemagick"
+                 "##email"
+                 "#mutt" "#neomutt"
+                 "#opensmtpd"
                  "#fanfiction"
                  "#git"
                  "#go-nuts"
@@ -93,12 +104,20 @@
                  "#organice" ;; @Matrix/#organice:matrix.org
                  "#python" "#django"
                  "#curl"
+                 "#grep"
                  "#reddit-sysadmin"
                  "#slime"
                  "#thelounge" "#thelounge-offtopic"
                  "#ubuntu" "#ubuntu-ir" "#linux" "#debian" "#archlinux" "#cafelinux"
-                 "#vim"
+                 "#vim" "#neovim" "#spacevim"
                  "#zsh" "#bash"
+                 "#zig"
+                 "#dotnet" "##vb.net" "##asp.net" "#fsharp" "#csharp"
+                 "#ocaml"
+                 "#haskell" "#haskell-beginners" "#haskell-emacs"
+                 "#haskell-game" "#haskell-in-depth"
+                 "#haskell-language-server"
+                 "#haskell-offtopic" "#haskell-lens" "#numerical-haskell"
                  "#security" "#opsec"
                  "#lobsters" "##crustaceans"
                  "#regex"
@@ -118,6 +137,7 @@
                  "##programming"
                  "#datahoarder"
                  "##math"
+                 "##machinelearning"
                  "##chat"
                  "#libera"
                  "##philosophy"
@@ -125,6 +145,7 @@
                  ;; "##news"
                  "#bitcoin" "##crypto"
                  "##politics"
+                 "##music"
                  )))
 
 ;;;
@@ -156,6 +177,7 @@
     (when (eq major-mode 'circe-channel-mode)
       (message "%i entities are online on %s." (length (circe-channel-nicks)) (buffer-name))))
 ;;;
+  (add-hook 'circe-mode-hook #'night/disable-font-lock)
   (add-hook 'circe-mode-hook #'night/disable-flycheck) ;; used resources
 
   ;; I am also using `company-global-modes' to disable it.

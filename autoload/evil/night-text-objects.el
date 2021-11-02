@@ -13,8 +13,8 @@
 
   (targets-define-to pipe "|" nil separator
                      :bind t :keys "|")
-  (targets-define-to cell "##+" nil separator
-                     :bind t :keys "C") ;; @seeAlso `night/cell-select'
+  (targets-define-to cell "\\(?:#\\{2,\\}\\|;\\{3,\\}\\).*" nil separator
+                     :bind t :keys "c") ;; @seeAlso `night/cell-select'
 
   (targets-define-to shfun
                      ;; "function "
@@ -95,4 +95,6 @@
   (define-key evil-outer-text-objects-map evil-textobj-line-a-key 'evil-a-line)
   (define-key evil-inner-text-objects-map evil-textobj-line-i-key 'evil-inner-line)
 
+  (map!
+   :textobj "C" #'evilnc-inner-comment #'evilnc-outer-commenter)
   (provide 'evil-textobj-line))

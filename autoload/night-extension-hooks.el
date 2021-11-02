@@ -77,22 +77,30 @@ Use this to stop the audio files being played by org-mode links."
       (kill-local-variable 'org-link-descriptive)
       ;; [[file:~/.emacs.d.doom/.local/straight/repos/org/lisp/org.el::make-local-variable 'org-link-descriptive][newer org versions have make it a local var on all buffers, which we have undone here]]
 
-      (when (s-contains? "..inline_links.." bfn)
+      (when (s-contains? (ntag "inline_links") bfn)
         (make-local-variable 'buffer-invisibility-spec)
 
         (make-local-variable 'org-link-descriptive)
 
         (night/org-hide-link-display :default nil))
-      (when (s-contains? "..startup.." bfn)
+
+      (when (s-contains? (ntag "startup") bfn)
         ;; @securityRisk
         (night/org-execute-startup-block))
-      (when (s-contains? "..org-highlighter.." bfn)
+
+      (when (s-contains? (ntag  "org-highlighter") bfn)
         (night/org-link-highlighter-hide)
         (scrollback-mode)
         (night/org-link-highlighter-hotkeys-enable)
         (org-show-all) ;; @userConfig no reason to hide stuff in a search buffer
         (org-sticky-header-mode t)
-        (message "org-highlighter activated")
+        (message "org-highlighter activated"))
+
+      (when (s-contains? (ntag "org-playlist") bfn)
+        ;; (night/org-playlist-hide)
+        (night/org-playlist-hotkeys-enable)
+        (org-sticky-header-mode t)
+        (message "org-playlist activated")
         ))
 
      ((member-ignore-case ext '("log" "ansitxt"))

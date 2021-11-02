@@ -77,9 +77,11 @@
        vterm                            ; the best terminal emulation in Emacs
 
        :checkers
-       syntax       ; tasing you for every semicolon you forget
+       ;; @warn Do NOT enable `syntax'; It enables `flycheck' and disables `flymake', which doesn't play nicely with `eglot'.
+       ;; syntax       ; tasing you for every semicolon you forget
+
        ;; spell             ; tasing you for misspelling mispelling
-       ;;grammar           ; tasing grammar mistake every you make
+       ;; grammar     ; @tosee0      ; tasing grammar mistake every you make
 
        :tools
        ;;ansible
@@ -105,8 +107,9 @@
 
        :lang
        ;;agda              ; types of types of types of types...
-       ;;cc                ; C/C++/Obj-C madness
+       (cc +lsp)                ; C/C++/Obj-C madness
        clojure                          ; java with a lisp
+       (zig +lsp)
        common-lisp       ; if you've seen one lisp, you've seen them all
        coq               ; proofs-as-programs
        crystal           ; ruby at the speed of c
@@ -146,7 +149,7 @@
        ;;purescript        ; javascript, but functional
        (python +conda)            ; +poetry is annoying
        ;;qt                ; the 'cutest' gui framework ever
-       ;; racket            ; a DSL for DSLs
+       (racket +xp)            ; a DSL for DSLs
        ;;rest              ; Emacs as a REST client
        rst               ; ReST in peace
        (ruby +rails)     ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}

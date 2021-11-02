@@ -2,6 +2,8 @@
 
 (after! yasnippet (yas-reload-all))
 ;;;
+
+;;;
 ;; (add-hook 'after-init-hook #'night/load-tramp-theme)
 ;; (add-hook 'doom-init-ui-hook #'night/load-tramp-theme)
 ;; (add-hook 'doom-customize-theme-hook #'night/load-tramp-theme)

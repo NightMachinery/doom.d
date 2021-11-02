@@ -5,6 +5,17 @@
 
 (setq default-input-method "farsi-isiri-9147")
 
+;;;
+(setq visual-order-cursor-movement nil) ;; @redundant
+(map!
+ ;; Makes the arrow keys consistent between the insert and normal state
+ ;; Without this, [help:left-char], [help:right-char] would have been used in the insert mode.
+ :gnvio
+ "<left>" #'evil-backward-char
+ :gnvio
+ "<right>" #'evil-forward-char)
+;;;
+
 (defun night/enable-bidirectional ()
   (interactive)
 

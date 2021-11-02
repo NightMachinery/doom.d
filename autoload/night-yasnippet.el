@@ -14,4 +14,9 @@
   (add-to-list 'yas-snippet-dirs 'doom-snippets-dir 'append #'eq)
 
   (yas-reload-all)
+;;;
+  (setq yas-key-syntaxes ;; @userConfig
+        (list #'yas-try-key-from-whitespace
+              "w_.()" "w_." "w_"))
+;;;
   )

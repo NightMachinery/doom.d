@@ -10,7 +10,6 @@
 ;;;
   (setq org-return-follows-link t)
 ;;;
-  (setq org-babel-min-lines-for-block-output 0) ; If number of lines of output is equal to or exceeds this value, the output is placed in a #+begin_example...#+end_exampleblock.
   (setq org-startup-with-inline-images t)
   ;; (setq org-src-tab-acts-natively nil) ; doesn't fix the completion TAB problem
   (defun night/org-save-hook-fn ()

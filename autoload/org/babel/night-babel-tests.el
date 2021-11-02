@@ -7,6 +7,7 @@
   (night/diff-buffers "*my-test*" (current-buffer))
   ;; (diff-buffers "*my-test*" (current-buffer) (list "--unified=30"))
   )
+
 (defun night/babel-tests-tmp ()
   (interactive)
   (let ((contents (buffer-string))

@@ -48,7 +48,10 @@
 
 ;;;
 ;; `doom-sync -u` is needed for the unpinnings to take effect
+
 (unpin! hl-todo)
+
+(package! racket-mode :pin "433c90561af2df0d63bbeafe70c8abc7ac60b1a2")
 ;;; @themes
 (package! solarized-theme)
 (package! humanoid-themes)
@@ -125,12 +128,12 @@
 ;;   ;; @example
 ;;   :recipe (:host nil :repo "https://framagit.org/steckerhalter/highlight.el" :branch "master"))
 ;;;
-(package! ov)                           ;; needed by our rainbow-mode
+(package! ov
+  :recipe (:host github :repo "emacsorphanage/ov")) ;; needed by our rainbow-mode
 (unpin! rainbow-mode)
 (package! rainbow-mode
   ;; my fork uses overlays instead of text properties so that it is not erased by hl-line
-  :recipe (:host github :repo "NightMachinary/rainbow-mode")
-  :pin "nil")
+  :recipe (:host github :repo "NightMachinary/rainbow-mode"))
 ;; (package! rainbow-mode :recipe (:local-repo "path/to/repo"))
 ;;;
 (package! org-super-links
@@ -217,7 +220,11 @@
 
 (package! eredis)
 
+(package! evil-mc)
+
 (package! xterm-color)
+
+(package! code-cells)
 
 (package! company-quickhelp) ;; uses pos-tip which only works in GUI
 (package! company-quickhelp-terminal)

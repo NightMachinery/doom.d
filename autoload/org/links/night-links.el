@@ -70,10 +70,18 @@
                     (funcall preserve it "CLIs?")
                     (funcall preserve it "GUIs?")
                     (funcall preserve it "troubleshooting")
+                    (funcall preserve it "kernels?")
+                    (funcall preserve it "IDEs?")
                     (funcall preserve it "useme")
                     (funcall preserve it "rememberme")
-                    (funcall preserve it "todo")
+                    (funcall preserve it "todos?")
+                    (funcall preserve it "bugs?")
                     (funcall preserve it "inbox")
+                    (funcall preserve it "install\\(ation\\)?")
+                    (funcall preserve it "frontends?")
+                    (funcall preserve it "backends?")
+                    (funcall preserve it "clients?")
+                    (funcall preserve it "servers?")
                     (prog1 (f-dirname it)
                       (message "it: %s" it))
                     (f-base it)
@@ -136,18 +144,28 @@
                                                        (f-filename file)))
                (file (f-filename file))
                (t "")))
-             (desc (when desc (-> desc
-                                (string-trim-right ":?\\*?links\\*?")
-                                (string-trim-left "\\*+\s+")
-                                ;; (night/org-str-to-plain)
-                                ))))
+             (tail
+              (cond
+               ((s-starts-with-p "Goodreads/goodreads_export" tail)
+                "GR")
+               (t tail)))
+             (desc (when desc
+                     (-> desc
+                         (string-trim-right ":?\\*?links\\*?")
+                         (string-trim-left "\\*+\s+")
+                         ;; (night/org-str-to-plain)
+                         ))))
         (message "%s" (concat "night/org-description-formatter: " "link=" link ", desc=" desc ", tail=" tail ", file=" file))
         (cond
          ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
          ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
-          (let ((desc-tail (or
-                            (cadr (s-match ".*:\\(.*\\)" desc))
-                            desc)))
+          (let*
+              ((desc-tail
+                (or
+                 (cadr
+                  ;; The first time a link is created, its title will be styled =some/path:headline=; This causes the backlink's title to this link to become =other/path:some/path:headline=, which isn't nice.
+                  (s-match "[^:]*/[^:]*:\\(.*\\)" desc))
+                 desc)))
             (if (not (equalp  desc-tail ""))
                 (concat tail ":" desc-tail)
               tail)))

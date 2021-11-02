@@ -15,7 +15,7 @@
 ;;;
   (setq vundo--window-max-height 10)
 
-  (set-popup-rule! "^\\*vundo.*\\*$" :height 0.5) ;; doesn't work
+  (set-popup-rule! "^\\*vundo.*\\*$" :height 0.5 :ttl nil) ;; doesn't work
 ;;;
   (defun night/h-vundo-buf-setup (orig-fn &rest args)
     "upstream PR: https://github.com/casouri/vundo/issues/9"

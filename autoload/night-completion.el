@@ -154,8 +154,9 @@
                ;;  company-yasnippet
                ;;  ;; company-abbrev
                ;;  )
-               (org-mode company-capf company-files (company-dabbrev company-ispell) company-yasnippet)
-               ;; company-ispell interfered with '<sz . It's possible to use the arrow keys to dismiss the completion tooltip and continue with the expansions, but I thought it's not worth it.
+               (org-mode company-capf company-files (company-dabbrev
+                                                     ;; company-ispell (makes org-babel's candidates become lost among the noise)
+                                                     ) company-yasnippet)
                (text-mode company-capf company-files (company-dabbrev company-ispell) company-yasnippet)
                (prog-mode company-capf company-dabbrev-code company-files company-yasnippet)
                (gerbil-mode company-etags company-capf company-dabbrev-code company-files company-yasnippet)

@@ -365,10 +365,59 @@ If on a:
                                    "\nmouse-1: Previous buffer\nmouse-3: Next buffer")
                 'local-map mode-line-buffer-identification-keymap)))
 
-(night/overrides-doom-modeline-buffer-file-name)
 (advice-add 'doom-modeline-buffer-file-name :override #'night/overrides-doom-modeline-buffer-file-name)
 ;; This is ultimately where the modeline is constructed:
 ;; [[doom:.local/straight/repos/doom-modeline/doom-modeline-segments.el::(doom-modeline-def-segment buffer-info]]
 
 (setq doom-modeline-buffer-file-name-style 'relative-from-project)
+;;;
+(defun night/trs (&rest paths)
+  (z trs (identity paths)))
+(advice-add 'system-move-file-to-trash :override #'night/trs)
+;;;
+(defun night/counsel-jump-list ()       ;; @toFuture/1401 @upstreamMe
+  "Go to an entry in evil's (or better-jumper's) jumplist."
+  (interactive)
+  ;; REVIEW Refactor me
+  (let (buffers)
+    (unwind-protect
+        (ivy-read
+         "jumplist: "
+         (nreverse
+          (delete-dups
+           (delq
+            nil
+            (mapcar
+             (lambda (mark)
+               (when mark
+                 (cl-destructuring-bind (path pt _id) mark
+                   (when (f-exists-p path)
+                     ;; @monkeyPatched to add the above check
+                     (let ((buf (get-file-buffer path)))
+                       (unless buf
+                         (push (setq buf (find-file-noselect path t))
+                               buffers))
+                       (with-current-buffer buf
+                         (goto-char pt)
+                         (font-lock-fontify-region (line-beginning-position) (line-end-position))
+                         (cons (format "%s:%d: %s"
+                                       (buffer-name)
+                                       (line-number-at-pos)
+                                       (string-trim-right (or (thing-at-point 'line) "")))
+                               (point-marker))))))))
+             (cddr (better-jumper-jump-list-struct-ring
+                    (better-jumper-get-jumps (better-jumper--get-current-context))))))))
+         :sort nil
+         :require-match t
+         :action (lambda (cand)
+                   (let ((mark (cdr cand)))
+                     (delq! (marker-buffer mark) buffers)
+                     (mapc #'kill-buffer buffers)
+                     (setq buffers nil)
+                     (with-current-buffer (switch-to-buffer (marker-buffer mark))
+                       (goto-char (marker-position mark)))))
+         :caller '+ivy/jump-list)
+      (mapc #'kill-buffer buffers))))
+(advice-add '+ivy/jump-list :override #'night/counsel-jump-list)
+;; WAIT [[https://github.com/gilbertw1/better-jumper/issues/17][gilbertw1/better-jumper#17 Getting the jumplist sorted by recency]]
 ;;;

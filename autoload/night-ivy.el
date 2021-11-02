@@ -3,17 +3,33 @@
 ;;; /doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
 
 (with-eval-after-load 'ivy
-  ;; `ivy--regex-ignore-order's '!negation' is broken for me
-  (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-ignore-order)) ;; needed by `night/swiper-irc-me'
-  ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
-  ;; (add-to-list 'ivy-re-builders-alist '(counsel-rg . ivy--regex-ignore-order))
+;;;
+  (defun night/ivy--no-sort (name candidates)
+    candidates)
 
-  (if nil
+  (add-to-list 'ivy-sort-matches-functions-alist '(t . ivy--shorter-matches-first))
+  (add-to-list 'ivy-sort-matches-functions-alist '(ivy-switch-buffer . ivy-sort-function-buffer))
+  (add-to-list 'ivy-sort-matches-functions-alist '(counsel-bookmark . night/ivy--no-sort))
+  (add-to-list 'ivy-sort-matches-functions-alist '(+ivy/jump-list . night/ivy--no-sort))
+  (add-to-list 'ivy-sort-matches-functions-alist '(counsel-org-goto . night/ivy--no-sort))
+
+  ;; (setq ivy-sort-matches-functions-alist '((t . ivy--shorter-matches-first)))
+
+  ;; (setq ivy-sort-matches-functions-alist '((t . ivy--flx-sort)))
+  ;; @upstreamBug `ivy--flx-sort' does not work with orderless. It's also slow.
+;;;
+  (if t
       ;; activate for all:
       (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
 
     ;; just replace the default option:
     (setq ivy-re-builders-alist (a-assoc-1 ivy-re-builders-alist t 'orderless-ivy-re-builder)))
+
+  ;; `ivy--regex-ignore-order's '!negation' is broken for me
+  (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-ignore-order)) ;; needed by `night/swiper-irc-me'
+  ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
+  ;; (add-to-list 'ivy-re-builders-alist '(counsel-rg . ivy--regex-ignore-order))
+
   ;; @alt to orderless:
   ;; - `ivy--regex-ignore-order'
   ;; - Ivy has ivy-restrict-to-matches, bound to S-SPC, so you can get the effect of out of order matching without using ivy--regex-ignore-order: (@toFuture/1401/6 this might be faster?)
@@ -43,7 +59,8 @@
        ((string-prefix-p "~" pattern) `(orderless-flex . ,(substring pattern 1)))
        ((string-suffix-p "~" pattern) `(orderless-flex . ,(substring pattern 0 -1)))
        ((and (not *orderless-no-fuzzy*)
-             (= _total 1)) 'orderless-flex)))
+             (= _total 1)) 'orderless-flex)
+       (t 'orderless-regexp)))
     (defun night/h-orderless-regexp (pattern index _total)
       'orderless-regexp)
 
@@ -60,6 +77,7 @@
     (let ((*orderless-no-fuzzy* t))
       (apply orig-fn args)))
   (advice-add 'counsel-rg :around #'night/advice-orderless-no-fuzzy)
+  (advice-add 'swiper-isearch :around #'night/advice-orderless-no-fuzzy)
 ;;;
   (comment
    (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))))

@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: src_jupyter_python
+# key: <jp
+# uuid: <jp
+# --
+#+begin_src jupyter-python :kernel py_base :session emacs_py_1 :async yes :pandoc t
+`%`$0
+#+end_src

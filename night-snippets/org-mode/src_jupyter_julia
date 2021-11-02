@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: src_jupyter_julia
+# key: <j
+# uuid: <j
+# --
+#+begin_src jupyter-julia :session j1 :async yes :pandoc t
+`%`$0
+#+end_src

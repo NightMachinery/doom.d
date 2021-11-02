@@ -46,7 +46,7 @@
         :nvi "lp" #'night/org-paste-clipboard-image)
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693
   (map!
-   :map evil-org-mode-map               ;; @todo0 also map to org-mode-map
+   :map evil-org-mode-map ;; @todo0 also map to org-mode-map
    :n
    ;; "TAB" 'org-cycle
    ;; "<S-tab>" 'org-force-cycle-archived ; is overrided ...
@@ -67,6 +67,9 @@
 
    :nvo "C-S-<left>" #'org-backward-heading-same-level
    :nvo "C-S-<right>" #'org-forward-heading-same-level
+
+   :nvoi "C-M-<up>" #'org-babel-previous-src-block
+   :nvoi "C-M-<down>" #'org-babel-next-src-block
 
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode

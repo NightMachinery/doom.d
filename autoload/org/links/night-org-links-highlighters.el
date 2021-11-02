@@ -5,46 +5,50 @@
 
   (defun night/org-link-highlighter-get-str-backward ()
     (interactive)
-    (save-excursion
-      (re-search-forward "\\]\\]") ;; go to after the current link
-      (let* (;; (end (- (point) 0))
-             (start (progn
-                      (re-search-backward night/org-link-re-highlighter)
-                      (point)))
-             (end (match-end 0)))
-        (buffer-substring-no-properties start end))))
+    (progn
+     (save-excursion
+       (re-search-forward "\\]\\]") ;; go to after the current link
+       (let* (;; (end (- (point) 0))
+              (start (progn
+                       (re-search-backward night/org-link-re-highlighter)
+                       (point)))
+              (end (match-end 0)))
+         (buffer-substring-no-properties start end)))))
 
   (defun night/org-link-highlighter-backward ()
     (interactive)
-    (re-search-backward night/org-link-re-highlighter)
-    (message "Link: %s"
-             (buffer-substring-no-properties
-              (+ 14 (match-beginning 0))
-              (+ 1 (match-beginning 1))
-              ;; @idk why (match-beginning 1) is set so wrongly
-              ))
-    (comment (message "Link: %s, %s, %s"
-              (match-beginning 1)
-              (match-end 1)
-              (buffer-substring-no-properties
-               (match-beginning 1)
-               (match-end 0))
-              ))
-    (cond
-     (t
-      (re-search-forward "\\]\\["))
-     (t
-      (dotimes (i 1)
-        (night/point-increment))))
-    (night/org-reveal-maybe)
-    (night/screen-center))
+    (ignore-error search-failed
+        (re-search-backward night/org-link-re-highlighter)
+      (message "Link: %s"
+               (buffer-substring-no-properties
+                (+ 14 (match-beginning 0))
+                (+ 1 (match-beginning 1))
+                ;; @idk why (match-beginning 1) is set so wrongly
+                ))
+      (comment (message "Link: %s, %s, %s"
+                        (match-beginning 1)
+                        (match-end 1)
+                        (buffer-substring-no-properties
+                         (match-beginning 1)
+                         (match-end 0))
+                        ))
+      (cond
+       (t
+        (re-search-forward "\\]\\["))
+       (t
+        (dotimes (i 1)
+          (night/point-increment))))
+      (night/org-reveal-maybe)
+      (night/screen-center)))
+
   (defun night/org-link-highlighter-forward ()
     (interactive)
-    (re-search-forward night/org-link-re-highlighter)
-    (cond
-     (t (night/org-link-highlighter-backward)) ;; end up at the start of the match
-     (t (night/point-decrement)))
-    (night/screen-center))
+    (ignore-error search-failed
+        (re-search-forward night/org-link-re-highlighter)
+      (cond
+       (t (night/org-link-highlighter-backward)) ;; end up at the start of the match
+       (t (night/point-decrement)))
+      (night/screen-center)))
 
   (defun night/org-link-highlighter-open-at-point (&optional position)
     (interactive)
@@ -89,8 +93,9 @@
 
   ;; also looks good: orangered,snow
   ;; @dup note that `org-activate-links' also has its own defaults for empty strings supplied for the colors
-  (defface night/org-link-face-highlighter '((t (:foreground "green"
-                                                 :background "ghostwhite"
+  (defface night/org-link-face-highlighter '((t (
+                                                 ;; :foreground "green"
+                                                 ;; :background "ghostwhite"
                                                  :weight bold))) "face for highlighter links")
   (org-link-set-parameters "highlight" :face 'night/org-link-face-highlighter)
 

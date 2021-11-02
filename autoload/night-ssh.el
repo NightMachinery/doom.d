@@ -130,6 +130,17 @@
       "-o ControlMaster=auto -o ControlPath='tramp.%%C' -o ControlPersist=yes")
 
 ;;;
+(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+;; This adds the -l flag to the shell command and sources ~/.profile
+;;;
+(defvar *night/org-babel-remote* t)
+(defun night/org-babel-session-name-get (&optional name)
+  (let ((name (or name "s1")))
+    (cond
+     (*night/org-babel-remote*
+      (concat "/ssh:paria@Parias-MacBook-Air.local:" name))
+     (t name))))
+;;;
 (map! :leader
       ;; remote
       "z r" #'night/scp-eva-current

@@ -8,8 +8,9 @@
 ;; (org-link-set-parameters "file" :face 'night/org-link-files)
   ;;;
 
-  (defface night/org-link-mouse-face '((t (:background "brightwhite" :weight bold))) "org links' mouse hover face")
+  (defface night/org-link-mouse-face '((t (:background "white" :weight bold))) "org links' mouse hover face")
 ;;;
+  (require 'ov)
   (defun org-activate-links (limit)
     "Add link properties to links.
 This includes angle, plain, and bracket links."
@@ -68,6 +69,7 @@ This includes angle, plain, and bracket links."
                     (add-text-properties start end properties))
                 ;; Handle invisible parts in bracket links.
                 (remove-text-properties start end '(invisible nil))
+                (ov-clear 'ov-org-link t start end )
                 (let ((hidden
                        (append `(invisible
                                  ,(or (org-link-get-parameter type :display)
@@ -84,14 +86,37 @@ This includes angle, plain, and bracket links."
                    ((and
                      (equalp type "highlight")
                      (not (string= path "")))
-                    (let* ((opts (s-split "," path))
+                    (let* ((none-lst
+                            '("nil" "default"))
+                           (opts (s-split "," path))
                            (fg (night/empty-str-to-nil (nth 0 opts)))
-                           (bg (night/empty-str-to-nil (nth 1 opts))))
-                        (add-face-text-property
-                         visible-start visible-end
-                         `(
-                           :foreground ,(or fg "green")
-                           :background ,(or bg "ghostwhite"))))))
+                           (bg (night/empty-str-to-nil (nth 1 opts)))
+                           (props
+                            `(
+                              ,@(cond
+                                 ((and
+                                   fg
+                                   (member-ignore-case fg none-lst))
+                                  nil)
+                                 (t
+                                  (list :foreground
+                                        (or fg "green"))))
+                              ,@(cond
+                                 ((and
+                                   bg
+                                   (member-ignore-case bg none-lst)) nil)
+                                 (t
+                                  (list
+                                   :background
+                                   (or bg "ghostwhite")))))))
+                      ;; (message "org_visible_props: %S" props)
+                      (add-face-text-property
+                       visible-start visible-end
+                       props)
+                      (ov visible-start visible-end
+                          'face props
+                          'ov-org-link 4999)
+                      )))
 ;;;
 
                   (add-text-properties visible-start visible-end properties)

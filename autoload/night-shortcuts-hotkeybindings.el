@@ -28,6 +28,16 @@
   (add-to-list 'emulation-mode-map-alists 'night-priority-map-alist) ;; @broken still gets overridden by, e.g., evil-snipe
   )
 ;;;
+(defun night/helpful-key (key-sequence)
+  (interactive
+   (list (read-key-sequence "Press key: ")))
+  (let ((sym (key-binding key-sequence)))
+    (cond
+     ((keymapp sym)
+      (describe-keymap sym))
+     (t
+      (funcall #'helpful-key key-sequence)))))
+;;;
 (defun night/tmp-buffer ()
   (interactive)
   (find-file "~/tmp/tmp.org"))

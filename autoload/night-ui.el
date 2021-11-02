@@ -1,34 +1,38 @@
-(cond ((display-graphic-p)
-       ;; (doom-adjust-font-size 2) ;; adjusting the GUI emacs font size
-       ;;;
+(after! (doom-modeline-core)
+  (setq doom-modeline-icon nil)         ;; makes the modeline way too big
 
-       (setq evil-insert-state-cursor '(box "purple"))
+  (cond ((display-graphic-p)
+         (setq doom-modeline-height 1)  ;; doesn't seem to work
+         ;; (doom-adjust-font-size 2) ;; adjusting the GUI emacs font size
+;;;
 
-       ;; (setq evil-normal-state-cursor '(box "royalblue"))
-       ;; (setq evil-insert-state-cursor '((bar . 5) "yellow"))
-       )
-      (t
-       ;; [[nightNotes:subjects/software/tools, apps, utility/CLI/terminal emulators/escape codes/change cursor type.org][escape codes/change cursor type.org]]
-       ;;
-       ;; These do not support colors.
-       ;;
-       ;; (global-term-cursor-mode)
-       ;;
-       ;; https://github.com/7696122/evil-terminal-cursor-changer
-       ;;
-       ;; (setq evil-insert-state-cursor '(box "azure"))
-       ;; (setq evil-normal-state-cursor '(box "paleturquoise"))
+         (setq evil-insert-state-cursor '(box "purple"))
 
-       ;; [[NIGHTDIR:configFiles/kitty/themes/night-solarized-light.conf][themes/night-solarized-light.conf]]
-       ;; (setq evil-insert-state-cursor '(box "azure"))
-       (setq evil-insert-state-cursor '(box "#f19618"
-                                            ;; orange
-                                            ))
-       (setq evil-normal-state-cursor '(box "#c7ceff"))
+         ;; (setq evil-normal-state-cursor '(box "royalblue"))
+         ;; (setq evil-insert-state-cursor '((bar . 5) "yellow"))
+         )
+        (t
+         ;; [[nightNotes:subjects/software/tools, apps, utility/CLI/terminal emulators/escape codes/change cursor type.org][escape codes/change cursor type.org]]
+         ;;
+         ;; These do not support colors.
+         ;;
+         ;; (global-term-cursor-mode)
+         ;;
+         ;; https://github.com/7696122/evil-terminal-cursor-changer
+         ;;
+         ;; (setq evil-insert-state-cursor '(box "azure"))
+         ;; (setq evil-normal-state-cursor '(box "paleturquoise"))
 
-       (require 'evil-terminal-cursor-changer)
-       (evil-terminal-cursor-changer-activate)
-       ))
+         ;; [[NIGHTDIR:configFiles/kitty/themes/night-solarized-light.conf][themes/night-solarized-light.conf]]
+         ;; (setq evil-insert-state-cursor '(box "azure"))
+         (setq evil-insert-state-cursor '(box "#f19618"
+                                              ;; orange
+                                              ))
+         (setq evil-normal-state-cursor '(box "#c7ceff"))
+
+         (require 'evil-terminal-cursor-changer)
+         (evil-terminal-cursor-changer-activate)
+         )))
 ;;;
 (after! highlight
   (setq hlt-max-region-no-warning 999999999999999))
@@ -62,7 +66,7 @@
                                  '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'zsh-macro t)))))
 
 (setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\).*$")
-(setq night/urgent-tag-regex "^.*\\(@urgent\\|:urgent:\\).*$")
+(setq night/urgent-tag-regex "^.*\\(@urgent\\|:urgent:\\|@ASAP\\|:ASAP:\\).*$")
 (defun night/highlight-org ()
   (interactive)
   (progn
@@ -128,7 +132,7 @@
 
 ;;;
 (defun night/highlight-background ()
-  "Highlights the background of the hardcoded patterns on the current buffer. It does NOT react to new additions of the patterns in the buffer. The highlight also is kind of sticky. It uses overlays so ast least it's not overrided by hl-line, but then again, it erases the at-tags as they are not yet overlays ..."
+  "Highlights the background of the hardcoded patterns on the current buffer. It does NOT react to new additions of the patterns in the buffer. The highlight also is kind of sticky. It uses overlays so at least it's not overrided by hl-line, but then again, it erases the at-tags as they are not yet overlays ..."
   (interactive)
   (hlt-highlight-regexp-region nil nil night/great-tag-regex 'zsh-macro 1))
 (defun night/hlt-set-current-face (&optional face)

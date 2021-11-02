@@ -37,13 +37,13 @@
      (t
       (message "char: %s" (char-to-string c))))))
 
-(defun night/point-increment ()
+(defun night/point-increment (&optional count)
   ;; (interactive)
-  (goto-char (min (point-max) (+ (point) 1))))
+  (goto-char (min (point-max) (+ (point) (or count 1)))))
 
-(defun night/point-decrement ()
+(defun night/point-decrement (&optional count)
   ;; (interactive)
-  (goto-char (max 1 (- (point) 1))))
+  (goto-char (max 1 (- (point) (or count 1)))))
 
 (cl-defun night/h-goto-paren-gen (&key (count 1) ;; currently only supporting 1 and -1
                                        (pattern "(\\|)")
@@ -183,6 +183,8 @@
   (add-hook 'emacs-lisp-mode-hook #'my-lisp-init)
   (add-hook 'lisp-mode-hook #'my-lisp-init)
   (add-hook 'scheme-mode-hook #'my-lisp-init)
+  (add-hook 'racket-mode-hook #'my-lisp-init)
+
   (defun conditionally-enable-lispy ()
     (when (eq this-command 'eval-expression)
       (lispy-mode 1)))

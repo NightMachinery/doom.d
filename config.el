@@ -84,6 +84,26 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
+(progn
+  (require 'doom-themes-ext-org)        ;; @workaround for upstream bugs
+
+  (require 'solarized-theme)
+  (require 'humanoid-themes)
+  (require 'kaolin-themes)
+  ;; (require 'spacemacs-theme)
+  (require 'apropospriate-theme)
+  (require 'darktooth-theme)
+  (require 'rebecca-theme)
+  (require 'solo-jazz-theme)
+  (require 'github-theme)
+  (require 'night-owl-theme)
+  (require 'colorless-themes)
+  (require 'leuven-theme)
+  (require 'base16-theme)
+  (require 'anti-zenburn-theme)
+  (require 'moe-theme)
+  (require 'poet-theme)
+  (require 'zaiste-theme))
 (cond
  (;; nil
   (night/server-alt1-p)
@@ -97,7 +117,8 @@
   )
  ((display-graphic-p)
   (setq night-theme
-        'solarized-selenized-white
+        'kaolin-light
+        ;; 'solarized-selenized-white
         ;; 'doom-one-light
         ;; 'humanoid-light
         ;; 'doom-nord-light (has some bad color choices for orgmode)
@@ -105,8 +126,10 @@
         ;; 'doom-one-light
         ))
  (t
+  (setq night-theme 'kaolin-light)
+
   ;; (setq night-theme 'solarized-light)
-  (setq night-theme 'solarized-selenized-light)
+  ;; (setq night-theme 'solarized-selenized-light) ;; @good
   ;; (setq night-theme 'doom-solarized-light) ; subtly different
   ))
 (setq doom-theme night-theme)

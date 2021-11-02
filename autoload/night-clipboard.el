@@ -50,7 +50,12 @@
 ;;;
 (defun night/paste-yank-html ()
   (interactive)
-  (insert-for-yank (z html2org)))
+  (night/insert-for-yank (z html2org)))
+
+(defun night/insert-for-yank (text)
+  (interactive)
+  (night/evil-region-delete-on-visual-paste)
+  (insert-for-yank text))
 ;;;
 (after! (org evil-org) (map!
                         :map evil-org-mode-map
