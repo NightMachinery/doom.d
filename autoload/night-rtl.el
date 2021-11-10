@@ -13,7 +13,17 @@
  :gnvio
  "<left>" #'evil-backward-char
  :gnvio
- "<right>" #'evil-forward-char)
+ "<right>" #'evil-forward-char
+ ;;;
+ :g
+ "<up>" #'previous-line                 ;; We can't remap these in the global mode, or =ivy= breaks
+ :g
+ "<down>" #'next-line
+ :nvio
+ "<up>" #'evil-previous-line ;; #'evil-previous-visual-line or #'previois-line can get buggy on some lines (this happens on LTR lines as well)
+ :nvio
+ "<down>" #'evil-next-line ;; #'evil-next-visual-line
+ )
 ;;;
 
 (defun night/enable-bidirectional ()

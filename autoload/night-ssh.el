@@ -133,12 +133,25 @@
 (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 ;; This adds the -l flag to the shell command and sources ~/.profile
 ;;;
-(defvar *night/org-babel-remote* t)
+(defvar *night/org-babel-remote* nil)
 (defun night/org-babel-session-name-get (&optional name)
+  ;; @upstreamBug [[https://github.com/nnicandro/emacs-jupyter/issues/352][nnicandro/emacs-jupyter#352 Bug when using elisp to determine the session name]]
   (let ((name (or name "s1")))
     (cond
-     (*night/org-babel-remote*
+     ((equalp *night/org-babel-remote* :pari)
       (concat "/ssh:paria@Parias-MacBook-Air.local:" name))
+     ((equalp *night/org-babel-remote* :remote_connection_file)
+      (concat
+       "/ssh:walle@51.178.215.202#2380:"
+       ;; "/ssh:ubuntu@194.5.193.126:"
+       ;; name
+       "tmp/jupyter_kernels/" name ".json" ;; start the kernel manually
+       ))
+     ((equalp *night/org-babel-remote* :remote_notebook_server)
+      (concat
+       "/jpy:51.178.215.202#2390:/"
+       name
+       ))
      (t name))))
 ;;;
 (map! :leader

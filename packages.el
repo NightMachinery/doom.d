@@ -51,6 +51,8 @@
 
 (unpin! hl-todo)
 
+(unpin! jupyter)
+
 (package! racket-mode :pin "433c90561af2df0d63bbeafe70c8abc7ac60b1a2")
 ;;; @themes
 (package! solarized-theme)
@@ -119,7 +121,7 @@
 ;; (package! snails
 ;;   :recipe (:build (:not compile) :host github :repo "manateelazycat/snails"))
 ;;;
-(package! vundo                         ;; needs at least emacs@28
+(package! vundo ;; needs at least emacs@28
   :recipe (:host github :repo "casouri/vundo"))
 
 ;;;

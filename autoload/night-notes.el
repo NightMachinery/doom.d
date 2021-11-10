@@ -111,7 +111,7 @@
                      (shell-command-to-string cmd))))
         (let ((lines (split-string text "\n" t "\s+")))
           (let ((link (car lines))
-                (meta (cdr lines))
+                (meta (s-join "\n" (cdr lines)))
                 (i 0))
             (when (not (equalp links-i 1))
               (night/+org--insert-item 'below
@@ -121,7 +121,7 @@
             (if (and description meta)
                 (if quote
                     (progn
-                      (insert (format  "\n#+BEGIN_QUOTE\n%s\n#+END_QUOTE\n" meta)))
+                      (insert (format "\n#+BEGIN_QUOTE\n%s\n#+END_QUOTE\n" meta)))
                     (dolist (line meta)
                       (progn (if (not (string= "" line)) ; so as to not insert the last empty line
                                  (progn

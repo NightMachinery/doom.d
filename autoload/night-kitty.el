@@ -19,5 +19,8 @@
     (set-char-table-range glyphless-char-display
                           (char-from-name "SOFT HYPHEN") 'zero-width)))
 
-  (global-auto-composition-mode -1))
+  (global-auto-composition-mode -1)
+  (after! (julia-mode)
+    ;; Julian source code can become unreadable without this
+    (add-hook 'julia-mode-hook #'auto-composition-mode)))
 ;;;

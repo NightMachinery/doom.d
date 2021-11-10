@@ -2,17 +2,34 @@
 
 (require 'jupyter)
 
+(after! (jupyter)
+  (setq jupyter-long-timeout 20))
 (after! (ob-async)
   (setq ob-async-no-async-languages-alist
         '("jupyter-python" "jupyter-julia")))
 
 (after! (jupyter-org-client)
+  (defun night/jupyter-org-eval-line-or-region ()
+    (interactive)
+    (jupyter-org-with-src-block-client
+     (call-interactively #'jupyter-eval-line-or-region)))
+
+  (defun night/jupyter-org-eval-defun ()
+    (interactive)
+    (jupyter-org-with-src-block-client
+     (call-interactively #'jupyter-eval-defun)))
+
+  (defun night/jupyter-org-inspect-at-point ()
+    (interactive)
+    (jupyter-org-with-src-block-client
+     (call-interactively #'jupyter-inspect-at-point)))
+
   (map! :map 'jupyter-org-interaction-mode-map
         :localleader
-        "ee" #'jupyter-eval-line-or-region
-        "ed" #'jupyter-eval-defun
+        "ee" #'night/jupyter-org-eval-line-or-region
+        "ed" #'night/jupyter-org-eval-defun
 
-        "i" #'jupyter-inspect-at-point
+        "i" #'night/jupyter-org-inspect-at-point
 
         "ki" #'jupyter-org-interrupt-kernel
         "kr" #'jupyter-repl-restart-kernel

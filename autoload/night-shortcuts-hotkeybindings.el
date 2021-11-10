@@ -134,7 +134,7 @@ move COUNT - 1 screen lines forward first."
 
         "y o" #'poporg-dwim
 
-        "x" nil                         ;;  @doom unbinds doom/open-scratch-buffer
+        "x" nil ;;  @doom unbinds doom/open-scratch-buffer
         "x s" #'doom/open-scratch-buffer
         "x d" #'fixup-whitespace
 
@@ -148,6 +148,8 @@ move COUNT - 1 screen lines forward first."
         "s h f" #'night/hlt-counsel-face
 
         "s d" #'night/search-dir ;; overrides @doom's default search pwd function
+
+        "s m" #'counsel-evil-marks
         )
 
   (map! :map profiler-report-mode-map
