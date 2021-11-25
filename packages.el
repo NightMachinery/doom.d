@@ -94,6 +94,8 @@
 
 (package! orgmdb
   :recipe (:host github :repo "isamert/orgmdb.el"))
+(package! ox-ipynb
+  :recipe (:host github :repo "jkitchin/ox-ipynb"))
 
 (package! explain-pause-mode
   :recipe (:host github :repo "lastquestion/explain-pause-mode"))
