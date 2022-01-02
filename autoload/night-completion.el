@@ -154,15 +154,21 @@
                ;;  company-yasnippet
                ;;  ;; company-abbrev
                ;;  )
-               (org-mode company-capf company-files (company-dabbrev
-                                                     ;; company-ispell (makes org-babel's candidates become lost among the noise)
-                                                     ) company-yasnippet)
+               (org-mode
+                ;; Also see `night/org-company-backends-set'
+                company-capf company-files (company-dabbrev
+                                            ;; company-ispell (makes org-babel's candidates become lost among the noise)
+                                            ) company-yasnippet)
                (text-mode company-capf company-files (company-dabbrev company-ispell) company-yasnippet)
                (prog-mode company-capf company-dabbrev-code company-files company-yasnippet)
                (gerbil-mode company-etags company-capf company-dabbrev-code company-files company-yasnippet)
                (lua-mode company-capf company-dabbrev-code company-files company-yasnippet)
                (conf-mode company-capf company-dabbrev-code company-files company-yasnippet))))
 (set-company-backend! 'sh-mode #'company-dabbrev-code) ; useless here, gets overridden
+
+(defun night/org-company-backends-set ()
+  (set-company-backend! 'org-mode
+    '(company-capf company-files company-dabbrev company-yasnippet)))
 ;;;
 (defun night/simple-completions ()
   (interactive)

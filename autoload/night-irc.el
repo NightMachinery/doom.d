@@ -104,7 +104,7 @@
                  "#org-mode"
                  "#org-roam"
                  "#organice" ;; @Matrix/#organice:matrix.org
-                 "#python" "#django"
+                 "#python" "#django" "#pydata"
                  "#curl"
                  "#grep"
                  "#reddit-sysadmin"
@@ -112,6 +112,7 @@
                  "#thelounge" "#thelounge-offtopic"
                  "#ubuntu" "#ubuntu-ir" "#linux" "#debian" "#archlinux" "#cafelinux"
                  "#vim" "#neovim" "#spacevim"
+                 "#R"
                  "#zsh" "#bash"
                  "#zig"
                  "#dotnet" "##vb.net" "##asp.net" "#fsharp" "#csharp"

@@ -20,7 +20,7 @@
  :g
  "<down>" #'next-line
  :nvio
- "<up>" #'evil-previous-line ;; #'evil-previous-visual-line or #'previois-line can get buggy on some lines (this happens on LTR lines as well)
+ "<up>" #'evil-previous-line ;; #'evil-previous-visual-line or #'previous-line can get buggy on some lines (this happens on LTR lines as well)
  :nvio
  "<down>" #'evil-next-line ;; #'evil-next-visual-line
  )

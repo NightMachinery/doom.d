@@ -2,9 +2,9 @@
 
 (defun night/org-startup ()
   (interactive)
-  (org-fragtog-mode)  ;; https://github.com/io12/org-fragtog
+  (org-fragtog-mode) ;; https://github.com/io12/org-fragtog
 
-  (night/highlight-background)        ;; @futureCron was this worth overcoming hl-line?
-  )
+  (night/highlight-background) ;; @futureCron was this worth overcoming hl-line?
+  (night/org-company-backends-set))
 
 (add-hook 'org-mode-hook #'night/org-startup)

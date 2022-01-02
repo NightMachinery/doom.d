@@ -19,3 +19,21 @@
 (format "hi %s" "ji")
 (s-join "\n" (list "hi" "jo"))
 ;;;
+(map!
+ ;; Makes the arrow keys consistent between the insert and normal state
+ ;; Without this, [help:left-char], [help:right-char] would have been used in the insert mode.
+ :gnvio
+ "<left>" #'evil-backward-char
+ :gnvio
+ "<right>" #'evil-forward-char
+ ;;;
+ :g
+ "<up>" #'previous-line                 ;; We can't remap these in the global mode, or =ivy= breaks
+ :g
+ "<down>" #'next-line
+ :nvio
+ "<up>" #'previous-line ;; #'evil-previous-visual-line or #'previous-line can get buggy on some lines (this happens on LTR lines as well)
+ :nvio
+ "<down>" #'next-line ;; #'evil-next-visual-line
+ )
+;;;

@@ -56,6 +56,12 @@
   (interactive)
   (night/evil-region-delete-on-visual-paste)
   (insert-for-yank text))
+
+(defun night/insert-for-yank-and-save (text)
+  (save-excursion
+    (night/insert-for-yank text))
+  (recenter 0)
+  (save-buffer))
 ;;;
 (after! (org evil-org) (map!
                         :map evil-org-mode-map

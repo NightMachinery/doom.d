@@ -27,6 +27,7 @@
 
   ;; `ivy--regex-ignore-order's '!negation' is broken for me
   (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-ignore-order)) ;; needed by `night/swiper-irc-me'
+  (add-to-list 'ivy-re-builders-alist '(counsel-org-goto . ivy--regex-ignore-order))
   ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
   ;; (add-to-list 'ivy-re-builders-alist '(counsel-rg . ivy--regex-ignore-order))
 

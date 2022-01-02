@@ -2,8 +2,13 @@
 ;;;
 (defun night/p-org-fanfic ()
   (interactive)
-  (save-excursion
-    (insert-for-yank (z p-org-fanfic)))
-  (recenter 0)
-  (save-buffer))
+  (night/insert-for-yank-and-save
+   (z p-org-fanfic))
+  (night/bell-link))
+;;;
+(defun night/semantic-scholar-to-org ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (z semantic-scholar-to-org))
+  (night/bell-link))
 ;;;
