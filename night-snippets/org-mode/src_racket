@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <sr
+# uuid: <sr
+# --
+#+begin_src racket :lang racket :results value :wrap example
+`%`$0
+#+end_src

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <eg
+# uuid: <eg
+# --
+#+begin_example go
+`%`$0
+#+end_example

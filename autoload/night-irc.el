@@ -79,7 +79,7 @@
                  "#docker"
                  "#emacs" "#emacs-social"
                  "#spacemacs"
-                 "#emacs-doom"          ;; @todo3 bridge this with Matrix
+                 "#emacs-doom" ;; @todo3 bridge this with Matrix
                  "#notmuch"
                  "#gnus"
                  "#emacsconf"
@@ -133,6 +133,7 @@
                  "#sed"
                  "#pandoc"
                  "#nyxt" "#qutebrowser"
+                 "#sql" "##sqlite" "#postgresql" "#mysql" "#mssql"
 ;;;
                  "#git"
                  "#docker"

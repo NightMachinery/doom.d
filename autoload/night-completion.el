@@ -327,6 +327,10 @@
   ;; (setq company-active-map (make-sparse-keymap))
   ;;;
   (setq company-frontends nil))
+
+(defun night/enable-company-frontends ()
+  (interactive)
+  (kill-local-variable 'company-frontends))
 ;;;
 (autoload 'helm-company "helm-company")
 (eval-after-load 'company

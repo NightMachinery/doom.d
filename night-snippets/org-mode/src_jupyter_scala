@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: src_jupyter_scala
+# key: <js
+# uuid: <js
+# --
+#+begin_src jupyter-scala :session s1 :async yes :pandoc t :exports both
+`%`$0
+#+end_src

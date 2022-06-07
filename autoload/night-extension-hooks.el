@@ -44,17 +44,10 @@ Use this to stop the audio files being played by org-mode links."
             ;; @bug this can leave the original buffer somewhat impaired, e.g., colored parens are lost in elisp mode; no idea why ...
             )
            ((and
-             (member-ignore-case ext '("mp3" "m4a" "flac" "wav")))
+             (member-ignore-case ext '("mp3" "m4a" "flac" "wav" "mp4" "avi" "mkv")))
             ;; (night/yank-buffer-filename)
             (kill-current-buffer)
-            (message "Playing audio: %s" bfn)
-
-;;;;
-            ;; (night/brishz "awaysh-oneinstance" night/marker-audio "hearinvisible" bfn)
-;;;
-            ;; @workaround for the lack of support of non-utf-8 in brish
-            (eredis-set "emacs_audio_file" bfn)
-            (night/brishz "eval" (concat "awaysh-oneinstance " night/marker-audio " hearinvisible \"$(redism get emacs_audio_file)\""))
+            (night/hear bfn)
 ;;;;
             ))))))
 

@@ -28,9 +28,24 @@
   ;; `ivy--regex-ignore-order's '!negation' is broken for me
   (add-to-list 'ivy-re-builders-alist '(swiper-all . ivy--regex-ignore-order)) ;; needed by `night/swiper-irc-me'
   (add-to-list 'ivy-re-builders-alist '(counsel-org-goto . ivy--regex-ignore-order))
-  ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
   ;; (add-to-list 'ivy-re-builders-alist '(counsel-rg . ivy--regex-ignore-order))
 
+  ;;;
+  (defun night/ivy--regex-pcre (str)
+    "@buggy e.g., capture groups hang."
+    (let ((re-elisp (pcre-to-elisp str)))
+      ;; (message "re-elisp: %s" re-elisp)
+
+      ;; re-elisp
+      ;; (orderless-ivy-re-builder re-elisp) ;; does NOT work
+      ;; (ivy--regex-ignore-order re-elisp) ;; does NOT work
+      (ivy--regex-plus re-elisp)
+      ))
+  ;; NOTE Alias `swiper--re-builder' instead of changing `ivy-re-builders-alist'.
+  ;; (defalias #'swiper--re-builder #'night/ivy--regex-pcre)
+  ;; (add-to-list 'ivy-re-builders-alist '(swiper . night/ivy--regex-pcre))
+  ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
+  ;;;
   ;; @alt to orderless:
   ;; - `ivy--regex-ignore-order'
   ;; - Ivy has ivy-restrict-to-matches, bound to S-SPC, so you can get the effect of out of order matching without using ivy--regex-ignore-order: (@toFuture/1401/6 this might be faster?)

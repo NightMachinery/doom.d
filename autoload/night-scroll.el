@@ -3,6 +3,8 @@
 (when (display-graphic-p)
   (require 'iscroll))
 ;;;
+(setq next-screen-context-lines 4)
+;;;
 (defun night/screen-center-ni (&rest args)
   ;; somehow the interactive version doesn't work with advice-add
   (night/screen-center))
@@ -123,7 +125,18 @@
           ;; recentering can cause the nasty behavior where the cursor is at just below the modeline and invisible, but not recentering can cause losing unseen content between scrolls
           ;; (ignore-errors (recenter 0)) ;; loses unseen content easily
           )))
+       (t (let* ((screen-lines (window-body-height))
+                (next-screen-context-lines
+                 (min
+                  (max 0 (- screen-lines 5))
+                  11)))
+              (cond
+               (down? (scroll-down))
+               (t (scroll-up))))
+          ;; If the scroll count is zero the command scrolls half the screen.
+          )
        (t (cond
+           ;; @upstreamBug These evil scroll commands sometimes fail in the visual mode.
            (down? (evil-scroll-up 0))
            (t (evil-scroll-down 0)))
           ;; If the scroll count is zero the command scrolls half the screen.

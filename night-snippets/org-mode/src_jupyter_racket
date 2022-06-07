@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: src_jupyter_racket
+# key: <jr
+# uuid: <jr
+#: This kernel keeps disconnecting after a while. I have removed =:async yes= and =:pandoc t= to be sure that this bug is not related to them, but the problem remains.
+# --
+#+begin_src jupyter-racket :session r1 :exports both
+`%`$0
+#+end_src

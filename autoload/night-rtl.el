@@ -14,15 +14,24 @@
  "<left>" #'evil-backward-char
  :gnvio
  "<right>" #'evil-forward-char
- ;;;
- :g
- "<up>" #'previous-line                 ;; We can't remap these in the global mode, or =ivy= breaks
- :g
- "<down>" #'next-line
- :nvio
- "<up>" #'evil-previous-line ;; #'evil-previous-visual-line or #'previous-line can get buggy on some lines (this happens on LTR lines as well)
- :nvio
- "<down>" #'evil-next-line ;; #'evil-next-visual-line
+;;;
+;;;
+ ;; This bug also happens with =evil-previous-line=, so I am reverting these. But it might be that different contexts are buggy depending on which command is used. Update: I think the bug happens with logical movement in both commands. (Visual movement with =next-line= works fine, it seems.)
+ ;; This bug does not exist in =emacs -q= with =(setq bidi-paragraph-direction 'nil)=.
+ ;; Test it with: [[id:4d81b59d-5b5c-4a69-9791-92d6c71e78d2][TA/gen:Logic circuits]]
+
+ ;; :g
+ ;; ;; :nviog
+ ;; "<up>" #'previous-line ;; We can't remap these in the global mode, or =ivy= breaks
+ ;; :g
+ ;; ;; :nviog
+ ;; "<down>" #'next-line
+
+ ;; :nvio
+ ;; "<up>" #'evil-previous-line ;; #'evil-previous-visual-line or #'previous-line can get buggy on some lines (this happens on LTR lines as well)
+ ;; :nvio
+ ;; "<down>" #'evil-next-line ;; #'evil-next-visual-line
+;;;
  )
 ;;;
 

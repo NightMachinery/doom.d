@@ -53,7 +53,12 @@
 
 (unpin! jupyter)
 
-(package! racket-mode :pin "433c90561af2df0d63bbeafe70c8abc7ac60b1a2")
+(package! racket-mode :pin "22e319754dcf650e282b3ba33b9d0ee3cda81007")
+;; (package! ob-racket
+;;   ;; doom uses https://github.com/DEADB17/ob-racket
+;;   ;;;
+;;   :recipe (:host github :repo "togakangaroo/ob-racket") ;; @bug `Invalid function: (requires (assoc 'requires params))`
+;;   )
 ;;; @themes
 (package! solarized-theme)
 (package! humanoid-themes)

@@ -37,3 +37,9 @@
  "<down>" #'next-line ;; #'evil-next-visual-line
  )
 ;;;
+(advice-add #'consult--read
+            :around
+            (lambda (&rest app)
+              (let ((completing-read-function #'completing-read-default))
+                (apply app))))
+;;;
