@@ -52,25 +52,38 @@
   ;; (recentf-cleanup) ;; takes too long
   (tramp-cleanup-all-buffers)
   (tramp-cleanup-all-connections))
+;;;
 (defun night/scp-eva-borg ()
   (interactive)
   (find-file-existing "/scp:eva@82.102.11.148:/home/eva/code/betterborg/stdplugins/"))
+
 (defun night/ssh-eva-borg ()
   (interactive)
   (find-file-existing "/ssh:eva@82.102.11.148:/home/eva/code/betterborg/stdplugins/"))
+
 (defun night/ssh-eva ()
   (interactive)
   (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))
+
 (defun night/scp-eva ()
   (interactive)
   (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
-
+;;;
 (defun night/scp-pari ()
   (interactive)
   (dired "/scp:paria@Parias-MacBook-Air.local:/Users/paria/scripts/"))
+
 (defun night/ssh-pari ()
   (interactive)
   (dired "/ssh:paria@Parias-MacBook-Air.local:/Users/paria/scripts/"))
+;;;
+(defun night/ssh-nm ()
+  (interactive)
+  (dired "/ssh:ubuntu@nightmachinery.ir:"))
+
+(defun night/scp-nm ()
+  (interactive)
+  (dired "/scp:ubuntu@nightmachinery.ir:"))
 ;;;
 ;; https://emacs.stackexchange.com/questions/64090/change-company-backends-for-tramp-buffers
 (defun night/tramp-enter ()

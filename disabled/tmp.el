@@ -43,3 +43,5 @@
               (let ((completing-read-function #'completing-read-default))
                 (apply app))))
 ;;;
+  (setq eldoc-documentation-strategy 'eldoc-documentation-compose
+        eldoc-echo-area-use-multiline-p 7)

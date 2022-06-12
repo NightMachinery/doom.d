@@ -157,4 +157,10 @@ move COUNT - 1 screen lines forward first."
         :nvig "<tab>" #'profiler-report-toggle-entry
         )
 
+  (map! :map prog-mode-map
+        :g "M-p" #'flymake-goto-prev-error
+        ;; @seeAlso `+default/diagnostics', `flymake-show-buffer-diagnostics'
+        ;; @seeAlso `previous-error'
+        :g "M-n" #'flymake-goto-next-error
+        )
   )

@@ -55,6 +55,9 @@
             (or (ignore-errors ;; with-demoted-errors ;; ignore-errors
                   (--> bfn
                     (funcall preserve it "resources?")
+                    (funcall preserve it "linux")
+                    (funcall preserve it "macos")
+                    (funcall preserve it "miscs?")
                     (funcall preserve it "learn")
                     (funcall preserve it "cheatsheets?")
                     (funcall preserve it "gen\\(?:eral\\)?")

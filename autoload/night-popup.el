@@ -1,6 +1,8 @@
 ;;; night-popup.el ---                               -*- lexical-binding: t; -*-
 ;; @warn Beware =:ttl= killing process buffers!
 ;;;
+(set-popup-rule! "^\\*Flymake.*\\*$" :height 0.5 :ttl nil)
+
 (set-popup-rule! "^\\*eldoc.*\\*$" :ttl 60 :width 0.3 :side 'right)
 ;; (set-popup-rule! "^\\*eldoc.*\\*$" :ttl 60 :height 0.3)
 
