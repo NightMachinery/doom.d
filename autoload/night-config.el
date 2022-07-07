@@ -64,7 +64,9 @@
 (defun night/wrap-soft-disable ()
   (interactive)
   (night/with-messages-suppressed
-    (toggle-truncate-lines 1)))
+    (toggle-truncate-lines 1)
+    (toggle-truncate-lines 1)           ;; @idk why we need to run this two times, but we do.
+    ))
 ;;; this config seemed to make emacs hang:
 
 ;; (remove-hook 'text-mode-hook #'visual-line-mode)
