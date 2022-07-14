@@ -2,7 +2,7 @@
 
 (defun night/search-notes (&optional initial-query)
   (interactive)
-  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,zsh,txt}"))
+  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,zsh,txt,json,csv}"))
 
 (defun night/agsi (&optional initial-query)
   (interactive)

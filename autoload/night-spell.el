@@ -10,6 +10,10 @@
                       ;; "salmon"
                       "pink"
                       )
+  (set-face-attribute 'flyspell-duplicate nil
+                      :background
+                      "palegreen"
+                      )
   ;;;
   (map! :leader
         "s c" #'flyspell-correct-word-before-point)
