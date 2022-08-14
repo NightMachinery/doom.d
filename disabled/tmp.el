@@ -47,3 +47,4 @@
         eldoc-echo-area-use-multiline-p 7)
 ;;;
 ;;;
+(org-roam-buffer-visit-thing)
