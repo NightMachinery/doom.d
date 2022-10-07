@@ -201,6 +201,7 @@
       ;; (call-interactively #'company-complete-common-or-cycle)
       (call-interactively #'counsel-company)
       )))
+
 (defvar counsel-company-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "TAB") #'ivy-next-line)

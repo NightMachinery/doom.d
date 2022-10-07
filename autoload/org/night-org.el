@@ -49,7 +49,7 @@
 
     (if (file-exists-p filename)
         (let* (
-               (width-max 650) ;; 800, 850 are also possible, but big images slow emacs when scrolling
+               (width-max 950) ;; 800, 850 are also possible, but big images slow emacs when scrolling
                (width-orig (string-to-number (z img-width (i filename))))
                (width-orig (/ width-orig 2.5))
                (width (cond

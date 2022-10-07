@@ -157,6 +157,13 @@
 (defun night/scroll-left ()
   (interactive)
   (scroll-left 4))
+;;;
+(defun night/scroll-precision-up ()
+  (interactive)
+  (pixel-scroll-precision-scroll-up 150))
 
+(defun night/scroll-precision-down ()
+  (interactive)
+  (pixel-scroll-precision-scroll-down 150))
 ;;;
 (provide 'night-scroll)

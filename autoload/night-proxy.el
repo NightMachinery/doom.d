@@ -2,11 +2,12 @@
 
 ;; (setq url-proxy-services nil)
 ;;; I think you can just set the env vars instead. If not, uncomment this block:
-;; (progn (setq url-proxy-services
-;;        '(("no_proxy" . "^\\(localhost\\|10.*\\)")
-;;          ("http" . "127.0.0.1:1087")
-;;          ("https" . "127.0.0.1:1087"))))
-;;;
+(comment
+ (progn (setq url-proxy-services
+              '(("no_proxy" . "^\\(localhost\\|10.*\\)")
+                ("http" . "127.0.0.1:1087")
+                ("https" . "127.0.0.1:1087")))))
+
 
 ;;;
 ;; proxychains did not work for me on macOS

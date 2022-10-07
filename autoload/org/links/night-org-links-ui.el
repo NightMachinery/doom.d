@@ -1,16 +1,19 @@
 ;;; autoload/org/night-org-links-ui.el -*- lexical-binding: t; -*-
 ;;;
 (after! (org ol)
-;; (org-link-set-parameters "nightNotes" :face 'org-link-nightNotes)
-;; these abbreviation link types are converted to a file link, and org-activate-links sees them as having the type "file".
+  ;; (org-link-set-parameters "nightNotes" :face 'org-link-nightNotes)
+  ;; these abbreviation link types are converted to a file link, and org-activate-links sees them as having the type "file".
 
-;; (defface night/org-link-files '((t (:foreground "sienna4" :background "cornsilk" :weight bold))) "face for nightNotes links")
-;; (org-link-set-parameters "file" :face 'night/org-link-files)
-  ;;;
+  ;; (defface night/org-link-files '((t (:foreground "sienna4" :background "cornsilk" :weight bold))) "face for nightNotes links")
+  ;; (org-link-set-parameters "file" :face 'night/org-link-files)
+;;;
 
   (defface night/org-link-mouse-face '((t (:background "white" :weight bold))) "org links' mouse hover face")
 ;;;
   (require 'ov)
+
+  (setq org-fold-core-style 'overlays)
+
   (defun org-activate-links (limit)
     "Add link properties to links.
 This includes angle, plain, and bracket links."

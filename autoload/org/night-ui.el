@@ -61,8 +61,8 @@
   (progn
     (face-spec-set 'org-level-5 ;; originally copied from org-level-8
                    (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist
-                     '((((class color) (min-colors 16) (background light)) (:foreground "brightblue"))
-                       (((class color) (min-colors 16) (background dark)) (:foreground "brightblue"))
+                     '((((class color) (min-colors 16) (background light)) (:foreground "royalblue"))
+                       (((class color) (min-colors 16) (background dark)) (:foreground "royalblue"))
                        (((class color) (min-colors 8)) (:foreground "green")))))
     (face-spec-set 'org-level-6 ;; originally copied from org-level-8
                    (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist

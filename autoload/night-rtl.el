@@ -52,7 +52,7 @@
      'arabic
      night/persian-font
      ))
-  (setq face-font-rescale-alist `((,night/persian-font . 1.50)))
+  (setq face-font-rescale-alist `((,night/persian-font . 1.30)))
   (setq bidi-paragraph-direction 'nil))
 
 (add-hook 'org-mode-hook 'night/enable-bidirectional)

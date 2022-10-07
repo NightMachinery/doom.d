@@ -11,3 +11,23 @@
  ;; yes, doesn't quite work as expected
  )
 ;;;
+(defun night/h-org-export-preprocess-add-default-setupfiles (backend)
+  (when (eq backend 'html)
+    (goto-char 0)
+    (insert "#+SETUPFILE: https://nightmachinery.github.io/orgmode-styles/notes_1.org\n")))
+
+(add-hook 'org-export-before-processing-hook #'night/h-org-export-preprocess-add-default-setupfiles)
+;;;
+(defun night/org-export-file-to-html (file)
+  (save-current-buffer
+    (let ((b (find-file-noselect file)))
+      (set-buffer b)
+      (let
+          ((out (org-html-export-to-html)))
+        (message "out: %s" out)
+        (if (f-absolute-p out)
+            out
+          (concat default-directory out))))))
+(comment
+ (night/org-export-file-to-html "/Users/evar/cellar/notes/subjects/math/AI/ML/NLP/learn/courses/cs224N/gen.org"))
+;;;

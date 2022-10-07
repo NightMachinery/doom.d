@@ -47,4 +47,13 @@
         eldoc-echo-area-use-multiline-p 7)
 ;;;
 ;;;
-(org-roam-buffer-visit-thing)
+(defun night/bell-link ()
+  ;; (night/brishz "awaysh" "tts-glados1-cached" "link, inserted")
+  )
+;;;
+(map!
+ :ivong
+ [tab] nil)
+;;;
+
+(org-html-export-to-html "/Users/evar/cellar/notes/private/subjects/supervisors/Pilehvar/reports.org")
