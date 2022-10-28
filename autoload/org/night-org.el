@@ -2,11 +2,16 @@
 (after! org
   (require 'org-element)
 ;;;
-  (add-hook 'org-mode-hook #'night/disable-company-frontends) ;; the tooltip frontend is buggy and moves the oorg headers indentations, which is visually distracting.
+  (add-hook 'org-mode-hook #'night/disable-company-frontends) ;; the tooltip frontend is buggy and moves the org headers indentations, which is visually distracting.
 ;;;
   ;; (setq org-cycle-emulate-tab 'exc-hl-bol) ; @weirdFeature
 ;;;
   (setq org-cycle-separator-lines 1)
+;;;
+  (setq org-priority-highest 0)
+  (setq org-priority-default 3)
+  (setq org-priority-lowest 9)
+  (setq org-priority-start-cycle-with-default nil)
 ;;;
   (setq org-return-follows-link t)
 ;;;

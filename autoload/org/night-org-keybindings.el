@@ -43,7 +43,8 @@
 ;;;
   (map! :map org-mode-map
         :localleader
-        :nvi "lp" #'night/org-paste-clipboard-image)
+        :nvi "lp" #'night/org-paste-clipboard-image
+        "rp" #'night/org-paste-with-files)
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693
   (map!
    :map evil-org-mode-map ;; @todo0 also map to org-mode-map
@@ -78,4 +79,6 @@
    ;; "sr" #'avy-org-refile-as-child
    "rf" #'+org/refile-to-file
    "rF" #'night/org-refile-to-new-file
+
+   "lC" #'night/org-link-browser-current
    ))

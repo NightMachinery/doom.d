@@ -55,5 +55,11 @@
  :ivong
  [tab] nil)
 ;;;
+(require 'ox-ipynb)
+;;;
+(progn
+  (setq hi 1)
+  :hey)
 
-(org-html-export-to-html "/Users/evar/cellar/notes/private/subjects/supervisors/Pilehvar/reports.org")
+(setq org-html--id-attr-prefix "JOKE_")
+;;;

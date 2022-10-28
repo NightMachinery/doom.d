@@ -1,5 +1,10 @@
 ;;; autoload/night-zsh-wrappers.el -*- lexical-binding: t; -*-
 ;;;
+(defun night/org-link-browser-current ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (z org-link-browser-current)))
+;;;
 (defun night/p-org-fanfic ()
   (interactive)
   (night/insert-for-yank-and-save

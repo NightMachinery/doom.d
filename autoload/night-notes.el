@@ -4,6 +4,19 @@
   (interactive)
   (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,zsh,txt,json,csv}"))
 
+(defun night/search-ideas ()
+  (interactive)
+  (night/search-dir
+   :dir (concat
+         (getenv "nightNotes")
+         "/subjects/math/")
+   :query "IDEA|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"
+   :args "--glob *.{org,org_archive,md,zsh,txt}"))
+
+(defun night/search-dir-limited (&optional initial-query)
+  (interactive)
+  (night/search-dir :query initial-query :args "--glob *.{org,org_archive,md,txt,zsh,py}"))
+
 (defun night/agsi (&optional initial-query)
   (interactive)
   (night/search-dir :dir (getenv "NIGHTDIR") :query initial-query :args "--glob *"))

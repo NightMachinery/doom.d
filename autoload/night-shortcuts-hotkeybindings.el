@@ -151,7 +151,9 @@ move COUNT - 1 screen lines forward first."
         "s h p" #'hlt-previous-highlight
         "s h f" #'night/hlt-counsel-face
 
-        "s d" #'night/search-dir ;; overrides @doom's default search pwd function
+        "s d" ;; overrides @doom's default search pwd function
+        #'night/search-dir
+        ;; #'night/search-dir-limited
 
         "s m" #'counsel-evil-marks
         )
