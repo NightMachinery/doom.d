@@ -13,7 +13,7 @@ With prefix argument ARG, move the files instead."
   (let*
       (
        (text (current-kill 0))
-       (files (zf reval-withstdin (identity text) rget "\\[file:([^.](?:[^]]|\\\\[|\\\\])*)\\]" --color never))
+       (files (zf reval-withstdin (identity text) rget "\\[file:([^.](?:[^]]|\\\\[|\\\\])*)\\]"))
        (stdout ""))
     (dolist (f files stdout)
       (let*
