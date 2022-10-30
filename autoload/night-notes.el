@@ -127,8 +127,21 @@
                             (message "name: %s my-buffer: %s string: %s" (buffer-name) "my-buffer" (buffer-string))
                             ;; (with-current-buffer my-buffer (insert text))
                             )))))
+;;;
+(defun night/html-unescape (text)
+  "`+web-decode-entities' seems broken"
+  (z html-unescape
+     (identity text)))
+(comment
+ (night/html-unescape "Alice&#x27s Message, Bob's")
+ (+web-decode-entities "Alice&#x27s Message, Bob's")
+ (org-cliplink-escape-html4 "Alice&#x27s Message, Bob's") ;; currently overridden by advice
+ )
 
+(advice-add 'org-cliplink-escape-html4 :override #'night/html-unescape)
+;;;
 (cl-defun night/unt (&key (description t) (quote t))
+  "@alt org-cliplink"
   (interactive)
   (let*
       (
@@ -163,21 +176,21 @@
                 (if quote
                     (progn
                       (insert (format "\n#+BEGIN_QUOTE\n%s\n#+END_QUOTE\n" meta)))
-                    (dolist (line meta)
-                      (progn (if (not (string= "" line)) ; so as to not insert the last empty line
-                                 (progn
-                                   (setq i (+ i 1))
-                                   (cond
-                                    ((= i 1)
-                                     ;; (org-insert-subheading nil)
-                                     (night/+org--insert-item 'below (+ (or (org-current-level) 1) 1)))
-                                    (t
-                                     ;; (org-insert-heading nil)
-                                     (+org--insert-item 'below)))
-                                   (insert-for-yank line)
-                                   ;; (insert line "\n" (make-string my-column ?\s))
+                  (dolist (line meta)
+                    (progn (if (not (string= "" line)) ; so as to not insert the last empty line
+                               (progn
+                                 (setq i (+ i 1))
+                                 (cond
+                                  ((= i 1)
+                                   ;; (org-insert-subheading nil)
+                                   (night/+org--insert-item 'below (+ (or (org-current-level) 1) 1)))
+                                  (t
+                                   ;; (org-insert-heading nil)
+                                   (+org--insert-item 'below)))
+                                 (insert-for-yank line)
+                                 ;; (insert line "\n" (make-string my-column ?\s))
                                         ; ?\s is the character for space.
-                                   ))))))))))
+                                 ))))))))))
     (save-buffer)
     (when was-normal
       (evil-normal-state t))
