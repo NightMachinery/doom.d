@@ -65,7 +65,7 @@
   (progn (font-lock-add-keywords 'sh-mode
                                  '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'zsh-macro t)))))
 
-(setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\).*$")
+(setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\).*$")
 (setq night/urgent-tag-regex "^.*\\(@urgent\\|:urgent:\\|@ASAP\\|:ASAP:\\).*$")
 (defun night/highlight-org ()
   (interactive)

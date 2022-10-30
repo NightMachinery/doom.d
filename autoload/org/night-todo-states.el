@@ -2,21 +2,23 @@
 ;;; Code:
 
 (after! (org)
- (setq org-todo-keywords
-       '((sequence "TODO(t)" "LOOP" "STRT(s)" "WAIT(w)" "|" "DONE(d)" "KILL(k)")
-         (sequence
-          "@idea(i)"
-          "IDEA"
-          "@idea/costly(e)"
-          "@idea/rejected(r)"
-          "@idea/presented(p)"
-          "@idea/bad(b)"
-          "|" "@acceptedIdea")
-         ;; (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)")
-         (sequence "|" "OKAY(o)" "YES(y)" "NO(n)")
+  (setq org-fontify-done-headline nil)
 
-         (sequence "QUESTION(q)" "CONFIRM(c)" "TANGENT(g)" "|" "ANSWERED(a)")
-         )))
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "LOOP" "STRT(s)" "WAIT(w)" "|" "DONE(d)" "KILL(k)")
+          (sequence
+           "@idea(i)"
+           "IDEA"
+           "@idea/costly(e)"
+           "@idea/rejected(r)"
+           "@idea/presented(p)"
+           "@idea/bad(b)"
+           "|" "@idea/accepted(=)")
+          ;; (sequence "[ ](T)" "[-](S)" "[?](W)" "|" "[X](D)")
+          (sequence "|" "OKAY(o)" "YES(y)" "NO(n)")
+
+          (sequence "QUESTION(q)" "CONFIRM(c)" "TANGENT(g)" "|" "ANSWERED(a)")
+          )))
 
 (setq org-todo-keyword-faces
       '(("[-]" . +org-todo-active)

@@ -4,22 +4,50 @@
   (interactive)
   (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,zsh,txt,json,csv}"))
 
-(defun night/search-ideas ()
+(cl-defun night/search-ideas
+    (&key
+     (query
+      "IDEA|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"))
   (interactive)
-  (night/search-dir
+  (night/search-dir-limited
    :dir (concat
          (getenv "nightNotes")
          "/subjects/math/")
-   :query "IDEA|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"
-   :args "--glob *.{org,org_archive,md,zsh,txt}"))
+   :extra-paths (list
+                 (concat
+                  (getenv "nightNotes")
+                  "/private/subjects/supervisors/"))
+   :query query))
 
-(defun night/search-dir-limited (&optional initial-query)
+(defun night/search-ideas-accepted ()
   (interactive)
-  (night/search-dir :query initial-query :args "--glob *.{org,org_archive,md,txt,zsh,py}"))
+  (night/search-ideas
+   :query "@idea/accepted"))
+
+(cl-defun night/search-dir-limited
+    (&key (dir nil) (extra-paths nil) (args "") (query "") (prompt nil))
+  (interactive)
+  (night/search-dir
+   :dir dir
+   :extra-paths extra-paths
+   :prompt prompt
+   :query query
+   :args (concat args " --glob *.{org,org_archive,md,txt,zsh,py}")))
 
 (defun night/agsi (&optional initial-query)
   (interactive)
-  (night/search-dir :dir (getenv "NIGHTDIR") :query initial-query :args "--glob *"))
+  (night/search-dir
+   :dir (getenv "NIGHTDIR")
+   :extra-paths (-filter
+                 (lambda (x)
+                   (f-exists-p x))
+                 (cl-map
+                  'list
+                  #'expand-file-name
+                  ;; @duplicateCode/9bd35fded6a091a2124673d5d0ec11b2
+                  ;; [agfi:agsi]
+                  '("~/.zshenv" "~/.zshrc" "~/.shared.sh" "~/.localScripts" "~/.glances" "~/.vimrc" "~/.ideavimrc" "~/.tmux.conf" "~/.privateBTT.sh" "~/.privateShell" "~/.privateStartup.sh" "~/test_nonexistent")))
+   :query initial-query :args "--glob *"))
 
 (defun night/search-doom (&optional initial-query)
   (interactive)

@@ -4,24 +4,41 @@
   (rg-enable-menu))
 
 ;; @retired This might only work in "project" dirs. We might need to wrap around counsel-rg directly.
-(cl-defun night/search-dir (&key (dir nil) (args "") (query "") (prompt "> "))
+(cl-defun night/search-dir
+    (&key
+     (dir nil)
+     (extra-paths nil)
+     (args "")
+     (query "")
+     (prompt "> "))
   "Conduct a text search in files under the given folder."
   (interactive)
   (let* ((default-directory (or dir
                                 ;; (counsel--git-root)
                                 default-directory))
-         (dir default-directory))
+         (dir default-directory)
+         (args
+          (if extra-paths
+              ;; https://github.com/abo-abo/swiper/issues/2356#issuecomment-596277828
+              (concat args " -- "
+                      (s-join " "
+                              (if (equalp dir "/")
+                                  extra-paths ;; The root path / is assumed to mean only search extra-paths.
+                                  (cons dir extra-paths))))
+            args)))
     (progn
+      ;; (message "args: %s" args)
+
       (setq ivy-calling-tmp ivy-calling)
       (setq-default ivy-calling t)
       (unwind-protect
           (counsel-rg query dir args prompt)
-          ;;;
-          ;; (call-interactively
-          ;;  (cond
-          ;;   ((featurep! :completion ivy) #"+ivy/project-search-from-cwd)
-          ;;   ((featurep! :completion helm) #'+helm/project-search-from-cwd)
-          ;;   (#'rgrep)))
+;;;
+        ;; (call-interactively
+        ;;  (cond
+        ;;   ((featurep! :completion ivy) #"+ivy/project-search-from-cwd)
+        ;;   ((featurep! :completion helm) #'+helm/project-search-from-cwd)
+        ;;   (#'rgrep)))
         (setq-default ivy-calling ivy-calling-tmp)))))
 
 ;;;
