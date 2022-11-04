@@ -1,5 +1,7 @@
 ;;; autoload/org/night-org-export.el -*- lexical-binding: t; -*-
 ;;;
+(require 'ox-reveal)
+;;;
 (defun night/org-export-string-as-utf8 (str)
   "Assume str has Org syntax, and convert it to UTF-8."
   (interactive)
@@ -36,7 +38,7 @@
 (defvar org-html--id-attr-prefix "ID-"
   "Prefix to use in ID attributes of exported HTML elements when the ID is being determined from the ID property.")
 
-(defun org-html--reference (datum info &optional named-only)
+(defun night/org-html--reference (datum info &optional named-only)
   "Return an appropriate reference for DATUM.
 
 DATUM is an element or a `target' type object.  INFO is the
@@ -82,6 +84,7 @@ targets and targets."
       nil)
      (t
       (org-export-get-reference datum info)))))
+(advice-add 'org-html--reference :override 'night/org-html--reference)
 
 (comment
  (defcustom org-html-id-property-in-name-attribute-p nil

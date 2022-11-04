@@ -13,8 +13,7 @@
             (company-dabbrev-code . (:selected (:background "light steel blue" :foreground "black")))
             (company-files . (:selected (:background "light steel blue" :foreground "black")))
             (company-ispell . (:selected (:background "light steel blue" :foreground "black")))
-            (company-yasnippet . (:all "lime green" :selected (:background "lime green" :foreground "black")))))
-    (add-hook 'company-mode-hook 'company-box-mode))
+            (company-yasnippet . (:all "lime green" :selected (:background "lime green" :foreground "black"))))))
 
   ;;; monkey patching company-box to wrap the doc buffers: (https://github.com/sebastiencs/company-box/issues/165)
   (defun company-box-doc--set-frame-position (frame)

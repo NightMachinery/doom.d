@@ -9,3 +9,11 @@
 (comment
  (night/org-str-to-plain "** *wow* /hi/ [[url][desc]]"))
 ;;;
+(defun night/current-line-level ()
+  "@seeAlso [help:org-current-level]"
+  (interactive)
+  (cl-parse-integer (z
+                     reval-withstdin
+                     (helm-current-line-contents)
+                     perl -lne "m/^(\\**)/ && print length $1")))
+;;;

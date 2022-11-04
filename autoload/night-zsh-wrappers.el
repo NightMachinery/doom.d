@@ -19,7 +19,8 @@
 ;;;
 (defun night/semantic-scholar-to-org ()
   (interactive)
-  (night/insert-for-yank-and-save
+  (night/org-insert-and-fix-levels
    (z semantic-scholar-to-org))
+  (night/save-buffer)
   (night/bell-link))
 ;;;

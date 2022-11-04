@@ -78,10 +78,10 @@
   ;; above the cursor if necessary.
   (setq company-tooltip-minimum company-tooltip-limit)
 
-  ;; Always display suggestions in the tooltip, even if there is only
-  ;; one. Also, don't display metadata in the echo area. (This
-  ;; conflicts with ElDoc.)
-  (setq company-frontends '(company-pseudo-tooltip-frontend))
+  (setq company-frontends nil)
+  ;; seems to be overridden by Doom?
+  ;; I am now using this function to set the frontends. [help:night/company-frontends-default]
+
   (setq company-backends '(company-capf company-dabbrev-code company-yasnippet)) ; probably useless here, gets overridden
 
 
@@ -113,8 +113,7 @@
   ;; When candidates in the autocompletion tooltip have additional
   ;; metadata, like a type signature, align that information to the
   ;; right-hand side. This usually makes it look neater.
-  (setq company-tooltip-align-annotations t)
-  )
+  (setq company-tooltip-align-annotations t))
 
 ;;;
 
@@ -332,6 +331,25 @@
 (defun night/enable-company-frontends ()
   (interactive)
   (kill-local-variable 'company-frontends))
+
+(defalias 'night/company-frontends-default
+  #'night/disable-company-frontends
+  ;;;
+  ;; Always display suggestions in the tooltip, even if there is only
+  ;; one. Also, don't display metadata in the echo area. (This
+  ;; conflicts with ElDoc.)
+  ;; (setq company-frontends '(company-pseudo-tooltip-frontenda))
+  ;;;
+  (comment
+   (when (display-graphic-p)
+     ;; (add-hook 'company-mode-hook 'company-box-mode)
+     (company-box-mode)
+     ))
+  )
+(comment
+ (remove-hook 'company-mode-hook #'company-box-mode))
+(add-hook 'text-mode-hook #'night/company-frontends-default)
+(add-hook 'prog-mode-hook #'night/company-frontends-default)
 ;;;
 (autoload 'helm-company "helm-company")
 (eval-after-load 'company

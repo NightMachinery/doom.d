@@ -2,7 +2,9 @@
 # name: src_jupyter_python
 # key: <jp
 # uuid: <jp
+#
+#: :pandoc t
 # --
-#+begin_src jupyter-python :kernel py_310 :session emacs_py_1 :async yes :pandoc t :exports both
+#+begin_src jupyter-python :kernel py_310 :session emacs_py_1 :async yes :exports both
 `%`$0
 #+end_src

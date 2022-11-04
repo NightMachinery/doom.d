@@ -214,6 +214,8 @@
 
 (package! nndiscourse)
 
+(package! org-reveal)
+
 (package! company-try-hard)
 
 (package! vlf)

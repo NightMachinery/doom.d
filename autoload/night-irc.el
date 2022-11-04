@@ -33,28 +33,27 @@
 
   (set-irc-server!
 
-      "irc.zii.lilf.ir"
-    ;; "irc.libera.chat"
+      ;; "irc.zii.lilf.ir"
+    "irc.libera.chat"
     ;; "chat.freenode.net"
 
     `(:tls t
-      :port 6635
-      ;; :port 6697
+      :port 6697
+      ;; :port 6635
+      ;;;
+      ;; :user ,(getenv "ZNC_USER")
+      ;; :pass ,(getenv "ZNC_PASS")
 
-      :user ,(getenv "ZNC_USER")
-      :pass ,(getenv "ZNC_PASS")
-      ;; :user ,(getenv "IRC_USER")
-      ;; :pass ,(getenv "IRC_PASS")
+      ;; :nick ,(getenv "ZNC_USER")
+      ;; :sasl-username ,(getenv "ZNC_USER")
+      ;; :sasl-password ,(getenv "ZNC_IRC_PASS")
+;;;
+      :user ,(getenv "IRC_USER")
+      :pass ,(getenv "IRC_PASS")
 
-
-
-      :nick ,(getenv "ZNC_USER")
-      :sasl-username ,(getenv "ZNC_USER")
-      :sasl-password ,(getenv "ZNC_IRC_PASS")
-
-      ;; :nick ,(getenv "IRC_NICK")
-      ;; :sasl-username ,(getenv "IRC_USER")
-      ;; :sasl-password ,(getenv "IRC_PASS")
+      :nick ,(getenv "IRC_NICK")
+      :sasl-username ,(getenv "IRC_USER")
+      :sasl-password ,(getenv "IRC_PASS")
       :channels (
                  "##anime"
                  "##english"

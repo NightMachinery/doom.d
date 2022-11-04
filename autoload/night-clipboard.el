@@ -48,9 +48,32 @@
 
 
 ;;;
+(defun night/org-insert-and-fix-levels (text &optional level)
+  "@seeAlso [agfi:org-header-indent-to-current]"
+  (let*
+      ((level
+        (or level
+            (org-current-level) 0)))
+    (night/insert-for-yank
+     (z reval-withstdin
+        (identity text)
+        h-org-insert-and-fix-levels (identity level)
+        ;; perl -lpe (concat "s/^(?=\\*)/" (s-repeat level "*") "/g")
+        ))))
+
+(defun night/pbpaste ()
+  "Returns the last copied string."
+  (current-kill 0))
+
+(defun night/org-paste-yank ()
+  (interactive)
+  (night/org-insert-and-fix-levels
+   (night/pbpaste)))
+
 (defun night/paste-yank-html ()
   (interactive)
-  (night/insert-for-yank (z html2org)))
+  (night/org-insert-and-fix-levels
+   (z html2org)))
 
 (defun night/insert-for-yank (text)
   (interactive)

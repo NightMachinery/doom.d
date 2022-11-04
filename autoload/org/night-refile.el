@@ -25,6 +25,7 @@ With prefix argument ARG, move the files instead."
                   (or arg "n")
                   (identity f-abs)
                   (concat default-directory "/" f))))))
-    (night/insert-for-yank-and-save text)
+    (night/org-insert-and-fix-levels text)
+    (night/save-buffer)
     (message "%s" stdout)))
 ;;;
