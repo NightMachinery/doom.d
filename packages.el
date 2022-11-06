@@ -215,6 +215,8 @@
 (package! nndiscourse)
 
 (package! org-reveal)
+(package! org-tree-slide :pin "d6529bc2df727d09014e0e56abf4f15a8e8fc20f")
+
 
 (package! company-try-hard)
 

@@ -54,12 +54,12 @@
 
     (if (file-exists-p filename)
         (let* (
-               (width-max 950) ;; 800, 850 are also possible, but big images slow emacs when scrolling
+               (width-max 1050) ;; 800, 850 are also possible, but big images slow emacs when scrolling
                (width-orig (string-to-number (z img-width (i filename))))
-               (width-orig (/ width-orig 2.5))
+               (width-orig (/ width-orig 1.4))
                (width (cond
                        ((= width-orig 0) ;; parse error has happened
-                        500)
+                        800)
                        ((<= width-orig width-max) width-orig)
                        (t width-max))))
           (insert (concat "#+ATTR_HTML: :width " (number-to-string (round width)) "\n[[file:" filename "]]\n"))))

@@ -34,7 +34,7 @@
 
   (defun night/org-present-prettify-slide-h ()
     "Set up the org window for presentation."
-    (let ((arg (if org-tree-slide-mode +1 -1)))
+    (let ((arg (if org-tree-slide-mode 1 -1)))
       (if (not org-tree-slide-mode)
           (when +org-present--last-wconf
             (set-window-configuration +org-present--last-wconf))
@@ -56,7 +56,14 @@
              (add-hook 'kill-buffer-hook #'+org-present--cleanup-org-tree-slides-mode
                        nil 'local)
              (text-scale-set +org-present-text-scale)
-             (ignore-errors (org-latex-preview '(4))))
+;;;
+             ;; This clears all the latex previews. I don't know why it was here, so I didn't remove it.
+             (ignore-errors (org-latex-preview '(4)))
+
+             ;; This generates all the latex previews.
+             (ignore-errors (org-latex-preview '(16)))
+;;;
+             )
             (t
              (text-scale-set 0)
              (pcase (type-of fringe-mode)
@@ -87,7 +94,12 @@
         (run-hooks 'org-tree-slide-before-move-next-hook)
         (widen)
         (org-tree-slide--outline-next-heading)
-        (org-tree-slide--display-tree-with-narrow))
+        (org-tree-slide--display-tree-with-narrow)
+;;;
+        (call-interactively #'evil-scroll-line-to-top)
+        ;; (call-interactively #'evil-scroll-line-to-center)
+;;;
+        )
 
        ;; stay the same slide (for CONTENT MODE, on the subtrees)
        (t (org-tree-slide--display-tree-with-narrow)))))
@@ -97,27 +109,49 @@
     'org-tree-slide-move-next-tree :override
     #'night/org-tree-slide-move-next-tree))
 
-;;;
-  (defun org-tree-slide--outline-previous-heading ()
-    "Go to the previous heading."
-    (org-tree-slide--outline-select-method
-     (if (outline-previous-heading)
-         (if (or
-              (org-tree-slide--heading-skip-p)
-              (> (org-outline-level)
-                 1))                    ;; @monkeyPatched to make it go to the first-level headings when going back
-             'skip
-           nil)
-       'first)
-     'previous))
-
   (defun night/org-tree-slide-move-previous-tree ()
+    (interactive)
+    (let
+        ((org-tree-slide-skip-outline-level
+          (or
+           night/org-tree-slide-skip-outline-level-for-going-back
+           org-tree-slide-skip-outline-level)))
+      (org-tree-slide-move-previous-tree))
+    (call-interactively #'evil-scroll-line-to-top))
+;;;
+  (defvar
+    night/org-tree-slide-skip-outline-level-for-going-back
+    nil
+    "Set to nil to use the original [help:org-tree-slide-skip-outline-level].")
+
+  (comment
+   (defun org-tree-slide--outline-previous-heading ()
+     "Go to the previous heading."
+     (org-tree-slide--outline-select-method
+      (if (outline-previous-heading)
+          (if (or
+               (let
+                   ((org-tree-slide-skip-outline-level
+                     (or
+                      night/org-tree-slide-skip-outline-level-for-going-back
+                      org-tree-slide-skip-outline-level)))
+                 ;; @monkeyPatched to use a custom var for determining skips when going back.
+
+                 (org-tree-slide--heading-skip-p)))
+              'skip
+            nil)
+        'first)
+      'previous)))
+
+  (defun night/org-tree-slide-move-previous-first-level-tree ()
+    "@seeAlso [help:night/org-tree-slide-skip-outline-level-for-going-back]"
     (interactive)
     (let
         ((org-tree-slide-skip-outline-level 2)
          ;; Show all subtrees when going back.
-         )
-        (org-tree-slide-move-previous-tree)))
+
+         (night/org-tree-slide-skip-outline-level-for-going-back 2))
+      (night/org-tree-slide-move-previous-tree)))
 
   (defun night/org-tree-slide-move-next-first-level-tree ()
     (interactive)
@@ -125,17 +159,16 @@
         ((org-tree-slide-skip-outline-level 2)
          ;; Show all subtrees when going back.
          )
-        (night/org-tree-slide-move-next-tree)))
+      (night/org-tree-slide-move-next-tree)))
 ;;;
   (map! :map org-tree-slide-mode-map
         :ng "C-<" #'night/org-tree-slide-move-previous-tree
-        :n [C-left]  #'night/org-tree-slide-move-previous-tree
-        :n [s-left]  #'night/org-tree-slide-move-previous-tree
-        :n [M-s-left]  #'night/org-tree-slide-move-previous-tree
+        :n [C-left] #'night/org-tree-slide-move-previous-tree
+        :n [s-left] #'night/org-tree-slide-move-previous-tree
+        :n [M-s-left] #'night/org-tree-slide-move-previous-first-level-tree
 
         :ng "C->" #'night/org-tree-slide-move-next-tree
         :n [C-right] #'night/org-tree-slide-move-next-tree
         :n [s-right] #'night/org-tree-slide-move-next-tree
-        :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree
-        ))
+        :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree))
 ;;;

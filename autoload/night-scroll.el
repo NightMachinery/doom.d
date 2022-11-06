@@ -1,7 +1,8 @@
 ;;; autoload/night-scroll.el -*- lexical-binding: t; -*-
 
 (when (display-graphic-p)
-  (require 'iscroll))
+  (require 'iscroll)
+  (pixel-scroll-precision-mode))
 ;;;
 (setq next-screen-context-lines 4)
 ;;;

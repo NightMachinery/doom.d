@@ -27,9 +27,11 @@
 (message "TERM: %s" (getenv "TERM"))
 ;;;
 (require 's)
+(require 'f)
 (require 'server)
 
 (setq server-socket-dir (concat (getenv "HOME") "/tmp/.emacs-servers"))
+;; This directory is created by [help:server-ensure-safe-dir] automatically.
 ;; see also `server-name`
 
 (defun night/server-name-set-auto ()
@@ -40,7 +42,7 @@
                         sn)
                        (t "server"))))
   server-name
-  ;;;
+;;;
   ;; (or
   ;;                         (and (boundp 'server-name) server-name (not (equalp server-name "")) server-name)
   ;;                         (getenv "EMACS_SERVER_NAME")
@@ -137,6 +139,8 @@
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory (concat (getenv "cellar") "/notes/org"))
+
+(setq night/roam-p nil)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.

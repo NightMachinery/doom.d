@@ -1,0 +1,1 @@
+doom wants to load the snippets before our config, so let's give it an empty directory here.

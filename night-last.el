@@ -51,7 +51,7 @@
     [tab] nil)))
 
 (night/company-keybindings-enable)
-(after! (org org-roam evil company yasnippet) ;; @workaround sth is overriding our keybindings, so I am using trial-and-error to re-enable the keybindings
+(after! (org night-roam evil company yasnippet) ;; @workaround sth is overriding our keybindings, so I am using trial-and-error to re-enable the keybindings
   ;; (night/bello)
   (night/company-keybindings-enable)
   (run-with-timer 10 nil #'night/company-keybindings-enable)

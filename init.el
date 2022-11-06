@@ -142,7 +142,9 @@
        nim               ; python + lisp at the speed of c
        nix               ; I hereby declare "nix geht mehr!"
        ocaml             ; an objective camel
-       (org +dragndrop +hugo +pandoc +gnuplot +jupyter +noter +present +roam) ; organize your plain life in plain text
+       (org +dragndrop +hugo +pandoc +gnuplot +jupyter +noter +present
+            ;; +roam2
+            ) ; organize your plain life in plain text
        raku             ; write code no one else can comprehend
        php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
