@@ -70,10 +70,15 @@
   (night/org-insert-and-fix-levels
    (night/pbpaste)))
 
-(defun night/paste-yank-html ()
-  (interactive)
+(defun night/paste-yank-html (&optional arg)
+  (interactive "P")
+
   (night/org-insert-and-fix-levels
-   (z html2org)))
+   (cond
+    (arg
+     (z eval "pbpaste-html-urlfinal | html2org"))
+    (t
+     (z html2org)))))
 
 (defun night/insert-for-yank (text)
   (interactive)

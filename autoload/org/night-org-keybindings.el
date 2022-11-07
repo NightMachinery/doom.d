@@ -6,11 +6,15 @@
     (interactive)
     (insert "\u200b"))
 ;;;
+  (defvar night/org-support-shift-select 'heading)
+
   (defun night/org-shiftright ()
     (interactive)
     (cond
-     ((and (not (eq org-support-shift-select 'always))
-           (org-at-heading-p))
+     ((or
+       (eq night/org-support-shift-select 'heading)
+       (and (not (eq org-support-shift-select 'always))
+            (org-at-heading-p)))
 
       (org-next-visible-heading 1)
       t)
@@ -20,8 +24,10 @@
   (defun night/org-shiftleft ()
     (interactive)
     (cond
-     ((and (not (eq org-support-shift-select 'always))
-           (org-at-heading-p))
+     ((or
+       (eq night/org-support-shift-select 'heading)
+       (and (not (eq org-support-shift-select 'always))
+            (org-at-heading-p)))
 
       (org-next-visible-heading -1)
       t)
