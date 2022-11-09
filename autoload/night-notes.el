@@ -2,7 +2,7 @@
 
 (defun night/search-notes (&optional initial-query)
   (interactive)
-  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,zsh,txt,json,csv}"))
+  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,tex,txt,json,csv,zsh,py}"))
 
 (cl-defun night/search-ideas
     (&key
@@ -32,7 +32,7 @@
    :extra-paths extra-paths
    :prompt prompt
    :query query
-   :args (concat args " --glob *.{org,org_archive,md,txt,zsh,py}")))
+   :args (concat args " --glob *.{org,org_archive,md,txt,tex,zsh,py}")))
 
 (defun night/agsi (&optional initial-query)
   (interactive)

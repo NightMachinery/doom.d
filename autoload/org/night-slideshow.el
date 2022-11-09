@@ -1,12 +1,15 @@
 ;;; night-slideshow.el ---                           -*- lexical-binding: nil; -*-
 ;;;
 (after! org-tree-slide
+  ;; @seeAlso [help:night/screen-center-ni]
+;;;
   ;; I don't know why [help:hide-subtree] does't work for us.
   (defalias 'hide-subtree #'org-fold-hide-subtree)
   (defalias 'show-subtree #'org-fold-show-subtree)
 
   (setq org-tree-slide-fold-subtrees-skipped nil)
   (setq org-tree-slide-skip-outline-level 3)
+  ;; @seeAlso [help:night/org-tree-slide-skip-outline-level-for-going-back]
 
   (setq +org-present-text-scale 0)
 
@@ -23,9 +26,56 @@
   (setq org-tree-slide-heading-emphasis t)
   (setq org-tree-slide-heading-level-1 '(outline-1 :height 1.2 bold))
   (setq org-tree-slide-heading-level-2 '(outline-2 :height 1.1 bold))
-  (setq org-tree-slide-heading-level-3 '(outline-3 :height 1 bold))
-  (setq org-tree-slide-heading-level-4 '(outline-4 :height 1 bold))
+  (setq org-tree-slide-heading-level-3 '(outline-3 :height 1.0 bold))
+  (setq org-tree-slide-heading-level-4 '(outline-4 :height 1.0 bold))
 
+  (defun night/org-tree-slide-widen (&rest args)
+    (when org-tree-slide-mode
+      (widen)))
+
+  (defun night/org-tree-slide-counsel-goto (&rest args)
+    (interactive)
+    (when org-tree-slide-mode
+      (widen))
+    (unwind-protect
+        (call-interactively #'counsel-org-goto)
+      (when org-tree-slide-mode
+        (org-tree-slide--display-tree-with-narrow))))
+
+  (defun night/org-tree-slide-id-open (id _)
+    "Go to the entry with id ID."
+    (org-mark-ring-push)
+    (let ((m (org-id-find id 'marker))
+          cmd)
+      (unless m
+        (error "Cannot find entry with ID \"%s\"" id))
+      ;; Use a buffer-switching command in analogy to finding files
+      (setq cmd
+            (or
+             (cdr
+              (assq
+               (cdr (assq 'file org-link-frame-setup))
+               '((find-file . switch-to-buffer)
+                 (find-file-other-window . switch-to-buffer-other-window)
+                 (find-file-other-frame . switch-to-buffer-other-frame))))
+             'switch-to-buffer-other-window))
+      (let
+          ((goes-to-current-buffer-p
+            (not (equal (current-buffer) (marker-buffer m)))))
+        (if
+            goes-to-current-buffer-p
+            (funcall cmd (marker-buffer m))
+;;;
+          ;; @monkeyPatched
+          (when org-tree-slide-mode
+            (widen))
+;;;
+          )
+        (goto-char m)
+        (move-marker m nil)
+        (org-fold-show-context)
+        (night/screen-center-ni)
+        )))
 
   (comment
    (defun night/org-present-detect-slide-h ())
@@ -63,7 +113,20 @@
              ;; This generates all the latex previews.
              (ignore-errors (org-latex-preview '(16)))
 ;;;
-             )
+             (night/disable-line-numbers)
+
+             (night/org-hide-link-display)
+
+             (advice-add 'org-id-open :override #'night/org-tree-slide-id-open)
+
+             (advice-add
+              'better-jumper-jump-backward
+              :before
+              #'night/org-tree-slide-widen)
+             (advice-add
+              'better-jumper-jump-forward
+              :before
+              #'night/org-tree-slide-widen))
             (t
              (text-scale-set 0)
              (pcase (type-of fringe-mode)
@@ -71,7 +134,18 @@
                ('cons (set-window-fringes nil (car fringe-mode) (cdr fringe-mode))))
              (org-clear-latex-preview)
              (org-remove-inline-images)
-             (org-mode)))
+             (org-mode)
+;;;
+             (night/org-show-link-display)
+
+             (advice-remove 'org-id-open #'night/org-tree-slide-id-open)
+
+             (advice-remove
+              'better-jumper-jump-backward
+              #'night/org-tree-slide-widen)
+             (advice-remove
+              'better-jumper-jump-forward
+              #'night/org-tree-slide-widen)))
       (redraw-display)))
 
   (advice-add '+org-present-prettify-slide-h :override #'night/org-present-prettify-slide-h)
@@ -96,8 +170,7 @@
         (org-tree-slide--outline-next-heading)
         (org-tree-slide--display-tree-with-narrow)
 ;;;
-        (call-interactively #'evil-scroll-line-to-top)
-        ;; (call-interactively #'evil-scroll-line-to-center)
+        (night/screen-top)
 ;;;
         )
 
@@ -117,7 +190,7 @@
            night/org-tree-slide-skip-outline-level-for-going-back
            org-tree-slide-skip-outline-level)))
       (org-tree-slide-move-previous-tree))
-    (call-interactively #'evil-scroll-line-to-top))
+    (night/screen-top))
 ;;;
   (defvar
     night/org-tree-slide-skip-outline-level-for-going-back
@@ -146,11 +219,12 @@
   (defun night/org-tree-slide-move-previous-first-level-tree ()
     "@seeAlso [help:night/org-tree-slide-skip-outline-level-for-going-back]"
     (interactive)
-    (let
+    (let*
         ((org-tree-slide-skip-outline-level 2)
          ;; Show all subtrees when going back.
 
-         (night/org-tree-slide-skip-outline-level-for-going-back 2))
+         (night/org-tree-slide-skip-outline-level-for-going-back
+          org-tree-slide-skip-outline-level))
       (night/org-tree-slide-move-previous-tree)))
 
   (defun night/org-tree-slide-move-next-first-level-tree ()
@@ -170,5 +244,10 @@
         :ng "C->" #'night/org-tree-slide-move-next-tree
         :n [C-right] #'night/org-tree-slide-move-next-tree
         :n [s-right] #'night/org-tree-slide-move-next-tree
-        :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree))
+        :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree
+;;;
+  :localleader
+  "." #'night/org-tree-slide-counsel-goto
+;;;
+  ))
 ;;;

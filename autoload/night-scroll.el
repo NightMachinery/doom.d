@@ -8,7 +8,30 @@
 ;;;
 (defun night/screen-center-ni (&rest args)
   ;; somehow the interactive version doesn't work with advice-add
-  (night/screen-center))
+  (cond
+   ((and
+     (boundp 'org-tree-slide-mode)
+     org-tree-slide-mode)
+    (let*
+        ((org-tree-slide-skip-outline-level
+          (or
+           night/org-tree-slide-skip-outline-level-for-going-back
+           org-tree-slide-skip-outline-level)))
+      (when (not (org-at-heading-p))
+        (org-tree-slide--outline-previous-heading))
+      (night/screen-top)
+      (org-tree-slide--display-tree-with-narrow)))
+   (t (night/screen-center))))
+
+(defun night/screen-top (&rest args)
+  (interactive)
+  (ignore-errors
+    (call-interactively #'evil-scroll-line-to-top)))
+
+(defun night/screen-bottom (&rest args)
+  (interactive)
+  (ignore-errors
+    (call-interactively #'evil-scroll-line-to-bottom)))
 
 (defun night/screen-center (&rest args)
   (interactive)

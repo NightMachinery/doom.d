@@ -1,4 +1,7 @@
 (after! org
+  (advice-add #'better-jumper-jump-backward :after #'night/screen-center-ni)
+  (advice-add #'better-jumper-jump-forward :after #'night/screen-center-ni)
+
   (advice-add #'org-forward-heading-same-level :after #'night/screen-center-ni)
   (advice-add #'org-backward-heading-same-level :after #'night/screen-center-ni)
 
@@ -10,6 +13,11 @@
 
   (advice-add #'org-previous-link :after #'night/screen-center-ni)
   (advice-add #'org-next-link :after #'night/screen-center-ni)
+
+  (advice-add #'org-id-open :after #'night/screen-center-ni)
+  (comment
+   (advice-add #'org-open-at-point-global :after #'night/screen-center-ni)
+   (advice-remove #'org-open-at-point-global #'night/screen-center-ni))
 
   ;; (night/unadvice #'org-next-visible-heading)
 ;;;
