@@ -35,10 +35,13 @@
 
   (defun night/org-tree-slide-counsel-goto (&rest args)
     (interactive)
-    (when org-tree-slide-mode
-      (widen))
+    (night/org-tree-slide-widen)
     (unwind-protect
-        (call-interactively #'counsel-org-goto)
+        (let (
+              (pos (point))
+              (buff (current-buffer)))
+          (when (call-interactively #'counsel-org-goto)
+            (org-mark-ring-push pos buff)))
       (when org-tree-slide-mode
         (org-tree-slide--display-tree-with-narrow))))
 
@@ -67,8 +70,7 @@
             (funcall cmd (marker-buffer m))
 ;;;
           ;; @monkeyPatched
-          (when org-tree-slide-mode
-            (widen))
+          (night/org-tree-slide-widen)
 ;;;
           )
         (goto-char m)
