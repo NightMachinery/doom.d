@@ -10,6 +10,7 @@
  ;; @update This only worked with roam/v1. I had to completely disable roam/v2 to get rid of these problems.
    )
 
+  (night/org-show-link-display)
   (night/highlight-background) ;; @futureCron was this worth overcoming hl-line?
   (night/org-company-backends-set)
   (night/disable-company-frontends)
