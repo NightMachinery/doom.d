@@ -18,7 +18,7 @@
   ;; (setq lsp-julia-default-environment "~/.julia/environments/v1.7")
   ;; (setq lsp-julia-default-environment (night/julia-env-last-get))
   (let ((base-env
-         (or (ignore-errors (z ffz-get BaseEnv))
+         (or (ignore-errors (z reval-true ffz-get BaseEnv))
              "/") ;; @bootstrapMe Clone BaseEnv.jl and make sure ffz-get remembers its path
          ))
     (cond
