@@ -220,6 +220,8 @@
 
 (package! company-try-hard)
 
+(package! a)
+
 (package! vlf)
 (package! bug-hunter)
 (package! telega)
