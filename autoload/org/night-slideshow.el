@@ -1,5 +1,6 @@
 ;;; night-slideshow.el ---                           -*- lexical-binding: nil; -*-
 ;;;
+(require 'org-tree-slide)
 (after! org-tree-slide
   ;; @seeAlso [help:night/screen-center-ni]
 ;;;
@@ -38,10 +39,23 @@
     (night/org-tree-slide-widen)
     (unwind-protect
         (let (
-              (pos (point))
-              (buff (current-buffer)))
+              ;; (pos (point))
+              ;; (buff (current-buffer))
+              (marker (point-marker))
+              ;; Contains the buffer info as well? But the buffer info is probably not used anyway. We can use with-current-buffer to force the buffer. But this function can't actually jump between buffers? So who cares.
+              )
           (when (call-interactively #'counsel-org-goto)
-            (org-mark-ring-push pos buff)))
+            ;; * [jalali:1401/09/09/12:23] [help:org-mark-ring-push] stopped working reliably here, so I am directly using [help:better-jumper-set-jump].
+            ;; ** [[id:3fe2336c-6339-4b89-a524-7cd0af6a2e8d][=doom-set-jump-a= assumes the given location is a marker]]
+            ;; *** Why did things work before then?!
+            ;;;
+            ;; (org-mark-ring-push pos buff)
+            (org-mark-ring-push marker)
+            ;; (better-jumper-set-jump pos)
+
+            ;; (org-mark-ring-push)
+            ;; (better-jumper-set-jump)
+            ))
       (when org-tree-slide-mode
         (org-tree-slide--display-tree-with-narrow))))
 
@@ -246,10 +260,10 @@
         :ng "C->" #'night/org-tree-slide-move-next-tree
         :n [C-right] #'night/org-tree-slide-move-next-tree
         :n [s-right] #'night/org-tree-slide-move-next-tree
-        :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree
-;;;
-  :localleader
-  "." #'night/org-tree-slide-counsel-goto
-;;;
-  ))
+        :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree)
+  (map! :map org-mode-map
+        :localleader
+        "." #'night/org-tree-slide-counsel-goto ;; good in general
+        )
+  )
 ;;;

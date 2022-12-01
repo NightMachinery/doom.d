@@ -2,6 +2,9 @@
 ;;;
 (require 'ox-reveal)
 ;;;
+(after! ox
+  (setq org-export-with-broken-links 'mark))
+;;;
 (defun night/org-export-string-as-utf8 (str)
   "Assume str has Org syntax, and convert it to UTF-8."
   (interactive)

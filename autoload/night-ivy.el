@@ -3,6 +3,8 @@
 ;;; /doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
 
 (with-eval-after-load 'ivy
+  ;;;
+  (setq ivy-height 14)
 ;;;
   (defun night/ivy--no-sort (name candidates)
     candidates)
@@ -11,7 +13,17 @@
   (add-to-list 'ivy-sort-matches-functions-alist '(ivy-switch-buffer . ivy-sort-function-buffer))
   (add-to-list 'ivy-sort-matches-functions-alist '(counsel-bookmark . night/ivy--no-sort))
   (add-to-list 'ivy-sort-matches-functions-alist '(+ivy/jump-list . night/ivy--no-sort))
+  (add-to-list 'ivy-sort-matches-functions-alist '(counsel-imenu . night/ivy--no-sort))
   (add-to-list 'ivy-sort-matches-functions-alist '(counsel-org-goto . night/ivy--no-sort))
+  (add-to-list 'ivy-sort-matches-functions-alist '(counsel-outline . night/ivy--no-sort))
+  (add-to-list 'ivy-sort-matches-functions-alist '(counsel-recentf . night/ivy--no-sort))
+
+  (comment
+   (add-to-list 'ivy-sort-matches-functions-alist '(counsel-fzf . ivy--shorter-matches-first))
+   (add-to-list 'ivy-sort-matches-functions-alist '(counsel-fzf . night/ivy--no-sort))
+   (setq ivy-sort-matches-functions-alist
+         (delete '(counsel-fzf . night/ivy--no-sort) ivy-sort-matches-functions-alist)))
+
 
   ;; (setq ivy-sort-matches-functions-alist '((t . ivy--shorter-matches-first)))
 

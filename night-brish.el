@@ -33,60 +33,149 @@
   (interactive
    (let ((cmd (read-string "Command: " nil 'night-brishz-history)))
      (list "eval" cmd)))
-  (apply #'night/brishz-in-session "" args)
-  )
-(defun night/brishz-in-session (night/brishz-session &rest args)
+  (apply #'night/brishz-in-session "" args))
+
+;;;
+(cl-defun night/call-process-async
+    (&key
+       command
+       (callback nil) ;; nil means synchronous, use t for async with no callback
+       (stdout-trim-right t)
+       (name "night/call-process-async"))
+
+  ;; (setq-local lexical-binding t) ;; @useless
+  (lexical-let* ((stdout-trim-right stdout-trim-right)
+                 (output-buffer
+                  (generate-new-buffer
+                   (concat " *" name "*")
+                   t))
+                 (stderr-buffer
+                  (generate-new-buffer
+                   (concat " *" name "_stderr*")
+                   t))
+                 (callback-fun callback)
+                 (sentinel
+                  (lambda (process signal)
+                    (when (memq (process-status process) '(exit signal))
+                      (when
+                          (not (or
+                                (equal callback-fun t)
+                                (null callback-fun)))
+                        (let*
+                            ((stdout
+                              (with-current-buffer output-buffer
+                                (buffer-substring-no-properties (point-min) (point-max))))
+                             (stdout
+                              (cond
+                                (stdout-trim-right
+                                 (s-trim-right stdout))
+                                (t stdout)))
+                             (stderr
+                              (with-current-buffer stderr-buffer
+                                (buffer-substring-no-properties (point-min) (point-max)))))
+                          (funcall callback-fun
+                                   stdout
+                                   (process-exit-status process)
+                                   stderr)))
+                      (kill-buffer output-buffer)
+                      (kill-buffer stderr-buffer)))))
+    (make-process
+     :name "night/call-process-async"
+     :buffer output-buffer
+     :stderr stderr-buffer
+     :command command
+     :connection-type 'pipe
+     :sentinel sentinel)
+    output-buffer))
+;;;
+;; sets globally
+(setenv "brishz_out_file_p" "y")
+(setenv "brishz_eval_file_p" "y")
+
+(defun night/brishz-in-session (session &rest args)
+  (night/brishz-ll
+   :session session
+   :command args))
+
+(cl-defun night/brishz-ll
+    (&key
+     session
+     command
+     callback
+     (name "night/brishz-ll")
+     (stdout-trim-right t))
   (interactive
    (let ((session (read-string "Session: " nil 'night-brishz-session-history))
          (cmd (read-string "Command: " nil 'night-brishz-history)))
-     (list session "eval" cmd)
-     )
-   )
-  (let* ((str-args '())
+     (list session "eval" cmd)))
+  (let* ((args command)
+         (str-args '())
          (errbuffname "*brishz-err*")
          (errbuff (get-buffer-create errbuffname))
          (error-file (make-temp-file "brishz-err-file"))
          (process-environment process-environment))
 
-    (when (and (not (equalp night/brishz-session "")))
+    (when (and (not (equalp session "")))
       (setq process-environment (cl-copy-list process-environment))
-      (setenv "brishz_session" night/brishz-session))
+      (setenv "brishz_session" session))
 
     (dolist (arg (-flatten args))
       (push (night/h-brishz-arg arg) str-args))
+    (setq str-args (nreverse str-args))
 
-    (with-output-to-string
-      (setq *brishz-retcode* (apply #'call-process "brishzq.zsh" nil (list standard-output error-file) nil (nreverse str-args))
-            ;; @singleThreaded Emacs Lisp has no real multithreading, so it is safe to store results inside private global variable.
-            )
+    (cond
+     ((not (or
+            (null callback)))
+      (night/call-process-async
+       :name name
+       :command (cons "brishzq.zsh" str-args)
+       :callback callback
+       :stdout-trim-right stdout-trim-right))
+     (t
+      (let*
+          ((stdout (with-output-to-string
+                     (setq *brishz-retcode* (apply #'call-process "brishzq.zsh" nil (list standard-output error-file) nil str-args)
+                           ;; @singleThreaded Emacs Lisp has no real multithreading, so it is safe to store results inside private global variable.
+                           )
 
 
-      ;; display errors, stolen from emacs' `shell-command` function, stolen from https://emacs.stackexchange.com/questions/12450/capturing-stderr-of-subprocesses?noredirect=1&lq=1
-      (when (and error-file (file-exists-p error-file))
-        (if (< 0 (nth 7 (file-attributes error-file)))
-            (with-current-buffer errbuff
-              (let ((pos-from-end (- (point-max) (point))))
-                (or (bobp)
+                     ;; display errors, stolen from emacs' `shell-command` function, stolen from https://emacs.stackexchange.com/questions/12450/capturing-stderr-of-subprocesses?noredirect=1&lq=1
+                     (when (and error-file (file-exists-p error-file))
+                       (if (< 0 (nth 7 (file-attributes error-file)))
+                           (with-current-buffer errbuff
+                             (let ((pos-from-end (- (point-max) (point))))
+                               (or (bobp)
 
-                    ;; \f skips to the start of the next page.
-                    ;; (insert "\f\n")
-                    (insert "\n\n=================\n=================\n\n")
-
-                    )
-                ;; Do no formatting while reading error file,
-                ;; because that can run a shell command, and we
-                ;; don't want that to cause an infinite recursion.
-                (format-insert-file error-file nil)
-                ;; Put point after the inserted errors.
-                (goto-char (- (point-max) pos-from-end)))
-              (+popup/buffer)
-              ))))))
+                                   ;; \f skips to the start of the next page.
+                                   ;; (insert "\f\n")
+                                   (insert "\n\n=================\n=================\n\n"))
+                               ;; Do no formatting while reading error file,
+                               ;; because that can run a shell command, and we
+                               ;; don't want that to cause an infinite recursion.
+                               (format-insert-file error-file nil)
+                               ;; Put point after the inserted errors.
+                               (goto-char (- (point-max) pos-from-end)))
+                             (+popup/buffer))))))
+           (stdout
+            (cond
+             (stdout-trim-right
+              (s-trim-right stdout))
+             (t stdout))))
+        stdout)))))
 
 (defmacro z (&rest args)
   (-concat (list '-z-helper ) (mapcar #'night/h-brishz-arg-macro args)))
 
 (defun -z-helper (&rest args)
   (s-trim-right (night/brishz (mapcar #'night/h-brishz-arg (-flatten args)))))
+
+(defmacro z-async (callback &rest args)
+  (-concat (list '-z-helper-async callback) (mapcar #'night/h-brishz-arg-macro args)))
+
+(defun -z-helper-async (callback &rest args)
+  (night/brishz-ll
+   :command (mapcar #'night/h-brishz-arg (-flatten args))
+   :callback callback))
 
 (defmacro zf (&rest args)
   (list 'split-string (append '(z) args) "\n" t)
@@ -108,6 +197,24 @@
   (message "%s" (z ec (buffer-file-name))))
 
 (mycomment
+ (night/brishz-ll
+  :command (list "eval" "fsay interesting ; date ; ecerr some_error")
+  :callback (lambda (out ret err &rest dummy)
+              (message "async process ended! ret: %s\nout: %s\nerr: %s" ret out err)))
+ (z-async
+  (lambda (out ret err &rest dummy)
+    (message "async process ended! ret: %s\nout: %s\nerr: %s" ret out err))
+  eval "bello ; ec Hi && sleep 1 && ecerr my bad")
+ (z-async
+  (lambda (out ret err &rest dummy)
+    (message "async process ended! ret: %s\nout: %s\nerr: %s" ret out err))
+  ec (* 7 9))
+
+ (z-async t bell-fail)
+ (z-async t fsay what a big long day)
+ (z-async t bell-ddd)
+ (z bell-ddd)
+
  (zb true)
  (zb false)
 
@@ -125,9 +232,7 @@
 
  (z du -h (zf ls -a))
 
- (z rin (z arrN (z0 arr0 1 2 3)) prefixer -o ", ")
-
- )
+ (z rin (z arrN (z0 arr0 1 2 3)) prefixer -o ", "))
 ;;;
 (defun night/brishz-eval-region (beg end)
   (interactive "r")

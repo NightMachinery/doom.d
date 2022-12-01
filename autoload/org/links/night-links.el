@@ -106,7 +106,7 @@
                     )
                (concat parent it)
              it)
-           (replace-regexp-in-string "/\\(?:gen\\|notes\\)$" "" it))))
+           (replace-regexp-in-string "/\\(?:gen\\|notes\\|readme\\)$" "" it))))
   (comment
    (f-base "HOME:.zshrc")
    (f-base ".zshrc")

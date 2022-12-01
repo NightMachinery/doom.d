@@ -224,9 +224,6 @@
       (evil-normal-state t))
     (night/bell-link)))
 
-(defun night/bell-link ()
-  (night/brishz "awaysh" "tts-glados1-cached" "link, inserted"))
-
 (defun night/after-link (&rest args)
   (save-buffer)
   (night/bell-link))

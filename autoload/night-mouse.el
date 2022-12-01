@@ -4,8 +4,13 @@
 (after! (night-scroll)
   (xterm-mouse-mode 1) ;; doom already does this I think
 
-  (global-set-key (kbd "<wheel-right>") #'night/scroll-left)
-  (global-set-key (kbd "<wheel-left>") #'night/scroll-right)
+  (comment
+   ;; [jalali:1401/09/09/21:18] I disabled the horizontal scrolling, as it made using the trackpad to scroll normally difficult.
+   (setq mouse-wheel-flip-direction t)
+   (setq mouse-wheel-tilt-scroll t)
+   (comment
+    (global-set-key (kbd "<wheel-right>") #'night/scroll-left)
+    (global-set-key (kbd "<wheel-left>") #'night/scroll-right)))
 
   (global-set-key (kbd "<mouse-5>") #'night/scroll-up)
   (global-set-key (kbd "<mouse-4>") #'night/scroll-down)

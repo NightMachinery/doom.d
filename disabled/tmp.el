@@ -72,3 +72,7 @@
    (wl . wl-other-frame)
    ;; (id . org-id-open)
    ))
+;;
+(markerp (point))
+;;
+(z arger "hi a" h j)

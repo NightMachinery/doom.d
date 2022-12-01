@@ -45,7 +45,7 @@
         ;; url-copy-file for downloading URLs
         ;; (call-process "pngpaste" nil nil nil filename)
         ;; @bug This always uses the png extension, while the file can be, e.g., jpg.
-        (call-process "brishzq.zsh" nil nil nil "pbpaste-image" (concat (file-name-directory (buffer-file-name)) "/" filename))
+        (call-process "brishzq.zsh" nil nil nil "h-emc-paste-img" (concat (file-name-directory (buffer-file-name)) "/" filename))
       ;; (call-process "screencapture" nil nil nil "-i" filename)
       )
     (if (eq system-type 'gnu/linux)

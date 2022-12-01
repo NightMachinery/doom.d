@@ -237,6 +237,9 @@
 
 (package! evil-mc)
 
+(package! outshine)
+(package! navi-mode)
+
 (package! xterm-color)
 
 (package! code-cells)

@@ -44,11 +44,12 @@
 
 (night/set-leader-keys "z t" #'night/tmp-buffer)
 ;;;
-(defun night/save-buffer ()
+(cl-defun night/save-buffer
+    (&key (force-normal-state t))
   (interactive)
   (save-buffer)
-  (evil-normal-state)                   ;; @futureCron was this a good @tradeoff ?
-  )
+  (when force-normal-state
+    (evil-normal-state)))
 ;;;
 (global-set-key (kbd "H-C-M-e") 'insert-char)
 

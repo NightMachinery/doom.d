@@ -15,10 +15,16 @@
   ))
 ;;;
 (defun night/setup-input-decode ()
-  (progn (define-key input-decode-map "\e[1;10A" [S-M-up])
-         (define-key input-decode-map "\e[1;10B" [S-M-down])
-         (define-key input-decode-map "\e[1;10C" [S-M-right])
-         (define-key input-decode-map "\e[1;10D" [S-M-left])))
+  (progn
+    (comment
+     ;; already supported by emacs
+     (define-key input-decode-map "\e[1;2D" [S-left])))
+  (comment
+   ;; @? iTerm
+   (define-key input-decode-map "\e[1;10A" [S-M-up])
+   (define-key input-decode-map "\e[1;10B" [S-M-down])
+   (define-key input-decode-map "\e[1;10C" [S-M-right])
+   (define-key input-decode-map "\e[1;10D" [S-M-left])))
 
 (night/setup-input-decode)
 
