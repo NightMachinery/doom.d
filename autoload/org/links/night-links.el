@@ -1,5 +1,8 @@
 ;;; autoload/org/night-links.el -*- lexical-binding: t; -*-
 
+(require 'org)
+(require 'evil-org)
+(require 'ol)
 (after! (org evil-org evil ol)
 ;;;
   (cl-defun night/org-show-link-display (&key (hide nil) (default t))
@@ -39,9 +42,9 @@
            (fb (f-base bfn))
            (extension (f-ext bfn))
            (fb (if (and extension (not (string= extension ""))
-                    (not (equalp extension "org")))
-            (concat fb "." extension)
-            fb))
+                        (not (equalp extension "org")))
+                   (concat fb "." extension)
+                 fb))
            (magic_marker "MAGIC_2720091660_")
            (slash_or_marker (concat  "\\(" magic_marker "\\|/\\|$\\)"))
            (preserve (lambda (str n)

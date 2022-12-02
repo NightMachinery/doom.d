@@ -76,3 +76,13 @@
 (markerp (point))
 ;;
 (z arger "hi a" h j)
+(defun insert-my-name () (insert "insert-my-name"))
+
+(setq
+ scroll-conservatively 101
+ maximum-scroll-margin 0.25
+ scroll-margin 0
+ scroll-step 0)
+(setq  scroll-margin 7)
+;;;
+(z eval "isEmacs && fsay yes || fsay no")

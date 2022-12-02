@@ -50,6 +50,7 @@
   (map! :map org-mode-map
         :localleader
         :nvi "lp" #'night/org-paste-clipboard-image
+        "la" #'night/semantic-scholar-to-org
         "lc" #'night/url2org
         "rp" #'night/org-paste-with-files)
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693

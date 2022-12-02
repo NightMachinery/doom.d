@@ -80,7 +80,7 @@
                       (kill-buffer output-buffer)
                       (kill-buffer stderr-buffer)))))
     (make-process
-     :name "night/call-process-async"
+     :name name
      :buffer output-buffer
      :stderr stderr-buffer
      :command command
@@ -110,9 +110,6 @@
      (list session "eval" cmd)))
   (let* ((args command)
          (str-args '())
-         (errbuffname "*brishz-err*")
-         (errbuff (get-buffer-create errbuffname))
-         (error-file (make-temp-file "brishz-err-file"))
          (process-environment process-environment))
 
     (when (and (not (equalp session "")))
@@ -133,7 +130,10 @@
        :stdout-trim-right stdout-trim-right))
      (t
       (let*
-          ((stdout (with-output-to-string
+          ((errbuffname "*brishz-err*")
+           (errbuff (get-buffer-create errbuffname))
+           (error-file (make-temp-file "brishz-err-file"))
+           (stdout (with-output-to-string
                      (setq *brishz-retcode* (apply #'call-process "brishzq.zsh" nil (list standard-output error-file) nil str-args)
                            ;; @singleThreaded Emacs Lisp has no real multithreading, so it is safe to store results inside private global variable.
                            )
@@ -351,3 +351,90 @@
   ;; the args are incompatible
   ;; (advice-add '+sh-lookup-documentation-handler :override #'brishz/doc-at-point)
   )
+;;;
+(cl-defun night/brishz-async-insert
+    (&key
+     command
+     (name "night/brishz-async-insert")
+     (callback-after #'night/bello)
+     (callback-failure #'night/bell-fail)
+     (insert-fn night/org-insert-and-fix-levels)
+     (save-p t)
+     (paste-on-error-p t))
+  (lexical-let*
+      ((default-directory "/") ;; stop remote possible execution
+       (callback-after callback-after)
+       (insert-fn insert-fn)
+       (save-p save-p)
+       (paste-on-error-p paste-on-error-p)
+       (name name)
+       (overlay nil)
+       (clipboard-content (night/pbpaste))
+       (current-marker (point-marker))
+       (current-buffer (current-buffer))
+       (callback
+        (lambda (out ret err &rest dummy)
+          (let
+              ((error-p (not
+                         (equalp ret 0))))
+            (when (or
+                   error-p
+                   (not
+                    (equalp err "")))
+              (message
+               "%s: ret: %s\nout: %s\nerr: %s"
+               name ret out err))
+            (save-excursion
+              (with-current-buffer current-buffer
+                (goto-char current-marker)
+                (delete-overlay overlay)
+                (+nav-flash/blink-cursor)
+                (when (and
+                       paste-on-error-p
+                       error-p
+                       (not (equalp clipboard-content "")))
+                  (insert-for-yank
+                   (concat
+                    ;; "An error occurred. The clipboard contained this when this function was called:\n"
+                    "@asyncError/" name " clipboard:\n#+begin_example\n"
+                    clipboard-content
+                    "\n#+end_example\n")))
+                (funcall insert-fn out)
+                (when save-p
+                  (night/save-buffer :force-normal-state nil))
+                (funcall callback-after)))))))
+    (progn
+      (+nav-flash/blink-cursor)
+      ;; The overlay can't be drawn when the caret is at the end of the file, so we should also flash the current line.
+      (let
+          ((pos (point))
+           (start nil)
+           (end nil))
+        (save-excursion
+          (let ((inhibit-point-motion-hooks t)
+                (cursor-intangible-mode nil)
+                (cursor-sensor-mode nil))
+            (goto-char pos)
+            (beginning-of-visual-line)
+            (setq start (point))
+            (end-of-visual-line)
+            (setq end (1+ (point)))))
+        (setq overlay
+              (night/ov
+               ;; :beg start
+               :beg pos
+               :end end
+               :properties (list
+                            'face
+                            'night/async-insertion-face
+                            'ov-night-async 4999)
+               :front-advance nil
+               :rear-advance nil
+               ;; :front-advance t
+               ;; :rear-advance t
+               ))))
+    (night/brishz-ll
+     :name name
+     :command command
+     :callback callback)))
+;;;

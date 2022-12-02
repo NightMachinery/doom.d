@@ -51,4 +51,8 @@
   (message "TERM: %s" (getenv "TERM"))
   (night/brishz 'awaysh 'eval "sleep 20 ; bell-sc2-evo-perfection")
   )
-(night/load-config)
+
+(cond
+ ((file-exists-p (getenv "DOOMDIR"))
+  (night/load-config))
+ (t (message "DOOMDIR does not exist, skipped night/load-config")))

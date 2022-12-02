@@ -4,6 +4,10 @@
   (interactive)
   (org-fragtog-mode) ;; https://github.com/io12/org-fragtog
 
+  (when (display-graphic-p)
+    (setq-local scroll-margin 0)
+    ;; It makes scrolling with images bad.
+    )
   (comment
    (org-roam-mode -1)
  ;; @workaround There are suddenly nonexistent roam commands being mapped to keys. This is probably a Doom regression which will go away with time.

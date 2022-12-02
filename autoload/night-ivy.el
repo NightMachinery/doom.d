@@ -22,6 +22,8 @@
    (add-to-list 'ivy-sort-matches-functions-alist '(counsel-fzf . ivy--shorter-matches-first))
    (add-to-list 'ivy-sort-matches-functions-alist '(counsel-fzf . night/ivy--no-sort))
    (setq ivy-sort-matches-functions-alist
+         (delete '(counsel-fzf . ivy--shorter-matches-first) ivy-sort-matches-functions-alist))
+   (setq ivy-sort-matches-functions-alist
          (delete '(counsel-fzf . night/ivy--no-sort) ivy-sort-matches-functions-alist)))
 
 

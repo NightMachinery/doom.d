@@ -1,4 +1,6 @@
 ;;; ~/doom.d/autoload/night-completion.el -*- lexical-binding: t; -*-
+;; * Some startup hooks set completion options.
+;; ** [help:night/zsh-mode-startup]
 ;;;
 (use-package! company
 
@@ -131,13 +133,6 @@
 ;;           company-dabbrev-code
 ;;           ))
 ;;        ))
-(defun night/sh-hook-fn()
-  (interactive)
-  (set-company-backend! 'sh-mode '(company-dabbrev-code company-files))
-  )
-(add-hook 'sh-mode-hook #'night/sh-hook-fn)
-
-
 (progn (setq +company-backend-alist
              '(
                ;; (julia-mode

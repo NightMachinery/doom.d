@@ -2,7 +2,8 @@
 
 (when (display-graphic-p)
   (require 'iscroll)
-  (pixel-scroll-precision-mode))
+  (pixel-scroll-precision-mode)
+  (setq scroll-margin 7))
 ;;;
 (setq next-screen-context-lines 4)
 ;;;

@@ -60,11 +60,12 @@
 (night/set-leader-keys "z n" #'night/search-notes)
 
 ;;;
-(defun night/browse-dir (&optional dir)
+(defun night/browse-dir (&optional dir query)
   (interactive)
   (let* ((ivy-truncate-lines nil)
          (dir (or dir default-directory "/"))
-         (default-directory dir))
+         (default-directory dir)
+         (query (or query "")))
     ;; (counsel-find-file dir)
     ;; (counsel-file-jump "" dir) ; we used this one before using fzf
 
@@ -73,20 +74,16 @@
            (concat
             "env FORCE_NONINTERACTIVE=y FZF_DEFAULT_COMMAND=\"fd --no-ignore --hidden --exclude=.git --follow\" fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir)
             " fzf"
-            ;; " fzf_mru.sh"
+            ;; " fzf_mru.sh" ;; @disabled
             " --tiebreak=end,length -f \"%s\"")))
       ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
-      (counsel-fzf "" dir ""))
+      (counsel-fzf query dir ""))
     ;;;
-    ;; fzf seems slower, but it supports fzf syntax and is async
-    ;; (counsel-fzf "" dir)
-    ;; (dired dir)
     ))
 
 (defun night/browse-notes ()
   (interactive)
-  (night/browse-dir (getenv "nightNotes"))
-  )
+  (night/browse-dir (getenv "nightNotes") ".org$ "))
 (night/set-leader-keys " z ." #'night/browse-notes)
 
 (defun night/browse-NIGHTDIR ()
@@ -197,7 +194,16 @@
     ;; (night/brishz  "awaysh" "ot-play-beeps1" "3")
     (night/bell-link)))
 
-(defun night/url-fanficfare-insert ()
+(night/defun-named night/url-fanficfare-insert ()
+  (interactive)
+  (night/brishz-async-insert
+   :name $0
+   :command (list "reval-paste" "fanficfare2org-emc")
+   :callback-after #'night/bell-link
+   :insert-fn #'night/org-insert-and-fix-levels
+   :save-p t))
+
+(defun night/url-fanficfare-insert-sync ()
   (interactive)
   (let*
       (

@@ -155,6 +155,8 @@ move COUNT - 1 screen lines forward first."
         "s d" ;; overrides @doom's default search pwd function
         #'night/search-dir
         ;; #'night/search-dir-limited
+        "s D" #'night/search-doom
+        "s a" #'night/agsi
 
         "s m" #'counsel-evil-marks
         )

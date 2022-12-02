@@ -29,15 +29,20 @@
 ;;;
 (defun night/company-keybindings-enable ()
   (interactive)
+  ;; @seeAlso [help:yas-minor-mode-map] in [[DOOMDIR:autoload/night-yasnippet.el]]
   ;; This TAB key was buggy on my old eOS machine and the new M1 (perhaps emacs@28 is to blame?). In the end, I bound a these to `global-map' for `night/company-yasnippet-or-completion', too.
   ;; Update: Using the below 'map!' snippet seems to have solved that problem.
   ;; Update: I think after changing ="\t"=  to =(kbd "<tab>")=, the below snippet would not be necessary after all!
   (map!
-   :map company-active-map
+   :map (company-active-map)
    :ig
    "TAB" #'night/company-yasnippet-or-completion
+   :ig
    "<tab>" #'night/company-yasnippet-or-completion
-   "\t" #'night/company-yasnippet-or-completion)
+   :ig
+   "\t" #'night/company-yasnippet-or-completion
+   :ig
+   [?\t] #'night/company-yasnippet-or-completion)
 
   ;; (unbind-key "TAB" company-active-map)
   ;; (unbind-key "<tab>" company-active-map)

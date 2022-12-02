@@ -1,3 +1,24 @@
+;;;
+(require 'ov)
+(cl-defun night/ov (&key
+                    beg end
+                    properties
+                    front-advance
+                    rear-advance
+                    )
+  "Make an overlay from BEG to END.
+
+If PROPERTIES are specified, set them for the created overlay."
+  (if properties
+      (progn
+        ;; To pass properties to `ov-set'
+        (when (listp (car-safe properties))
+          (setq properties (car properties)))
+        (let ((o (ov-make beg end nil front-advance rear-advance)))
+          (ov-set o properties)
+          o))
+    (ov-make beg end nil front-advance rear-advance)))
+;;;
 (after! (doom-modeline-core)
   (setq doom-modeline-icon nil)         ;; makes the modeline way too big
 
@@ -52,6 +73,14 @@
                            :background "mistyrose"
                            ;; :background "orangered"
                            :weight bold))) "")
+(defface night/async-insertion-face
+  '((t (
+        :foreground "black"
+        :background "orchid1"
+        ;; :weight bold
+        :extend t
+        ;; extend makes the face go to the end of the line, but it also makes it extend to new lines if you create them. This latter property seems like an upstream bug.
+        ))) "")
 
 (defun night/highlight-atsign ()
   "DEPRECATED: We now customize hl-todo instead."

@@ -19,4 +19,15 @@
         (list #'yas-try-key-from-whitespace
               "w_.()" "w_." "w_"))
 ;;;
+  (map!
+   :map (yas-minor-mode-map)
+   :ig
+   "TAB" yas-maybe-expand
+   :ig
+   "<tab>" yas-maybe-expand
+   :ig
+   "\t" yas-maybe-expand
+   :ig
+   [?\t] yas-maybe-expand)
+;;;
   )
