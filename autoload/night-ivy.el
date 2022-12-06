@@ -124,6 +124,11 @@
   ;; @upstreamBug ivy-rich adds extra stuff that it assumes will be just truncated, so it doesn't play nicely with this:
   ;;   https://github.com/Yevgnen/ivy-rich/issues/112
 
+  (defun night/h-advice-ivy-truncate-lines-off (orig-fn)
+    (let ((ivy-truncate-lines nil))
+      (funcall orig-fn)))
+  (advice-add #'counsel-outline :around #'night/counsel-recentf-advice)
+
   (defun night/counsel-recentf-advice (orig-fn)
     (let ((ivy-truncate-lines nil)
           ;; (orderless-style-dispatchers #'night/h-orderless-regexp)
@@ -321,5 +326,14 @@
                    '(:columns (
                                (ivy-rich-candidate (:width 0.4))
                                (night/ivy-docstring (:face font-lock-doc-face))))))
+;;;
+  (defun night/advice-with-jump-set (orig-fn &rest args)
+    (let
+        ((marker (point-marker))
+         (buf (current-buffer)))
+      (when (apply orig-fn args)
+        ;; (night/bello)
+        (night/jump-set :pos marker :buffer buf))))
+  (advice-add #'counsel-imenu :around #'night/advice-with-jump-set)
 ;;;
   )

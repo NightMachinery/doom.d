@@ -221,6 +221,7 @@
             ("cellar" . ,(concat (getenv "cellar") "/"))
             ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
             ("orgdir" . ,(concat  org-directory "/"))
+            ("org_image_dir" . ,(concat (getenv "org_img_dir") "/"))
             ("vol" . ,(concat  "/Volumes/"))))
   (add-to-list 'org-modules 'org-protocol)
   ;; https://orgmode.org/manual/Link-Abbreviations.html

@@ -28,9 +28,11 @@
   (setq org-image-actual-width '(700)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
   ;; (setq org-image-actual-width '(fill-column))
 ;;;
-  (defun night/org-paste-clipboard-image ()
-    "Paste the image in the clipboard at point."
-    (interactive)
+  (defun night/org-paste-clipboard-image (&optional arg)
+    "Paste the image in the clipboard at point.
+
+@seeAlso [agfi:org-img-unused]"
+    (interactive "P")
     ;; (org-display-inline-images)
     (setq filename
           (concat
@@ -45,7 +47,9 @@
         ;; url-copy-file for downloading URLs
         ;; (call-process "pngpaste" nil nil nil filename)
         ;; @bug This always uses the png extension, while the file can be, e.g., jpg.
-        (call-process "brishzq.zsh" nil nil nil "h-emc-paste-img" (concat (file-name-directory (buffer-file-name)) "/" filename))
+        (z "reval-to-stdout" "h-emc-paste-img"
+           (concat (file-name-directory (buffer-file-name)) "/" filename)
+           (or arg ""))
       ;; (call-process "screencapture" nil nil nil "-i" filename)
       )
     (if (eq system-type 'gnu/linux)

@@ -23,8 +23,8 @@
         (set-visited-file-name new-file-name)
         (set-buffer-modified-p nil)
         (message (concat "File renamed to " new-file-name))))
-(defun night/md2org ()
+
+(defun night/extension-set-to-org ()
   (interactive)
-  ;; @todo0 run pandoc on it as well
-  (night/change-file-extension "org")
-  )
+  (night/change-file-extension "org"))
+;;;

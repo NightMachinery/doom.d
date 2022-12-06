@@ -45,16 +45,15 @@
               ;; Contains the buffer info as well? But the buffer info is probably not used anyway. We can use with-current-buffer to force the buffer. But this function can't actually jump between buffers? So who cares.
               )
           (when (call-interactively #'counsel-org-goto)
-            ;; * [jalali:1401/09/09/12:23] [help:org-mark-ring-push] stopped working reliably here, so I am directly using [help:better-jumper-set-jump].
+            ;; * DONE [jalali:1401/09/09/12:23] [help:org-mark-ring-push] stopped working reliably here, so I am directly using [help:night/jump-set].
             ;; ** [[id:3fe2336c-6339-4b89-a524-7cd0af6a2e8d][=doom-set-jump-a= assumes the given location is a marker]]
             ;; *** Why did things work before then?!
             ;;;
             ;; (org-mark-ring-push pos buff)
             (org-mark-ring-push marker)
-            ;; (better-jumper-set-jump pos)
+            ;; (night/jump-set :pos pos)
 
             ;; (org-mark-ring-push)
-            ;; (better-jumper-set-jump)
             ))
       (when org-tree-slide-mode
         (org-tree-slide--display-tree-with-narrow))))

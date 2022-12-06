@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: prop_source
+# uuid: prop_source
+# key: <ps
+# --
+:PROPERTIES:
+:source: ${1:`
+(night/pbpaste)
+`}
+:END:
+$0

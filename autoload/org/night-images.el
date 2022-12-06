@@ -6,6 +6,7 @@
   (require 'org-yt)
 
   (defun org-image-link (protocol link _description)
+    ;; * WAIT How can I use an async/callback function for =(org-link-set-parameters "imghttp" :image-data-fun #'org-image-link)=?
     "Interpret LINK as base64-encoded image data."
     (cl-assert (string-match "\\`img" protocol) nil
                "Expected protocol type starting with img")

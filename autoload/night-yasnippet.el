@@ -19,15 +19,38 @@
         (list #'yas-try-key-from-whitespace
               "w_.()" "w_." "w_"))
 ;;;
-  (map!
-   :map (yas-minor-mode-map)
-   :ig
-   "TAB" yas-maybe-expand
-   :ig
-   "<tab>" yas-maybe-expand
-   :ig
-   "\t" yas-maybe-expand
-   :ig
-   [?\t] yas-maybe-expand)
+  (after! night-last
+    ;; @seeAlso [help:night/company-keybindings-enable]
+    (map!
+     :map (yas-minor-mode-map)
+     :ig
+     "TAB" yas-maybe-expand
+     :ig
+     "<tab>" yas-maybe-expand
+     :ig
+     "\t" yas-maybe-expand
+     :ig
+     [?\t] yas-maybe-expand)
+    (comment
+     (map!
+      :map (yas-minor-mode-map)
+      :ig
+      "TAB" #'yas-expand
+      :ig
+      "<tab>" #'yas-expand
+      :ig
+      "\t" #'yas-expand
+      :ig
+      [?\t] #'yas-expand)
+     (map!
+      :map (yas-minor-mode-map)
+      :ig
+      "TAB" #'night/company-yasnippet-or-completion
+      :ig
+      "<tab>" #'night/company-yasnippet-or-completion
+      :ig
+      "\t" #'night/company-yasnippet-or-completion
+      :ig
+      [?\t] #'night/company-yasnippet-or-completion)))
 ;;;
   )

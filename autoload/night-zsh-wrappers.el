@@ -42,3 +42,12 @@
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p t))
 ;;;
+(night/defun-named night/paste-md2org ()
+  (interactive)
+  (night/brishz-async-insert
+   :name $0
+   :command (list "reval-paste" "md2org")
+   :callback-after #'night/nop
+   :insert-fn #'night/org-insert-and-fix-levels
+   :save-p t))
+;;;

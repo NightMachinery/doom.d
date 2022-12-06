@@ -1,4 +1,8 @@
 ;;;
+(defun night/disable-line-numbers ()
+  (interactive)
+  (display-line-numbers-mode -1))
+;;;
 (require 'ov)
 (cl-defun night/ov (&key
                     beg end

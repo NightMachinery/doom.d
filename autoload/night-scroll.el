@@ -177,18 +177,43 @@
 
 (defun night/scroll-right ()
   (interactive)
-  (scroll-right 4))
+  (night/scroll-left -4))
 
-(defun night/scroll-left ()
+(defun night/scroll-left (&optional n)
   (interactive)
-  (scroll-left 4))
+  (let ((n (or n 4)))
+      (cond
+       ((string= "pdf-view-mode" major-mode)
+        (image-set-window-hscroll (+ n (window-hscroll)))
+        (comment (image-forward-hscroll n)))
+       (t (scroll-left 4))))
+  (night/h-remember-hscroll))
+
+(defun night/h-remember-hscroll ()
+  (setq-local night/window-hscroll (window-hscroll)))
 ;;;
-(defun night/scroll-precision-up ()
+(defun night/scroll-precision-up (&optional n)
   (interactive)
-  (pixel-scroll-precision-scroll-up 150))
+  (let
+      ((delta
+        (* -1 (or n 150))))
+      (night/scroll-precision-down delta)))
 
-(defun night/scroll-precision-down ()
+(defun night/scroll-precision-down (&optional n)
   (interactive)
-  (pixel-scroll-precision-scroll-down 150))
+  (let
+      ((delta
+        (* -1 (or n 150)))
+       (current-window (selected-window)))
+    (cond
+     (t
+      ;; code copied from [help:pixel-scroll-precision]
+      (progn
+        (let ((kin-state (pixel-scroll-kinetic-state)))
+          (aset kin-state 0 (make-ring 30))
+          (aset kin-state 1 nil))
+        (pixel-scroll-precision-interpolate delta current-window)))
+     (nil
+      (pixel-scroll-precision-scroll-down delta)))))
 ;;;
 (provide 'night-scroll)

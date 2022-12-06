@@ -34,7 +34,7 @@
             )
         (when
             (swiper-isearch re)
-          (better-jumper-set-jump pos)
+          (night/jump-set :pos pos)
           (doom/escape)))))
 
   (defun outline-invent-heading (head up)

@@ -85,4 +85,18 @@
  scroll-step 0)
 (setq  scroll-margin 7)
 ;;;
-(z eval "isEmacs && fsay yes || fsay no")
+(setq-local scroll-preserve-screen-position 'always)
+;;
+(map! :map pdf-view-mode-map
+      :localleader "m"
+      (lambda ()
+        "Saves the current position on the pdf to jump to later with <C-f2>."
+        (interactive)
+        (setf my-bookmark (pdf-view-bookmark-make-record))))
+
+(map! :map pdf-view-mode-map
+      :localleader "j"
+      (lambda ()
+        "Loads the position saved by <C-f1>."
+        (interactive)
+        (pdf-view-bookmark-jump my-bookmark)))

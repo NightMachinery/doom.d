@@ -379,6 +379,7 @@
                          (equalp ret 0))))
             (when (or
                    error-p
+                   (equalp out "")
                    (not
                     (equalp err "")))
               (message
@@ -404,6 +405,7 @@
                   (night/save-buffer :force-normal-state nil))
                 (funcall callback-after)))))))
     (progn
+      (night/jump-set)
       (+nav-flash/blink-cursor)
       ;; The overlay can't be drawn when the caret is at the end of the file, so we should also flash the current line.
       (let
