@@ -83,7 +83,7 @@
 
 (defun night/browse-notes ()
   (interactive)
-  (night/browse-dir (getenv "nightNotes") ".org$ "))
+  (night/browse-dir (getenv "nightNotes") ".org$ | .gpg$ | .json$ "))
 (night/set-leader-keys " z ." #'night/browse-notes)
 
 (defun night/browse-NIGHTDIR ()
@@ -198,7 +198,7 @@
   (interactive)
   (night/brishz-async-insert
    :name $0
-   :command (list "reval-paste" "fanficfare2org-emc")
+   :command (list "reval-timeout" night/zsh-timeout-default "reval-paste" "fanficfare2org-emc")
    :callback-after #'night/bell-link
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p t))

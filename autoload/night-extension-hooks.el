@@ -35,13 +35,15 @@ Use this to stop the audio files being played by org-mode links."
           ;; (message "file opened: %s" bfn)
           (cond
            ((and
-             (not window-system)
              (member-ignore-case ext '("png" "apng" "jpg" "jpeg" "gif")))
-            (night/yank-buffer-filename)
-            (kill-current-buffer)
-            (message "buf: %s, cmd: %s" bfn this-command)
-            (night/brishz "kitty-launch-icat" bfn)
+            ;; (night/yank-buffer-filename)
+            (z pbadd (buffer-file-name))
+            (when (not window-system)
+              (kill-current-buffer)
+              (message "buf: %s, cmd: %s" bfn this-command)
+              (night/brishz "kitty-launch-icat" bfn)
             ;; @bug this can leave the original buffer somewhat impaired, e.g., colored parens are lost in elisp mode; no idea why ...
+              )
             )
            ((and
              (member-ignore-case ext '("mp3" "m4a" "flac" "wav" "mp4" "avi" "mkv")))

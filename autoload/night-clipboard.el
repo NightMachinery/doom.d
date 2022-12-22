@@ -65,6 +65,15 @@
   "Returns the last copied string."
   (current-kill 0))
 
+(defun night/pbcopy ()
+  (interactive)
+  (call-interactively #'evil-yank))
+
+(defun night/pbcopy-org2html ()
+  (interactive)
+  (night/pbcopy)
+  (z reval-paste pbcopy-org2html))
+
 (defun night/org-paste-yank ()
   (interactive)
   (night/org-insert-and-fix-levels
@@ -93,7 +102,8 @@
 ;;;
 (after! (org evil-org) (map!
                         :map evil-org-mode-map
-                        :nv "P" #'night/paste-yank-html))       ;; @futureCron @tradeoff Is this upgrade worth the slowdown in 'P'? @update I limited it to only org, where it should be worth it.
+                        :nv "P" #'night/paste-yank-html
+                        :nv "p" #'night/org-paste-yank))
 (night/set-leader-keys "y y" #'night/paste-yank-html)
 
 (night/set-leader-keys "z c i" #'ns-yank-image-at-point-as-image)

@@ -1,5 +1,7 @@
 ;;; autoload/night-zsh-wrappers.el -*- lexical-binding: t; -*-
 ;;;
+(setq night/zsh-timeout-default 300)    ;; in seconds
+;;;
 (defun night/org-link-browser-current ()
   (interactive)
   (night/insert-for-yank-and-save
@@ -28,7 +30,7 @@
   (interactive)
   (night/brishz-async-insert
    :name $0
-   :command (list "reval-paste" "semantic-scholar-to-org-emc")
+   :command (list "reval-timeout" night/zsh-timeout-default "reval-paste" "semantic-scholar-to-org-emc")
    :callback-after #'night/bell-link
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p t))
@@ -37,7 +39,7 @@
   (interactive)
   (night/brishz-async-insert
    :name $0
-   :command (list "reval-paste" "url2org-emc")
+   :command (list "reval-timeout" night/zsh-timeout-default "reval-paste" "url2org-emc")
    :callback-after #'night/bell-link
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p t))
