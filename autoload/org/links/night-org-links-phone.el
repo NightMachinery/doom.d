@@ -1,10 +1,7 @@
 ;;; autoload/org/links/night-org-links-phone.el -*- lexical-binding: t; -*-
 
 (after! (org ol)
-  (defun night/org-link-phone-follow (path arg)
-    (message "night/org-link-phone-follow: not implemented yet; path: %s, arg: %s" path arg))
-
-  (org-link-set-parameters "phone" :follow #'night/org-link-phone-follow)
+  (org-link-set-parameters "phone" :follow #'night/org-link-follow-copy)
 
   (defface night/org-link-face-phone '((t (:foreground "black"
                                           :background "ghostwhite"

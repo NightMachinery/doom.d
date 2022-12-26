@@ -100,3 +100,6 @@
         "Loads the position saved by <C-f1>."
         (interactive)
         (pdf-view-bookmark-jump my-bookmark)))
+;;;
+(map! :i "M-<backspace>" #'night/kill-whitespace-or-word-backward)
+;;;

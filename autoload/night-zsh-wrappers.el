@@ -53,3 +53,7 @@
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p t))
 ;;;
+(defun night/p-titlecase ()
+  (interactive)
+  (insert-for-yank (z reval-paste titlecase)))
+;;;

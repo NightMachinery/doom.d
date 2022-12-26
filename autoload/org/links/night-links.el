@@ -5,6 +5,12 @@
 (require 'ol)
 (after! (org evil-org evil ol)
 ;;;
+  (defun night/org-link-follow-copy (path arg)
+    (kill-new path))
+
+  (dolist (type (list "user" "pass"))
+   (org-link-set-parameters type :follow #'night/org-link-follow-copy))
+;;;
   (cl-defun night/org-show-link-display (&key (hide nil) (default t))
     (interactive)
     (when default

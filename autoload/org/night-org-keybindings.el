@@ -2,6 +2,61 @@
 
 (after! (org evil-org evil)
 ;;;
+(defun night/yank-org-inner-object ()
+  (interactive)
+  (apply #'kill-ring-save (evil-org-select-inner-element (org-element-context))))
+
+(defun evil-org-select-inner-element (element)
+  "Select inner org ELEMENT."
+  (let ((type (org-element-type element))
+        (begin (org-element-property :begin element))
+        (end (org-element-property :end element))
+        (contents-begin (org-element-property :contents-begin element))
+        (contents-end (org-element-property :contents-end element))
+        (post-affiliated (org-element-property :post-affiliated element))
+        (post-blank (org-element-property :post-blank element)))
+    (cond
+;;; @monkeyPatched
+     ((memq type '(link))
+      (let*
+          ((link-type (org-element-property :type element))
+           (link-type-len (length link-type))
+           (link-path (org-element-property :path element))
+           (inner-begin
+            (save-excursion
+              (goto-char begin)
+              (re-search-forward "\\w" end)
+              (point)))
+           (path-begin
+            (cond
+             ((member link-type '("fuzzy"))
+              (- inner-begin 1))
+             ((member link-type '("http" "https" "ftp"))
+              (setq link-path (concat link-type ":" link-path))
+              (- inner-begin 1))
+             (t (+ inner-begin link-type-len))))
+           (link-path-len (length link-path))
+           (path-end (+ path-begin link-path-len)))
+
+        (list path-begin path-end)))
+;;;
+     ((or (string-suffix-p "-block" (symbol-name type))
+          (memq type '(latex-environment)))
+      ;; Special case on block types (thanks Nicolas Goaziou)
+      (list (org-with-point-at post-affiliated (line-beginning-position 2))
+            (org-with-point-at end (line-beginning-position (- post-blank)))))
+     ((memq type '(verbatim code))
+      (list (1+ begin) (- end post-blank 1)))
+     ('otherwise
+      (list (or contents-begin post-affiliated begin)
+            (or contents-end
+                ;; Prune post-blank lines from :end element
+                (org-with-point-at end
+                  ;; post-blank is charwise for objects and linewise for elements
+                  (if (memq type org-element-all-objects)
+                      (- end post-blank)
+                    (line-end-position (- post-blank))))))))))
+;;;
   (defun night/insert-zero-width-space ()
     (interactive)
     (insert "\u200b"))
@@ -55,7 +110,7 @@
         "rp" #'night/org-paste-with-files)
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693
   (map!
-   :map evil-org-mode-map ;; @todo0 also map to org-mode-map
+   :map (org-mode-map evil-org-mode-map)
    :n
    ;; "TAB" 'org-cycle
    ;; "<S-tab>" 'org-force-cycle-archived ; is overrided ...
@@ -64,6 +119,9 @@
 
    :nvo
    "g8" #'night/avy-goto-org-header
+
+   :n
+   "gl" #'org-open-at-point
 
    :nvo
    "{" #'org-previous-visible-heading
@@ -88,5 +146,4 @@
    "rf" #'+org/refile-to-file
    "rF" #'night/org-refile-to-new-file
 
-   "lC" #'night/org-link-browser-current
-   ))
+   "lC" #'night/org-link-browser-current))

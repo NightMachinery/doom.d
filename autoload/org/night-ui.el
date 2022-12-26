@@ -48,15 +48,6 @@
   ;; (remove-hook 'org-babel-after-execute-hook 'night/babel-ansi)
 ;;;
   ;; (set-face-attribute 'org-level-1 nil :box  `(:line-width 30 :color ,(face-background 'default)))
-  (defun night/modify-org-done-face ()
-    (interactive)
-    (setq org-fontify-done-headline t)
-    ;; (set-face-attribute 'org-done nil :strike-through "black")
-    (set-face-attribute 'org-headline-done nil
-                        ;; :strike-through "black" ; doesn't work for me
-                        :foreground "cadetblue"))
-  (night/modify-org-done-face)
-
 
   (progn
     (face-spec-set 'org-level-5 ;; originally copied from org-level-8

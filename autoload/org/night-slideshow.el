@@ -48,7 +48,7 @@
             ;; * DONE [jalali:1401/09/09/12:23] [help:org-mark-ring-push] stopped working reliably here, so I am directly using [help:night/jump-set].
             ;; ** [[id:3fe2336c-6339-4b89-a524-7cd0af6a2e8d][=doom-set-jump-a= assumes the given location is a marker]]
             ;; *** Why did things work before then?!
-            ;;;
+;;;
             ;; (org-mark-ring-push pos buff)
             (org-mark-ring-push marker)
             ;; (night/jump-set :pos pos)
@@ -249,6 +249,12 @@
          ;; Show all subtrees when going back.
          )
       (night/org-tree-slide-move-next-tree)))
+;;;
+  (defun night/theme-solo-jazz-load ()
+    (interactive)
+    (load-theme 'solo-jazz t t)
+    (enable-theme 'solo-jazz)
+    (night/modify-org-done-face))
 ;;;
   (map! :map org-tree-slide-mode-map
         :ng "C-<" #'night/org-tree-slide-move-previous-tree

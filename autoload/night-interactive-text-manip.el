@@ -4,25 +4,41 @@
   "DWIM kill characters backward until encountering the beginning of a
 word or non-word."
   (interactive)
-  (if (thing-at-point 'word) (backward-kill-word 1)
-    (let* ((orig-point              (point))
-           (orig-line               (line-number-at-pos))
-           (backward-word-point     (progn (backward-word) (point)))
-           (backward-non-word-point (progn (goto-char orig-point) (night/backward-non-word) (point)))
-           (min-point               (max backward-word-point backward-non-word-point)))
+  (let* ((orig-point (point))
+         (beg-of-line (line-beginning-position))
+         ;; (orig-line (line-number-at-pos))
+         (backward-word-point
+          (progn (night/backward-word) (point)))
+         (backward-non-word-point
+          (progn
+            (goto-char orig-point)
+            (night/backward-non-word) (point)))
+         (min-point
+          (max backward-word-point
+               backward-non-word-point
+               beg-of-line)))
 
-      (if (< (line-number-at-pos min-point) orig-line) (progn (goto-char min-point) (end-of-line) (delete-horizontal-space))
-        (delete-region min-point orig-point)
-        (goto-char min-point))
-      )))
+    ;; (message "min-point: %s beg-of-line: %s" min-point beg-of-line)
+    (delete-region min-point orig-point)
+    (goto-char min-point)))
 
-(defun night/backward-non-word ()
+(cl-defun night/backward-non-word (&key pat)
   "Move backward until encountering the beginning of a non-word."
   (interactive)
-  (search-backward-regexp "[^a-zA-Z0-9\s\n]")
-  (while (looking-at "[^a-zA-Z0-9\s\n]")
-    (backward-char))
-  (forward-char))
+  (let ((pat
+         (or pat
+             (concat "[^" "a-zA-Z0-9\\s\n*" "]")))
+        (search-back-p t))
+    (when search-back-p
+      (search-backward-regexp pat))
+    (while (looking-at pat)
+      (backward-char))
+    (forward-char)))
+
+(defun night/backward-word ()
+  (interactive)
+  (night/backward-non-word
+   :pat (concat "[" "a-zA-Z0-9*" "]")))
 ;;;
 (defvar night/syntax-table1
   (let ((st (make-syntax-table)))
@@ -203,20 +219,21 @@ word or non-word."
   (let  ((p (point))
          (c (char-to-string (char-before)))
          )
-    (if (member c '("\t"  " "))
-        (progn
-          (re-search-backward "[^ \t]" nil :no-error)
-          (forward-char)
-          (kill-region p (point)))
-
-      (if (equalp c "\n")
-          (delete-char -1)
-        (night/dwim-backward-kill-word)
-        ;; (progn
-        ;;   (re-search-backward "[ \t\n]" nil :no-error)
-        ;;   (forward-char)
-        ;;   (kill-region p (point)))
-        ))))
+    (cond
+     ((equalp c "\n")
+      (delete-char -1))
+     ((member c '("\t"  " "))
+      (progn
+        (re-search-backward "[^ \t]" nil :no-error)
+        (forward-char)
+        (kill-region p (point))))
+     (t
+      (night/dwim-backward-kill-word))
+     ;; (progn
+     ;;   (re-search-backward "[ \t\n]" nil :no-error)
+     ;;   (forward-char)
+     ;;   (kill-region p (point)))
+     )))
 ;;;
 (defun night/backward-symbol (&optional count)
   (interactive)
@@ -227,6 +244,7 @@ word or non-word."
  ;; "C-w" #'night/dwim-backward-kill-word
  ;; "M-DEL" #'night/dwim-backward-kill-word
  "M-DEL" #'night/kill-whitespace-or-word-backward
+ :nviog
  "M-<backspace>" #'night/kill-whitespace-or-word-backward
  ;; "M-DEL" #'night/delete-word-or-whitespace
  ;; "M-<backspace>" #'fixup-whitespace
@@ -234,7 +252,10 @@ word or non-word."
  ;; "M-<left>" #'night/backward-symbol
  ;; "M-<right>" #'forward-symbol
 
+
+ :nviog
  "M-<left>" #'evil-backward-WORD-end
+ :nviog
  "M-<right>" #'evil-forward-WORD-end
 
  ;; "M-<left>" #'evil-backward-word-begin

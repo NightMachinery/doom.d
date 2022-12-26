@@ -1,10 +1,19 @@
 ;;; night-todo-states.el ---                         -*- lexical-binding: t; -*-
 ;;; Code:
+(defun night/modify-org-done-face ()
+  (interactive)
+  (setq org-fontify-done-headline nil)
+  (set-face-attribute 'org-done nil :strike-through nil)
+  (comment
+   (set-face-attribute 'org-headline-done nil
+                       ;; :strike-through "black" ; doesn't work for me
+                       :strike-through nil
+                       :foreground "cadetblue"
+                       )))
 
 (defun night/org-ui-todo-setup ()
   (interactive)
-
-  (setq org-fontify-done-headline nil)
+  (night/modify-org-done-face)
 
   (setq org-todo-keywords
         '((sequence "TODO(t)" "LOOP" "STRT(s)" "WAIT(w)" "|" "DONE(d)" "KILL(k)")
