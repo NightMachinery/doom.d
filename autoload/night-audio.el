@@ -1,15 +1,17 @@
 ;;; autoload/night-audio.el -*- lexical-binding: t; -*-
 ;;;
 (cl-defun night/hear (url &key (command
-                                "hear-loadfile"
+                                "hear-loadfile-begin"
                                 ))
   (message "Playing audio: %s" url)
   ;;;
   ;; (night/brishz "awaysh-oneinstance" night/marker-audio "hearinvisible" url)
   ;;;
-  ;; @workaround for the lack of support of non-utf-8 in brish
-  (eredis-set "emacs_audio_file" url)
-  (night/brishz "eval" (concat "awaysh-oneinstance " night/marker-audio " " command "  \"$(redism get emacs_audio_file)\"")))
+  (comment
+   ;; @workaround for the lack of support of non-utf-8 in brish
+   (eredis-set "emacs_audio_file" url))
+  (night/brishz "eval" (concat "awaysh-oneinstance " night/marker-audio " " command "  \"$(redism get emacs_audio_file)\""))
+  (night/brishz "awaysh-oneinstance" night/marker-audio (identity command) (identity url)))
 
 (defun night/hearinvisible (url &rest args)
 ;;; @tests
