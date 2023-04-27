@@ -33,10 +33,12 @@
   ;; (night/load-tramp-theme)
   ;; https://www.gnu.org/software/emacs/manual/html_node/tramp/Frequently-Asked-Questions.html
   (setq remote-file-name-inhibit-cache nil)
-  ;;;
+
+  (setq remote-file-name-inhibit-locks t)
+;;;
   ;; completely disabled anaconda-mode instead
   ;; (add-hook 'python-mode-hook #'turn-off-anaconda-eldoc-mode)
-  ;;;
+;;;
   (setq vc-ignore-dir-regexp
         (format "\\(%s\\)\\|\\(%s\\)"
                 vc-ignore-dir-regexp
@@ -52,6 +54,10 @@
   ;; (recentf-cleanup) ;; takes too long
   (tramp-cleanup-all-buffers)
   (tramp-cleanup-all-connections))
+;;;
+(defun night/scp-hpc1 ()
+  (interactive)
+  (find-file-existing "/scp:hpc1:/home/user01/code/uni/"))
 ;;;
 (defun night/scp-eva-borg ()
   (interactive)

@@ -34,6 +34,29 @@
     (when org-tree-slide-mode
       (widen)))
 
+  (defun night/org-counsel-goto-without-nesting (&rest args)
+    (interactive)
+    (let* (
+           (outline-regexp "\\*\\{1,13\\} ") ;; I just hardcoded the first 13 patterns, feel free to extend.
+           (org-outline-regexp outline-regexp)
+           (outline-heading-alist
+            ;; seems both this and redefining [gelp:outline-level] are needed
+            '(("* " . 1)
+              ("** " . 1)
+              ("*** " . 1)
+              ("**** " . 1)
+              ("***** " . 1)
+              ("****** " . 1)
+              ("******* " . 1)
+              ("******** " . 1)
+              ("********* " . 1)
+              ("********** " . 1)
+              ("*********** " . 1)
+              ("************ " . 1)
+              ("************* " . 1))))
+      (letf! ((defun outline-level () 1))
+        (night/org-tree-slide-counsel-goto args))))
+
   (defun night/org-tree-slide-counsel-goto (&rest args)
     (interactive)
     (night/org-tree-slide-widen)
@@ -268,7 +291,11 @@
         :n [M-s-right] #'night/org-tree-slide-move-next-first-level-tree)
   (map! :map org-mode-map
         :localleader
-        "." #'night/org-tree-slide-counsel-goto ;; good in general
+        "."
+        #'night/org-counsel-goto-without-nesting
+
+        "gg"
+        #'night/org-tree-slide-counsel-goto
         )
   )
 ;;;

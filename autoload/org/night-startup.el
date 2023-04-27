@@ -5,17 +5,21 @@
   (org-fragtog-mode) ;; https://github.com/io12/org-fragtog
 
   (when (display-graphic-p)
+    (night/disable-line-numbers)  ;; @?
+    )
+
+  (when (display-graphic-p)
     (setq-local scroll-margin 0)
     ;; It makes scrolling with images bad.
     )
   (comment
    (org-roam-mode -1)
- ;; @workaround There are suddenly nonexistent roam commands being mapped to keys. This is probably a Doom regression which will go away with time.
- ;; @update This only worked with roam/v1. I had to completely disable roam/v2 to get rid of these problems.
+   ;; @workaround There are suddenly nonexistent roam commands being mapped to keys. This is probably a Doom regression which will go away with time.
+   ;; @update This only worked with roam/v1. I had to completely disable roam/v2 to get rid of these problems.
    )
 
   (when (fboundp #'night/org-show-link-display)
-   (night/org-show-link-display))
+    (night/org-show-link-display))
   (night/highlight-background) ;; @futureCron was this worth overcoming hl-line?
   (night/org-company-backends-set)
   (night/disable-company-frontends)

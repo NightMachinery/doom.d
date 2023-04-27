@@ -46,7 +46,7 @@ Use this to stop the audio files being played by org-mode links."
               )
             )
            ((and
-             (member-ignore-case ext '("mp3" "m4a" "flac" "wav" "mp4" "avi" "mkv")))
+             (member-ignore-case ext '("mp3" "ogg" "m4a" "flac" "wav" "mp4" "avi" "mkv" "flv")))
             ;; (night/yank-buffer-filename)
             (kill-current-buffer)
             (night/hear bfn)
@@ -62,7 +62,8 @@ Use this to stop the audio files being played by org-mode links."
     (when remote
       ;; (z bell-sc2-become-primal)
       ;; (z tts-glados1-cached "tramp, ready")
-      (z bell-sonic-fx-ready))
+      (z bell-sonic-fx-ready)           ;; Remote SSH Load Bell
+      )
 
     (cond
      ((member-ignore-case ext '("ol"))

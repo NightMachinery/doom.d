@@ -377,7 +377,7 @@ If on a:
 (setq doom-modeline-buffer-file-name-style 'relative-from-project)
 ;;;
 (defun night/trs (&rest paths)
-  (z trs (identity paths)))
+  (z fnswap reval-ec reval trs (identity paths)))
 (advice-add 'system-move-file-to-trash :override #'night/trs)
 ;;;
 (defun night/counsel-jump-list ()       ;; @toFuture/1401 @upstreamMe

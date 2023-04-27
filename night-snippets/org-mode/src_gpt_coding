@@ -1,0 +1,21 @@
+# -*- mode: snippet -*-
+# name: src_gpt_coding
+# key: <xc
+# uuid: <xc
+# --
+#+begin_src jupyter-python :kernel py_310 :session emacs_py_1 :async yes :exports both
+res = openai_chat_complete(
+    model="gpt-3.5-turbo",
+    messages=[
+        {
+            "role": "system",
+            "content": """You are a language model designed to help programmers write better code.""",
+        },
+        {"role": "user", "content": """$0"""},
+    ],
+    temperature=0,
+    interactive=True,
+)
+
+chatml_response_process(res, copy_mode="default")
+#+end_src

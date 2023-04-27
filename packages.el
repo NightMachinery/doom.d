@@ -118,6 +118,8 @@
 ;;;
 (package! ediprolog)
 ;;;
+(package! htmlize)
+;;;
 (unpin! company-mode)
 (package! helm-company)
 (unpin! helm-company)

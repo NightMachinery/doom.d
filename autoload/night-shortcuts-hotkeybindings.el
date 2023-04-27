@@ -84,6 +84,9 @@ move COUNT - 1 screen lines forward first."
   (global-set-key (kbd "C-e") #'evil-end-of-line-or-visual-line)
   ;; We might need to set these via map! :ng as well
 ;;;
+  (unbind-key "C-<wheel-down>" global-map) ;; bound to various functions of [help:text-scale-adjust]
+  (unbind-key "C-<wheel-up>" global-map)
+
   (map! :n
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig

@@ -1,5 +1,7 @@
 ;;; autoload/night-bookmarks.el -*- lexical-binding: t; -*-
-(after! (bookmark)
+(after! (
+;; disabled_7667
+ bookmark)
   (let
       ((f (concat (getenv "nightNotes") "/private/configs/" (z hostname) "/bookmarks.el")))
     (when (f-exists-p f)

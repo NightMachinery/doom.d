@@ -112,3 +112,14 @@
   (interactive)
   (z pbadd (buffer-file-name)))
 ;;;
+(defun night/region-copy ()
+  "Copy the currently selected region."
+  (interactive)
+  (if (use-region-p)
+      (let ((text (buffer-substring-no-properties (region-beginning) (region-end))))
+        (kill-ring-save (region-beginning) (region-end))
+        text)
+    (progn
+      (message "No region selected")
+      nil)))
+;;;

@@ -2,7 +2,7 @@
 
 (defun night/search-notes (&optional initial-query)
   (interactive)
-  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,tex,txt,json,csv,zsh,py}"))
+  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,tex,txt,json,csv,zsh,py} --glob !*chrome*bookmarks.org"))
 
 (cl-defun night/search-ideas
     (&key
@@ -83,7 +83,7 @@
 
 (defun night/browse-notes ()
   (interactive)
-  (night/browse-dir (getenv "nightNotes") ".org$ | .gpg$ | .json$ "))
+  (night/browse-dir (getenv "nightNotes") ".org$ | .gpg$ | .tex$ | .md$ | .txt$ | .json$ "))
 (night/set-leader-keys " z ." #'night/browse-notes)
 
 (defun night/browse-NIGHTDIR ()

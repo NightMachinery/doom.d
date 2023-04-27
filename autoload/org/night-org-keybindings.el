@@ -25,11 +25,15 @@
            (inner-begin
             (save-excursion
               (goto-char begin)
-              (re-search-forward "\\w" end)
+              (re-search-forward "\\w\\|~" end)
               (point)))
            (path-begin
             (cond
-             ((member link-type '("fuzzy"))
+             ((or
+               (not (equalp
+                     (buffer-substring-no-properties (- inner-begin 1) (+ inner-begin link-type-len -1))
+                     link-type))
+               (comment (member link-type '("fuzzy"))))
               (- inner-begin 1))
              ((member link-type '("http" "https" "ftp"))
               (setq link-path (concat link-type ":" link-path))
@@ -106,7 +110,6 @@
         :localleader
         :nvi "lp" #'night/org-paste-clipboard-image
         "la" #'night/semantic-scholar-to-org
-        "lc" #'night/url2org
         "rp" #'night/org-paste-with-files)
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693
   (map!
@@ -146,4 +149,9 @@
    "rf" #'+org/refile-to-file
    "rF" #'night/org-refile-to-new-file
 
-   "lC" #'night/org-link-browser-current))
+
+
+   "lC" #'night/url2org
+   "lc" #'night/org-link-browser-current
+   "le" #'night/org-link-edge-current
+   ))

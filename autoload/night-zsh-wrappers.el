@@ -6,6 +6,11 @@
   (interactive)
   (night/insert-for-yank-and-save
    (z org-link-browser-current)))
+
+(defun night/org-link-edge-current ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (z org-link-edge-current)))
 ;;;
 (defun night/p-org-fanfic ()
   (interactive)
@@ -56,4 +61,19 @@
 (defun night/p-titlecase ()
   (interactive)
   (insert-for-yank (z reval-paste titlecase)))
+
+(defun night/ocr ()
+  (interactive)
+  (insert-for-yank (z reval-paste serr ocr)))
+;;;
+(defun night/lilf-link-notes ()
+  (interactive)
+  (let ((url (z lilf-link-notes (buffer-file-name))))
+    (message "%s" url)
+    (kill-new url)))
+;;;
+(defun night/strip-prefixed-colons ()
+  (interactive)
+  (when-let ((text (night/region-copy)))
+    (kill-new (z reval-paste strip-prefixed-colons))))
 ;;;

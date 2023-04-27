@@ -2,6 +2,10 @@
 (defun night/disable-line-numbers ()
   (interactive)
   (display-line-numbers-mode -1))
+
+(defun night/enable-line-numbers ()
+  (interactive)
+  (display-line-numbers-mode))
 ;;;
 (require 'ov)
 (cl-defun night/ov (&key
