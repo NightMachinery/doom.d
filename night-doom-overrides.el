@@ -22,11 +22,12 @@
  doom-modeline-window-width-limit 30    ;; @userConfig
  )
 ;;;
-(after! smartparens (smartparens-global-mode -1))
 ;; (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
 ;; * @upstreamBug? [jalali:1402/02/08/18:07]
 ;; ** When this line was present, emacs hanged (by trying to do M-x or most other operations) when it was loaded from config.el. Evaling it later had no effect. This happened with emacs 28.2, 29.0.60, and 30.0.50.
 ;; Interestingly, this hook was empty anyway, so I have just commented this line.
+;;
+;; ** [[https://github.com/doomemacs/doomemacs/issues/7211][{REGRESSION} Weird bug that causes `remove-hook` to make emacs hang · Issue #7211 · doomemacs/doomemacs]]
 ;;;
 (remove-hook 'kill-emacs-hook #'recentf-cleanup)
 ;;;

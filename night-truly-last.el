@@ -1,5 +1,7 @@
 ;;; night-truly-last.el -*- lexical-binding: t; -*-
 ;;;
+(after! smartparens (smartparens-global-mode -1))
+;;;
 (require 'org)
 (after! org
   ;; Something aside from [doom:modules/lang/org/config.el] is overriding this, so we need to run the setup here, as well.
