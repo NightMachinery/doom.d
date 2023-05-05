@@ -16,7 +16,14 @@
      ((or
        ;; t ;; disable this modification entirely
        (not skip-p))
-      (apply orig-fn string rest))
+      (progn
+        (apply orig-fn string rest)
+        (when (night/server-p)
+          (night/call-process-async
+           :command '("socat" "-" "TCP:127.0.0.1:6030")
+           :callback (lambda (stdout exitcode stderr)
+                       )
+           :stdin-text string-raw))))
      (t
       ;; (message "skipped whitespace kill: %s" string-raw)
       ;; (message "skipped whitespace kill")

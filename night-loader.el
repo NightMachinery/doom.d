@@ -11,6 +11,7 @@
 ;;;
 
 (defun night/server-p ()
+  ;; @AKA isServer
   ;; (not (equalp user-login-name "evar"))
   (not (eq system-type 'darwin))
   )
