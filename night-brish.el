@@ -41,7 +41,9 @@
        command
        (callback nil) ;; nil means synchronous, use t for async with no callback
        (stdout-trim-right t)
-       (name "night/call-process-async"))
+       (name "night/call-process-async")
+       (stdin-text nil)
+       (error-callback nil))
 
   ;; (setq-local lexical-binding t) ;; @useless
   (lexical-let* ((stdout-trim-right stdout-trim-right)
@@ -79,14 +81,31 @@
                                    stderr)))
                       (kill-buffer output-buffer)
                       (kill-buffer stderr-buffer)))))
-    (make-process
-     :name name
-     :buffer output-buffer
-     :stderr stderr-buffer
-     :command command
-     :connection-type 'pipe
-     :sentinel sentinel)
-    output-buffer))
+    (let ((process
+           (make-process
+            :name name
+            :buffer output-buffer
+            :stderr stderr-buffer
+            :command command
+            :connection-type 'pipe
+            :sentinel sentinel))
+          (process-error nil))
+      (when stdin-text
+        (condition-case err
+            (progn
+              (process-send-string process stdin-text)
+              (process-send-eof process))
+          (error (setq process-error err))))
+      (when (and process-error error-callback)
+        (funcall error-callback process-error))
+      output-buffer)))
+
+(comment
+ (night/call-process-async
+  :command '("tac")
+  :callback (lambda (stdout exitcode stderr)
+              (message "Output: %s" stdout))
+  :stdin-text "Apple\nZorg\nBoring\n"))
 ;;;
 ;; sets globally
 (setenv "brishz_out_file_p" "y")
