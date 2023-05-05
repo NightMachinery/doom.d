@@ -44,9 +44,10 @@ old one."
       ;; case, we want the new bookmark consed onto the alist...)
 
 ;;; @monkkeyPatched
-      ;; (push (cons stripped-name alist) bookmark-alist))
-      (setf (cdr (last bookmark-alist))
-            (list (cons stripped-name alist))))
+      (cond
+       ((last bookmark-alist) (setf (cdr (last bookmark-alist))
+                                    (list (cons stripped-name alist)))))
+      (t (push (cons stripped-name alist) bookmark-alist))))
 ;;;
 
     ;; Added by db
