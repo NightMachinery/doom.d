@@ -46,8 +46,8 @@ old one."
 ;;; @monkkeyPatched
       (cond
        ((last bookmark-alist) (setf (cdr (last bookmark-alist))
-                                    (list (cons stripped-name alist)))))
-      (t (push (cons stripped-name alist) bookmark-alist))))
+                                    (list (cons stripped-name alist))))
+       (t (push (cons stripped-name alist) bookmark-alist))))
 ;;;
 
     ;; Added by db
