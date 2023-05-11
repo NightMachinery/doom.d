@@ -140,6 +140,8 @@
     (setq str-args (nreverse str-args))
 
     (cond
+     ((null (executable-find "brishzq.zsh"))
+      (message "brishzq.zsh not found; cmd: %s" (s-join " " str-args)))
      ((not (or
             (null callback)))
       (night/call-process-async
