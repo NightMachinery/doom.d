@@ -9,7 +9,10 @@
         '("jupyter-python" "jupyter-julia")))
 
 (after! (jupyter-org-client)
-  ;;;
+;;;
+(setq-default org-babel-default-header-args:jupyter-python nil)
+(add-to-list 'org-babel-default-header-args:jupyter-python '(:results . "scalar"))
+;;;
   (defun night/jupyter-org-eval-line-or-region ()
     (interactive)
     (jupyter-org-with-src-block-client

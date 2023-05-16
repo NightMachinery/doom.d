@@ -25,7 +25,7 @@
       ))
   (add-hook 'after-save-hook #'night/org-save-hook-fn)
 ;;;
-  (setq org-image-actual-width '(700)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
+  (setq org-image-actual-width '(1000)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
   ;; (setq org-image-actual-width '(fill-column))
 ;;;
   (defun night/org-paste-clipboard-image (&optional arg)

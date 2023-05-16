@@ -126,6 +126,9 @@
    :n
    "gl" #'org-open-at-point
 
+   :n
+   "zx" #'org-redisplay-inline-images
+
    :nvo
    "{" #'org-previous-visible-heading
 

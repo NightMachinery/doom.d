@@ -8,8 +8,8 @@
   (defun night/org-link-follow-copy (path arg)
     (kill-new path))
 
-  (dolist (type (list "user" "pass" "rss"))
-   (org-link-set-parameters type :follow #'night/org-link-follow-copy))
+  (dolist (type (list "user" "username" "pass" "password" "ip" "rss" "studentID" "mailto"))
+    (org-link-set-parameters type :follow #'night/org-link-follow-copy))
 ;;;
   (cl-defun night/org-show-link-display (&key (hide nil) (default t))
     (interactive)
@@ -127,6 +127,13 @@
    (night/org-title "HOME:b/.zshrc")
    (night/org-title "HOME:b/a/.zshrc"))
 
+  (defun night/h-remove-tags-for-description (str)
+    (--> str
+         (replace-regexp-in-string "[[:space:]]?@toread\\([^[:space:]]+\\)?" "" it)
+         (string-trim it)))
+  (comment
+   (night/h-remove-tags-for-description "hi @toread45 @good "))
+
   (defun night/org-description-formatter (link desc)
     (message "%s" (concat "night/org-description-formatter" " (beg): link=" link ", desc=" desc))
     (with-demoted-errors "Error in night/org-description-formatter: %S"
@@ -175,6 +182,10 @@
                          ))))
         (message "%s" (concat "night/org-description-formatter: " "link=" link ", desc=" desc ", tail=" tail ", file=" file))
         (cond
+         ((and desc (not (equalp desc "")))
+          ;; This cond branch skips the older, more complex branches below.
+
+          (night/h-remove-tags-for-description desc))
          ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
          ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
           (let*

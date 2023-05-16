@@ -1,6 +1,15 @@
 ;;; autoload/org/night-org-export.el -*- lexical-binding: t; -*-
 ;;;
 (require 'ox-reveal)
+
+;;;
+(require 'ox-ipynb)
+
+(defun night/export-org-file-to-ipynb (&optional file)
+  (interactive)
+  (let ((file
+         (or file (buffer-file-name))))
+      (ox-ipynb-export-org-file-to-ipynb-file file)))
 ;;;
 (after! ox
   (setq org-export-with-broken-links 'mark))

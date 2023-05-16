@@ -30,7 +30,12 @@
   ;; (flyspell-mode-off) ; managed at init.el modules
   ;; (add-to-list 'company-backends 'company-dabbrev-code nil) ; they add other backends in front of it which makes this useless
   ;; (night/highlight-atsign) ; bug: This hook might get called multiple times on a single buffer, and that can cause pollution.
+
   (hl-todo-mode)
+
+  (when (fboundp 'smartparens-global-mode)
+      (smartparens-global-mode -1))
+
   ;; org-babel breaks our custom TAB :(
   ;; (map!
   ;;        :map company-active-map

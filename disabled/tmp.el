@@ -55,7 +55,6 @@
  :ivong
  [tab] nil)
 ;;;
-(require 'ox-ipynb)
 ;;;
 (progn
   (setq hi 1)
@@ -103,3 +102,4 @@
 ;;;
 (map! :i "M-<backspace>" #'night/kill-whitespace-or-word-backward)
 ;;;
+(fboundp 'nil)

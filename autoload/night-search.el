@@ -49,11 +49,12 @@
 ;; - breaks my fzf-M-x
 ;; - has some occasional bugs, e.g., when scrolling quickly
 ;; - makes emacs hang-y when it tries to preview a bad (e.g., big) file
-;; Reemeber that we have mapped `=` to ivy-call
 ;;;
 (map! :map ivy-minibuffer-map ;; counsel-ag-map
-      "=" #'ivy-call-and-recenter
-      "C-l" #'ivy-call-and-recenter)
+      ;; "=" #'ivy-call-and-recenter
+      "M-c" #'ivy-call-and-recenter
+      "C-l" #'ivy-call-and-recenter
+      )
 
 (after! deadgrep
   (map! :map deadgrep-mode-map

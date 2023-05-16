@@ -26,6 +26,7 @@
 ;;;
 (message "TERM: %s" (getenv "TERM"))
 ;;;
+(require 'cl-extra)
 (require 's)
 (require 'f)
 (require 'server)
@@ -38,13 +39,13 @@
   (interactive)
   (setq server-name (let ((sn (getenv "emacs_night_server_name")))
                       (cond
-                       ((and sn (not (equalp sn "")))
+                       ((and sn (not (cl-equalp sn "")))
                         sn)
                        (t "server"))))
   server-name
 ;;;
   ;; (or
-  ;;                         (and (boundp 'server-name) server-name (not (equalp server-name "")) server-name)
+  ;;                         (and (boundp 'server-name) server-name (not (cl-equalp server-name "")) server-name)
   ;;                         (getenv "EMACS_SERVER_NAME")
   ;;                         (getenv "EMACS_SERVER_NAME"))
   )

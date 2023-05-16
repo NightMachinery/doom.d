@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: src_jupyter_python
+# key: <j
+# uuid: <j
+#
+#: :pandoc t
+# --
+#+begin_src jupyter-python :kernel py_base :session /jpy:127.0.0.1#6035:orgk1/ :async yes :exports both
+`%`$0
+#+end_src

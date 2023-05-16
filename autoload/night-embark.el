@@ -2,4 +2,5 @@
 
 (require 'embark)
 (after! (ivy embark)
-  (define-key ivy-minibuffer-map (kbd "<deletechar>") 'embark-act))
+  (define-key ivy-minibuffer-map (kbd "<deletechar>") #'embark-act)
+  (define-key ivy-minibuffer-map (kbd "M-z") #'embark-act))

@@ -46,7 +46,11 @@
       ;; (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")
    ))
 
-  (add-hook 'window-setup-hook #'night/load-truly-last)
+  (add-hook
+   'window-setup-hook
+   ;; 'doom-first-buffer-hook ;; @upstreamBug @hang
+   #'night/load-truly-last
+   1000)
   (night/load-last)
 
   (message "TERM: %s" (getenv "TERM"))

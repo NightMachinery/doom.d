@@ -2,6 +2,6 @@
 # key: <se
 # uuid: <se
 # --
-#+begin_src elisp :results value :exports both :wrap example
+#+begin_src elisp :results verbatim :exports both :wrap example
 `%`$0
 #+end_src

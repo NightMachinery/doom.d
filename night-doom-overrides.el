@@ -23,11 +23,15 @@
  )
 ;;;
 ;; (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
-;; * @upstreamBug? [jalali:1402/02/08/18:07]
+;; * @upstreamBug? @hang [jalali:1402/02/08/18:07]
 ;; ** When this line was present, emacs hanged (by trying to do M-x or most other operations) when it was loaded from config.el. Evaling it later had no effect. This happened with emacs 28.2, 29.0.60, and 30.0.50.
-;; Interestingly, this hook was empty anyway, so I have just commented this line.
+;;
+;; It seems this hook becomes empty after running?
 ;;
 ;; ** [[https://github.com/doomemacs/doomemacs/issues/7211][{REGRESSION} Weird bug that causes `remove-hook` to make emacs hang · Issue #7211 · doomemacs/doomemacs]]
+;;
+;; ** [jalali:1402/02/24/03:33] This doesn't work even on my laptop, so sth in doom has changed. It's a real bug.
+;; *** [[file:~/.emacs.d/lisp/doom-editor.el::(use-package! smartparens][lisp/doom-editor.el::(use-package! smartparens]]
 ;;;
 (remove-hook 'kill-emacs-hook #'recentf-cleanup)
 ;;;

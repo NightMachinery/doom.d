@@ -52,6 +52,10 @@
 (unpin! hl-todo)
 
 (unpin! jupyter)
+(package! jupyter
+  :recipe (:build (:not native-compile compile))
+  ;; [[https://github.com/emacs-jupyter/jupyter/issues/297][ZMQ subprocess error · Issue #297 · emacs-jupyter/jupyter]]
+  )
 
 (package! racket-mode :pin "22e319754dcf650e282b3ba33b9d0ee3cda81007")
 ;; (package! ob-racket
@@ -280,5 +284,8 @@
 ;;   :recipe (:host github :repo "gambit/gambit"
 ;;            :files ("misc/gambit.el")))
 ;;;
-(disable-packages! anaconda-mode)
+(disable-packages!
+  anaconda-mode
+  ;; smartparens ;; @hang will hang if disabled [jalali:1402/02/24/06:16]
+ )
 ;;;

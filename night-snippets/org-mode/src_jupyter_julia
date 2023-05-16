@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
 # name: src_jupyter_julia
-# key: <j
-# uuid: <j
+# key: <ju
+# uuid: <ju
 # --
 #+begin_src jupyter-julia :session (night/org-babel-session-name-get "j1") :async yes :pandoc t :exports both
 `%`$0
