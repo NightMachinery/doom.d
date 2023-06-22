@@ -1,14 +1,19 @@
 ;;; autoload/org/night-links.el -*- lexical-binding: t; -*-
 
-(require 'org)
-(require 'evil-org)
-(require 'ol)
+;;;
+;; @todo2 [[https://discourse.doomemacs.org/t/how-do-i-load-org-in-config-el/3899][How do I load org in `config.el`? - User Support / Org - Doom Emacs Discourse]]
+;; loading these can cause a version mismatch as they will load the builtin org version
+;; not loading them will cause the first org buffer opened to have the wrong settings
+;; (require 'org)
+;; (require 'evil-org)
+;; (require 'ol)
+;;;
 (after! (org evil-org evil ol)
 ;;;
   (defun night/org-link-follow-copy (path arg)
     (kill-new path))
 
-  (dolist (type (list "user" "username" "pass" "password" "ip" "rss" "studentID" "mailto"))
+  (dolist (type (list "user" "username" "pass" "password" "ip" "rss" "studentID" "mailto" "postal" "postalCode"))
     (org-link-set-parameters type :follow #'night/org-link-follow-copy))
 ;;;
   (cl-defun night/org-show-link-display (&key (hide nil) (default t))

@@ -49,7 +49,9 @@
         ;; @bug This always uses the png extension, while the file can be, e.g., jpg.
         (z "reval-to-stdout" "h-emc-paste-img"
            (concat (file-name-directory (buffer-file-name)) "/" filename)
-           (or arg ""))
+           (if arg
+               "y"
+             "n"))
       ;; (call-process "screencapture" nil nil nil "-i" filename)
       )
     (if (eq system-type 'gnu/linux)
@@ -58,7 +60,7 @@
 
     (if (file-exists-p filename)
         (let* (
-               (width-max 1050) ;; 800, 850 are also possible, but big images slow emacs when scrolling
+               (width-max 900) ;; 800, 850 are also possible, but big images slow emacs when scrolling
                (width-orig (string-to-number (z img-width (i filename))))
                (width-orig (/ width-orig 1.4))
                (width (cond

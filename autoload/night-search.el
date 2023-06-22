@@ -18,6 +18,8 @@
                                 default-directory))
          (dir default-directory)
          (args
+          (concat args "--hidden"))
+         (args
           (if extra-paths
               ;; https://github.com/abo-abo/swiper/issues/2356#issuecomment-596277828
               (concat args " -- "

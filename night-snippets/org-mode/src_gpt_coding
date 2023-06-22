@@ -3,7 +3,7 @@
 # key: <xc
 # uuid: <xc
 # --
-#+begin_src jupyter-python :kernel py_310 :session emacs_py_1 :async yes :exports both
+#+begin_src jupyter-python :kernel py_base :session emacs_py_1 :async yes :exports both
 res = openai_chat_complete(
     model="gpt-3.5-turbo",
     messages=[
