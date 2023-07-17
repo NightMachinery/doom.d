@@ -386,7 +386,9 @@ If on a:
 ;;;
 (defun night/trs (&rest paths)
   (z fnswap reval-ec reval trs (identity paths)))
-(advice-add 'system-move-file-to-trash :override #'night/trs)
+
+(when (brish-p)
+    (advice-add 'system-move-file-to-trash :override #'night/trs))
 ;;;
 (defun night/counsel-jump-list ()       ;; @toFuture/1401 @upstreamMe
   "Go to an entry in evil's (or better-jumper's) jumplist."

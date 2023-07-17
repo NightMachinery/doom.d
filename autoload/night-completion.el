@@ -161,8 +161,13 @@
 (set-company-backend! 'sh-mode #'company-dabbrev-code) ; useless here, gets overridden
 
 (defun night/org-company-backends-set ()
-  (set-company-backend! 'org-mode
-    '(company-capf company-files company-dabbrev company-yasnippet)))
+  (interactive)
+  (let ((backends
+         '(company-capf company-files company-dabbrev company-yasnippet)))
+    (set-company-backend! 'org-mode backends)
+
+    (when (eq major-mode 'org-mode)
+      (setq-local company-backends backends))))
 ;;;
 (defun night/simple-completions ()
   (interactive)

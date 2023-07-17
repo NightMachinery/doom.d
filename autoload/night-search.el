@@ -8,7 +8,7 @@
     (&key
      (dir nil)
      (extra-paths nil)
-     (args "")
+     (args " --glob !*.ipynb ")
      (query "")
      (prompt "> "))
   "Conduct a text search in files under the given folder."
@@ -18,7 +18,7 @@
                                 default-directory))
          (dir default-directory)
          (args
-          (concat args "--hidden"))
+          (concat args " --hidden --glob !.git "))
          (args
           (if extra-paths
               ;; https://github.com/abo-abo/swiper/issues/2356#issuecomment-596277828

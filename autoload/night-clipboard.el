@@ -72,9 +72,11 @@
   "Returns the last copied string."
   (current-kill 0))
 
-(defun night/pbcopy ()
+(defun night/pbcopy (&optional text)
   (interactive)
-  (call-interactively #'evil-yank))
+  (if text
+      (kill-new text)
+    (call-interactively #'evil-yank)))
 
 (defun night/pbcopy-org2html ()
   (interactive)

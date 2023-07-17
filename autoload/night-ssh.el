@@ -75,6 +75,10 @@
   (interactive)
   (dired "/scp:eva@82.102.11.148:/home/eva/scripts/"))
 ;;;
+(defun night/ssh-surfer ()
+  (interactive)
+  (dired "/scp:surfer@213.233.184.221:"))
+;;;
 (defun night/scp-pari ()
   (interactive)
   (dired "/scp:paria@Parias-MacBook-Air.local:/Users/paria/scripts/"))

@@ -102,4 +102,7 @@
 ;;;
 (map! :i "M-<backspace>" #'night/kill-whitespace-or-word-backward)
 ;;;
+(night/pbcopy "hij")
+(night/search-dir :dir (getenv "DOOMDIR") :query "" :args "--glob * ")
+;;;
 (fboundp 'nil)

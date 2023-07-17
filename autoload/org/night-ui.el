@@ -33,7 +33,7 @@
               (goto-char beg)
               (insert colored)))))))
 
-  (defun night/babel-ansi3 ()
+  (defun night/babel-ansi-all1 ()
     (interactive)
     ;; (save-mark-and-excursion
     ;;   (xterm-color-colorize-buffer))
@@ -43,8 +43,13 @@
       ;; (message "p2: %s" p)
       (goto-char p)))
 
+  (defun night/babel-ansi-all2 ()
+    (interactive)
+    (jupyter-org--ansi-color-apply-on-region (point-min) (point-max)))
+
   (defalias 'night/babel-ansi #'night/babel-ansi2)
-  (add-hook 'org-babel-after-execute-hook 'night/babel-ansi)
+  (add-hook 'org-babel-after-execute-hook 'night/babel-ansi-all2)
+  ;; (remove-hook 'org-babel-after-execute-hook 'night/babel-ansi-all2)
   ;; (remove-hook 'org-babel-after-execute-hook 'night/babel-ansi)
 ;;;
   ;; (set-face-attribute 'org-level-1 nil :box  `(:line-width 30 :color ,(face-background 'default)))

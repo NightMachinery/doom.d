@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
-# key: <ej
-# uuid: <ej
+# key: <e
+# uuid: <e
 # --
-#+begin_example julia
+#+begin_example
 `%`$0
 #+end_example

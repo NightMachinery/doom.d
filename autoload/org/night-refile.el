@@ -13,7 +13,14 @@ With prefix argument ARG, move the files instead."
   (let*
       (
        (text (current-kill 0))
-       (files (zf reval-withstdin (identity text) rget "\\[file:([^.](?:[^]]|\\\\[|\\\\])*)\\]"))
+       (files
+        (zf
+         reval-withstdin (identity text)
+         rget
+         "\\[file:([^/](?:[^]]|\\\\[|\\\\])*)\\]"
+         ;; "\\[file:([^.](?:[^]]|\\\\[|\\\\])*)\\]"
+         ;; @idk why we had excluded paths that started with a dot
+         ))
        (stdout ""))
     (dolist (f files stdout)
       (let*

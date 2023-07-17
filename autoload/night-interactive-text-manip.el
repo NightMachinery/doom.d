@@ -39,6 +39,25 @@ word or non-word."
   (interactive)
   (night/backward-non-word
    :pat (concat "[" "a-zA-Z0-9*" "]")))
+
+(cl-defun night/forward-word (&key pat)
+  "Move forward until encountering the end of a word, but do not move to the next line."
+  (interactive)
+  (when (= (point) (line-end-position))
+    (forward-char 1))
+  (let* ((pat
+          (or pat
+              (concat "[" "a-zA-Z0-9*" "]")))
+         (search-forward-p t)
+         (end-of-line (line-end-position)))
+    (when search-forward-p
+      (unless (search-forward-regexp pat end-of-line t)
+        (goto-char end-of-line)))
+    (while (and (looking-at pat) (< (point) end-of-line))
+      (forward-char))
+    ;; (when (< (point) end-of-line)
+    ;;   (forward-char))
+    ))
 ;;;
 (defvar night/syntax-table1
   (let ((st (make-syntax-table)))
@@ -254,9 +273,12 @@ word or non-word."
 
 
  :nviog
- "M-<left>" #'evil-backward-WORD-end
+ "M-<left>" #'night/backward-word
+ ;; "M-<left>" #'evil-backward-WORD-end
+
  :nviog
- "M-<right>" #'evil-forward-WORD-end
+ "M-<right>" #'night/forward-word
+ ;; "M-<right>" #'evil-forward-WORD-end
 
  ;; "M-<left>" #'evil-backward-word-begin
  ;; "M-<right>" #'evil-forward-word-end

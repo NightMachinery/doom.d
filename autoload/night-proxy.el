@@ -6,7 +6,7 @@
  (getenv "http_proxy")
 
  (progn (setq url-proxy-services
-              '(("no_proxy" . "^\\(localhost\\|10.*\\)")
+              '(("no_proxy" . "^\\(localhost\\|10.*\\|213.233.184.221\\)")
                 ("http" . "127.0.0.1:1087")
                 ("https" . "127.0.0.1:1087")))))
 

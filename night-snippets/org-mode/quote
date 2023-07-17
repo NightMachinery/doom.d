@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <q
+# uuid: <q
+# --
+#+begin_quote
+`%`$0
+#+end_quote

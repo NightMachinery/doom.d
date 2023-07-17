@@ -22,7 +22,7 @@
 (set-popup-rule! "^\\*night-html-viewer\\*$" :ignore nil :height 0.7)
 
 (after! (jupyter)
-  (set-popup-rule! "^\\*jupyter.*\\*$" :ignore nil :height 0.5 :select nil :ttl nil))
+  (set-popup-rule! "^\\*jupyter.*\\*$" :ignore nil :height 0.5 :select t :ttl nil))
 (after! (racket-mode)
   (set-popup-rule! "^\\*Racket REPL.*\\*$" :ignore nil :height 0.5 :select nil :ttl nil))
 (after! (eglot)
