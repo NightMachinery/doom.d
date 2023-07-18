@@ -95,7 +95,7 @@ Use this to stop the audio files being played by org-mode links."
       (when (s-contains? (ntag "org-playlist") bfn)
         ;; (night/org-playlist-hide)
         (night/org-playlist-hotkeys-enable)
-        (org-sticky-header-mode t)
+        ;; (org-sticky-header-mode t)
         (message "org-playlist activated")
         ))
 

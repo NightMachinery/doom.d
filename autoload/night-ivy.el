@@ -72,32 +72,39 @@
       ;; makes `counsel-recentf' too slow
       ;;
       ;; you can bind `orderless-style-dispatchers' dynamically to override this for specific commands
-      (cond
-       ((string= "!" pattern) `(orderless-literal . ""))
-       ;; Without literal
-       ((string-prefix-p "!" pattern) `(orderless-without-literal . ,(substring pattern 1)))
-       ;; Character folding
-       ((string-prefix-p "%" pattern) `(char-fold-to-regexp . ,(substring pattern 1)))
-       ((string-suffix-p "%" pattern) `(char-fold-to-regexp . ,(substring pattern 0 -1)))
-       ;; Initialism matching
-       ((string-prefix-p "`" pattern) `(orderless-initialism . ,(substring pattern 1)))
-       ((string-suffix-p "`" pattern) `(orderless-initialism . ,(substring pattern 0 -1)))
-       ;; Literal matching
-       ((string-prefix-p "'" pattern) `(orderless-literal . ,(substring pattern 1)))
-       ((string-suffix-p "'" pattern) `(orderless-literal . ,(substring pattern 0 -1)))
-       ;; Flex matching
-       ((string-prefix-p "~" pattern) `(orderless-flex . ,(substring pattern 1)))
-       ((string-suffix-p "~" pattern) `(orderless-flex . ,(substring pattern 0 -1)))
-       ((and (not *orderless-no-fuzzy*)
-             (= _total 1)) 'orderless-flex)
-       (t 'orderless-regexp)))
+
+      ;; (message "orderless pattern: %s" pattern)
+      (night/message-and-return
+       ;; "orderless dispatched: %s"
+       nil
+
+       (cond
+        ((string= "!" pattern) `(orderless-literal . ""))
+        ;; Without literal
+        ((string-prefix-p "!" pattern) `(orderless-without-literal . ,(substring pattern 1)))
+        ;; Character folding
+        ((string-prefix-p "%" pattern) `(char-fold-to-regexp . ,(substring pattern 1)))
+        ((string-suffix-p "%" pattern) `(char-fold-to-regexp . ,(substring pattern 0 -1)))
+        ;; Initialism matching
+        ((string-prefix-p "`" pattern) `(orderless-initialism . ,(substring pattern 1)))
+        ((string-suffix-p "`" pattern) `(orderless-initialism . ,(substring pattern 0 -1)))
+        ;; Literal matching
+        ((string-prefix-p "'" pattern) `(orderless-literal . ,(substring pattern 1)))
+        ((string-suffix-p "'" pattern) `(orderless-literal . ,(substring pattern 0 -1)))
+        ;; Flex matching
+        ((string-prefix-p "~" pattern) `(orderless-flex . ,(substring pattern 1)))
+        ((string-suffix-p "~" pattern) `(orderless-flex . ,(substring pattern 0 -1)))
+        ((and (not *orderless-no-fuzzy*)
+              (= _total 1)) 'orderless-flex)
+        (t 'orderless-regexp))))
     (defun night/h-orderless-regexp (pattern index _total)
       'orderless-regexp)
 
     (setq orderless-style-dispatchers '(night/h-orderless-style-dispatcher))
-
     ;; @great this can support an essentially arbitrary query syntax:
     ;;   https://github.com/oantolin/orderless#style-dispatchers
+
+    (setq orderless-component-separator #'orderless-escapable-split-on-space)
     (setq orderless-matching-styles '(orderless-regexp orderless-literal orderless-initialism))
     (comment
      ;; fuzzy (orderless-flex) breaks `night/search-notes'

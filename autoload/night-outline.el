@@ -33,7 +33,11 @@
             ;; (buff (current-buffer))
             )
         (when
-            (swiper-isearch re)
+            (swiper-isearch
+             (night/escape-spaces-with-backslash re)
+             ;; [help:orderless-component-separator]
+             ;; [help:orderless-escapable-split-on-space]
+             )
           (night/jump-set :pos pos)
           (doom/escape)))))
 
