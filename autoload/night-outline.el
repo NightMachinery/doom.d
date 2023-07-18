@@ -22,24 +22,29 @@
           (when (not done)
             (goto-char pos))))))
 
-  (defun night/outline-goto-v1 ()
+  (defun night/outline-goto-v1 (&optional regex)
     "@alt [help:night/outline-goto]"
     (interactive)
     (let (
           (re
-           outline-regexp))
+           (or regex outline-regexp)))
       (let (
             (pos (point))
             ;; (buff (current-buffer))
             )
         (when
             (swiper-isearch
-             (night/escape-spaces-with-backslash re)
+             (concat
+              (night/escape-spaces-with-backslash re) " ")
              ;; [help:orderless-component-separator]
              ;; [help:orderless-escapable-split-on-space]
              )
           (night/jump-set :pos pos)
           (doom/escape)))))
+
+  (defun night/goto-org-heading ()
+    (interactive)
+    (night/outline-goto-v1 "^ *\\(?:#\\|;\\|%\\|--\\)* *[*]\\{1,8\\} "))
 
   (defun outline-invent-heading (head up)
     ;; @PR/ready @toFuture/1402
@@ -74,6 +79,12 @@ Otherwise, it will be one level below."
   (map! :map prog-mode-map
         :localleader
         :n "." #'night/outline-goto)
+  (map!
+        :localleader
+        :n "/" #'night/goto-org-heading)
+  (map! :map org-mode-map
+        :localleader
+        :n "/" #'night/goto-org-heading)
   (map! :map
         (
          ;; outshine-mode-map
