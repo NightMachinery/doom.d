@@ -1,7 +1,7 @@
 ;;; autoload/night-brish.el -*- lexical-binding: nil; -*-
 ;;; @todo2 z needs `lexical-binding: nil` on its users as well
 
-(defun brish-p ()
+(defun night/brish-p ()
   (interactive)
   (not (null (executable-find "brishzq.zsh"))))
 
@@ -144,7 +144,7 @@
     (setq str-args (nreverse str-args))
 
     (cond
-     ((null (brish-p))
+     ((null (night/brish-p))
       (message "brishzq.zsh not found; cmd: %s" (s-join " " str-args)))
      ((not (or
             (null callback)))

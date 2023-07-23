@@ -71,11 +71,16 @@
         (or level
             (org-current-level) 0)))
     (night/insert-for-yank
-     (z reval-withstdin
-        (identity text)
-        h-org-insert-and-fix-levels (identity level)
-        ;; perl -lpe (concat "s/^(?=\\*)/" (s-repeat level "*") "/g")
-        ))))
+     (cond
+      ((night/brish-p)
+       (z reval-withstdin
+          (identity text)
+          h-org-insert-and-fix-levels (identity level)
+          ;; perl -lpe (concat "s/^(?=\\*)/" (s-repeat level "*") "/g")
+          ))
+      (t text
+         ;; @gracefulFallback
+         )))))
 
 (defun night/pbpaste ()
   "Returns the last copied string."
@@ -151,7 +156,9 @@
       (insert-file-contents "~/.remote_clipboard")
       (let ((current-clip (buffer-string)))
         (unless (string= current-clip night/h-interprogram-paste-from-file-last)
-          (setq night/h-interprogram-paste-from-file-last current-clip))))))
+          (setq night/h-interprogram-paste-from-file-last current-clip)
+          ;; The return value of the setq form is the value of the last VAL.
+          )))))
 
 (when (night/ssh-p)
   (setq interprogram-paste-function 'night/interprogram-paste-from-file))
