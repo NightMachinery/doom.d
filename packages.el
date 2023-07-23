@@ -292,8 +292,10 @@
 ;;   :recipe (:host github :repo "gambit/gambit"
 ;;            :files ("misc/gambit.el")))
 ;;;
+(package! clipetty)
+;;;
 (disable-packages!
-  anaconda-mode
-  ;; smartparens ;; @hang will hang if disabled [jalali:1402/02/24/06:16]
+ anaconda-mode
+ ;; smartparens ;; @hang will hang if disabled [jalali:1402/02/24/06:16]
  )
 ;;;

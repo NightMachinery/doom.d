@@ -1,5 +1,8 @@
 ;;; ~/doom.d/night-clipboard.el -*- lexical-binding: t; -*-
 ;;;
+(require 'clipetty)
+;; (global-clipetty-mode 1)
+;;;
 (defun night/h-kill-skip-whitespace (orig-fn string &optional rest)
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
   (let* (

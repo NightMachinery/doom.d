@@ -13,7 +13,7 @@
   (defun night/org-link-follow-copy (path arg)
     (kill-new path))
 
-  (dolist (type (list "user" "username" "pass" "password" "ip" "rss" "studentID" "mailto" "postal" "postalCode"))
+  (dolist (type (list "user" "username" "pass" "password" "ip" "rss" "studentID" "nationalID" "mailto" "postal" "postalCode"))
     (org-link-set-parameters type :follow #'night/org-link-follow-copy))
 ;;;
   (cl-defun night/org-show-link-display (&key (hide nil) (default t))
