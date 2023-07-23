@@ -15,6 +15,9 @@
   ;; (not (equalp user-login-name "evar"))
   (not (eq system-type 'darwin))
   )
+(defun night/ssh-p ()
+  ;; @AKA isSSH
+  (night/server-p))
 
 (defun night/load-last ()
   ;; autoloaded functions can still get loaded after this; Use:

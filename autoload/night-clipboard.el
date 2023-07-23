@@ -2,6 +2,11 @@
 ;;;
 (require 'clipetty)
 ;; (global-clipetty-mode 1)
+(comment
+ ;;[[id:19422cda-0bda-412f-96b4-5026f5563955][spudlyo/clipetty: Manipulate the system (clip)board with (e)macs from a (tty)]]
+ (defun night/osc52-paste ()
+   (clipetty--emit
+    (concat clipetty--osc-start "?" clipetty--osc-end))))
 ;;;
 (defun night/h-kill-skip-whitespace (orig-fn string &optional rest)
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
@@ -21,7 +26,8 @@
        (not skip-p))
       (progn
         (apply orig-fn string rest)
-        (when (night/server-p)
+        (when (night/ssh-p)
+          ;; could have used [help:interprogram-cut-function]
           (night/call-process-async
            :command '("socat" "-" "TCP:127.0.0.1:6030")
            :callback (lambda (stdout exitcode stderr)
@@ -134,4 +140,19 @@
     (progn
       (message "No region selected")
       nil)))
+;;;
+(defvar night/h-interprogram-paste-from-file-last nil
+  "The last string provided by `night/interprogram-paste-from-file'.")
+
+(defun night/interprogram-paste-from-file ()
+  "Reads the ~/.remote_clipboard file and returns its contents if it is different from the last paste."
+  (when (file-exists-p "~/.remote_clipboard")
+    (with-temp-buffer
+      (insert-file-contents "~/.remote_clipboard")
+      (let ((current-clip (buffer-string)))
+        (unless (string= current-clip night/h-interprogram-paste-from-file-last)
+          (setq night/h-interprogram-paste-from-file-last current-clip))))))
+
+(when (night/ssh-p)
+  (setq interprogram-paste-function 'night/interprogram-paste-from-file))
 ;;;
