@@ -84,6 +84,7 @@
        ;; grammar     ; @tosee0      ; tasing grammar mistake every you make
 
        :tools
+       tree-sitter
        ;;ansible
        ;;debugger          ; FIXME stepping through code, to help you add bugs
        ;;direnv
@@ -149,7 +150,7 @@
        php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional
-       (python +conda)            ; +poetry is annoying
+       (python +conda +tree-sitter)            ; +poetry is annoying
        ;;qt                ; the 'cutest' gui framework ever
        (racket +xp)            ; a DSL for DSLs
        ;;rest              ; Emacs as a REST client
