@@ -17,30 +17,39 @@
     (org-babel-next-src-block))
 ;;;
   (defun night/org-babel-select-src-and-results ()
-  "Select the current org-babel cell at point along with its RESULTS block."
+    "Select the current org-babel cell at point along with its RESULTS block."
+    (interactive)
+    ;; Check if we're at a src block
+    (unless (org-in-src-block-p)
+      (search-backward "#+begin_src" nil t)
+      ;; (+nav-flash/blink-cursor)
+      ;; (sit-for 0.5)
+      )
+    ;; Recheck if we're at a src block
+    (if (org-in-src-block-p)
+        (let ((src-start (org-babel-where-is-src-block-head))
+              (src-end (org-babel-where-is-src-block-result))
+              results-end)
+          ;; Extend the selection to include the RESULTS block if it exists
+          (save-excursion
+            (goto-char src-end)
+            (if (re-search-forward "^#\\+RESULTS:" nil t)
+                (setq results-end (org-babel-result-end))
+              ;; No RESULTS block, so just select the source block
+              (setq results-end src-end)))
+          ;; Select the region
+          (goto-char src-start)
+          (push-mark results-end t t))
+      (message "Not at a src block!")))
+;;;
+(defun night/org-babel-remove-all-results ()
   (interactive)
-  ;; Check if we're at a src block
-  (unless (org-in-src-block-p)
-    (search-backward "#+begin_src" nil t)
-    ;; (+nav-flash/blink-cursor)
-    ;; (sit-for 0.5)
-    )
-  ;; Recheck if we're at a src block
-  (if (org-in-src-block-p)
-      (let ((src-start (org-babel-where-is-src-block-head))
-            (src-end (org-babel-where-is-src-block-result))
-            results-end)
-        ;; Extend the selection to include the RESULTS block if it exists
-        (save-excursion
-          (goto-char src-end)
-          (if (re-search-forward "^#\\+RESULTS:" nil t)
-              (setq results-end (org-babel-result-end))
-            ;; No RESULTS block, so just select the source block
-            (setq results-end src-end)))
-        ;; Select the region
-        (goto-char src-start)
-        (push-mark results-end t t))
-    (message "Not at a src block!")))
+  (save-excursion
+    (goto-char (point-min))
+    (while (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" nil t)
+      (let ((el (org-element-context)))
+        (when (org-in-src-block-p)
+          (org-babel-remove-result))))))
 ;;;
 
   (map! :map 'evil-org-mode-map

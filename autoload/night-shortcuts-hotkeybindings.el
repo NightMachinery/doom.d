@@ -175,4 +175,9 @@ move COUNT - 1 screen lines forward first."
         ;; @seeAlso `previous-error'
         :g "M-n" #'flymake-goto-next-error
         )
+  (map!
+   :g
+   "C-M-<up>" #'scroll-other-window-down
+   :g
+   "C-M-<down>" #'scroll-other-window)
   )

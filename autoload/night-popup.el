@@ -1,6 +1,7 @@
 ;;; night-popup.el ---                               -*- lexical-binding: t; -*-
 ;; @warn Beware =:ttl= killing process buffers!
 ;;;
+(set-popup-rule! "^\\*org-babel.*\\*$" :height 0.5 :ttl nil)
 (set-popup-rule! "^\\*Flymake.*\\*$" :height 0.5 :ttl nil)
 
 ;; (set-popup-rule! "^\\*.*dict.*\\*$" :height 0.5 :ttl nil) ;; @idk doesn't seem to work
