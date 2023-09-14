@@ -12,6 +12,14 @@
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
   (let* (
          (string-raw (substring-no-properties string))
+         (string
+          (progn
+            (cond
+             ((and
+               (equalp major-mode 'org-mode)
+               (> (length (split-string string-raw "\n" nil)) 1))
+              (org-unescape-code-in-string string))
+             (t string))))
          (skip-p
           (not (string-match-p "[^][ *-+_(){}\t\n\r]" ;; @note double backslashes are not needed or accepted here.
                                string-raw))
