@@ -114,4 +114,10 @@ otherwise use the subtree title."
       ;;   (yank))
       ))
 ;;;
+(defun night/org-night-directive-present-p (directive)
+  "Check if a given DIRECTIVE is present in the current org buffer, ignoring case."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((case-fold-search t))
+      (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t))))
   )
