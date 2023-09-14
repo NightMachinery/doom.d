@@ -26,9 +26,28 @@
  )
 ;;;
 (defun night/h-org-export-preprocess-add-default-setupfiles (backend)
-  (when (eq backend 'html)
+  (message "night/h-org-export-preprocess-add-default-setupfiles: backend=%s" backend)
+  (cond
+   ((eq backend 'html)
     (goto-char 0)
-    (insert "#+SETUPFILE: https://nightmachinery.github.io/orgmode-styles/notes_1.org\n")))
+    (insert "#+SETUPFILE: https://nightmachinery.github.io/orgmode-styles/notes_1.org\n"))
+   ((eq backend 'beamer)
+    (when (night/org-night-directive-present-p "night_beamer_common1")
+      (goto-char 0)
+      (let ((directives
+             (concat
+              "#+latex_header: \\input{"
+              (getenv "nightNotes")
+              "/resources/beamer/night_beamer_common1.tex"
+              "}\n"
+              "#+SETUPFILE: "
+              (getenv "nightNotes")
+              "/resources/beamer/night_beamer_common1.org"
+              "\n")
+             ))
+        (message "night/h-org-export-preprocess-add-default-setupfiles: added directives: %s" directives)
+        (insert directives))))))
+
 
 (add-hook 'org-export-before-processing-hook #'night/h-org-export-preprocess-add-default-setupfiles)
 ;;;
