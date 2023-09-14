@@ -2,6 +2,7 @@
 ;;;
 (signal 'error (list "you're attempting to eval tmp.el; aborted"))
 (z bello)
+(f-exists-p "/skkdkjd/dldldk")
 ;;;
 (setq glyphless-char-display (make-display-table))
 ;;;
@@ -106,3 +107,8 @@
 (night/search-dir :dir (getenv "DOOMDIR") :query "" :args "--glob * ")
 ;;;
 (fboundp 'nil)
+(with-eval-after-load 'evil
+  (define-key evil-inner-text-objects-map "e" 'night/org-value-at-point))
+
+(org-unescape-code-in-string ",*hi")
+;;;

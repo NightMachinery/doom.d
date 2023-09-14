@@ -1,6 +1,9 @@
 ;;; autoload/org/night-ui.el -*- lexical-binding: nil; -*-
 
 (after! (org)
+  (require 'jupyter-org-client)
+  ;; to load =jupyter-org--ansi-color-apply-on-region=
+
   (defun night/babel-ansi1 ()
     (interactive)
     (when-let ((beg (org-babel-where-is-src-block-result nil nil)))
