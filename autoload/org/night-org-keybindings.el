@@ -110,7 +110,9 @@
         :localleader
         :nvi "lp" #'night/org-paste-clipboard-image
         "la" #'night/semantic-scholar-to-org
-        "rp" #'night/org-paste-with-files)
+        "rp" #'night/org-paste-with-files
+        ;; "yi" #'night/org-value-at-point
+        )
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693
   (map!
    :map (org-mode-map evil-org-mode-map)
@@ -125,6 +127,7 @@
 
    :n
    "gl" #'org-open-at-point
+   ;; :n "gL" #'org-insert-link-global
 
    :n
    "zx" #'org-redisplay-inline-images
