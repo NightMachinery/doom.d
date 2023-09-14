@@ -44,4 +44,8 @@
   (map!
    :nvo
    "g y" #'night/avy-copy-from-char-to-char)
+  (map!
+   :map magit-mode-map
+   :nvo
+   "g y" #'night/avy-copy-from-char-to-char)
   )
