@@ -29,11 +29,15 @@
           (let (start-pos end-pos)
             (setq start-pos (avy-process (avy--regex-candidates (string start-char))))
             ;; If a starting position is selected
-            (when start-pos
+            (when (and
+                   start-pos
+                   (listp start-pos))
               (when-let ((end-char (night/read-char-or-cancel "End char: ")))
                 (setq end-pos (avy-process (avy--regex-candidates (string end-char))))
                 ;; If an ending position is selected, copy the text
-                (when end-pos
+                (when (and
+                       end-pos
+                       (listp end-pos))
                   ;; (message "start: %s, end: %s" start-pos end-pos)
                   ;; start: (3417 . 3418), end: (3419 . 3420)
                   (let ((start-pos (car start-pos))
