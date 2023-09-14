@@ -258,6 +258,9 @@
 
 (package! code-cells)
 
+(package! ob-mermaid)
+(package! org-inline-pdf)
+
 ;;;
 ;; * [[https://github.com/dalanicolai/image-roll.el][dalanicolai/image-roll.el: Virtual scroll display engine for Emacs]]
 (package! pdf-tools :recipe
