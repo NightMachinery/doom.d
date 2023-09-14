@@ -91,6 +91,8 @@ move COUNT - 1 screen lines forward first."
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig
         "C-s" #'night/save-buffer
+        :n
+        "p" 'evil-paste-before
         :nvoig
         "<next>" #'evil-avy-goto-char
         :nvoig
@@ -162,6 +164,8 @@ move COUNT - 1 screen lines forward first."
         "s a" #'night/agsi
 
         "s m" #'counsel-evil-marks
+
+        "n L" #'org-insert-link-global
         )
 
   (map! :map profiler-report-mode-map
