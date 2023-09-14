@@ -7,8 +7,9 @@
   (interactive)
   (display-line-numbers-mode))
 ;;;
-(cl-defun night/read-char-or-cancel (&optional prompt inherit-input-method seconds
-                                               &key (cancel-chars '(27)))
+(cl-defun night/read-char-or-cancel
+    (&optional prompt inherit-input-method seconds
+               &key (cancel-chars '(27)))
   "Read a character from the user, but cancel if one of CANCEL-CHARS is pressed.
 CANCEL-CHARS is a list of characters that will trigger a cancellation.
 By default, it contains only the escape character (27)."
