@@ -177,7 +177,7 @@
 (package! org-sticky-header)
 
 (package! applescript-mode)
-(package! magit-vcsh)
+;; (package! magit-vcsh)
 (package! smeargle)                     ;; Highlighting Regions by Last Updated Time
 (package! org-web-tools)
 (package! helm-org-rifle)
