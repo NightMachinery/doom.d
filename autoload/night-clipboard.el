@@ -48,6 +48,21 @@
       ;; imitating the return value of `kill-new'
       0))))
 (advice-add 'kill-new :around #'night/h-kill-skip-whitespace)
+;; @seeAlso [help:filter-buffer-substring]
+;;;
+(defun night/h-current-kill (orig-fun &rest args)
+  (let ((result (apply orig-fun args)))
+    (if (and (stringp result))
+        (cond
+         ((and
+           nil
+           ;; @disabled This introduced too many edge cases, unlike its copying counterpart in `kill-new'.
+           (equalp major-mode 'org-mode)
+           (string-match-p "\n" result))
+          (org-escape-code-in-string result))
+         (t result))
+      result)))
+(advice-add 'current-kill :around #'night/h-current-kill)
 ;;;
 (defun ns-yank-image-at-point-as-image ()
   "Yank the image at point to the X11 clipboard as image/png."
