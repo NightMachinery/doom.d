@@ -156,7 +156,7 @@
 (unpin! rainbow-mode)
 (package! rainbow-mode
   ;; my fork uses overlays instead of text properties so that it is not erased by hl-line
-  :recipe (:host github :repo "NightMachinary/rainbow-mode"))
+  :recipe (:host github :repo "NightMachinery/rainbow-mode"))
 ;; (package! rainbow-mode :recipe (:local-repo "path/to/repo"))
 ;;;
 (package! org-super-links
