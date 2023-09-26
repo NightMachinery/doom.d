@@ -20,8 +20,17 @@
 ;;;
 (defun night/p-newline2space ()
   (interactive)
-  (night/insert-for-yank
-   (z p-newline2space)))
+  (let ((text (z p-newline2space)))
+    (night/insert-for-yank
+     (cond
+      ((and
+        (minibufferp))
+       ;; In minibuffer, we often want to search for this this string. Using lower case allows smart-case matching.
+       ;; Paper names are often capitalized differently and we do not want not to find a match for case sensitivity.
+       ;;;
+       ;; (message "bf: %s" (buffer-name))
+       (s-downcase text))
+      (t text)))))
 (defalias 'night/pns #'night/p-newline2space)
 ;;;
 (defun night/semantic-scholar-to-org-sync ()

@@ -108,6 +108,7 @@
 ;;;
   (map! :map org-mode-map
         :localleader
+        :n "] ]" #'org-beamer-export-to-pdf
         :nvi "lp" #'night/org-paste-clipboard-image
         "la" #'night/semantic-scholar-to-org
         "rp" #'night/org-paste-with-files

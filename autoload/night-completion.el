@@ -134,11 +134,13 @@
 ;;           ))
 ;;        ))
 (progn (setq +company-backend-alist
+             ;; [help:+company--backends]
+             ;; uses parent modes' backends, too
              '(
                ;; (julia-mode
                ;;  company-dabbrev-code ; default
                ;;  )
-               ;;; useless here, gets overridden
+;;; useless here, gets overridden
                ;; (sh-mode
                ;;  ;; company-shell
                ;;  company-dabbrev-code
@@ -153,7 +155,7 @@
                 company-capf company-files (company-dabbrev
                                             ;; company-ispell (makes org-babel's candidates become lost among the noise)
                                             ) company-yasnippet)
-               (text-mode company-capf company-files (company-dabbrev company-ispell) company-yasnippet)
+               (text-mode company-capf company-files (company-dabbrev) company-yasnippet)
                (prog-mode company-capf company-dabbrev-code company-files company-yasnippet)
                (gerbil-mode company-etags company-capf company-dabbrev-code company-files company-yasnippet)
                (lua-mode company-capf company-dabbrev-code company-files company-yasnippet)

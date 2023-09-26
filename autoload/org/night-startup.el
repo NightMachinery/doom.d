@@ -5,7 +5,7 @@
   (org-fragtog-mode) ;; https://github.com/io12/org-fragtog
 
   (when (display-graphic-p)
-    (night/disable-line-numbers)  ;; @?
+    (night/disable-line-numbers) ;; @?
     )
 
   (when (display-graphic-p)
@@ -23,6 +23,15 @@
   (night/highlight-background) ;; @futureCron was this worth overcoming hl-line?
   (night/org-company-backends-set)
   (night/disable-company-frontends)
+
+  (run-with-timer
+   0.1
+   nil
+   (lambda ()
+     (interactive)
+     (night/babel-ansi-all2)
+     ))
+  ;; (xterm-color-colorize-buffer)
 
   (comment
    (map! :map 'local

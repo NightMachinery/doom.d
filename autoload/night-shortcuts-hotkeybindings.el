@@ -91,8 +91,10 @@ move COUNT - 1 screen lines forward first."
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig
         "C-s" #'night/save-buffer
-        :n
-        "p" 'evil-paste-before
+        :nv "P" #'night/paste-yank-html
+        ;; :nv "P" #'evil-paste-before
+        :nvoig
+        "s-," #'night/pns
         :nvoig
         "<next>" #'evil-avy-goto-char
         :nvoig
@@ -138,6 +140,7 @@ move COUNT - 1 screen lines forward first."
   (setq expand-region-reset-fast-key "c")
 
   (map! :leader
+        "b R" #'night/buffer-reopen
         ;; "f r" #'night/fzf-recentf ;; somewhat slow
         "f r" #'counsel-recentf
         ;; "f r" #'helm-recentf ;; loses keys while it is not still open, and isn't fuzzy

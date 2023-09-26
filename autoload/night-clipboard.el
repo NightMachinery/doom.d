@@ -150,9 +150,14 @@
                         :map evil-org-mode-map
                         :nv "P" #'night/paste-yank-html
                         :nv "p" #'night/org-paste-yank))
-(night/set-leader-keys "y y" #'night/paste-yank-html)
 
-(night/set-leader-keys "z c i" #'ns-yank-image-at-point-as-image)
+(map! :leader
+      "," nil)
+(night/set-leader-keys ", h" #'night/paste-yank-html)
+(night/set-leader-keys ", n" #'night/pns)
+(night/set-leader-keys ", m" #'night/paste-md2org)
+(night/set-leader-keys ", c" #'night/p-titlecase)
+(night/set-leader-keys ", i" #'ns-yank-image-at-point-as-image)
 ;;;
 (defun night/pbadd-current ()
   (interactive)

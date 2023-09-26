@@ -112,3 +112,24 @@
 
 (org-unescape-code-in-string ",*hi")
 ;;;
+;; Step 1: Create the watcher function
+(defun night/company-backends-watcher (symbol newval operation where)
+  (message "company-backends changed by %S (%S): %S" where operation newval))
+(defun night/company-backends-watcher (symbol newval operation where)
+  (let* ((bt (with-output-to-string
+               (backtrace)))
+         ;; Capture the relevant part of the backtrace, excluding this watcher function
+         (relevant-bt (substring bt (string-match "night/org-company-backends-set" bt))))
+    (message "company-backends changed by %S (%S): %S\nBacktrace: %s" where operation newval relevant-bt)))
+
+(defun night/org-company-backends-set ()
+  (interactive)
+  (let ((backends
+         '(company-capf company-files company-dabbrev company-yasnippet)))
+    (set-company-backend! 'org-mode backends)
+
+    (when (eq major-mode 'org-mode)
+      (setq-local company-backends backends)
+
+      ;; Step 2: Add the watcher after setting company-backends
+      (add-variable-watcher 'company-backends 'night/company-backends-watcher))))

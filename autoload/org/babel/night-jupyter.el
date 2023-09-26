@@ -33,7 +33,8 @@
         "ee" #'night/jupyter-org-eval-line-or-region
         "ed" #'night/jupyter-org-eval-defun
 
-        "i" #'night/jupyter-org-inspect-at-point
+        ;; "i" #'night/jupyter-org-inspect-at-point
+        ;; "i" conflicts with [help:org-toggle-item]
 
         "ki" #'jupyter-org-interrupt-kernel
         "kr" #'jupyter-repl-restart-kernel

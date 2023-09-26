@@ -86,7 +86,7 @@ Use this to stop the audio files being played by org-mode links."
 
       (when (s-contains? (ntag  "org-highlighter") bfn)
         (night/org-link-highlighter-hide)
-        (scrollback-mode)
+        ;; (scrollback-mode)
         (night/org-link-highlighter-hotkeys-enable)
         (org-show-all) ;; @userConfig no reason to hide stuff in a search buffer
         (org-sticky-header-mode t)
@@ -99,7 +99,9 @@ Use this to stop the audio files being played by org-mode links."
         (message "org-playlist activated")
         ))
 
-     ((member-ignore-case ext '("log" "ansitxt"))
+     ((member-ignore-case ext '(
+                                ;; "log"
+                                "ansitxt"))
       (scrollback-mode))
 
      ((member-ignore-case ext '("scrollback"))

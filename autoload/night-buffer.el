@@ -1,5 +1,14 @@
 ;;; ~/doom.d/night-buffer.el -*- lexical-binding: t; -*-
-
+;;;
+(defun night/buffer-reopen ()
+  (interactive)
+  (if-let (filename (or
+                     buffer-file-name))
+      (progn
+        (kill-current-buffer)
+        (find-file-existing filename))
+    (error "Couldn't find filename in current buffer")))
+;;;
 (defun night/diff-buffers (buffer-A buffer-B)
   "Run Ediff on a pair of buffers, BUFFER-A and BUFFER-B."
   (interactive
@@ -12,7 +21,10 @@
 (defun night/yank-buffer-filename ()
   "Copy the current buffer's path to the kill ring."
   (interactive)
-  (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
+  (if-let (filename (or
+                     buffer-file-name
+                     (and (bound-and-true-p list-buffers-directory)
+                          list-buffers-directory)))
       (progn
         (kill-new filename)
         (message "Yanked: %s" filename))

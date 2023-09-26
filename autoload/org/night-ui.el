@@ -48,7 +48,11 @@
 
   (defun night/babel-ansi-all2 ()
     (interactive)
-    (jupyter-org--ansi-color-apply-on-region (point-min) (point-max)))
+    (let ((mod-p (buffer-modified-p)))
+      (jupyter-org--ansi-color-apply-on-region (point-min) (point-max))
+      (set-buffer-modified-p mod-p)
+      ;; @assumes no concurrency can happen here
+      ))
 
   (defalias 'night/babel-ansi #'night/babel-ansi2)
   (add-hook 'org-babel-after-execute-hook 'night/babel-ansi-all2)
