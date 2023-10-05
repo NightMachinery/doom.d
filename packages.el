@@ -84,6 +84,12 @@
 (package! night-owl-theme)
 (package! colorless-themes)
 (package! leuven-theme)
+(package! modus-themes)
+(package! ef-themes)
+(package! material-theme)
+(package! tao-theme)
+(package! organic-green-theme)
+(package! color-theme-sanityinc-tomorrow)
 
 ;; [[id:c0713162-d1bd-46fc-9ef4-f5495d7ff16f][doom/bugs, issues:@upstreamBug hlissner/doom-emacs#5629 {BUG} Some themes fail to build]]
 ;; (package! soft-stone-theme
@@ -296,6 +302,9 @@
 ;;            :files ("misc/gambit.el")))
 ;;;
 (package! clipetty)
+;;;
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 ;;;
 (disable-packages!
  anaconda-mode

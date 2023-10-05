@@ -43,7 +43,8 @@
            :stdin-text string-raw))))
      (t
       ;; (message "skipped whitespace kill: %s" string-raw)
-      ;; (message "skipped whitespace kill")
+      (message "skipped whitespace kill")
+      ;; This message allows us to be sure that we have been deleting whitespace lines and not hidden (folded) text.
 
       ;; imitating the return value of `kill-new'
       0))))

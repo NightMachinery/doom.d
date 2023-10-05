@@ -256,3 +256,44 @@ If PROPERTIES are specified, set them for the created overlay."
           (powerline-reset)))
     (error "Problem loading theme %s" x))))
 ;;;
+(defun night/theme-org-override ()
+  "Override some of the org-mode faces."
+  (interactive)
+  (let* ((frame nil)
+         (inside-bg "#eeeeee")
+         (begin-bg inside-bg)
+         ;; (begin-bg "#dddddd")
+         (end-bg begin-bg)
+         (extend t)   ;; extend the background to the end of line
+         (begin-line nil)
+         (end-line nil)
+         ;; @? =:overline= doesn't work on TUI.
+         ;; (begin-line t)
+         ;; (end-line t)
+         )
+    (with-eval-after-load 'org-faces
+      ;; Override org-block
+      (set-face-attribute 'org-block frame
+                          :background inside-bg
+                          ;; :foreground "#000000"
+                          :extend extend
+                          )
+
+      ;; Override org-block-begin-line
+      (set-face-attribute 'org-block-begin-line frame
+                          :background begin-bg
+                          :overline begin-line
+                          :extend extend
+                          )
+
+      ;; Override org-block-end-line
+      (set-face-attribute 'org-block-end-line frame
+                          :background end-bg
+                          :underline end-line
+                          :extend extend
+                          )
+      (set-face-attribute 'org-hide frame
+                          :foreground "#dddddd")))
+  (with-eval-after-load 'org
+    (add-hook 'org-mode-hook 'night/theme-org-override)))
+;;;

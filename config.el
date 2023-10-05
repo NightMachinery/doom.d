@@ -106,7 +106,13 @@
   (require 'anti-zenburn-theme)
   (require 'moe-theme)
   (require 'poet-theme)
-  (require 'zaiste-theme))
+  (require 'zaiste-theme)
+  (require 'modus-themes)
+  (require 'ef-themes)
+  (require 'material-theme)
+  (require 'tao-theme)
+  (require 'organic-green-theme)
+  (require 'color-theme-sanityinc-tomorrow))
 (cond
  (;; nil
   (night/server-alt1-p)
