@@ -134,6 +134,8 @@
 ;;;
 (package! gnus)
 ;;;
+(package! org-transclusion)
+;;;
 (package! ediprolog)
 ;;;
 (package! htmlize)

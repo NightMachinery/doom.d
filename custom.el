@@ -36,7 +36,7 @@
  '(jdee-db-spec-breakpoint-face-colors (cons "#FFFBF0" "#E1DBCD"))
  '(lsp-ui-doc-border "#586e75" t)
  '(neuron-default-tags '("stub"))
- '(neuron-default-zettelkasten-directory "/Users/evar/cellar/notes/zettle")
+ '(neuron-default-zettelkasten-directory "/Users/evar/notes/public/zettle")
  '(neuron-tag-specific-title-faces '(("stub" neuron-stub-face)))
  '(nrepl-message-colors
    '("#dc322f" "#cb4b16" "#b58900" "#5b7300" "#b3c34d" "#0061a8" "#2aa198" "#d33682" "#6c71c4"))
@@ -50,7 +50,9 @@
  '(rustic-ansi-faces
    ["#FDF6E3" "#dc322f" "#859900" "#b58900" "#268bd2" "#d33682" "#2aa198" "#556b72"])
  '(safe-local-variable-values
-   '((undo-fu-session-mode . t)
+   '((org-use-tag-inheritance)
+     (copilot-mode . t)
+     (undo-fu-session-mode . t)
      (undo-fu-session-mode)
      (coding-system-for-write . utf-16)
      (org-tree-slide-skip-outline-level . 2)
@@ -97,4 +99,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(eldoc-box-body ((t (:background "light steel blue" :foreground "black"))))
+ '(fill-column-indicator ((t (:foreground "gray80" :weight normal))))
+ '(multi-magit-repo-heading ((t (:inherit magit-section-heading :box nil))))
+ '(speedbar-selected-face ((t (:foreground "#008B45" :underline t))))
  '(ts-fold-replacement-face ((t (:foreground unspecified :box nil :inherit font-lock-comment-face :weight light)))))

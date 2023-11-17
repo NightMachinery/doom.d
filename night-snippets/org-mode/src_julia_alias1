@@ -1,5 +1,5 @@
 # name: src_julia_alias1
-# key: <sj
+# key: <sju
 # type: command
 # --
 (yas-expand-snippet (yas-lookup-snippet "src_jupyter_julia"))

@@ -93,6 +93,7 @@ move COUNT - 1 screen lines forward first."
         "C-s" #'night/save-buffer
         :nv "P" #'night/paste-yank-html
         ;; :nv "P" #'evil-paste-before
+        :nv "p" #'evil-paste-before
         :nvoig
         "s-," #'night/pns
         :nvoig
@@ -184,7 +185,10 @@ move COUNT - 1 screen lines forward first."
         )
   (map!
    :g
-   "C-M-<up>" #'scroll-other-window-down
+   "C-S-<up>" #'scroll-other-window-down
+   ;; "C-M-<up>" #'scroll-other-window-down
    :g
-   "C-M-<down>" #'scroll-other-window)
+   "C-S-<down>" #'scroll-other-window
+   ;; "C-M-<down>" #'scroll-other-window
+   )
   )

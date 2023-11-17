@@ -29,7 +29,9 @@
        ;; Paper names are often capitalized differently and we do not want not to find a match for case sensitivity.
        ;;;
        ;; (message "bf: %s" (buffer-name))
-       (s-downcase text))
+       (regexp-quote
+        ;; [agfi:regex-escape]
+        (s-downcase text)))
       (t text)))))
 (defalias 'night/pns #'night/p-newline2space)
 ;;;

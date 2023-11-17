@@ -214,7 +214,7 @@ If FORCE-P, overwrite the destination file if it exists, without confirmation."
             ((or 'buffer-name _)
              (propertize "%b" 'face 'doom-modeline-buffer-file))))
 ;;; @monkeyPatched
-         (file-name (s-replace-regexp "^cellar/notes/" "~nt/" file-name))
+         (file-name (s-replace-regexp "^(?:cellar/)?notes/" "~nt/" file-name))
          ;; (file-name (s-replace-regexp "^doom.d/" "~dom/" file-name))
          (file-name
           (or

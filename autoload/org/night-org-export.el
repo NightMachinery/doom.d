@@ -7,12 +7,17 @@
 
 (defun night/export-org-file-to-ipynb (&optional file)
   (interactive)
-  (let ((file
-         (or file (buffer-file-name))))
-      (ox-ipynb-export-org-file-to-ipynb-file file)))
+  (let* ((file
+          (or file (buffer-file-name)))
+         (exported-rel-path
+          (ox-ipynb-export-org-file-to-ipynb-file file)))
+    (message "exported: %s" exported-rel-path)
+    (z pbadd (identity exported-rel-path))
+    ))
 ;;;
 (after! ox
-  (setq org-export-with-broken-links 'mark))
+  (setq org-export-with-broken-links 'mark)
+  (setq org-export-with-toc 1))
 ;;;
 (defun night/org-export-string-as-utf8 (str)
   "Assume str has Org syntax, and convert it to UTF-8."
@@ -62,7 +67,7 @@
             out
           (concat default-directory out))))))
 (comment
- (night/org-export-file-to-html "/Users/evar/cellar/notes/subjects/math/AI/ML/NLP/learn/courses/cs224N/gen.org"))
+ (night/org-export-file-to-html (concat (getenv "nightNotesPublic") "/subjects/math/AI/ML/NLP/learn/courses/cs224N/gen.org")))
 ;;;
 (setq org-html-prefer-user-labels t)
 

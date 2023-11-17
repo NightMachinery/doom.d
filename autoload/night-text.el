@@ -21,3 +21,14 @@
     (while (search-forward "\"" nil t 1)
       (replace-match "\\\\\""))
     (kill-new (buffer-substring-no-properties (point-min) (point-max)))))
+;;;
+(defun night/erase-ansi (str)
+  "Remove ANSI escape sequences from STR."
+  (if (stringp str)
+      (progn
+        ;; (message "erase-ansi before: %s" str)
+        (let ((result (replace-regexp-in-string "\033\\(\\[[0-9;]*\\([a-zA-Z]\\)?\\)?" "" str)))
+          ;; (message "erase-ansi after: %s" result)
+          result))
+    (error "night/erase-ansi: expected a string")))
+;;;

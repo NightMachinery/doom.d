@@ -257,14 +257,17 @@ If PROPERTIES are specified, set them for the created overlay."
     (error "Problem loading theme %s" x))))
 ;;;
 (defun night/theme-org-override ()
-  "Override some of the org-mode faces."
+  "Override some of the org-mode faces.
+
+Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
+"
   (interactive)
   (let* ((frame nil)
          (inside-bg "#eeeeee")
          (begin-bg inside-bg)
          ;; (begin-bg "#dddddd")
          (end-bg begin-bg)
-         (extend t)   ;; extend the background to the end of line
+         (extend t) ;; extend the background to the end of line
          (begin-line nil)
          (end-line nil)
          ;; @? =:overline= doesn't work on TUI.

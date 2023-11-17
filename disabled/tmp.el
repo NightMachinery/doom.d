@@ -133,3 +133,5 @@
 
       ;; Step 2: Add the watcher after setting company-backends
       (add-variable-watcher 'company-backends 'night/company-backends-watcher))))
+;;;
+;;;

@@ -44,7 +44,9 @@
 
   (defun night/goto-org-heading ()
     (interactive)
-    (night/outline-goto-v1 "^ *\\(?:#\\|;\\|%\\|--\\)* *[*]\\{1,8\\} "))
+    (night/outline-goto-v1 "^ *\\(?:#\\|;\\|%\\|--\\|///?\\)* *[*]\\{1,8\\} ")
+    ;; =///?= is to make it work with an odd number of slashes.
+    )
 
   (defun outline-invent-heading (head up)
     ;; @PR/ready @toFuture/1402

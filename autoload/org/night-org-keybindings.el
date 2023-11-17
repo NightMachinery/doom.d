@@ -156,6 +156,8 @@
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode
    :localleader
+   "K" #'night/org-babel-remove-all-results
+
    "rs" #'avy-org-refile-as-child
    ;; "sr" #'avy-org-refile-as-child
    "rf" #'+org/refile-to-file
@@ -166,4 +168,8 @@
    "lC" #'night/url2org
    "lc" #'night/org-link-browser-current
    "le" #'night/org-link-edge-current
+
+   "ui" #'orgmdb-fill-movie-properties
+   ;; Update IMDB
+   ;; Perhaps we should add an after-advice to run =+org/open-all-folds= or =revert-buffer=? There is a bug that the inserted properties drawer can't be opened without running a workaround first ...revert-buffer a bug that the inserted properties drawer can't be opened without running a workaround first ...
    ))

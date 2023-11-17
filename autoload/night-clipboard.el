@@ -16,6 +16,13 @@
           (progn
             (cond
              ((and
+               (equalp major-mode 'org-mode))
+              (night/erase-ansi string))
+             (t string))))
+         (string
+          (progn
+            (cond
+             ((and
                (equalp major-mode 'org-mode)
                (> (length (split-string string-raw "\n" nil)) 1))
               (org-unescape-code-in-string string))
@@ -64,6 +71,10 @@
          (t result))
       result)))
 (advice-add 'current-kill :around #'night/h-current-kill)
+
+(defun night/org-paste-escaped ()
+  (interactive)
+  (night/insert-for-yank (org-escape-code-in-string (current-kill 0))))
 ;;;
 (defun ns-yank-image-at-point-as-image ()
   "Yank the image at point to the X11 clipboard as image/png."
