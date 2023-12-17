@@ -38,11 +38,18 @@
      (t
       (funcall #'helpful-key key-sequence)))))
 ;;;
-(defun night/tmp-buffer ()
+(defun night/bookmarks-open-tmp ()
   (interactive)
   (find-file "~/tmp/tmp.org"))
 
-(night/set-leader-keys "z t" #'night/tmp-buffer)
+(defun night/bookmarks-open-chatgpt ()
+  (interactive)
+  (find-file (concat
+              (getenv "nightNotesPrivate")
+              "/subjects/ML/chatlog/chatgpt/megalog.org")))
+
+(night/set-leader-keys "z t" #'night/bookmarks-open-tmp)
+(night/set-leader-keys "z z" #'night/bookmarks-open-chatgpt)
 ;;;
 (cl-defun night/save-buffer
     (&key (force-normal-state t))

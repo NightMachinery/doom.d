@@ -91,6 +91,16 @@
 (package! organic-green-theme)
 (package! color-theme-sanityinc-tomorrow)
 
+;; (package! chatgpt-shell
+;;   :recipe (:host github :repo "xenodium/chatgpt-shell" :branch "main"))
+;; (unpin! chatgpt-shell)
+(package! chatgpt-shell)
+(package! ob-chatgpt-shell)
+(package! dall-e-shell)
+(package! ob-dall-e-shell)
+(package! pcsv)  ;; needed by =chatgpt-shell=
+(unpin! chatgpt-shell ob-chatgpt-shell dall-e-shell ob-dall-e-shell)
+
 ;; [[id:c0713162-d1bd-46fc-9ef4-f5495d7ff16f][doom/bugs, issues:@upstreamBug hlissner/doom-emacs#5629 {BUG} Some themes fail to build]]
 ;; (package! soft-stone-theme
 ;;   :recipe (:build (:not native-compile compile)))

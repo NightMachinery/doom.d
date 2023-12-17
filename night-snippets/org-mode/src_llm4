@@ -1,0 +1,26 @@
+# -*- mode: snippet -*-
+# name: llm
+# key: <l4
+# uuid: <l4
+# --
+#+begin_src jupyter-python :kernel py_base :session chatgpt_1 :async yes :exports both
+res = openai_chat_complete(
+    ##
+    model="gpt-4-0314",
+    # model="gpt-4-0613",
+    # model="gpt-4-turbo",
+    # model="gpt-3.5-turbo",
+    ##
+    messages=[
+        # {"role": "system", "content": """You are a senior programmer. You are an expert in functional programming. You use design patterns as appropriate."""},
+        {"role": "user", "content": r"""
+        `%`$0
+        """},
+    ],
+    temperature=0,
+    interactive=True,
+)
+
+print_chat_streaming(res, copy_mode="chat2")
+bell_gpt()
+#+end_src

@@ -1,5 +1,11 @@
 ;;; ~/doom.d/night-text.el -*- lexical-binding: t; -*-
-
+;;;
+(defun night/copy-buffer-content ()
+  "Copy the entire content of the current buffer to the clipboard."
+  (interactive)
+  (clipboard-kill-ring-save (point-min) (point-max))
+  (message "Buffer content copied to clipboard!"))
+;;;
 (defun my-select-current-line ()
   (interactive)
   (move-beginning-of-line nil)

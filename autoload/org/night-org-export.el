@@ -42,11 +42,11 @@
       (let ((directives
              (concat
               "#+latex_header: \\input{"
-              (getenv "nightNotes")
+              (getenv "nightNotesPublic")
               "/resources/beamer/night_beamer_common1.tex"
               "}\n"
               "#+SETUPFILE: "
-              (getenv "nightNotes")
+              (getenv "nightNotesPublic")
               "/resources/beamer/night_beamer_common1.org"
               "\n")
              ))

@@ -121,3 +121,14 @@ otherwise use the subtree title."
     (let ((case-fold-search t))
       (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t))))
   )
+;;;
+(defun night/org-go-to-last-heading (&optional level)
+  "Go to the last heading in the current Org mode buffer."
+  (interactive)
+  (let* ((level (or level 1)))
+    (goto-char (point-max)) ;; Go to the end of the buffer
+    (unless (org-at-heading-p)
+      (org-previous-visible-heading 1))
+    (while (> (org-outline-level) level) ; While not at a first-level heading, go up.
+      (org-up-heading-safe))))
+;;;

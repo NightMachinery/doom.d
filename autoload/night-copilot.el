@@ -19,7 +19,9 @@
    "co" #'copilot-mode
    "cc" #'copilot-panel-complete
    "cv" #'copilot-next-completion
-   "cx" #'copilot-accept-completion)
+   "cx" #'copilot-previous-completion
+   ;; "cx" #'copilot-accept-completion
+   )
   (map! :map copilot-completion-map
 
         "C-<right>" #'copilot-accept-completion

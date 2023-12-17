@@ -4,24 +4,40 @@
   (interactive)
   (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,tex,txt,json,csv,zsh,py} --glob !*chrome*bookmarks.org"))
 
-(cl-defun night/search-ideas
+(cl-defun night/search-research
     (&key
-     (query
-      "IDEA|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"))
+     (query nil
+))
   (interactive)
   (night/search-dir-limited
    :dir (concat
-         (getenv "nightNotes")
+         (getenv "nightNotesPublic")
          "/subjects/math/")
    :extra-paths (list
                  (concat
-                  (getenv "nightNotes")
-                  "/private/subjects/supervisors/"))
+                  (getenv "nightNotesPublic")
+                  "/subjects/ML/")
+                 (concat
+                  (getenv "nightNotesPrivate")
+                  "/subjects/supervisors/")
+                 (concat
+                  (getenv "nightNotesPrivate")
+                  "/research/"))
    :query query))
+
+(defun night/search-research-CR ()
+  (interactive)
+  (night/search-research
+   :query "@CR\\ "))
+
+(defun night/search-ideas ()
+  (interactive)
+  (night/search-research
+   :query "IDEA|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"))
 
 (defun night/search-ideas-accepted ()
   (interactive)
-  (night/search-ideas
+  (night/search-research
    :query "@idea/accepted"))
 
 (cl-defun night/search-dir-limited

@@ -1,0 +1,22 @@
+# -*- mode: snippet -*-
+# name: llm
+# key: <ll
+# uuid: <ll
+# --
+#+begin_src jupyter-python :kernel py_base :session chatgpt_1 :async yes :exports both
+chat(
+    r"""
+    `%`$0
+    """,
+    ##
+    # model="gpt-4-0314",
+    # model="gpt-4-0613",
+    model="gpt-4-turbo",
+    # model="gpt-3.5-turbo",
+    ##
+    conversation="default",
+    reset_conversation=True,
+    ##
+    bell=True,
+)
+#+end_src

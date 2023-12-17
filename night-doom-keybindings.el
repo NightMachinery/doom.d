@@ -15,6 +15,17 @@
   ))
 ;;;
 (defun night/setup-input-decode ()
+  (dotimes (i 26)
+    ;; This loop adds cmd + all the lower case letters.
+    ;;;
+    (let ((letter (char-to-string (+ i ?a)))
+          (code (+ i 97)))              ; 97 is the ASCII code for 'a'
+      (define-key input-decode-map (format "\e[27;33;%d~" code) (kbd (format "s-%s" letter)))))
+  ;; (define-key input-decode-map "\e[27;33;105~" [?\s-i])
+  ;; (define-key input-decode-map "\e[27;33;107~" [?\s-k])
+  (define-key input-decode-map "\e[27;33;44~" [?\s-,])
+  ;; @GPT4 The issue is with the `[s-,]` part. The correct syntax for a key sequence in Emacs Lisp is a vector of symbols or characters, not a list. You should use a vector instead of a list, =[?\s-,]=.
+;;;
   (progn
     (comment
      ;; already supported by emacs
@@ -28,6 +39,6 @@
 
 (night/setup-input-decode)
 
-;;* input-decode-map is reset for each terminal instance.
+;; input-decode-map is reset for each terminal instance.
 (add-hook 'tty-setup-hook #'night/setup-input-decode)
 ;;;
