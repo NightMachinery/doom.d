@@ -11,6 +11,11 @@
   (interactive)
   (night/insert-for-yank-and-save
    (z org-link-edge-current)))
+
+(defun night/org-link-arc-current ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (z org-link-arc-current)))
 ;;;
 (defun night/p-org-fanfic ()
   (interactive)

@@ -6,12 +6,22 @@
   (clipboard-kill-ring-save (point-min) (point-max))
   (message "Buffer content copied to clipboard!"))
 ;;;
-(defun my-select-current-line ()
+(defun night/current-line-select ()
   (interactive)
   (move-beginning-of-line nil)
   (set-mark-command nil)
   (move-end-of-line nil)
   (setq deactivate-mark nil))
+(defalias 'my-select-current-line #'night/current-line-select)
+
+(defun night/current-line-get ()
+  "Get the current line as a string."
+
+  (buffer-substring-no-properties
+
+   (line-beginning-position)
+   (line-end-position)))
+;;;
 (defun kill-all-comments ()
   "Kills all the comments in the code, without putting them in the killring."
   (interactive)

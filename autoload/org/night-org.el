@@ -19,57 +19,72 @@
   ;; (setq org-src-tab-acts-natively nil) ; doesn't fix the completion TAB problem
   (defun night/org-save-hook-fn ()
     (interactive)
+    ;;;
+    (when (night/org-night-directive-present-p "night_autoexport_latex_to_pdf")
+      (org-beamer-export-to-pdf))
+    ;;;
     (when (string= "org-mode" major-mode)
+      ;;;
       ;; (org-html-export-to-html)
-      (org-babel-tangle)
+      ;;;
+      ;; (org-babel-tangle)
+      ;;;
       ))
-  (add-hook 'after-save-hook #'night/org-save-hook-fn)
 ;;;
   (setq org-image-actual-width '(1000)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
   ;; (setq org-image-actual-width '(fill-column))
 ;;;
-  (defun night/org-paste-clipboard-image (&optional arg)
+  (defun night/org-paste-clipboard-image (&optional arg format)
     "Paste the image in the clipboard at point.
 
 @seeAlso [agfi:org-img-unused]"
     (interactive "P")
     ;; (org-display-inline-images)
-    (setq filename
-          (concat
-           (make-temp-name
-            (concat (file-name-nondirectory (buffer-file-name))
-                    "_imgs/"
-                    (format-time-string "%Y%m%d_%H%M%S_"))) ".png"))
-    (unless (file-exists-p (file-name-directory filename))
-      (make-directory (file-name-directory filename)))
-                                        ; take screenshot
-    (if (eq system-type 'darwin)
-        ;; url-copy-file for downloading URLs
-        ;; (call-process "pngpaste" nil nil nil filename)
-        ;; @bug This always uses the png extension, while the file can be, e.g., jpg.
-        (z "reval-to-stdout" "h-emc-paste-img"
-           (concat (file-name-directory (buffer-file-name)) "/" filename)
-           (if arg
-               "y"
-             "n"))
-      ;; (call-process "screencapture" nil nil nil "-i" filename)
-      )
-    (if (eq system-type 'gnu/linux)
-        (call-process "import" nil nil nil filename))
+    (let*  ((format (cond
+                     (arg ".png")       ;; `arg' means remove background, so we need the alpha channel.
+                     (format format)
+                     (t ".jpg")
+                     ;; (t ".png")
+                     ))
+            (filename
+             (concat
+              (make-temp-name
+               (concat (file-name-nondirectory (buffer-file-name))
+                       "_imgs/"
+                       (format-time-string "%Y%m%d_%H%M%S_"))) format)))
+      (unless (file-exists-p (file-name-directory filename))
+        (make-directory (file-name-directory filename)))
+      (if (eq system-type 'darwin)
+          (z "reval-to-stdout" "h-emc-paste-img"
+             (concat (file-name-directory (buffer-file-name)) "/" filename)
+             (if arg
+                 "y"
+               "n"))
+        ; take screenshot
+        ;; (call-process "screencapture" nil nil nil "-i" filename)
+        )
+      (if (eq system-type 'gnu/linux)
+          (call-process "import" nil nil nil filename))
                                         ; insert into file if correctly taken
 
-    (if (file-exists-p filename)
-        (let* (
-               (width-max 900) ;; 800, 850 are also possible, but big images slow emacs when scrolling
-               (width-orig (string-to-number (z img-width (i filename))))
-               (width-orig (/ width-orig 1.4))
-               (width (cond
-                       ((= width-orig 0) ;; parse error has happened
-                        800)
-                       ((<= width-orig width-max) width-orig)
-                       (t width-max))))
-          (insert (concat "#+ATTR_HTML: :width " (number-to-string (round width)) "\n[[file:" filename "]]\n"))))
-    (org-redisplay-inline-images))
+      (if (file-exists-p filename)
+          (let* (
+                 (width-max 900) ;; 800, 850 are also possible, but big images slow emacs when scrolling
+                 (width-orig (string-to-number (z img-width (i filename))))
+                 (width-orig (/ width-orig 1.4))
+                 (width (cond
+                         ((= width-orig 0) ;; parse error has happened
+                          800)
+                         ((<= width-orig width-max) width-orig)
+                         (t width-max))))
+            (insert (concat "#+ATTR_HTML: :width " (number-to-string (round width)) "\n[[file:" filename "]]\n"))))
+      (org-redisplay-inline-images)))
+  (defun night/org-paste-clipboard-image-png (&optional arg)
+    (interactive "P")
+    (night/org-paste-clipboard-image arg ".png"))
+  (defun night/org-paste-clipboard-image-jpg (&optional arg)
+    (interactive "P")
+    (night/org-paste-clipboard-image arg ".jpg"))
 
   (setq org-blank-before-new-entry '(
                                      (heading . t)

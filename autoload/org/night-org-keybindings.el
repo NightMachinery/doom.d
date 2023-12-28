@@ -168,6 +168,7 @@
    "lC" #'night/url2org
    "lc" #'night/org-link-browser-current
    "le" #'night/org-link-edge-current
+   "l;" #'night/org-link-arc-current
 
    "ui" #'orgmdb-fill-movie-properties
    ;; Update IMDB

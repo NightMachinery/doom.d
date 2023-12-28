@@ -1,5 +1,10 @@
 ;;; autoload/org/night-latex.el -*- lexical-binding: t; -*-
 
+(defun night/latex-to-pdf-logs ()
+  (interactive)
+  (find-file (expand-file-name "~/logs/pdflatex_emacs.ansilog"))
+  ;; @duplicateCode/f96ce923c4daa8a299a2a376062acc30
+  )
 (after! org
   ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
   ;; Update: we already have automatic previews ...
@@ -25,10 +30,19 @@
             ("linenos" "")))
 
     (setq org-latex-to-pdf-process
+;;;
           ;; '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           ;;   "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
           ;;   "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f")
-          '("latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f"))
+;;;
+          ;; '("latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
+;;;
+          ;; I tried using an elisp function here, but it errored. The docs seem to be wrong here.
+
+          ;; '("brishzq.zsh h-pdflatex-emacs %F")
+          '("brishzq.zsh h-pdflatex-emacs-async %F")
+;;;
+          )
     ;; `org-latex-to-pdf-process' was probably deprecated.
     (setq org-latex-pdf-process org-latex-to-pdf-process)
     ;; -shell-escape  Enable the \write18{command} construct. The command can be any shell  command. This construct is normally disallowed for security reasons.

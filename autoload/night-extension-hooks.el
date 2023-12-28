@@ -101,6 +101,7 @@ Use this to stop the audio files being played by org-mode links."
 
      ((member-ignore-case ext '(
                                 ;; "log"
+                                "ansilog"
                                 "ansitxt"))
       (scrollback-mode))
 

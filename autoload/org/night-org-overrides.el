@@ -15,7 +15,101 @@ Return nil when there is no matching folding spec."
      (alist-get spec-or-alias org-fold-core--spec-symbols)
      spec-or-alias))))
 ;;;
-(defun night/org-dwim-at-point (&optional arg)
+(defun night/org-return-enter (&optional indent arg interactive)
+  "Goto next table row or insert a newline.
+
+Calls `org-table-next-row' or `newline', depending on context.
+
+When optional INDENT argument is non-nil, call
+`newline-and-indent' with ARG, otherwise call `newline' with ARG
+and INTERACTIVE.
+
+When `org-return-follows-link' is non-nil and point is on
+a timestamp or a link, call `org-open-at-point'.  However, it
+will not happen if point is in a table or on a \"dead\"
+object (e.g., within a comment).  In these case, you need to use
+`org-open-at-point' directly."
+  (interactive "i\nP\np")
+  (let* ((context (if org-return-follows-link (org-element-context)
+		    (org-element-at-point)))
+         (element-type (org-element-type context)))
+    (cond
+     ;; In a table, call `org-table-next-row'.  However, before first
+     ;; column or after last one, split the table.
+     ((or (and (eq 'table element-type)
+	       (not (eq 'table.el (org-element-property :type context)))
+	       (>= (point) (org-element-property :contents-begin context))
+	       (< (point) (org-element-property :contents-end context)))
+	  (org-element-lineage context '(table-row table-cell) t))
+      ;; (message "night/org-return-enter: at table")
+      (if (or (looking-at-p "[ \t]*$")
+	      (save-excursion (skip-chars-backward " \t") (bolp)))
+	  (insert "\n")
+	(org-table-justify-field-maybe)
+	(call-interactively #'org-table-next-row)))
+     ;; On a link or a timestamp, call `org-open-at-point' if
+     ;; `org-return-follows-link' allows it.  Tolerate fuzzy
+     ;; locations, e.g., in a comment, as `org-open-at-point'.
+     ((and org-return-follows-link
+	   (or (and (eq 'link element-type)
+		    ;; Ensure point is not on the white spaces after
+		    ;; the link.
+		    (let ((origin (point)))
+		      (org-with-point-at (org-element-property :end context)
+			(skip-chars-backward " \t")
+			(> (point) origin))))
+	       (org-in-regexp org-ts-regexp-both nil t)
+	       (org-in-regexp org-tsr-regexp-both nil  t)
+	       (org-in-regexp org-link-any-re nil t)))
+      ;; (message "night/org-return-enter: at link")
+      (call-interactively #'org-open-at-point))
+     ;; Insert newline in heading, but preserve tags.
+     ((and (not (bolp))
+	   (let ((case-fold-search nil))
+	     (org-match-line org-complex-heading-regexp)))
+      ;; (message "night/org-return-enter: at headline")
+      ;; At headline.
+      (cond
+       ;; @monkeyPatched I disabled the complicated logic here (as it was buggy) to opt for a simple newline instead.
+       (t
+        (org--newline indent arg interactive))
+       (t
+        ;; Split line. However, if point is on keyword, priority cookie or tags, do not break any of them: add a newline after the headline instead.
+        (let (
+              (tags-column
+               (and (match-beginning 5)
+                    (save-excursion
+                      (goto-char (match-beginning 5))
+                      (current-column))))
+              (string
+               (when (and (match-end 4) (org-point-in-group (point) 4))
+                 (delete-and-extract-region (point) (match-end 4)))))
+          ;; Adjust tag alignment.
+          (cond
+           ((not (and tags-column string)))
+           (org-auto-align-tags (org-align-tags))
+           (t (org--align-tags-here tags-column))) ;preserve tags column
+          (end-of-line)
+          (org-fold-show-entry 'hide-drawers)
+          (org--newline indent arg interactive)
+          (when string (save-excursion (insert (org-trim string))))))))
+     ;; In a list, make sure indenting keeps trailing text within.
+     ((and (not (eolp))
+	   (org-element-lineage context '(item)))
+      ;; (message "night/org-return-enter: in a list")
+      (let ((trailing-data
+	     (delete-and-extract-region (point) (line-end-position))))
+	(org--newline indent arg interactive)
+	(save-excursion (insert trailing-data))))
+     (t
+      ;; (message "night/org-return-enter: else clause")
+      ;; Do not auto-fill when point is in an Org property drawer.
+      (let ((auto-fill-function (and (not (org-at-property-p))
+				     auto-fill-function)))
+	(org--newline indent arg interactive))))))
+(advice-add 'org-return :override 'night/org-return-enter)
+
+(defun night/org-dwim-at-point (&optional arg) ;; org enter at heading
   ;; @forkedFrom =+org/dwim-at-point= [[~/.emacs.d/modules/lang/org/autoload/org.el]]
   "Do-what-I-mean at point.
 
@@ -51,22 +145,24 @@ If on a:
          (org-cite-follow context arg))
 
         (`headline
-         (cond ((memq (bound-and-true-p org-goto-map)
-                      (current-active-maps))
-                (org-goto-ret))
-               ((and (fboundp 'toc-org-insert-toc)
-                     (member "TOC" (org-get-tags)))
-                (toc-org-insert-toc)
-                (message "Updating table of contents"))
-               ((string= "ARCHIVE" (car-safe (org-get-tags)))
-                (org-force-cycle-archived))
-               ((or (org-element-property :todo-type context)
-                    (org-element-property :scheduled context))
-                (org-todo
-                 (if (eq (org-element-property :todo-type context) 'done)
-                     (or (car (+org-get-todo-keywords-for (org-element-property :todo-keyword context)))
-                         'todo)
-                   'done))))
+         (cond
+          ((night/audiofile-link-get-current-line :open-link-p t) t)
+          ((memq (bound-and-true-p org-goto-map)
+                 (current-active-maps))
+           (org-goto-ret))
+          ((and (fboundp 'toc-org-insert-toc)
+                (member "TOC" (org-get-tags)))
+           (toc-org-insert-toc)
+           (message "Updating table of contents"))
+          ((string= "ARCHIVE" (car-safe (org-get-tags)))
+           (org-force-cycle-archived))
+          ((or (org-element-property :todo-type context)
+               (org-element-property :scheduled context))
+           (org-todo
+            (if (eq (org-element-property :todo-type context) 'done)
+                (or (car (+org-get-todo-keywords-for (org-element-property :todo-keyword context)))
+                    'todo)
+              'done))))
          ;; Update any metadata or inline previews in this subtree
          (org-update-checkbox-count)
          (org-update-parent-todo-statistics)

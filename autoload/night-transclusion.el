@@ -3,9 +3,17 @@
   :after org
   :init
   (progn
+    (defun night/org-transclusion-refresh-all ()
+      (interactive)
+      (org-transclusion-remove-all)
+      (org-transclusion-add-all))
+
     (map!
      ;; :map global-map "<f12>" #'org-transclusion-add
      :leader
-     :prefix "n"
-     :desc "Org Transclusion Mode" "t" #'org-transclusion-mode)
+     "n t" #'org-transclusion-mode
+     "n n" #'night/org-transclusion-refresh-all
+     "n b" #'org-transclusion-remove-all
+     "n m" #'org-transclusion-add-all
+     )
     (setq org-transclusion-exclude-elements nil)))

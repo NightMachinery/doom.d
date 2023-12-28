@@ -29,8 +29,7 @@
    nil
    (lambda ()
      (interactive)
-     (night/babel-ansi-all2)
-     ))
+     (night/babel-ansi-all2)))
   ;; (xterm-color-colorize-buffer)
 
   (comment
@@ -38,7 +37,10 @@
          :ing
          "TAB" #'org-cycle ;; trying to prevent =company= from hijacking these
          "<tab>" #'org-cycle
-         [tab] #'org-cycle
-         )))
+         [tab] #'org-cycle))
+;;;
+  (add-hook 'after-save-hook #'night/org-save-hook-fn)
+;;;
+  )
 
 (add-hook 'org-mode-hook #'night/org-startup)

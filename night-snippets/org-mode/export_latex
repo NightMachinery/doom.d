@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <x
+# uuid: <x
+# --
+#+begin_export latex
+`%`$0
+#+end_export

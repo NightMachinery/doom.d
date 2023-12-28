@@ -78,6 +78,8 @@
 ;;;
 (defun ns-yank-image-at-point-as-image ()
   "Yank the image at point to the X11 clipboard as image/png."
+  ;; @seeAlso [agfi:pbcopy-img]
+  ;;;
   (interactive)
   (let ((image (get-text-property (point) 'display)))
     (if (eq (car image) 'image)
@@ -88,7 +90,9 @@
                    (insert data)
                    (call-shell-region
                     (point-min) (point-max)
-                    "impbcopy"))) ;; http://www.alecjacobson.com/weblog/?p=3816 Linux x11: https://emacs.stackexchange.com/questions/41016/how-can-i-yank-images-from-emacs?noredirect=1#comment64407_41016
+                    "impbcopy")))
+                ;; impbcopy: http://www.alecjacobson.com/weblog/?p=3816
+                ;; Linux x11: https://emacs.stackexchange.com/questions/41016/how-can-i-yank-images-from-emacs?noredirect=1#comment64407_41016
                 (file
                  (if (file-exists-p file)
                      (start-process
@@ -171,6 +175,7 @@
 (night/set-leader-keys ", c" #'night/p-titlecase)
 (night/set-leader-keys ", ;" #'night/strip-prefixed-colons)
 (night/set-leader-keys ", i" #'ns-yank-image-at-point-as-image)
+(night/set-leader-keys "f Y" #'night/pbadd-current)
 ;;;
 (defun night/pbadd-current ()
   (interactive)

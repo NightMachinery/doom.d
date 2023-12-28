@@ -41,15 +41,43 @@
       (goto-char 0)
       (let ((directives
              (concat
+              "\n"
+              ;;; moved to =pdflatex-m= instead
+              ;; "#+latex_header: \\newcommand{\\globalBibPath}{"
+              ;; (getenv "nightResourcesPublic")
+              ;; "/latex/global_refs.bib"
+              ;; "}\n"
+              ;;;
+              "#+latex_header: \\input{"
+              (getenv "nightNotesPrivate")
+              "/subjects/resume, CV/common.tex"
+              "}\n"
+              ;;
               "#+latex_header: \\input{"
               (getenv "nightNotesPublic")
               "/resources/beamer/night_beamer_common1.tex"
               "}\n"
+              ;;
               "#+SETUPFILE: "
               (getenv "nightNotesPublic")
               "/resources/beamer/night_beamer_common1.org"
-              "\n")
-             ))
+              "\n"
+              ;;
+              )))
+        (message "night/h-org-export-preprocess-add-default-setupfiles: added directives: %s" directives)
+        (insert directives)))
+    (when (night/org-night-directive-present-p "night_beamer_biblio1")
+      (goto-char 0)
+      (let ((directives
+             (concat
+              "\n"
+              ;;
+              "#+latex_header: \\input{"
+              (getenv "nightNotesPublic")
+              "/resources/beamer/night_beamer_biblio1.tex"
+              "}\n"
+              ;;
+              )))
         (message "night/h-org-export-preprocess-add-default-setupfiles: added directives: %s" directives)
         (insert directives))))))
 

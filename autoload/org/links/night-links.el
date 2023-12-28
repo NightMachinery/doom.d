@@ -8,6 +8,17 @@
 ;; (require 'evil-org)
 ;; (require 'ol)
 ;;;
+(defun night/org-escape-title (title)
+  "Escape square brackets in TITLE by replacing them with curly braces.
+@seeAlso `org-link-escape'
+"
+  (org-link-escape
+   (replace-regexp-in-string
+    "\\[" "{"
+    (replace-regexp-in-string "\\]" "}" title))))
+(comment
+ (org-link-escape "This is a [sample] string with special characters."))
+
 (after! (org evil-org evil ol)
 ;;;
   (defun night/org-link-follow-copy (path arg)
@@ -133,11 +144,15 @@
    (night/org-title "HOME:b/a/.zshrc"))
 
   (defun night/h-remove-tags-for-description (str)
-    (--> str
-         (replace-regexp-in-string "[[:space:]]?@toread\\([^[:space:]]+\\)?" "" it)
-         (string-trim it)))
+    (let ((res
+           (--> str
+                (replace-regexp-in-string "[[:space:]]?@\\(?:links\\|toread\\|CR\\|towatch\\|todo\\|toplay\\|tosee\\)\\([^[:space:]]+\\)?" "" it)
+                (string-trim it))))
+      (message "Link title after removing bad tags: before: '%s' -> '%s'" str res)
+      res))
   (comment
-   (night/h-remove-tags-for-description "hi @toread45 @good "))
+   (night/h-remove-tags-for-description "hi @toread45 @good ")
+   (night/h-remove-tags-for-description "@links"))
 
   (defun night/org-description-formatter (link desc)
     (message "%s" (concat "night/org-description-formatter" " (beg): link=" link ", desc=" desc))
@@ -180,32 +195,33 @@
                 "GR")
                (t tail)))
              (desc (when desc
-                     (-> desc
-                         (string-trim-right ":?\\*?links\\*?")
-                         (string-trim-left "\\*+\s+")
-                         ;; (night/org-str-to-plain)
-                         ))))
+                     (--> desc
+                          (string-trim-left it "\\*+\s+")
+                          (night/h-remove-tags-for-description it)
+                          ;; (night/org-str-to-plain)
+                          ))))
         (message "%s" (concat "night/org-description-formatter: " "link=" link ", desc=" desc ", tail=" tail ", file=" file))
-        (cond
-         ((and desc (not (equalp desc "")))
-          ;; This cond branch skips the older, more complex branches below.
+        (night/org-escape-title
+         (cond
+          ((and desc (not (equalp desc "")))
+           ;; This cond branch skips the older, more complex branches below.
 
-          (night/h-remove-tags-for-description desc))
-         ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
-         ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
-          (let*
-              ((desc-tail
-                (or
-                 (cadr
-                  ;; The first time a link is created, its title will be styled =some/path:headline=; This causes the backlink's title to this link to become =other/path:some/path:headline=, which isn't nice.
-                  (s-match "[^:]*/[^:]*:\\(.*\\)" desc))
-                 desc)))
-            (if (not (equalp  desc-tail ""))
-                (concat tail ":" desc-tail)
-              tail)))
-         ((and tail (not (equalp tail ""))) tail)
-         ((and desc (not (equalp desc ""))) desc)
-         (t link)))))
+           desc)
+          ((and desc (not (equalp desc "")) (equalp desc tail)) desc)
+          ((and desc (not (equalp desc "")) tail (not (equalp tail "")))
+           (let*
+               ((desc-tail
+                 (or
+                  (cadr
+                   ;; The first time a link is created, its title will be styled =some/path:headline=; This causes the backlink's title to this link to become =other/path:some/path:headline=, which isn't nice.
+                   (s-match "[^:]*/[^:]*:\\(.*\\)" desc))
+                  desc)))
+             (if (not (equalp  desc-tail ""))
+                 (concat tail ":" desc-tail)
+               tail)))
+          ((and tail (not (equalp tail ""))) tail)
+          ((and desc (not (equalp desc ""))) desc)
+          (t link))))))
 
   ;; (cadr (s-match "^[^/]*:\\(.*\\)" "aJK:lol/as"))
   ;; (org-id-find "124fa3e8-c032-4b80-9ede-d3caff9cec8a")

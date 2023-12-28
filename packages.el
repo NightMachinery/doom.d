@@ -315,6 +315,8 @@
 ;;;
 (package! clipetty)
 ;;;
+(package! org-make-toc)
+;;;
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 ;;;

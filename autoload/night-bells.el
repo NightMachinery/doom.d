@@ -16,5 +16,6 @@
   (z-async t bell-batman-cave-open))
 ;;;
 (after! (org ox-beamer)
-  (advice-add #'org-beamer-export-to-pdf :after #'night/bell-export-completed))
+  ;; (advice-add #'org-beamer-export-to-pdf :after #'night/bell-export-completed)
+  )
 ;;;
