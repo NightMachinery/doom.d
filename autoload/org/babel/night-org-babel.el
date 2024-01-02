@@ -157,8 +157,11 @@ Assumes that the source block has already been executed."
                (cl-subseq
                 lines
                 (or first-relevant-line-index 0)
-                (or (+ 1 last-relevant-line-index)
-                    (+ 0 (length lines))))
+                (cond
+                 (last-relevant-line-index
+                  (+ 1 last-relevant-line-index))
+                 (t
+                  (+ 0 (length lines)))))
                "\n"))
              (result (replace-regexp-in-string "^\\(: \\|:$\\)" "" result t t))
 
