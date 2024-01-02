@@ -135,6 +135,7 @@ If on a:
   (if (button-at (point))
       (call-interactively #'push-button)
     (let* ((context (org-element-context))
+           ;; (org-element-type (org-element-context))
            (type (org-element-type context)))
       ;; skip over unimportant contexts
       (while (and context (memq type '(verbatim code bold italic underline strike-through subscript superscript)))
@@ -235,19 +236,24 @@ If on a:
         (`link
          (let* ((lineage (org-element-lineage context '(link) t))
                 (path (org-element-property :path lineage)))
-           (if (or (equal (org-element-property :type lineage) "img")
-                   (and path (image-type-from-file-name path)))
-               (progn ;; @monkeyPatched
-                 (message "%s"
-                          (z reval-to-stdout reval-ec pbcopy-img (identity path)))
-                 (progn
-                   (+org--toggle-inline-images-in-subtree
-                    (org-element-property :begin lineage)
-                    (org-element-property :end lineage)))
-                 (when (not (display-graphic-p))
-                   (org-open-at-point arg) ;; To open the image which works on Kitty.
-                   ))
-             (org-open-at-point arg))))
+           (cond
+            ((or (equal (org-element-property :type lineage) "img")
+                 (and path (image-type-from-file-name path)))
+             (progn ;; @monkeyPatched
+               (message "%s"
+                        (z reval-to-stdout reval-ec pbcopy-img (identity path)))
+               (progn
+                 (+org--toggle-inline-images-in-subtree
+                  (org-element-property :begin lineage)
+                  (org-element-property :end lineage)))
+               (when (not (display-graphic-p))
+                 (org-open-at-point arg)
+                 ;; To open the image which works on Kitty.
+                 )))
+            (t
+             ;; (message "Opening link ...")
+             (org-open-at-point arg)
+             ))))
 
         (`paragraph
          (+org--toggle-inline-images-in-subtree))
@@ -265,4 +271,133 @@ If on a:
             (org-element-property :begin context)
             (org-element-property :end context))))))))
 (advice-add '+org/dwim-at-point :override 'night/org-dwim-at-point)
+;;;
+(defun night/org-open-at-point (&optional arg)
+  "Open thing at point.
+The thing can be a link, citation, timestamp, footnote, src-block or
+tags.
+
+When point is on a link, follow it.  Normally, files will be opened by
+an appropriate application (see `org-file-apps').  If the optional prefix
+argument ARG is non-nil, Emacs will visit the file.  With a double
+prefix argument, try to open outside of Emacs, in the application the
+system uses for this file type.
+
+When point is on a timestamp, open the agenda at the day
+specified.
+
+When point is a footnote definition, move to the first reference
+found.  If it is on a reference, move to the associated
+definition.
+
+When point is on a src-block of inline src-block, open its result.
+
+When point is on a citation, follow it.
+
+When point is on a headline, display a list of every link in the
+entry, so it is possible to pick one, or all, of them.  If point
+is on a tag, call `org-tags-view' instead.
+
+On top of syntactically correct links, this function also tries
+to open links and time-stamps in comments, node properties, and
+keywords if point is on something looking like a timestamp or
+a link."
+  (interactive "P")
+  (org-load-modules-maybe)
+  (setq org-window-config-before-follow-link (current-window-configuration))
+  (org-remove-occur-highlights nil nil t)
+  (unless (run-hook-with-args-until-success 'org-open-at-point-functions)
+    (let* ((context
+	    ;; Only consider supported types, even if they are not the
+	    ;; closest one.
+	    (org-element-lineage
+	     (org-element-context)
+	     '(citation citation-reference clock comment comment-block
+                        footnote-definition footnote-reference headline
+                        inline-src-block inlinetask keyword link node-property
+                        planning src-block timestamp)
+	     t))
+	   (type (org-element-type context))
+	   (value (org-element-property :value context)))
+      (cond
+       ((not type) (user-error "No link found"))
+       ;; No valid link at point.  For convenience, look if something
+       ;; looks like a link under point in some specific places.
+       ((memq type '(comment comment-block node-property keyword))
+	(call-interactively #'org-open-at-point-global))
+       ;; On a headline or an inlinetask, but not on a timestamp,
+       ;; a link, a footnote reference or a citation.
+       ((memq type '(headline inlinetask))
+	(org-match-line org-complex-heading-regexp)
+	(let ((tags-beg (match-beginning 5))
+	      (tags-end (match-end 5)))
+	  (if (and tags-beg (>= (point) tags-beg) (< (point) tags-end))
+	      ;; On tags.
+	      (org-tags-view
+	       arg
+	       (save-excursion
+		 (let* ((beg-tag (or (search-backward ":" tags-beg 'at-limit) (point)))
+			(end-tag (search-forward ":" tags-end nil 2)))
+		   (buffer-substring (1+ beg-tag) (1- end-tag)))))
+	    ;; Not on tags.
+	    (pcase (org-offer-links-in-entry (current-buffer) (point) arg)
+	      (`(nil . ,_)
+	       (require 'org-attach)
+	       (when (org-attach-dir)
+		 (message "Opening attachment")
+		 (if (equal arg '(4))
+		     (org-attach-reveal-in-emacs)
+		   (org-attach-reveal))))
+	      (`(,links . ,links-end)
+	       (dolist (link (if (stringp links) (list links) links))
+		 (search-forward link nil links-end)
+		 (goto-char (match-beginning 0))
+		 (org-open-at-point arg)))))))
+       ;; On a footnote reference or at definition's label.
+       ((or (eq type 'footnote-reference)
+	    (and (eq type 'footnote-definition)
+		 (save-excursion
+		   ;; Do not validate action when point is on the
+		   ;; spaces right after the footnote label, in order
+		   ;; to be on par with behavior on links.
+		   (skip-chars-forward " \t")
+		   (let ((begin
+			  (org-element-property :contents-begin context)))
+		     (if begin (< (point) begin)
+		       (= (org-element-property :post-affiliated context)
+			  (line-beginning-position)))))))
+	(org-footnote-action))
+       ;; On a planning line.  Check if we are really on a timestamp.
+       ((and (eq type 'planning)
+	     (org-in-regexp org-ts-regexp-both nil t))
+	(org-follow-timestamp-link))
+       ;; On a clock line, make sure point is on the timestamp
+       ;; before opening it.
+       ((and (eq type 'clock)
+	     value
+	     (>= (point) (org-element-property :begin value))
+	     (<= (point) (org-element-property :end value)))
+	(org-follow-timestamp-link))
+       ((eq type 'src-block) (org-babel-open-src-block-result))
+       ;;; @monkeyPatched
+       ;; Do nothing on white spaces after an object.
+       ((and
+         nil
+         ;; @disabled I wanted to make this work when we are on the non-existent character at the end of the lines and the last character of the line is a non-whitespace link character (e.g., the line ends with `[audiofile:x]POINT_HERE`), but now I have opted for the simple approach of just disabling this optimization.
+         ;;;
+         (>= (point)
+             (save-excursion
+               (goto-char (org-element-property :end context))
+               (skip-chars-backward " \t")
+               (point))))
+	(user-error "Link NOT followed because we are the on whitespace after the link. See [help:night/org-open-at-point]."))
+       ;;;
+       ((eq type 'inline-src-block) (org-babel-open-src-block-result))
+       ((eq type 'timestamp) (org-follow-timestamp-link))
+       ((eq type 'link) (org-link-open context arg))
+       ((memq type '(citation citation-reference)) (org-cite-follow context arg))
+       (t (user-error "No link found")))))
+  (run-hook-with-args 'org-follow-link-hook))
+
+(advice-add 'org-open-at-point :override 'night/org-open-at-point)
 ;;;

@@ -1,9 +1,9 @@
 ;;; autoload/night-chatgpt.el -*- lexical-binding: t; -*-
 
-(after! (org)
+(after! (org night-openai)
   (use-package chatgpt-shell
     :ensure t)
-  (setq chatgpt-shell-openai-key (z var-get "openai_api_key"))
+  (setq chatgpt-shell-openai-key (night/openai-key-get))
   (setq dall-e-shell-openai-key chatgpt-shell-openai-key)
   (require 'ob-chatgpt-shell)
   (ob-chatgpt-shell-setup)

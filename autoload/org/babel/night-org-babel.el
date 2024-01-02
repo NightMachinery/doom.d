@@ -124,6 +124,70 @@ NO-BLOCKS-MESSAGE is a message string to display if no blocks are found in the s
           (when (org-in-src-block-p)
             (org-babel-remove-result))))))
 ;;;
+(defun night/org-babel-result-get ()
+  "Return the result of the current source block as a string.
+Assumes that the source block has already been executed."
+  (interactive)
+  (save-excursion
+    (let ((result-beg (org-babel-where-is-src-block-result))
+          result-end)
+      (unless result-beg
+
+        (error "No result found for the current source block"))
+      (goto-char result-beg)
+      (setq result-end (org-babel-result-end))
+      (let* ((raw-result (buffer-substring-no-properties result-beg result-end))
+             (result (string-trim raw-result))
+             (lines (split-string result "\n"))
+             (first-relevant-line-index
+              (cl-position-if-not
+
+               (lambda (line)
+                 (string-match-p "^\\(#\\+\\|:RESULTS:[ \t\n]*\\)" line))
+               lines))
+             (last-relevant-line-index
+              (cl-position-if
+               (lambda (line)
+                 (not
+                  (string-match-p "^\\(: ----+\\|:END:\\)[ \t]*$" line)))
+               lines :from-end t))
+             (result
+              (mapconcat
+               'identity
+               (cl-subseq
+                lines
+                (or first-relevant-line-index 0)
+                (or (+ 1 last-relevant-line-index)
+                    (+ 0 (length lines))))
+               "\n"))
+             (result (replace-regexp-in-string "^\\(: \\|:$\\)" "" result t t))
+
+             (result (string-trim result)))
+        ;; (message "first: %s, last: %s, lines: %s" first-relevant-line-index last-relevant-line-index lines)
+        (when (called-interactively-p)
+          (kill-new result)
+          (message "%s" result))
+        result))))
+
+(defun night/org-babel-copy-as-chat ()
+  "Copies the result section of the current source block as the last message in an LLM chat.
+
+@seeAlso [[file:~/code/python/PyNight/pynight/common_openai.py::def chatml_response_text_process]]
+"
+  (interactive)
+  (let* (
+         (last-msg (night/org-babel-result-get))
+         (assistant
+          (concat
+           "        {\"role\": \"assistant\", \"content\": r\"\"\""
+           last-msg
+           "\"\"\"},"))
+         (chat
+          (concat
+           assistant
+           "\n        {\"role\": \"user\", \"content\": r\"\"\"\n        \n        \"\"\"},")))
+    (kill-new chat)))
+;;;
 
   (map! :map 'evil-org-mode-map
         :localleader
@@ -135,6 +199,7 @@ NO-BLOCKS-MESSAGE is a message string to display if no blocks are found in the s
         "zp" #'night/org-babel-execute-before
         "zz" #'org-ctrl-c-ctrl-c
         "zv" #'night/org-babel-select-src-and-results
+        "zc" #'night/org-babel-copy-as-chat
         )
 ;;;
   (comment
