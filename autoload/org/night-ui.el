@@ -1,6 +1,11 @@
 ;;; autoload/org/night-ui.el -*- lexical-binding: nil; -*-
 
-(after! (org)
+(after! (org night-color)
+  ;;;
+  ;; The following make =org-verse= look the same as =org-quote=.
+  (custom-set-faces
+     '(org-verse ((t (:inherit org-quote)))))
+  ;;;
   (require 'jupyter-org-client)
   ;; to load =jupyter-org--ansi-color-apply-on-region=
 
@@ -69,13 +74,13 @@
                        (((class color) (min-colors 8)) (:foreground "green")))))
     (face-spec-set 'org-level-6 ;; originally copied from org-level-8
                    (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist
-                     '((((class color) (min-colors 16) (background light)) (:foreground "darkcyan"))
-                       (((class color) (min-colors 16) (background dark)) (:foreground "darkcyan"))
+                     `((((class color) (min-colors 16) (background light)) (:foreground ,(night/color-256rgb-to-hex 0 109 109)))
+                       (((class color) (min-colors 16) (background dark)) (:foreground ,(night/color-256rgb-to-hex 0 109 109)))
                        (((class color) (min-colors 8)) (:foreground "green")))))
     (face-spec-set 'org-level-7 ;; originally copied from org-level-8
                    (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist
-                     '((((class color) (min-colors 16) (background light)) (:foreground "deepskyblue"))
-                       (((class color) (min-colors 16) (background dark)) (:foreground "deepskyblue"))
+                     '((((class color) (min-colors 16) (background light)) (:foreground "deepskyblue4"))
+                       (((class color) (min-colors 16) (background dark)) (:foreground "deepskyblue4"))
                        (((class color) (min-colors 8)) (:foreground "green")))))
     (face-spec-set 'org-level-8 ;; originally copied from org-level-8
                    (org-compatible-face nil ;; not inheriting from outline-9 because that does not exist

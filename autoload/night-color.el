@@ -1,5 +1,5 @@
 ;;; autoload/night-color.el -*- lexical-binding: t; -*-
-
+;;;
 (defun night/color-name-to-rgb256 (name)
   (let ((rgb (color-name-to-rgb name)))
     (mapcar (lambda (value) (round (* value 255))) rgb)))
@@ -33,3 +33,8 @@ selected color."
                           (night/pbcopy text)
                           (message "copied: %s" text)))
               :caller 'counsel-colors-web)))
+;;;
+(defun night/color-256rgb-to-hex (red green blue &optional digits-per-component)
+  (color-rgb-to-hex (/ red 255.0) (/ green 255.0) (/ blue 255.0) digits-per-component))
+;;;
+(provide 'night-color)

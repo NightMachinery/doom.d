@@ -4,7 +4,28 @@
 ;; (setq night/persian-font "Courier New")
 
 (setq default-input-method "farsi-isiri-9147")
+;;;
+(defun night/insert-persian-half-space ()
+  "Insert a Persian half-space (zero-width non-joiner) character."
+  (interactive)
+  (insert-char ?\u200C))
 
+(defun night/insert-shift-space ()
+  (interactive)
+  (cond
+   ((string= current-input-method "farsi-isiri-9147")
+    (night/insert-persian-half-space))
+   (t
+    ;; (insert " ")
+    (insert-char ?\s)
+    ;; It'd be best if we could do shift+space from the original map, e.g., [help:org-self-insert-command], [help:lispy-space], but I don't know how to do that.
+    ;; It still doesn't matter much, as we never use shift+space in non-Persian buffers anyway.
+    )))
+
+(map!
+ :i
+ "S-SPC" #'night/insert-shift-space
+ )
 ;;;
 (setq visual-order-cursor-movement nil) ;; @redundant
 (map!
@@ -37,7 +58,6 @@
 
 (defun night/enable-bidirectional ()
   (interactive)
-
 
   (when (fboundp 'set-fontset-font)
     ;;  this function isn't defined in builds of Emacs that aren't compiled with GUI support.

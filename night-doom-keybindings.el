@@ -9,6 +9,8 @@
       ;; :desc "M-x" "SPC" #'night/fzf-M-x
 
       :desc "M-x" "SPC" #'execute-extended-command
+
+      "fp" #'+ivy/projectile-find-file
       )
 (comment (map!
   :ng "M-x" #'night/fzf-M-x ;; #'execute-extended-command
@@ -25,6 +27,8 @@
   ;; (define-key input-decode-map "\e[27;33;107~" [?\s-k])
   (define-key input-decode-map "\e[27;33;44~" [?\s-,])
   ;; @GPT4 The issue is with the `[s-,]` part. The correct syntax for a key sequence in Emacs Lisp is a vector of symbols or characters, not a list. You should use a vector instead of a list, =[?\s-,]=.
+;;; Adding Shift modified keys:
+(define-key input-decode-map "\e[27;2;32~" [?\S- ])
 ;;;
   (progn
     (comment

@@ -72,7 +72,16 @@
    :command (list "reval-paste" "md2org")
    :callback-after #'night/nop
    :insert-fn #'night/org-insert-and-fix-levels
-   :save-p t))
+   :save-p nil))
+
+(night/defun-named night/paste-org2md ()
+  (interactive)
+  (night/brishz-async-insert
+   :name $0
+   :command (list "reval-paste" "org2md")
+   :callback-after #'night/nop
+   :insert-fn #'night/insert-for-yank
+   :save-p nil))
 ;;;
 (defun night/p-titlecase ()
   (interactive)

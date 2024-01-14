@@ -2,64 +2,64 @@
 
 (after! (org evil-org evil)
 ;;;
-(defun night/yank-org-inner-object ()
-  (interactive)
-  (apply #'kill-ring-save (evil-org-select-inner-element (org-element-context))))
+  (defun night/yank-org-inner-object ()
+    (interactive)
+    (apply #'kill-ring-save (evil-org-select-inner-element (org-element-context))))
 
-(defun evil-org-select-inner-element (element)
-  "Select inner org ELEMENT."
-  (let ((type (org-element-type element))
-        (begin (org-element-property :begin element))
-        (end (org-element-property :end element))
-        (contents-begin (org-element-property :contents-begin element))
-        (contents-end (org-element-property :contents-end element))
-        (post-affiliated (org-element-property :post-affiliated element))
-        (post-blank (org-element-property :post-blank element)))
-    (cond
+  (defun evil-org-select-inner-element (element)
+    "Select inner org ELEMENT."
+    (let ((type (org-element-type element))
+          (begin (org-element-property :begin element))
+          (end (org-element-property :end element))
+          (contents-begin (org-element-property :contents-begin element))
+          (contents-end (org-element-property :contents-end element))
+          (post-affiliated (org-element-property :post-affiliated element))
+          (post-blank (org-element-property :post-blank element)))
+      (cond
 ;;; @monkeyPatched
-     ((memq type '(link))
-      (let*
-          ((link-type (org-element-property :type element))
-           (link-type-len (length link-type))
-           (link-path (org-element-property :path element))
-           (inner-begin
-            (save-excursion
-              (goto-char begin)
-              (re-search-forward "\\w\\|~" end)
-              (point)))
-           (path-begin
-            (cond
-             ((or
-               (not (equalp
-                     (buffer-substring-no-properties (- inner-begin 1) (+ inner-begin link-type-len -1))
-                     link-type))
-               (comment (member link-type '("fuzzy"))))
-              (- inner-begin 1))
-             ((member link-type '("http" "https" "ftp"))
-              (setq link-path (concat link-type ":" link-path))
-              (- inner-begin 1))
-             (t (+ inner-begin link-type-len))))
-           (link-path-len (length link-path))
-           (path-end (+ path-begin link-path-len)))
+       ((memq type '(link))
+        (let*
+            ((link-type (org-element-property :type element))
+             (link-type-len (length link-type))
+             (link-path (org-element-property :path element))
+             (inner-begin
+              (save-excursion
+                (goto-char begin)
+                (re-search-forward "\\w\\|~" end)
+                (point)))
+             (path-begin
+              (cond
+               ((or
+                 (not (equalp
+                       (buffer-substring-no-properties (- inner-begin 1) (+ inner-begin link-type-len -1))
+                       link-type))
+                 (comment (member link-type '("fuzzy"))))
+                (- inner-begin 1))
+               ((member link-type '("http" "https" "ftp"))
+                (setq link-path (concat link-type ":" link-path))
+                (- inner-begin 1))
+               (t (+ inner-begin link-type-len))))
+             (link-path-len (length link-path))
+             (path-end (+ path-begin link-path-len)))
 
-        (list path-begin path-end)))
+          (list path-begin path-end)))
 ;;;
-     ((or (string-suffix-p "-block" (symbol-name type))
-          (memq type '(latex-environment)))
-      ;; Special case on block types (thanks Nicolas Goaziou)
-      (list (org-with-point-at post-affiliated (line-beginning-position 2))
-            (org-with-point-at end (line-beginning-position (- post-blank)))))
-     ((memq type '(verbatim code))
-      (list (1+ begin) (- end post-blank 1)))
-     ('otherwise
-      (list (or contents-begin post-affiliated begin)
-            (or contents-end
-                ;; Prune post-blank lines from :end element
-                (org-with-point-at end
-                  ;; post-blank is charwise for objects and linewise for elements
-                  (if (memq type org-element-all-objects)
-                      (- end post-blank)
-                    (line-end-position (- post-blank))))))))))
+       ((or (string-suffix-p "-block" (symbol-name type))
+            (memq type '(latex-environment)))
+        ;; Special case on block types (thanks Nicolas Goaziou)
+        (list (org-with-point-at post-affiliated (line-beginning-position 2))
+              (org-with-point-at end (line-beginning-position (- post-blank)))))
+       ((memq type '(verbatim code))
+        (list (1+ begin) (- end post-blank 1)))
+       ('otherwise
+        (list (or contents-begin post-affiliated begin)
+              (or contents-end
+                  ;; Prune post-blank lines from :end element
+                  (org-with-point-at end
+                    ;; post-blank is charwise for objects and linewise for elements
+                    (if (memq type org-element-all-objects)
+                        (- end post-blank)
+                      (line-end-position (- post-blank))))))))))
 ;;;
   (defun night/insert-zero-width-space ()
     (interactive)
@@ -105,6 +105,41 @@
   (add-hook 'org-shiftright-hook #'night/org-shiftright)
   (add-hook 'org-shiftleft-final-hook #'night/org-shiftleft-final)
   (add-hook 'org-shiftright-final-hook #'night/org-shiftright-final)
+;;;
+  (defun night/org-next-visible-heading (arg)
+    "Move to the next visible heading line.
+With ARG, repeats or can move backward if negative."
+    (interactive "p")
+    (let ((regexp (concat "^" (org-get-limited-outline-regexp))))
+      (if (< arg 0)
+          (beginning-of-line)
+        (end-of-line))
+      (while (and (< arg 0) (re-search-backward regexp nil
+                                                :move
+                                                ;; t ;; @monkeyPatched
+                                                ))
+        (unless (bobp)
+          (when (org-fold-folded-p)
+            (goto-char (org-fold-previous-visibility-change))
+            (unless (looking-at-p regexp)
+              (re-search-backward regexp nil :mode))))
+        (cl-incf arg))
+      (while (and (> arg 0) (re-search-forward regexp nil
+                                               :move
+                                               ;; t ;; @monkeyPatched
+                                               ))
+;;; @monkeyPatched disabled this part which fixed the issue
+        ;; ** [help:org-next-visible-heading] jumps to the end on some files
+        ;; *** e.g., on [[id:c799e112-f124-42c2-8cf0-d6931a3d109e][MBZUAI/faculty]]
+        ;; (when (org-fold-folded-p)
+        ;;   (goto-char (org-fold-next-visibility-change))
+        ;;   (skip-chars-forward " \t\n")
+        ;;   (end-of-line))
+;;;
+        (cl-decf arg))
+      (if (> arg 0) (goto-char (point-max)) (beginning-of-line))
+      ))
+  (advice-add 'org-next-visible-heading :override 'night/org-next-visible-heading)
 ;;;
   (map! :map org-mode-map
         :localleader
@@ -163,14 +198,19 @@
    "rf" #'+org/refile-to-file
    "rF" #'night/org-refile-to-new-file
 
-
+   "ui" #'orgmdb-fill-movie-properties
+   ;; Update IMDB
+   ;; Perhaps we should add an after-advice to run =+org/open-all-folds= or =revert-buffer=? There is a bug that the inserted properties drawer can't be opened without running a workaround first ...revert-buffer a bug that the inserted properties drawer can't be opened without running a workaround first ...
 
    "lC" #'night/url2org
    "lc" #'night/org-link-browser-current
    "le" #'night/org-link-edge-current
    "l;" #'night/org-link-arc-current
-
-   "ui" #'orgmdb-fill-movie-properties
-   ;; Update IMDB
-   ;; Perhaps we should add an after-advice to run =+org/open-all-folds= or =revert-buffer=? There is a bug that the inserted properties drawer can't be opened without running a workaround first ...revert-buffer a bug that the inserted properties drawer can't be opened without running a workaround first ...
-   ))
+   )
+  (map!
+   :leader
+   "lC" #'night/url2org
+   "lc" #'night/org-link-browser-current
+   "le" #'night/org-link-edge-current
+   "l;" #'night/org-link-arc-current)
+  )

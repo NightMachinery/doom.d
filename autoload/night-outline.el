@@ -44,7 +44,7 @@
 
   (defun night/goto-org-heading ()
     (interactive)
-    (night/outline-goto-v1 "^ *\\(?:#\\|;\\|%\\|--\\|///?\\)* *[*]\\{1,8\\} ")
+    (night/outline-goto-v1 "^ *\\(?:#\\|;\\|%\\|---?\\|///?\\)* *[*]\\{1,8\\} ")
     ;; =///?= is to make it work with an odd number of slashes.
     )
 
@@ -81,12 +81,18 @@ Otherwise, it will be one level below."
   (map! :map prog-mode-map
         :localleader
         :n "." #'night/outline-goto)
-  (map!
-        :localleader
+
+  (map! :leader
         :n "/" #'night/goto-org-heading)
+  (comment
+   (map!
+    :localleader
+    :n "/" #'night/goto-org-heading)
+   )
   (map! :map org-mode-map
-        :localleader
-        :n "/" #'night/goto-org-heading)
+         :localleader
+         :n "/" #'night/goto-org-heading)
+
   (map! :map
         (
          ;; outshine-mode-map
