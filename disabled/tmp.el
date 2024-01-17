@@ -135,3 +135,10 @@
       (add-variable-watcher 'company-backends 'night/company-backends-watcher))))
 ;;;
 ;;;
+(setq image-transform-smoothing nil)
+(setq image-transform-smoothing t)
+(setq image-transform-smoothing 'image--default-smoothing)
+(yas-lookup-snippet "hear-get" 'org-mode)
+(yas-lookup-snippet "auto-heading" 'org-mode)
+(yas-lookup-snippet "h67" 'org-mode)
+(yas-lookup-snippet "*" 'org-mode)

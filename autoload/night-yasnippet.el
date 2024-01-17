@@ -1,5 +1,23 @@
 ;;; autoload/night-yasnippet.el -*- lexical-binding: t; -*-
+;;;
+(cl-defun night/h-point-at-beginning-p
+    (&key
+       prefix-pattern
+       (fixed-strings nil))
+  "Check if the point is at the beginning of a line followed by PREFIX-PATTERN."
+  (let ((point-start (point))
+        (line-start (line-beginning-position))
 
+        (pattern (if fixed-strings
+                     (regexp-quote prefix-pattern)
+
+                   prefix-pattern)))
+    (save-excursion
+      (goto-char line-start)
+      (when (looking-at pattern)
+        (let ((match-end (match-end 0)))
+          (= point-start match-end))))))
+;;;
 (after! yasnippet
   (setq +snippets-dir (concat (getenv "DOOMDIR") "/" "night-snippets/"))
   (setq yas-snippet-dirs (list +snippets-dir))

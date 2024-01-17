@@ -1,0 +1,6 @@
+# name: auto-heading-alias1
+# key: 8
+# type: command
+# condition: (night/h-point-at-beginning-p :prefix-pattern "\\*\\|8")
+# --
+(yas-expand-snippet (yas-lookup-snippet "auto-heading" 'org-mode))

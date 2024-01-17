@@ -22,9 +22,18 @@
 (defun night/load-last ()
   ;; autoloaded functions can still get loaded after this; Use:
   ;; (advice-add 'original-function :override #'something-fixed)
-  ;;;
+;;;
   ;; (mapcar #'load '("autoload/night-completion.el"))
-  (mapcar #'load-night '("doom-overrides" "last")))
+  (mapcar #'load-night '("doom-overrides" "last"))
+;;;
+  (when (display-graphic-p)
+    (setq ns-use-native-fullscreen t)
+    ;; Non-nil means to use native fullscreen on Mac OS X 10.7 and later.
+
+    (toggle-frame-fullscreen)
+    (message "Fullscreen activated!"))
+;;;
+  )
 
 (defun night/load-truly-last ()
   (mapcar #'load-night '("truly-last")))

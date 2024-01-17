@@ -50,7 +50,8 @@
  '(rustic-ansi-faces
    ["#FDF6E3" "#dc322f" "#859900" "#b58900" "#268bd2" "#d33682" "#2aa198" "#556b72"])
  '(safe-local-variable-values
-   '((org-use-tag-inheritance)
+   '((coding-system-for-write . utf-8)
+     (org-use-tag-inheritance)
      (copilot-mode . t)
      (undo-fu-session-mode . t)
      (undo-fu-session-mode)
@@ -101,5 +102,6 @@
  '(eldoc-box-body ((t (:background "light steel blue" :foreground "black"))))
  '(fill-column-indicator ((t (:foreground "gray80" :weight normal))))
  '(multi-magit-repo-heading ((t (:inherit magit-section-heading :box nil))))
+ '(org-verse ((t (:inherit org-quote))))
  '(speedbar-selected-face ((t (:foreground "#008B45" :underline t))))
  '(ts-fold-replacement-face ((t (:foreground unspecified :box nil :inherit font-lock-comment-face :weight light)))))

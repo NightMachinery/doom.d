@@ -46,10 +46,17 @@
   (interactive)
   (find-file (concat
               (getenv "nightNotesPrivate")
-              "/subjects/ML/chatlog/chatgpt/megalog.org")))
+              "/subjects/ML/chatlog/chatgpt/megalog/gen.org")))
+
+(defun night/bookmarks-open-latex-ocr ()
+  (interactive)
+  (find-file (concat
+              (getenv "nightNotesPrivate")
+              "/subjects/ML/chatlog/chatgpt/GPT4V/LaTeX OCR/1.org")))
 
 (night/set-leader-keys "z t" #'night/bookmarks-open-tmp)
 (night/set-leader-keys "z z" #'night/bookmarks-open-chatgpt)
+(night/set-leader-keys "z l" #'night/bookmarks-open-latex-ocr)
 ;;;
 (cl-defun night/save-buffer
     (&key (force-normal-state t))

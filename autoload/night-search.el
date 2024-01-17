@@ -54,7 +54,7 @@
 ;;;
 (map! :map ivy-minibuffer-map ;; counsel-ag-map
       ;; "=" #'ivy-call-and-recenter
-      "M-c" #'ivy-call-and-recenter
+      "M-/" #'ivy-call-and-recenter
       "C-l" #'ivy-call-and-recenter
       )
 
