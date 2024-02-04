@@ -100,7 +100,7 @@ move COUNT - 1 screen lines forward first."
 ;;;
   (unbind-key "C-<wheel-down>" global-map) ;; bound to various functions of [help:text-scale-adjust]
   (unbind-key "C-<wheel-up>" global-map)
-
+;;;
   (map! :n
         "J" #'counsel-dash-at-point     ; originally joined the two lines.
         :nvig
@@ -142,10 +142,18 @@ move COUNT - 1 screen lines forward first."
         "0" #'evil-beginning-of-line-or-visual-line
         :nvo
         "$" #'evil-end-of-line-or-visual-line
-        :nvo                ; the operator hotkeys are also set in night-evil.el
+
+        :nvo
         "j" #'evil-next-line
+        :nvio
+        "<down>" #'evil-next-line
+        ;; We can't remap these in the global mode, or =ivy= breaks
+
+        :nvio
+        "<up>" #'evil-previous-line
         :nvo
         "k" #'evil-previous-line
+
         :nvo
         "] \\" #'night/repeat-command
         :nvo
@@ -155,6 +163,7 @@ move COUNT - 1 screen lines forward first."
   (setq expand-region-reset-fast-key "c")
 
   (map! :leader
+        "b D" #'night/force-kill-current-buffer
         "b R" #'night/buffer-reopen
         ;; "f r" #'night/fzf-recentf ;; somewhat slow
         "f r" #'counsel-recentf

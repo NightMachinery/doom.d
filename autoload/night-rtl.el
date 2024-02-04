@@ -26,6 +26,24 @@
  :i
  "S-SPC" #'night/insert-shift-space
  )
+
+;; [help:+default-minibuffer-maps]
+(map! :map
+      (
+       minibuffer-local-map
+       ivy-minibuffer-map
+       ;; minibuffer-mode-map
+       ;; read-expression-map
+       ;; evil-ex-map
+       ;; evil-ex-search-keymap
+       evil-ex-completion-map)
+      ;; ivy-minibuffer-map
+      :g
+      "S-SPC"
+      #'night/insert-shift-space
+      ;; "i"
+      ;; #'night/bello
+      )
 ;;;
 (setq visual-order-cursor-movement nil) ;; @redundant
 (map!
@@ -35,24 +53,6 @@
  "<left>" #'evil-backward-char
  :gnvio
  "<right>" #'evil-forward-char
-;;;
-;;;
- ;; This bug also happens with =evil-previous-line=, so I am reverting these. But it might be that different contexts are buggy depending on which command is used. Update: I think the bug happens with logical movement in both commands. (Visual movement with =next-line= works fine, it seems.)
- ;; This bug does not exist in =emacs -q= with =(setq bidi-paragraph-direction 'nil)=.
- ;; Test it with: [[id:4d81b59d-5b5c-4a69-9791-92d6c71e78d2][TA/gen:Logic circuits]]
-
- ;; :g
- ;; ;; :nviog
- ;; "<up>" #'previous-line ;; We can't remap these in the global mode, or =ivy= breaks
- ;; :g
- ;; ;; :nviog
- ;; "<down>" #'next-line
-
- ;; :nvio
- ;; "<up>" #'evil-previous-line ;; #'evil-previous-visual-line or #'previous-line can get buggy on some lines (this happens on LTR lines as well)
- ;; :nvio
- ;; "<down>" #'evil-next-line ;; #'evil-next-visual-line
-;;;
  )
 ;;;
 
@@ -72,8 +72,95 @@
      'arabic
      night/persian-font
      ))
+  ;;;
   (setq face-font-rescale-alist `((,night/persian-font . 1.30)))
-  (setq bidi-paragraph-direction 'nil))
+  (setq bidi-paragraph-direction 'nil)
+  (setq bidi-paragraph-separate-re "^"
+        bidi-paragraph-start-re "^"))
 
+(defun night/enable-bidirectional-extras ()
+  (interactive)
+  ;;;
+  (setq-local line-move-ignore-invisible nil)
+  ;; [[id:ff0eb77c-aa38-4cb1-8633-c7d255e479a3][Scrolling Bug]]
+  ;;;
+  )
+
+(defun night/h-rtl-enter ()
+  (interactive)
+  (activate-input-method "farsi-isiri-9147")
+  (insert "\n"))
+
+(defun night/h-latex-after-save ()
+  (interactive)
+  (z-async t h-seminar-compile-emacs)
+  ;; @todo0 Delete the above line, we no longer need it.
+  )
+(defun night/latex-rtl-opinionated ()
+  (interactive)
+  (map! :map 'local
+        :i "\\" (lambda () (interactive)
+                  (activate-input-method nil)
+                  (insert "\\"))
+        :i "<return>" #'night/h-rtl-enter
+        :i "RET" #'night/h-rtl-enter
+        )
+;;;
+  (add-hook 'after-save-hook
+            #'night/h-latex-after-save
+            nil t)
+;;;
+  (setq-local company-backends
+              ;; company-dabbrev doesn't seem to find dabbrev completions from other buffers, unlike normal dabbrev. I tried it with everything else disabled, too, for both dabbrev and dabbrev-code.
+              '(
+                company-dabbrev
+                company-dabbrev-code
+                (
+                 company-reftex-labels company-reftex-citations
+                 (+latex-symbols-company-backend company-auctex-macros company-auctex-environments)
+                 company-capf company-files
+                 company-yasnippet
+                 )
+                ))
+  (setq-local company-idle-delay 0)
+  (setq-local company-frontends
+              '(
+                ;; company-pseudo-tooltip-frontend
+                company-preview-frontend
+                ;; This preview frontend didn't show anything for me ...
+                ))
+  (setq-local company-minimum-prefix-length 3)
+  )
 (add-hook 'org-mode-hook 'night/enable-bidirectional)
 (add-hook 'markdown-mode-hook 'night/enable-bidirectional)
+(add-hook 'LaTeX-mode-hook 'night/enable-bidirectional)
+(add-hook 'LaTeX-mode-hook 'night/enable-bidirectional-extras)
+;;;
+(defun night/evil-line-move-with-bidi-workaround (count)
+  "Move the cursor COUNT lines, considering the bidirectional paragraph direction."
+  ;; This function works around a bug where we can't scroll.
+  ;; [[id:ff0eb77c-aa38-4cb1-8633-c7d255e479a3][Scrolling Bug]]
+  (let ((line-move-visual nil))
+    ;; `line-move-visual': `evil-previous-line' is specifically for moving logical lines. There is `evil-previous-visual-line' for visual lines.
+    (cond
+     ((eq (current-bidi-paragraph-direction) 'right-to-left)
+      (let ((line-move-ignore-invisible nil))
+        (evil-line-move count)))
+     (t
+      (evil-line-move count)))))
+
+(evil-define-motion night/evil-previous-line (count)
+  "Move the cursor COUNT lines up, working around a bug that makes scrolling not work."
+
+  :type line
+  (night/evil-line-move-with-bidi-workaround (- (or count 1))))
+
+(evil-define-motion night/evil-next-line (count)
+  "Move the cursor COUNT lines down, working around a bug that makes scrolling not work."
+
+  :type line
+  (night/evil-line-move-with-bidi-workaround (or count 1)))
+
+(advice-add 'evil-next-line :override #'night/evil-next-line)
+(advice-add 'evil-previous-line :override #'night/evil-previous-line)
+;;;

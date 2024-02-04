@@ -15,3 +15,4 @@ Also see [help:doom-shut-up-a]."
                                  (message "hi")
                                  nil))
 ;;;
+(provide 'night-macros)

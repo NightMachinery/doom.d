@@ -4,7 +4,51 @@
 
 ;;;
 (require 'ox-ipynb)
+;;;
+(defun night/h-ox-ipynb-split-text (s)
+  "Given a string S, split it into substrings.
+Each heading is its own string. Also, split on #+ipynb-newcell and #+attr_ipynb.
+Empty strings are eliminated."
+  (let* ((s1 (s-slice-at org-heading-regexp s))
+         ;; split headers out
+         (s2 (cl-loop for string in s1
+                   append
+                   (if (string-match org-heading-regexp string)
+                       (let ((si (split-string string "\n"))
+			     heading content)
+			 ;; The first one is definitely the heading. We may also
+			 ;; need properties.
+			 (setq heading (pop si))
+			 (when (and
+                                org-export-with-properties
+                                si (s-matches? ":PROPERTIES:" (car si)))
+			   ;; @monkeyPatched I added `org-export-with-properties' above.
+                           ;;;
+                           (setq heading (concat "\n" heading (pop si) "\n"))
+			   (while (not (s-matches? ":END:" (car si)))
+			     (setq heading (concat heading (pop si) "\n")))
+			   (setq heading (concat heading (pop si) "\n"))
+                           )
+                         (list heading
+			       (mapconcat 'identity si "\n")))
+                     (list string))))
+         (s3 (cl-loop for string in s2
+                   append
+                   (split-string string "#\\+ipynb-newcell")))
+	 ;; check for paragraph metadata and split on that, but keep the attribute.
+	 (s4 (cl-loop for string in s3
+                   append
+		   ;; Note I specifically leave off the b: in this pattern so I
+		   ;; can use it in the next section
+                   (split-string string "^#\\+attr_ipyn")))
+	 (s5 (cl-loop for string in s4 collect
+		   (if (string-prefix-p "b: " string t)
+		       (concat "#+attr_ipyn" string)
+		     string))))
 
+    s5))
+(advice-add 'ox-ipynb-split-text :override #'night/h-ox-ipynb-split-text)
+;;;
 (defun night/export-org-file-to-ipynb (&optional file)
   (interactive)
   (let* ((file

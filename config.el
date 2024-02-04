@@ -5,15 +5,18 @@
 ;;; this needs to be first, otherwise any error in our config will reset recentf
 (require 'recentf)
 (after! recentf
-  ;; (customize-set-value 'recentf-auto-cleanup 3600) ; doesn't work
+;;;
+  ;; (customize-set-variable 'recentf-auto-cleanup 3600)
+  ;; Cleanup each time Emacs has been idle that number of seconds.
 
-  (customize-set-variable 'recentf-auto-cleanup 3600)
-  (setq recentf-auto-cleanup 3600)
-  ;; (customize-set-variable 'recentf-auto-cleanup 'never)
-  ;; (setq recentf-auto-cleanup 'never)
+  (customize-set-variable 'recentf-auto-cleanup 'never)
+  ;; We do the cleanup ourselves.
+;;;
 
   (setq recentf-max-saved-items 50000)
   (recentf-load-list)
+
+  ;; @seeAlso [[./autoload/night-recentf.el]]
   )
 ;;;
 (defmacro mycomment (&rest a)

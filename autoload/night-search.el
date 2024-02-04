@@ -2,7 +2,35 @@
 
 (after! rg
   (rg-enable-menu))
+;;;
+(defvar night/advice-ivy-calling-enabled-p t
+  "Control whether `ivy-calling' is enabled in advice.
+This variable can be bound dynamically.")
+(setq night/advice-ivy-calling-enabled-p 'no-arg)
 
+(defun night/h-advice-ivy-calling (orig-fun &rest args)
+  "Advice to temporarily set `ivy-calling' to `night/advice-ivy-calling-enabled-p' around other functions."
+  (let ((ivy-calling-tmp (default-value 'ivy-calling)))
+    (setq-default ivy-calling
+          (cond
+           ((eq night/advice-ivy-calling-enabled-p 'no-arg)
+            (not
+             ;; C-u should not be present to enable ivy-calling:
+             (= (prefix-numeric-value current-prefix-arg) 4)))
+           (t night/advice-ivy-calling-enabled-p))
+          )
+    (unwind-protect
+        (apply orig-fun args)
+      (setq-default ivy-calling ivy-calling-tmp))))
+
+(defun night/M-x-no-ivy-calling ()
+  "Call `counsel-M-x' with `ivy-calling' disabled."
+  (interactive)
+  (let ((night/advice-ivy-calling-enabled-p nil))
+    (counsel-M-x)))
+
+(advice-add '+ivy/project-search :around #'night/h-advice-ivy-calling)
+;;;
 ;; @retired This might only work in "project" dirs. We might need to wrap around counsel-rg directly.
 (cl-defun night/search-dir
     (&key
@@ -26,23 +54,19 @@
                       (s-join " "
                               (if (equalp dir "/")
                                   extra-paths ;; The root path / is assumed to mean only search extra-paths.
-                                  (cons dir extra-paths))))
+                                (cons dir extra-paths))))
             args)))
     (progn
       ;; (message "args: %s" args)
-
-      (setq ivy-calling-tmp ivy-calling)
-      (setq-default ivy-calling t)
-      (unwind-protect
-          (counsel-rg query dir args prompt)
+      (counsel-rg query dir args prompt)
 ;;;
-        ;; (call-interactively
-        ;;  (cond
-        ;;   ((featurep! :completion ivy) #"+ivy/project-search-from-cwd)
-        ;;   ((featurep! :completion helm) #'+helm/project-search-from-cwd)
-        ;;   (#'rgrep)))
-        (setq-default ivy-calling ivy-calling-tmp)))))
-
+      ;; (call-interactively
+      ;;  (cond
+      ;;   ((featurep! :completion ivy) #"+ivy/project-search-from-cwd)
+      ;;   ((featurep! :completion helm) #'+helm/project-search-from-cwd)
+      ;;   (#'rgrep)))
+      )))
+(advice-add 'night/search-dir :around #'night/h-advice-ivy-calling)
 ;;;
 ;; (setq-default ivy-calling t)
 (setq-default ivy-calling nil)
@@ -55,7 +79,7 @@
 (map! :map ivy-minibuffer-map ;; counsel-ag-map
       ;; "=" #'ivy-call-and-recenter
       "M-/" #'ivy-call-and-recenter
-      "C-l" #'ivy-call-and-recenter
+      "C-l" #'ivy-call-and-recenter     ;; Sth is overriding this
       )
 
 (after! deadgrep

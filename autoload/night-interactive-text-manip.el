@@ -8,10 +8,10 @@ word or non-word."
          (beg-of-line (line-beginning-position))
          ;; (orig-line (line-number-at-pos))
          (backward-word-point
-          (progn (night/backward-word) (point)))
+          (save-excursion
+            (night/backward-word) (point)))
          (backward-non-word-point
-          (progn
-            (goto-char orig-point)
+          (save-excursion
             (night/backward-non-word) (point)))
          (min-point
           (max backward-word-point
@@ -38,7 +38,10 @@ word or non-word."
 (defun night/backward-word ()
   (interactive)
   (night/backward-non-word
-   :pat (concat "[" "a-zA-Z0-9*" "]")))
+   :pat
+        "\\sw"
+   ;; (concat "[" "a-zA-Z0-9*" "]")
+   ))
 
 (cl-defun night/forward-word (&key pat)
   "Move forward until encountering the end of a word, but do not move to the next line."
@@ -47,7 +50,9 @@ word or non-word."
     (forward-char 1))
   (let* ((pat
           (or pat
-              (concat "[" "a-zA-Z0-9*" "]")))
+                "\\sw"
+              ;; (concat "[" "a-zA-Z0-9*" "]")
+              ))
          (search-forward-p t)
          (end-of-line (line-end-position)))
     (when search-forward-p

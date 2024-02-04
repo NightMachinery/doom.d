@@ -13,6 +13,8 @@
 (defun night/on-buffer-startup ()
   (setq line-move-visual nil))
 
+(setq-default line-move-visual nil)
+(setq line-move-visual nil)
 (add-hook 'after-change-major-mode-hook #'night/on-buffer-startup)
 ;;;
 (setq pop-up-frames nil) ;;Default is true.

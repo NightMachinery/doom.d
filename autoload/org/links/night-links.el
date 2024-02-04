@@ -258,6 +258,8 @@
             ("NIGHTDIR" . ,(concat (getenv "NIGHTDIR") "/"))
             ("cellar" . ,(concat (getenv "cellar") "/"))
             ("nightNotes" . ,(concat (getenv "nightNotes") "/"))
+            ("nightNotesPublic" . ,(concat (getenv "nightNotesPublic") "/"))
+            ("nightNotesPrivate" . ,(concat (getenv "nightNotesPrivate") "/"))
             ("orgdir" . ,(concat  org-directory "/"))
             ("org_image_dir" . ,(concat (getenv "org_img_dir") "/"))
             ("vol" . ,(concat  "/Volumes/"))))
@@ -272,6 +274,14 @@
     )
   ;; @bug setting these completion functions causes these link types to appear twice in the =\ l l= list
   (org-link-set-parameters "nightNotes" :complete #'org-nightNotes-complete-link)
+
+  (defun org-nightNotesPublic-complete-link ()
+    (concat "nightNotesPublic:" (night/browse-notes (getenv "nightNotesPublic"))))
+  (org-link-set-parameters "nightNotesPublic" :complete #'org-nightNotesPublic-complete-link)
+  (defun org-nightNotesPrivate-complete-link ()
+    (concat "nightNotesPrivate:" (night/browse-notes (getenv "nightNotesPrivate"))))
+  (org-link-set-parameters "nightNotesPrivate" :complete #'org-nightNotesPrivate-complete-link)
+
 
   (defun org-NIGHTDIR-complete-link ()
     (concat "NIGHTDIR:" (night/browse-NIGHTDIR))

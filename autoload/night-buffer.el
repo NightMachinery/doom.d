@@ -1,5 +1,12 @@
 ;;; ~/doom.d/night-buffer.el -*- lexical-binding: t; -*-
 ;;;
+(defun night/force-kill-current-buffer ()
+  (interactive)
+  ;; [[https://emacs.stackexchange.com/questions/59348/force-kill-a-buffer][force kill a buffer? - Emacs Stack Exchange]]
+  ;; You can use [help:with-current-buffer] together with this to force kill any buffer.
+  (let (kill-buffer-hook kill-buffer-query-functions)
+    (kill-buffer)))
+;;;
 (defun night/buffer-reopen ()
   (interactive)
   (if-let (filename (or

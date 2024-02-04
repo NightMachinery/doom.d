@@ -46,7 +46,6 @@
  '(pdf-view-midnight-colors (cons "#556b72" "#FDF6E3"))
  '(pos-tip-background-color "#eee8d5" t)
  '(pos-tip-foreground-color "#586e75" t)
- '(recentf-auto-cleanup 3600)
  '(rustic-ansi-faces
    ["#FDF6E3" "#dc322f" "#859900" "#b58900" "#268bd2" "#d33682" "#2aa198" "#556b72"])
  '(safe-local-variable-values

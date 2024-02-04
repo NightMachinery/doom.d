@@ -27,13 +27,13 @@
       (when-let ((start-char (night/read-char-or-cancel "Start char: ")))
         ;; (message "start-char: %s" start-char)
         (let (start-pos end-pos)
-          (setq start-pos (avy-process (avy--regex-candidates (string start-char))))
+          (setq start-pos (avy-process (avy--regex-candidates (regexp-quote (string start-char)))))
           ;; If a starting position is selected
           (when (and
                  start-pos
                  (listp start-pos))
             (when-let ((end-char (night/read-char-or-cancel "End char: ")))
-              (setq end-pos (avy-process (avy--regex-candidates (string end-char))))
+              (setq end-pos (avy-process (avy--regex-candidates (regexp-quote (string end-char)))))
               ;; If an ending position is selected, copy the text
               (when (and
                      end-pos

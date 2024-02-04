@@ -191,6 +191,52 @@ Assumes that the source block has already been executed."
            "\n        {\"role\": \"user\", \"content\": r\"\"\"\n        \n        \"\"\"},")))
     (kill-new chat)))
 ;;;
+(cl-defun night/h-org-babel-navigate-src-block (&key (direction 'backward) (k 1))
+  "Move to the next or previous Org-mode source block depending on DIRECTION.
+Move the point K lines in the specified direction before starting the search.
+We move between the start and beginning of blocks. `org-babel-next-src-block'/`org-babel-previous-src-block' always moves to the beginning of blocks."
+  (let ((case-fold-search t) ;; Ensure case-insensitive search
+        (search-fn (if (eq direction 'backward)
+                       're-search-backward
+                     're-search-forward))
+
+        (block-found nil))
+
+    ;; Use save-excursion to avoid moving the point if no block is found
+    (save-excursion
+      ;; Move the point k lines in the specified direction
+      (if (eq direction 'backward)
+
+          (forward-line (- k))
+        (forward-line k))
+
+      ;; Search for the source block
+      (setq block-found
+            (funcall search-fn
+                     "#\\+\\(begin\\|end\\)_"
+                     ;; \\(src\\|example\\|quote\\|verse\\)
+                     ;; We use this for navigation, and moving to blocks of all types is actually better for us.
+                     nil t)))
+
+    ;; If a block is found, move the point to the block and center the screen
+    (if block-found
+        (progn
+          (goto-char (match-beginning 0))
+          (night/screen-center))
+      (error "No %s source block found" (symbol-name direction)))))
+
+(defun night/org-babel-previous-src-block ()
+  "Move to the previous Org-mode source block.
+See `night/h-org-babel-navigate-src-block'."
+  (interactive)
+  (night/h-org-babel-navigate-src-block :direction 'backward))
+
+(defun night/org-babel-next-src-block ()
+  "Move to the next Org-mode source block.
+See `night/h-org-babel-navigate-src-block'."
+  (interactive)
+  (night/h-org-babel-navigate-src-block :direction 'forward))
+;;;
 
   (map! :map 'evil-org-mode-map
         :localleader

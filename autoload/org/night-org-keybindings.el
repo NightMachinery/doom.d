@@ -179,10 +179,13 @@ With ARG, repeats or can move backward if negative."
    ;; :nivo "C-M-<up>" #'org-backward-heading-same-level
    ;; :nivo "C-M-<down>" #'org-forward-heading-same-level
 
-   :nvoi "C-<up>" #'org-babel-previous-src-block
-   :nvoi "C-<down>" #'org-babel-next-src-block
+
    ;; :nvoi "C-M-<up>" #'org-babel-previous-src-block
    ;; :nvoi "C-M-<down>" #'org-babel-next-src-block
+   ;; :nvoi "C-<up>" #'org-babel-previous-src-block
+   ;; :nvoi "C-<down>" #'org-babel-next-src-block
+   :nvoi "C-<up>" #'night/org-babel-previous-src-block
+   :nvoi "C-<down>" #'night/org-babel-next-src-block
 
    :nvo "C-S-<left>" #'org-backward-heading-same-level
    :nvo "C-S-<right>" #'org-forward-heading-same-level
