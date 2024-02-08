@@ -15,7 +15,9 @@
        ((member-ignore-case ext '("org")) t)
        (t (xterm-color-colorize-buffer)
           (set-buffer-modified-p nil)
-          (read-only-mode))))
+          (read-only-mode)
+          ;; =read-only-mode= activates =view-mode-map=.
+          )))
 
 ;;;
     (comment

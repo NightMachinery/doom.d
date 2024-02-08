@@ -30,3 +30,7 @@
                    (define-key map "N" #'evil-snipe-repeat-reverse)
                    map))
            )
+;;;
+(map! :map view-mode-map
+      :n "0" #'evil-beginning-of-line-or-visual-line)
+;;;

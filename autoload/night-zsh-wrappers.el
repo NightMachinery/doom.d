@@ -109,3 +109,13 @@ If no region is currently selected, we paste the clipboard without its prefix co
    (t
     (insert-for-yank (z reval-paste strip-prefixed-colons)))))
 ;;;
+(defun night/cp-link (&rest args)
+  "Copy FILES to DEST."
+  (unless (and args (length> args 1))
+    (error "Needs at least two arguments"))
+  (let* ((dest (car (last args)))       ; Get the last argument as DEST
+         (files (butlast args)))        ; Get all but the last argument as FILES
+    ;; (message "Files: %s" files)
+    ;; (message "Dest: %s" dest)
+    (z fnswap reval-ec reval cp-link (identity files) (identity dest))))
+;;;

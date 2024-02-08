@@ -115,14 +115,31 @@ NO-BLOCKS-MESSAGE is a message string to display if no blocks are found in the s
           (push-mark results-end t t))
       (message "Not at a src block!")))
 ;;;
-  (defun night/org-babel-remove-all-results ()
-    (interactive)
-    (save-excursion
-      (goto-char (point-min))
-      (while (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" nil t)
+(defun night/org-babel-remove-results-from-region (start end)
+  "Remove Babel results from the specified region."
+
+  (interactive "r") ; When called interactively, use the current region
+  (save-excursion
+    (goto-char start)
+    (let ((end-marker (copy-marker end))) ; Use a marker to track the dynamic end position
+      (while (and (< (point) end-marker)
+                  (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" end-marker t))
         (let ((el (org-element-context)))
           (when (org-in-src-block-p)
-            (org-babel-remove-result))))))
+            (org-babel-remove-result)))))))
+(defun night/org-babel-remove-all-results ()
+  "Remove all Babel results in the current buffer."
+  (interactive)
+  (night/org-babel-remove-results-from-region (point-min) (point-max)))
+
+  (comment (defun night/org-babel-remove-all-results ()
+     (interactive)
+     (save-excursion
+       (goto-char (point-min))
+       (while (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" nil t)
+         (let ((el (org-element-context)))
+           (when (org-in-src-block-p)
+             (org-babel-remove-result)))))))
 ;;;
 (defun night/org-babel-result-get ()
   "Return the result of the current source block as a string.
