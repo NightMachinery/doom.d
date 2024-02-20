@@ -1,6 +1,6 @@
 ;;; autoload/night-ivy-rich.el -*- lexical-binding: t; -*-
 
-(after! (night-ivy ivy ivy-rich)
+(after! (night-ivy ivy ivy-rich nerd-icons-ivy-rich)
 ;;;
   (setq ivy-rich-path-style
         ;; 'abbrev
