@@ -92,7 +92,6 @@
        ;;editorconfig      ; let someone else argue about tabs vs spaces
        ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)                        ; run code, run (also, repls)
-       gist                                   ; interacting with github gists
        (lookup +dictionary +docsets +offline) ; navigate your code and its documentation
        (lsp +eglot +peek)
        magit                    ; a git porcelain for Emacs

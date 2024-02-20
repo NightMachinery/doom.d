@@ -327,13 +327,6 @@
    (night/ivy-docstring "printskskska8ss0")
    )
 ;;;
-
-  (setq ivy-rich-display-transformers-list
-        (plist-put ivy-rich-display-transformers-list 'counsel-company
-                   '(:columns (
-                               (ivy-rich-candidate (:width 0.4))
-                               (night/ivy-docstring (:face font-lock-doc-face))))))
-;;;
   (defun night/advice-with-jump-set (orig-fn &rest args)
     (let
         ((marker (point-marker))
@@ -344,3 +337,5 @@
   (advice-add #'counsel-imenu :around #'night/advice-with-jump-set)
 ;;;
   )
+;;;
+(provide 'night-ivy)

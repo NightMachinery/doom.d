@@ -55,6 +55,10 @@
 
 (unpin! hl-todo)
 
+;;;
+;; (package! flycheck
+;;     :recipe (:build (:not native-compile compile)))
+;;;
 ;; (unpin! jupyter)
 (package! jupyter
   :recipe (:build (:not native-compile compile))
@@ -232,6 +236,8 @@
 ;;   (package! eglot-jl))
 
 ;; (package! fzf)
+(package! counsel-fd)
+
 (package! org-drill)
 (package! org-ql)
 

@@ -62,7 +62,20 @@
                   #'expand-file-name
                   ;; @duplicateCode/9bd35fded6a091a2124673d5d0ec11b2
                   ;; [agfi:agsi]
-                  '("~/.zshenv" "~/.zshrc" "~/.shared.sh" "~/.localScripts" "~/.glances" "~/.vimrc" "~/.ideavimrc" "~/.tmux.conf" "~/.privateBTT.sh" "~/.privateShell" "~/.privateStartup.sh" "~/.startup..private..zsh" "~/test_nonexistent")))
+                  '("~/.zshenv"
+                    "~/.zshrc"
+                    "~/.shared.sh"
+                    "~/.localScripts"
+                    "~/.glances"
+                    "~/.vimrc"
+                    "~/.ideavimrc"
+                    "~/.tmux.conf"
+                    "~/.privateBTT.sh"
+                    "~/.privateShell"
+                    "~/.privateStartup.sh"
+                    "~/.startup..private..zsh"
+                    "~/.hammerspoon/init.lua"
+                    "~/test_nonexistent")))
    :query initial-query :args "--glob *"))
 
 (defun night/search-doom (&optional initial-query)

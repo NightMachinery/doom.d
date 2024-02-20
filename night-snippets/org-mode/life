@@ -1,0 +1,29 @@
+# -*- mode: snippet -*-
+# name: life
+# key: <<
+# uuid: <<
+# expand-env: ((yas-after-exit-snippet-hook #'evil-normal-state))
+# --
+- [ ] Burning Candle [0/4]
+  - [ ] $0Luna is Alive
+  - [ ] 30m Exercise
+    - Wrist Exercises
+  - [ ] Teeth [0/3]
+    - [ ] Brush [0/2]
+      - [ ] Morning
+      - [ ] Night
+    - [ ] Floss
+    - [ ] Mouthwash
+  - [ ] Sleep Before Midnight
+
+- [ ] Abstinence [0/3]
+  - [ ] No News
+  - [ ] No Entertainment
+  - [ ] No Sugar
+
+- [ ] Reticence [0/1]
+  - [ ] Telegram [0/2]
+    - [ ] No Excessive Text Chatting
+    - [ ] No Loitering
+
+- [ ] Out of This Circle of Blood

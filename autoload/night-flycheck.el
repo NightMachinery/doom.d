@@ -4,6 +4,7 @@
   (interactive)
   (flycheck-mode -1))
 ;;;
+(after! (flycheck)
 ;; https://emacs.stackexchange.com/questions/47878/how-can-i-disable-a-specific-lint-error-for-emacs-lisp-using-flycheck
 (defcustom flycheck-noflycheck-marker "noflycheck"
   "Flycheck line regions marked with this marker string are ignored."
@@ -20,8 +21,8 @@
 
 (defun noflycheck-hook ()
   "Add the ;;;###noflycheck thing to elisp."
-  (require 'flycheck)
   (add-hook 'flycheck-process-error-functions #'flycheck-noflycheck nil t))
 
 (add-hook 'prog-mode-hook #'noflycheck-hook)
 ;;;
+)

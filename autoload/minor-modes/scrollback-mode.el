@@ -36,20 +36,20 @@
           ;; https://github.com/noctuid/general.el#override-keymaps-and-buffer-local-keybindings
           ;; forcefully overrides the keybindings
 ;;;
-          :nvo "q" #'save-buffers-kill-terminal
-          :nvo [remap quit-window] #'save-buffers-kill-terminal
+          :n "q" #'save-buffers-kill-terminal
+          :n [remap quit-window] #'save-buffers-kill-terminal
 
-          :nvo "u" #'night/scroll-halfpage-down
-          :nvo "d" #'night/scroll-halfpage-up
+          :n "u" #'night/scroll-halfpage-down
+          :n "d" #'night/scroll-halfpage-up
 
-          :nvo "a" #'night/hlt-counsel-face
-          :nvo "s" #'hlt-highlight-regexp-region
-          :nvo "x" #'hlt-highlight-regexp-region
+          :n "a" #'night/hlt-counsel-face
+          :n "s" #'hlt-highlight-regexp-region
+          :n "x" #'hlt-highlight-regexp-region
 
-          :nvo "," #'hlt-previous-highlight
-          :nvo "." #'hlt-next-highlight
+          :n "," #'hlt-previous-highlight
+          :n "." #'hlt-next-highlight
 
-          :nvo "o" #'link-hint-open-link
+          :n "o" #'link-hint-open-link
           )
     ))
 ;;;

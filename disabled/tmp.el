@@ -142,3 +142,17 @@
 (yas-lookup-snippet "auto-heading" 'org-mode)
 (yas-lookup-snippet "h67" 'org-mode)
 (yas-lookup-snippet "*" 'org-mode)
+
+(require 'jupyter)
+;;;
+(after! (files)
+  ;; This did not work as I thought.
+  (setq directory-abbrev-alist
+        `(
+          (
+           "~nt" .
+           ,(concat
+             "\\`"
+             (getenv "nightNotes")))))
+)
+;;;
