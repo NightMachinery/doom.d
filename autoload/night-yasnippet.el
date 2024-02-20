@@ -1,9 +1,11 @@
 ;;; autoload/night-yasnippet.el -*- lexical-binding: t; -*-
 ;;;
+(require 'yasnippet)
+;;;
 (cl-defun night/h-point-at-beginning-p
     (&key
-       prefix-pattern
-       (fixed-strings nil))
+     prefix-pattern
+     (fixed-strings nil))
   "Check if the point is at the beginning of a line followed by PREFIX-PATTERN."
   (let ((point-start (point))
         (line-start (line-beginning-position))
