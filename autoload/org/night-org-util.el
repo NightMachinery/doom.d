@@ -1,5 +1,9 @@
 ;;; autoload/org/night-org-util.el -*- lexical-binding: t; -*-
 ;;;
+(defun night/org-current-level ()
+  (interactive)
+  (or (org-current-level) 0))
+;;;
 (defun night/org-str-to-plain (str)
   ;; @Q&A Does org have a function to convert an org-mode formatted string to a plain text string without the rich formatting? Sth like `(org-strip "*bold* /italic/") == "bold italic"`
   ;;

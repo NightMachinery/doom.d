@@ -5,4 +5,4 @@
 # condition: (night/h-point-at-beginning-p :prefix-pattern "'")
 #: Using `$1` allows us to press TAB again to go over it.
 # --
-`(make-string (+ 1 (org-current-level)) ?*)` ${1:_}
+`(make-string (+ 1 (night/org-current-level)) ?*)` ${1:_}

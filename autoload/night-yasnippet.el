@@ -40,7 +40,7 @@
   (after! night-last
     ;; @seeAlso [help:night/company-keybindings-enable]
     (map!
-     :map (yas-minor-mode-map)
+     :map yas-minor-mode-map
      :ig
      "TAB" yas-maybe-expand
      :ig
@@ -49,6 +49,18 @@
      "\t" yas-maybe-expand
      :ig
      [?\t] yas-maybe-expand)
+
+    (map!
+     :map yas-keymap
+     :ig
+     "TAB" (yas-filtered-definition 'yas-next-field-or-maybe-expand)
+     :ig
+     "<tab>" (yas-filtered-definition 'yas-next-field-or-maybe-expand)
+     :ig
+     "\t" (yas-filtered-definition 'yas-next-field-or-maybe-expand)
+     :ig
+     [?\t] (yas-filtered-definition 'yas-next-field-or-maybe-expand))
+
     (comment
      (map!
       :map (yas-minor-mode-map)
