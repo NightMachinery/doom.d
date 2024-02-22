@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <ej
+# uuid: <ej
+# --
+#+begin_example js
+`%`$0
+#+end_example

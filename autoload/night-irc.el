@@ -18,7 +18,7 @@
   (defun night/irc-set-watch-strings ()
     (when (not (boundp 'circe-notifications-watch-strings))
       ;; (setq circe-notifications-watch-strings '())
-      (user-error! "night/irc-set-watch-strings: circe-notifications not loaded")
+      (user-error "night/irc-set-watch-strings: circe-notifications not loaded")
       )
 
     (dolist (i (list

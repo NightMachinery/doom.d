@@ -64,9 +64,9 @@
   :recipe (:build (:not native-compile compile))
   ;; [[https://github.com/emacs-jupyter/jupyter/issues/297][ZMQ subprocess error · Issue #297 · emacs-jupyter/jupyter]]
 
-  ;; :pin "1baabc8f2d0631f8f4308400f9a53f1aadd58d14"
-  :pin "1baabc8"
   ;; :pin "053a78d"
+  :pin "1baabc8"
+  ;; :pin "da306a6"
   )
 
 (package! racket-mode :pin "22e319754dcf650e282b3ba33b9d0ee3cda81007")
@@ -225,6 +225,7 @@
 (package! evil-tutor)
 
 (package! orderless)
+(package! vertico)
 (package! consult)
 
 (unpin! julia-mode julia-repl eglot-jl)

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <ec
+# uuid: <ec
+# --
+#+begin_example lisp
+`%`$0
+#+end_example

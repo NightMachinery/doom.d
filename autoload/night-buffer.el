@@ -6,6 +6,17 @@
   ;; You can use [help:with-current-buffer] together with this to force kill any buffer.
   (let (kill-buffer-hook kill-buffer-query-functions)
     (kill-buffer)))
+
+(defun night/force-save-current-buffer ()
+  (interactive)
+  ;; Temporarily disable save-related hooks and functions
+  (let (
+        (write-file-functions nil)
+        ;; `undo-fu-session--save-safe'
+        ;;;
+        (before-save-hook nil)
+        (after-save-hook nil))
+    (save-buffer)))
 ;;;
 (defun night/buffer-reopen ()
   (interactive)

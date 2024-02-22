@@ -19,16 +19,16 @@
   ;; (setq org-src-tab-acts-natively nil) ; doesn't fix the completion TAB problem
   (defun night/org-save-hook-fn ()
     (interactive)
-    ;;;
+;;;
     (when (night/org-night-directive-present-p "night_autoexport_latex_to_pdf")
       (org-beamer-export-to-pdf))
-    ;;;
+;;;
     (when (string= "org-mode" major-mode)
-      ;;;
+;;;
       ;; (org-html-export-to-html)
-      ;;;
+;;;
       ;; (org-babel-tangle)
-      ;;;
+;;;
       ))
 ;;;
   (setq org-image-actual-width '(1000)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
@@ -41,7 +41,7 @@
     (interactive "P")
     ;; (org-display-inline-images)
     (let*  ((format (cond
-                     (arg ".png")       ;; `arg' means remove background, so we need the alpha channel.
+                     (arg ".png") ;; `arg' means remove background, so we need the alpha channel.
                      (format format)
                      (t ".jpg")
                      ;; (t ".png")
@@ -60,7 +60,7 @@
              (if arg
                  "y"
                "n"))
-        ; take screenshot
+                                        ; take screenshot
         ;; (call-process "screencapture" nil nil nil "-i" filename)
         )
       (if (eq system-type 'gnu/linux)
@@ -86,6 +86,7 @@
     (interactive "P")
     (night/org-paste-clipboard-image arg ".jpg"))
 
+;;;
   (setq org-blank-before-new-entry '(
                                      (heading . t)
                                      ;; (heading . nil)
@@ -93,6 +94,18 @@
                                      (plain-list-item . t)
                                      ;; (plain-list-item . nil)
                                      ))
+
+  (defvar night/org-blank-after-new-heading-p t
+    "If non-nil, insert a blank line after inserting a new heading in Org mode.")
+
+  (defun night/insert-blank-after-org-heading (&rest dummy)
+    "Insert a newline after a new org heading if `night/org-blank-after-new-heading-p` is true."
+    (when night/org-blank-after-new-heading-p
+      (save-excursion
+        (end-of-line)
+        (insert "\n"))))
+
+  (advice-add 'org-insert-heading :after #'night/insert-blank-after-org-heading)
 ;;;
   (defun night/org-refile-to-new-file (&optional x)
     "Cut the subtree currently being edited and create a new file
@@ -129,12 +142,12 @@ otherwise use the subtree title."
       ;;   (yank))
       ))
 ;;;
-(defun night/org-night-directive-present-p (directive)
-  "Check if a given DIRECTIVE is present in the current org buffer, ignoring case."
-  (save-excursion
-    (goto-char (point-min))
-    (let ((case-fold-search t))
-      (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t))))
+  (defun night/org-night-directive-present-p (directive)
+    "Check if a given DIRECTIVE is present in the current org buffer, ignoring case."
+    (save-excursion
+      (goto-char (point-min))
+      (let ((case-fold-search t))
+        (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t))))
   )
 ;;;
 (defun night/org-go-to-last-heading (&optional level)

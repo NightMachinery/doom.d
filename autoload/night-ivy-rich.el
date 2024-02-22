@@ -63,9 +63,13 @@
   (plist-put ivy-rich-display-transformers-list
              'counsel-projectile-find-file
              '(:columns
-               ((nerd-icons-ivy-rich-file-icon)
+               (
+                ;; (nerd-icons-ivy-rich-file-icon)
+                ;; The nerd icon should be disabled for TTY, which I don't know hot to do.
+                ;;;
                 (counsel-projectile-find-file-transformer
-                 (:width 1.0))
+                 ;; (:width 1.0)
+                 )
                 ;; (nerd-icons-ivy-rich-project-file-id
                 ;;  (:width 15 :face nerd-icons-ivy-rich-file-owner-face :align right))
                 ;; (nerd-icons-ivy-rich-project-file-modes
@@ -94,7 +98,8 @@
 
                  ;; ivy-rich-candidate
 
-                 (:width 1.0)))))
+                 ;; (:width 1.0)
+                 ))))
 
   (plist-put ivy-rich-display-transformers-list
              'ivy-switch-buffer

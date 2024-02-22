@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <et
+# uuid: <et
+# --
+#+begin_example tex
+`%`$0
+#+end_example

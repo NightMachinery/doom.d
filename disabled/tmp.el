@@ -156,3 +156,30 @@
              (getenv "nightNotes")))))
 )
 ;;;
+(tramp-read-passwd nil (or "Password: "))
+
+(let ((dummy-process (start-process "dummy" nil "true")))
+
+  (tramp-read-passwd dummy-process (or "Password: ")))
+;;;
+(add-to-list 'ivy-re-builders-alist '(swiper-all . orderless-ivy-re-builder))
+(defun tmp1 (&rest dummy)
+  (list (cons
+         ;; "hi"
+         ;; "\\(?:\\(?:[^1]\\|1?:[^2]\\)\\)+"
+         "\\(?:\\(?:[^1]\\|1\\(?:[^2]\\)\\)+\\)"
+         ;; "\\(?:\\(\\`\\)\\(?:[^1]\\|\\'\\|1\\(?:[^2]\\|\\'\\)\\)*\\)"
+         t))
+  )
+(setq ivy-re-builders-alist '((t . tmp1)))
+(setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
+(z pbcopy (caar (orderless-ivy-re-builder "!12")))
+;; [^1]\|\'\|1
+;; [^1]\|\'\|1\(?:[^2]\|\'\)
+;; \(?:[^1]\|\'\|1\(?:[^2]\|\'\)\)*
+(z ec hi)
+
+(add-hook 'ivy-mode-hook #'consult-preview-at-point-mode)
+(add-hook 'ivy-mode-hook #'consult-preview-at-point-mode)
+(add-hook 'completion-list-mode-hook #'consult-preview-at-point-mode)
+;;;

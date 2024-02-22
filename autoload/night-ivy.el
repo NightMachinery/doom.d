@@ -1,9 +1,8 @@
 ;;; B
 ;;; ~
 ;;; /doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
-
-(with-eval-after-load 'ivy
-  ;;;
+(after! (night-orderless ivy counsel ivy-rich)
+;;;
   (setq ivy-height 14)
 ;;;
   (defun night/ivy--no-sort (name candidates)
@@ -44,7 +43,7 @@
   (add-to-list 'ivy-re-builders-alist '(counsel-org-goto . ivy--regex-ignore-order))
   ;; (add-to-list 'ivy-re-builders-alist '(counsel-rg . ivy--regex-ignore-order))
 
-  ;;;
+;;;
   (defun night/ivy--regex-pcre (str)
     "@buggy e.g., capture groups hang."
     (let ((re-elisp (pcre-to-elisp str)))
@@ -59,7 +58,7 @@
   ;; (defalias #'swiper--re-builder #'night/ivy--regex-pcre)
   ;; (add-to-list 'ivy-re-builders-alist '(swiper . night/ivy--regex-pcre))
   ;; (add-to-list 'ivy-re-builders-alist '(swiper . ivy--regex-ignore-order))
-  ;;;
+;;;
   ;; @alt to orderless:
   ;; - `ivy--regex-ignore-order'
   ;; - Ivy has ivy-restrict-to-matches, bound to S-SPC, so you can get the effect of out of order matching without using ivy--regex-ignore-order: (@toFuture/1401/6 this might be faster?)
@@ -69,6 +68,9 @@
   (progn
     (defvar *orderless-no-fuzzy* nil)
     (defun night/h-orderless-style-dispatcher (pattern index _total)
+      ;; @tosee0 [[https://github.com/oantolin/orderless/commit/c1def76024adb3f6eb55ab476f53fa2f68281d9b][Pattern compiler: Compile to regexps and a predicate function · oantolin/orderless@c1def76]]
+      ;; [[https://github.com/oantolin/orderless/issues/164][{Q} How do I use `orderless-style-dispatchers` with `ivy`? · Issue #164 · oantolin/orderless]]
+;;;
       ;; makes `counsel-recentf' too slow
       ;;
       ;; you can bind `orderless-style-dispatchers' dynamically to override this for specific commands
@@ -114,12 +116,14 @@
     (let ((*orderless-no-fuzzy* t))
       (apply orig-fn args)))
   (advice-add 'counsel-rg :around #'night/advice-orderless-no-fuzzy)
+  (advice-add 'counsel-grep :around #'night/advice-orderless-no-fuzzy)
+  (advice-add 'consult-line :around #'night/advice-orderless-no-fuzzy)
   (advice-add 'swiper-isearch :around #'night/advice-orderless-no-fuzzy)
+  (advice-add 'swiper :around #'night/advice-orderless-no-fuzzy)
 ;;;
   (comment
-   (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order)))))
-
-(after! (ivy counsel ivy-rich)
+   (setq ivy-re-builders-alist '((t . ivy--regex-ignore-order))))
+;;;
   (setq counsel-find-file-ignore-regexp nil) ;; @tradeoff @config
 
 ;;;
@@ -160,15 +164,15 @@
     )
 
   (define-key counsel-find-file-map (kbd "<left>")
-    #'night/ivy--directory-out)
+              #'night/ivy--directory-out)
   (define-key counsel-find-file-map (kbd "<right>")
-    #'night/ivy--directory-enter)
+              #'night/ivy--directory-enter)
 ;;;
   ;; @ideal it's better to add these to the specific maps that need them, but I can't find what other map is used by, e.g., `read-file-name`
   (define-key ivy-minibuffer-map (kbd "<left>")
-    #'night/ivy--directory-out)
+              #'night/ivy--directory-out)
   (define-key ivy-minibuffer-map (kbd "<right>")
-    #'night/ivy--directory-enter)
+              #'night/ivy--directory-enter)
 
   (define-key ivy-minibuffer-map (kbd "S-<right>") 'forward-char)
   (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)

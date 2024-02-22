@@ -13,7 +13,7 @@
     (mycomment only called from -z-helper as night/brishz flattens its arguments)
     (cond
      (no-eval arg)
-     (t (user-error! "List encountered outside of the macro: %s" arg)))
+     (t (user-error "List encountered outside of the macro: %s" arg)))
     )
    (t
     (format "%s" arg)

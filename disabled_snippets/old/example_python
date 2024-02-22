@@ -2,6 +2,6 @@
 # key: <ep
 # uuid: <ep
 # --
-#+begin_src python :eval never
+#+begin_example python
 `%`$0
-#+end_src
+#+end_example

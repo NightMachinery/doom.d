@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: <eju
+# uuid: <eju
+# --
+#+begin_example julia
+`%`$0
+#+end_example

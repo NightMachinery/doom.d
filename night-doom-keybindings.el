@@ -5,12 +5,21 @@
  :ng "TAB" #'indent-for-tab-command)
 (setq doom-localleader-key "\\")
 (setq doom-localleader-alt-key "M-\\")
+
+(define-key global-map [remap swiper] nil)
+
 (map! :leader
       ;; :desc "M-x" "SPC" #'night/fzf-M-x
 
       :desc "M-x" "SPC" #'execute-extended-command
 
       "fp" #'+ivy/projectile-find-file
+
+      "ss"
+      ;; #'swiper
+      'consult-line
+      ;; Default was [help:+default/search-buffer], which used =swiper-isearch=, which has this bug:
+      ;; [[https://github.com/oantolin/orderless/issues/164][{Q} How do I use `orderless-style-dispatchers` with `ivy`? · Issue #164 · oantolin/orderless]]
       )
 (comment (map!
   :ng "M-x" #'night/fzf-M-x ;; #'execute-extended-command
