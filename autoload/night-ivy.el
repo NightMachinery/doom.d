@@ -169,16 +169,52 @@
     (ivy--directory-enter)
     )
 
+
+  (defvar night/h-ivy-file-p nil)
+  (defun night/advice-ivy-file-p (orig-fn &rest args)
+    (let ((night/h-ivy-file-p t))
+      (apply orig-fn args)))
+  (advice-add 'read-file-name :around #'night/advice-ivy-file-p)
+
+  (defun night/ivy--directory-out-smart ()
+    (interactive)
+    (cond
+     (night/h-ivy-file-p
+      (message "ivy-file-p")
+      (night/ivy--directory-out))
+     (t
+      (evil-backward-char))))
+  (defun night/ivy--directory-enter-smart ()
+    (interactive)
+    (cond
+     (night/h-ivy-file-p
+      (message "ivy-file-p")
+      (night/ivy--directory-enter))
+     (t
+      (evil-forward-char))))
+
   (define-key counsel-find-file-map (kbd "<left>")
               #'night/ivy--directory-out)
   (define-key counsel-find-file-map (kbd "<right>")
               #'night/ivy--directory-enter)
 ;;;
-  ;; @ideal it's better to add these to the specific maps that need them, but I can't find what other map is used by, e.g., `read-file-name`
-  (define-key ivy-minibuffer-map (kbd "<left>")
-              #'night/ivy--directory-out)
-  (define-key ivy-minibuffer-map (kbd "<right>")
-              #'night/ivy--directory-enter)
+  (cond
+   (nil
+    (define-key ivy-minibuffer-map (kbd "<left>")
+                #'evil-backward-char)
+    (define-key ivy-minibuffer-map (kbd "<right>")
+                #'evil-forward-char))
+   (t
+    (define-key ivy-minibuffer-map (kbd "<left>")
+                #'night/ivy--directory-out-smart)
+    (define-key ivy-minibuffer-map (kbd "<right>")
+                #'night/ivy--directory-enter-smart))
+   (nil
+    ;; DONE it's better to add these to the specific maps that need them, but I can't find what other map is used by, e.g., `read-file-name'
+    (define-key ivy-minibuffer-map (kbd "<left>")
+                #'night/ivy--directory-out)
+    (define-key ivy-minibuffer-map (kbd "<right>")
+                #'night/ivy--directory-enter)))
 
   (define-key ivy-minibuffer-map (kbd "S-<right>") 'forward-char)
   (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)

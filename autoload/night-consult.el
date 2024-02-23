@@ -1,7 +1,8 @@
 ;;; autoload/night-consult.el -*- lexical-binding: t; -*-
 
-(after! (ivy night-ivy night-orderless)
-  (require 'vertico)
+(require 'vertico)
+(require 'consult)
+(after! (ivy night-ivy night-orderless vertico consult)
   (vertico-mode)
 ;;;
   (map! :map vertico-map
@@ -23,9 +24,9 @@
    #'consult-ripgrep
    )
 ;;;
-;; [[https://github.com/minad/consult/discussions/947#discussioncomment-8565359][✏️ Draft - {Q} How do I hide the line numbers in, e.g., `consult-outline`? · minad/consult · Discussion #947]]
-(consult-customize consult-outline :annotate nil)
-(consult-customize consult-line :annotate nil)
+  ;; [[https://github.com/minad/consult/discussions/947#discussioncomment-8565359][✏️ Draft - {Q} How do I hide the line numbers in, e.g., `consult-outline`? · minad/consult · Discussion #947]]
+  (consult-customize consult-outline :annotate nil)
+  (consult-customize consult-line :annotate nil)
 ;;;
   ;; [[https://github.com/minad/consult/wiki#pre-select-nearest-heading-for-consult-org-heading-and-consult-outline-using-vertico][Home · minad/consult Wiki]]
   ;; @works [[https://github.com/minad/consult/discussions/891][wiki code for pre-selecting nearest heading erroring out vertico--exhibit wrong-type-argument · minad/consult · Discussion #891]]
@@ -73,11 +74,17 @@ Used to preselect nearest headings and imenu items.")
 ;;;
   (cond
    (t
-    (advice-add #'consult--read
-            :around
-            (lambda (&rest app)
-              (let ((completing-read-function #'completing-read-default))
-                (apply app)))))
+    (dolist (fn
+             (list
+              #'consult--read
+              ;; #'read-file-name
+              ))
+        (advice-add
+         fn
+         :around
+         (lambda (&rest app)
+           (let ((completing-read-function #'completing-read-default))
+             (apply app))))))
    (t
     (dolist (fn
              '(consult-line
@@ -106,6 +113,12 @@ Used to preselect nearest headings and imenu items.")
                ))
       (add-to-list 'ivy-completing-read-handlers-alist
                    `(,fn . completing-read-default)))))
+  (dolist (fn
+             '(
+               execute-extended-command
+               ))
+      (add-to-list 'ivy-completing-read-handlers-alist
+                   `(,fn . completing-read-default)))
 ;;;
   (provide 'night-consult)
   )

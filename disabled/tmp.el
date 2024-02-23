@@ -183,3 +183,6 @@
 (add-hook 'ivy-mode-hook #'consult-preview-at-point-mode)
 (add-hook 'completion-list-mode-hook #'consult-preview-at-point-mode)
 ;;;
+
+(setq Man-fontify-manpage-flag nil)
+(night/unadvice #'read-file-name)
