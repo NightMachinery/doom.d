@@ -84,14 +84,16 @@ Otherwise, it will be one level below."
 
   (map! :leader
         :n "/" #'night/goto-org-heading)
-  (comment
+  (progn
    (map!
     :localleader
     :n "/" #'night/goto-org-heading)
    )
   (map! :map org-mode-map
-         :localleader
-         :n "/" #'night/goto-org-heading)
+        :localleader
+        :n "/" #'night/goto-org-heading
+        ;; :n "/" #'consult-outline
+        :n "\\" #'consult-org-heading)
 
   (map! :map
         (

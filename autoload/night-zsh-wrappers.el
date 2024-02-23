@@ -30,7 +30,7 @@
      (cond
       ((and
         (minibufferp))
-       ;; In minibuffer, we often want to search for this this string. Using lower case allows smart-case matching.
+       ;; In minibuffer, we often want to search for this string. Using lower case allows smart-case matching.
        ;; Paper names are often capitalized differently and we do not want not to find a match for case sensitivity.
        ;;;
        ;; (message "bf: %s" (buffer-name))

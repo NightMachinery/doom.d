@@ -66,7 +66,10 @@
   ;;  (define-key ivy-minibuffer-map (kbd "SPC") #'self-insert-command)
 
   (progn
-    (defvar *orderless-no-fuzzy* nil)
+    (defvar *orderless-no-fuzzy*
+      ;; nil
+      t
+      )
     (defun night/h-orderless-style-dispatcher (pattern index _total)
       ;; @tosee0 [[https://github.com/oantolin/orderless/commit/c1def76024adb3f6eb55ab476f53fa2f68281d9b][Pattern compiler: Compile to regexps and a predicate function · oantolin/orderless@c1def76]]
       ;; [[https://github.com/oantolin/orderless/issues/164][{Q} How do I use `orderless-style-dispatchers` with `ivy`? · Issue #164 · oantolin/orderless]]
@@ -117,7 +120,10 @@
       (apply orig-fn args)))
   (advice-add 'counsel-rg :around #'night/advice-orderless-no-fuzzy)
   (advice-add 'counsel-grep :around #'night/advice-orderless-no-fuzzy)
+
+  ;; consult no fuzzy functions
   (advice-add 'consult-line :around #'night/advice-orderless-no-fuzzy)
+
   (advice-add 'swiper-isearch :around #'night/advice-orderless-no-fuzzy)
   (advice-add 'swiper :around #'night/advice-orderless-no-fuzzy)
 ;;;

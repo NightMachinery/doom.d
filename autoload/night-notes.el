@@ -2,7 +2,18 @@
 
 (defun night/search-notes (&optional initial-query)
   (interactive)
-  (night/search-dir :dir (getenv "nightNotes") :query initial-query :args "--glob *.{org,org_archive,md,tex,txt,json,csv,zsh,py} --glob !*chrome*bookmarks.org"))
+  (night/search-dir-consult
+   ;; night/search-dir
+
+   :dir (getenv "nightNotes")
+
+   :query initial-query
+   :include-extensions '("org" "org_archive" "md" "tex" "txt" "json" "csv" "zsh" "py")
+   :exclude-globs '("*chrome*bookmarks.org"))
+  ;; (night/search-dir-consult
+  ;;  :dir (getenv "nightNotes") :query initial-query
+  ;;  :args "--glob=*.{org,org_archive,md,tex,txt,json,csv,zsh,py} --glob=!*chrome*bookmarks.org")
+  )
 
 (cl-defun night/search-research
     (&key
@@ -32,8 +43,9 @@
 
 (defun night/search-ideas ()
   (interactive)
+  ;; We need the ugrep engine for =!pat= to work.
   (night/search-research
-   :query "IDEA|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"))
+   :query "IDEA\\|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"))
 
 (defun night/search-ideas-accepted ()
   (interactive)
@@ -41,18 +53,27 @@
    :query "@idea/accepted"))
 
 (cl-defun night/search-dir-limited
-    (&key (dir nil) (extra-paths nil) (args "") (query "") (prompt nil))
+    (&key
+     (dir nil)
+     (extra-paths nil)
+     (args "")
+     (query "")
+     (prompt nil)
+     (engine "ug"))
   (interactive)
-  (night/search-dir
+  (night/search-dir-consult
    :dir dir
    :extra-paths extra-paths
    :prompt prompt
    :query query
-   :args (concat args " --glob *.{org,org_archive,md,txt,tex,zsh,py}")))
+   :include-extensions '("org" "org_archive" "md" "tex" "txt" "zsh" "py")
+   ;; :engine "rg"
+   :engine engine
+   ))
 
 (defun night/agsi (&optional initial-query)
   (interactive)
-  (night/search-dir
+  (night/search-dir-consult
    :dir (getenv "NIGHTDIR")
    :extra-paths (-filter
                  (lambda (x)
@@ -76,15 +97,15 @@
                     "~/.startup..private..zsh"
                     "~/.hammerspoon/init.lua"
                     "~/test_nonexistent")))
-   :query initial-query :args "--glob *"))
+   :query initial-query :args "--glob=*"))
 
 (defun night/search-doom (&optional initial-query)
   (interactive)
-  (night/search-dir :dir (getenv "DOOMDIR") :query initial-query :args "--glob *"))
+  (night/search-dir :dir (getenv "DOOMDIR") :query initial-query :args "--glob=*"))
 
 (defun night/search-r_rational (&optional initial-query)
   (interactive)
-  (night/search-dir :dir "/Volumes/hyper-diva/archives/reddit/rational/posts/" :query initial-query :args "--glob *"))
+  (night/search-dir :dir "/Volumes/hyper-diva/archives/reddit/rational/posts/" :query initial-query :args "--glob=*"))
 
 (night/set-leader-keys "z n" #'night/search-notes)
 
