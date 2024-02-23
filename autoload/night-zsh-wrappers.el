@@ -32,10 +32,9 @@
         (minibufferp))
        ;; In minibuffer, we often want to search for this string. Using lower case allows smart-case matching.
        ;; Paper names are often capitalized differently and we do not want not to find a match for case sensitivity.
-       ;;;
+;;;
        ;; (message "bf: %s" (buffer-name))
-       (regexp-quote
-        ;; [agfi:regex-escape]
+       (night/regex-escape-smart
         (s-downcase text)))
       (t text)))))
 (defalias 'night/pns #'night/p-newline2space)

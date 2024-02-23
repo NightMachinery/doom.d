@@ -1,6 +1,8 @@
 ;;; night-consult-ugrep.el ---                       -*- lexical-binding: t; -*-
 ;;;
 (after! (night-consult)
+  (defvar night/h-consult-ugrep-in-progress nil)
+
   (defvar night/consult-ugrep-args
     (string-join '("ugrep"
                    "--color=never"
@@ -12,7 +14,8 @@
                    "--line-number"
                    "--null"
                    "--recursive"
-                   "--bool")
+                   "--bool"
+                   "--perl-regexp")
                  " "))
   (defun night/consult-ugrep-make-builder (paths)
     "Create ugrep command line builder given PATHS."
@@ -25,26 +28,35 @@
             (cons
              (append
               cmd
-              (cdr
-               (mapcan
-                (lambda (x)
-                  (let*
-                      ((x
-                        (cond
-                         ((s-starts-with-p "!" x)
-                          (concat "-" (substring x 1))
-                          ;; converting orderless's syntax to ugrep
-                          )
-                         (t x))))
-                    (list "--and" "-e" x)))
-                re))
+              (cond
+               (t
+                ;; (message "ugrep input: %s" input)
+
+                ;; We give the input directly to ugrep, without any further processing.
+                (list "-e" input))
+               (t (cdr
+                   (mapcan
+                    (lambda (x)
+                      (let*
+                          ((x
+                            (cond
+                             ((s-starts-with-p "!" x)
+                              (concat "-" (substring x 1))
+                              ;; converting orderless's syntax to ugrep
+                              )
+                             (t x))))
+                        (list "--and" "-e" x)))
+                    re))))
               opts paths)
-             hl))))))
+             hl
+             ;; nil
+             ))))))
 
   (defun night/consult-ugrep (&optional dir initial prompt)
     "Search with `ugrep' for files in DIR with INITIAL input."
     (interactive)
-    (let ((prompt (or prompt "ug")))
+    (let ((prompt (or prompt "ug"))
+          (night/h-consult-ugrep-in-progress t))
       (consult--grep prompt #'night/consult-ugrep-make-builder dir initial)))
 
   (defun night/consult-ugrep-buffer (&optional initial)

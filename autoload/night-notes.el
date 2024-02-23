@@ -45,7 +45,10 @@
   (interactive)
   ;; We need the ugrep engine for =!pat= to work.
   (night/search-research
-   :query "IDEA\\|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"))
+   :query
+   "IDEA|@idea -@ideas -@idea/rejected -@idea/bad -@idea/presented -@idea/costly -@idea/small"
+   ;; "IDEA\\|@idea !@ideas !@idea/rejected !@idea/bad !@idea/presented !@idea/costly !@idea/small"
+   ))
 
 (defun night/search-ideas-accepted ()
   (interactive)
