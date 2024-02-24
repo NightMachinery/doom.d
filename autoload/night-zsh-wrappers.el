@@ -26,6 +26,11 @@
 (defun night/p-newline2space ()
   (interactive)
   (let ((text (z p-newline2space)))
+    (comment
+     (message "minibufferp: %s, evil-ex-c: %s ex-s: %s"
+              (minibufferp)
+              (night/in-evil-ex-completion-p)
+              (night/in-evil-ex-search-p)))
     (night/insert-for-yank
      (cond
       ((and

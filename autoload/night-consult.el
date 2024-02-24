@@ -5,6 +5,9 @@
 (after! (ivy night-ivy night-orderless vertico consult)
   (vertico-mode)
 ;;;
+  (setq consult-async-split-style 'perl)
+  ;; (setq consult-async-split-style 'comma)
+;;;
   (map! :map vertico-map
         :g "M-<down>" #'vertico-scroll-up
         :g "M-<up>" #'vertico-scroll-down
@@ -20,8 +23,9 @@
    ;; #'+ivy/switch-buffer
 
    :leader "sp"
-   ;; #'+default/search-project
-   #'consult-ripgrep
+   #'+default/search-project
+   ;; #'consult-ripgrep
+   ;; [[id:146c8d61-d5d3-466b-979f-7e54cd0f5312][@me {Q/Bug} consult-grep (with ripgrep or ugrep) is slower than counsel-rg · Issue #950 · minad/consult]]
    )
 ;;;
   ;; [[https://github.com/minad/consult/discussions/947#discussioncomment-8565359][✏️ Draft - {Q} How do I hide the line numbers in, e.g., `consult-outline`? · minad/consult · Discussion #947]]
@@ -79,12 +83,12 @@ Used to preselect nearest headings and imenu items.")
               #'consult--read
               ;; #'read-file-name
               ))
-        (advice-add
-         fn
-         :around
-         (lambda (&rest app)
-           (let ((completing-read-function #'completing-read-default))
-             (apply app))))))
+      (advice-add
+       fn
+       :around
+       (lambda (&rest app)
+         (let ((completing-read-function #'completing-read-default))
+           (apply app))))))
    (t
     (dolist (fn
              '(consult-line
@@ -114,11 +118,11 @@ Used to preselect nearest headings and imenu items.")
       (add-to-list 'ivy-completing-read-handlers-alist
                    `(,fn . completing-read-default)))))
   (dolist (fn
-             '(
-               execute-extended-command
-               ))
-      (add-to-list 'ivy-completing-read-handlers-alist
-                   `(,fn . completing-read-default)))
+           '(
+             execute-extended-command
+             ))
+    (add-to-list 'ivy-completing-read-handlers-alist
+                 `(,fn . completing-read-default)))
 ;;;
   (provide 'night-consult)
   )

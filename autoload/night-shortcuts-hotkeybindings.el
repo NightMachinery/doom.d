@@ -108,7 +108,7 @@ move COUNT - 1 screen lines forward first."
         :nv "P" #'night/paste-yank-html
         ;; :nv "P" #'evil-paste-before
         :nv "p" #'evil-paste-before
-        :nvoig
+        :nvig
         "s-," #'night/pns
         :nvoig
         "<next>" #'evil-avy-goto-char
@@ -213,5 +213,18 @@ move COUNT - 1 screen lines forward first."
    :g
    "C-S-<down>" #'scroll-other-window
    ;; "C-M-<down>" #'scroll-other-window
+
+   :map (minibuffer-mode-map
+         ivy-minibuffer-map
+         vertico-map
+         evil-ex-completion-map)
+   :nvig
+   "s-," #'night/pns
+
+   :g
+   "C-<up>" #'scroll-other-window-down
+   ;; "C-M-<up>" #'scroll-other-window-down
+   :g
+   "C-<down>" #'scroll-other-window
    )
   )

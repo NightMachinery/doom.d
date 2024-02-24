@@ -43,7 +43,8 @@
 
 (defun night/search-ideas ()
   (interactive)
-  ;; We need the ugrep engine for =!pat= to work.
+  ;; We need the ugrep engine for =-pat= to work.
+  ;; We need the ivy-rg engine for =!pat= to work.
   (night/search-research
    :query
    "IDEA|@idea -@ideas -@idea/rejected -@idea/bad -@idea/presented -@idea/costly -@idea/small"
@@ -62,7 +63,8 @@
      (args "")
      (query "")
      (prompt nil)
-     (engine "ug"))
+     (engine "ug")
+     )
   (interactive)
   (night/search-dir-consult
    :dir dir

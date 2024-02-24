@@ -45,8 +45,9 @@ This variable can be bound dynamically.")
      (extra-paths nil)
      (query "")
      (prompt nil)
+     (engine "ivy-rg")
      ;; (engine "rg")
-     (engine "ug")
+     ;; (engine "ug")
      (args " ")
      (include-extensions nil)
      (exclude-extensions '("ipynb"))
@@ -96,23 +97,42 @@ This variable can be bound dynamically.")
                               (if (equalp dir "/")
                                   extra-paths ;; The root path / is assumed to mean only search extra-paths.
                                 (cons dir extra-paths))))
-            args))
-         (prompt (or prompt engine)))
+            args)))
     (cond
      ((equalp engine "ug")
-      (night/consult-ugrep paths query prompt))
+      (night/consult-ugrep paths query (or prompt engine)))
      ((equalp engine "ivy-rg")
-      (counsel-rg query dir args prompt))
+      ;; ivy-rg seems faster han consult
+      ;; [[id:146c8d61-d5d3-466b-979f-7e54cd0f5312][@me {Q/Bug} consult-grep (with ripgrep or ugrep) is slower than counsel-rg · Issue #950 · minad/consult]]
+      (counsel-rg query dir args (or prompt "> ")))
      (t
       ;; (equalp engine "rg")
       (consult--grep
-       prompt
+       (or prompt engine)
        #'consult--ripgrep-make-builder
        paths
        query)))))
 (defalias 'night/search-dir-consult 'night/search-dir)
 
 (advice-add 'counsel-rg :around #'night/h-advice-ivy-calling)
+
+(defun night/search-dir-counsel (&rest args)
+  (interactive)
+  (apply #'night/search-dir
+         :engine "ivy-rg"
+         args))
+
+(defun night/search-dir-consult-rg (&rest args)
+  (interactive)
+  (apply #'night/search-dir
+         :engine "rg"
+         args))
+
+(defun night/search-dir-consult-ug (&rest args)
+  (interactive)
+  (apply #'night/search-dir
+         :engine "ug"
+         args))
 ;;;
 ;; (setq-default ivy-calling t)
 (setq-default ivy-calling nil)

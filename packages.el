@@ -227,6 +227,7 @@
 (package! orderless)
 (package! vertico)
 (package! consult)
+(package! embark-consult)
 
 (unpin! julia-mode julia-repl eglot-jl)
 (package! julia-mode)
