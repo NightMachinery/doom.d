@@ -21,19 +21,29 @@
   "@seeAlso `night/regex-escape'"
   (--> pattern
        (regexp-quote it)
-       ;; replace `|` with `\|`
-       (replace-regexp-in-string "|" "\\\\|" it)))
+       ;; Replace `|` etc. with their escaped versions `\|` etc.:
+       (replace-regexp-in-string "\\([()|]\\)" "\\\\\\1" it)))
 (comment
- (night/regex-escape-fast "a|b/c"))
+ (night/regex-escape-fast "a|b/c)")
+ ;; You can test with =-hi-\/man -wow\(ok?)= and [help:night/consult-ugrep-buffer].
+ )
 
 (defun night/regex-escape-smart (pattern)
   (let*
-      ((escaped
+      ((escaped pattern)
+       (escaped
         (cond
          (night/h-consult-ugrep-in-progress
           ;; (night/regex-escape pattern)
           ;; [[id:90e6d2fd-9259-441b-beca-41e408f9b090][{BUG} Escaped space causes an error · Issue #360 · Genivia/ugrep]]
-          (night/regex-escape-fast pattern))
+          (-->
+           escaped
+           (night/regex-escape-fast it)
+
+           ;; Trying to escape =--bool= syntax:
+           (replace-regexp-in-string " " "[ ]" it)
+           (replace-regexp-in-string "^-" "\\\\-" it)
+           ))
          (t (regexp-quote pattern))))
        (escaped
         (cond

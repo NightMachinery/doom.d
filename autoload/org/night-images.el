@@ -54,7 +54,7 @@
       (with-temp-buffer
         (insert string)
         (goto-char (point-min))
-        (while (re-search-forward (format "\\[file:\\(\\(?:[^]]\\|\\\\\\[\\|\\\\\\]\\)+?%s\\)\\]" extensions-regex) nil t)
+        (while (re-search-forward (format "\\[\\(?:file:\\)?\\(\\(?:[^][]\\|\\\\\\[\\|\\\\\\]\\)+?%s\\)\\]" extensions-regex) nil t)
           (push (match-string-no-properties 1) links))
         (nreverse links))))
 
@@ -91,7 +91,9 @@
                        (buffer-substring-no-properties (region-beginning) (region-end))
                      (thing-at-point 'line t)))
            (image-links (night/h-extract-image-links region)))
+      ;; (message "dir: %s" dir)
       (dolist (link image-links)
+        ;; (message "link: %s" link)
         (let* ((filename (file-name-nondirectory link))
                (new-path (expand-file-name filename dir)))
 

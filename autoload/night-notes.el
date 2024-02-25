@@ -2,8 +2,8 @@
 
 (defun night/search-notes (&optional initial-query)
   (interactive)
-  (night/search-dir-consult
-   ;; night/search-dir
+  (night/search-dir
+   :engine "ug"
 
    :dir (getenv "nightNotes")
 

@@ -32,7 +32,7 @@
                (t
                 ;; (message "ugrep input: %s" input)
 
-                ;; We give the input directly to ugrep, without any further processing.
+                ;; We give the input directly to ugrep, without any further processing. [help:completion-category-overrides]
                 (list "-e" input))
                (t (cdr
                    (mapcan
@@ -52,8 +52,9 @@
              ;; nil
              ))))))
   (defun night/consult-ugrep-make-builder-fast (paths)
-    ;; This is no faster though?
-    "Create ugrep command line builder given PATHS."
+    ;; I don't think this is significantly faster than `night/consult-ugrep-make-builder'? Losing the highlights doesn't seem worth it.
+    ;;;
+    "Create ugrep command line builder given PATHS. Doesn't do any highlighting so it should be faster."
     (let ((cmd (consult--build-args night/consult-ugrep-args)))
       (lambda (input)
         ;; (message "ugrep input: %s" input)
@@ -72,11 +73,12 @@
     (let ((prompt (or prompt "ug"))
           (night/h-consult-ugrep-in-progress t))
       (consult--grep prompt
-                     #'night/consult-ugrep-make-builder-fast
-                     ;; #'night/consult-ugrep-make-builder
+                     ;; #'night/consult-ugrep-make-builder-fast
+                     #'night/consult-ugrep-make-builder
                      dir initial)))
 
   (defun night/consult-ugrep-buffer (&optional initial)
+    "@seeAlso `counsel-grep-or-swiper', `counsel-grep-use-swiper-p'"
     (interactive)
     (night/consult-ugrep (list (buffer-file-name)) initial)))
 ;;;

@@ -227,4 +227,11 @@ move COUNT - 1 screen lines forward first."
    :g
    "C-<down>" #'scroll-other-window
    )
+  (after! (org)
+    (map!
+     :map org-mode-map
+     :g
+     "C-S-<down>" #'scroll-other-window
+     :g
+     "C-S-<up>" #'scroll-other-window-down))
   )

@@ -1,5 +1,8 @@
 ;;; night-truly-last.el -*- lexical-binding: t; -*-
 ;;;
+(after! yasnippet (yas-reload-all))
+;; repeated from night-last
+
 (after! smartparens (smartparens-global-mode -1))
 ;;;
 (require 'org)

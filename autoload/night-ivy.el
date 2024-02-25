@@ -382,6 +382,5 @@
         (night/jump-set :pos marker :buffer buf))))
   (advice-add #'counsel-imenu :around #'night/advice-with-jump-set)
 ;;;
-  )
-;;;
 (provide 'night-ivy)
+  )

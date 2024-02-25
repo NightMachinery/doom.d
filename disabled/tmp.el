@@ -186,3 +186,12 @@
 
 (setq Man-fontify-manpage-flag nil)
 (night/unadvice #'read-file-name)
+
+(add-hook 'completion-at-point-functions #'dabbrev-capf)
+
+;;;
+(setq consult-async-min-input 3)
+(setq consult-async-refresh-delay 0.1)
+(setq consult-async-input-throttle 0.1)
+(setq consult-async-input-debounce 0.1)
+;;;

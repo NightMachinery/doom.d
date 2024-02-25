@@ -1,6 +1,8 @@
 ;;; autoload/org/babel/night-jupyter.el -*- lexical-binding: t; -*-
 
 (require 'jupyter)
+(require 'ob-async)
+(require 'jupyter-org-client)
 
 (after! (jupyter)
   (setq jupyter-long-timeout 20))

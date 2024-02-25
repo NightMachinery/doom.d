@@ -17,9 +17,16 @@
 
       "ss"
       ;; #'swiper
-      'consult-line
+      #'consult-line
+      ;; @seeAlso [help:night/consult-ugrep-buffer]
       ;; Default was [help:+default/search-buffer], which used =swiper-isearch=, which has this bug:
       ;; [[https://github.com/oantolin/orderless/issues/164][{Q} How do I use `orderless-style-dispatchers` with `ivy`? · Issue #164 · oantolin/orderless]]
+
+      "sb"
+      #'consult-line-multi
+
+      "sB"
+      #'night/consult-line-all-buffers
       )
 (comment (map!
   :ng "M-x" #'night/fzf-M-x ;; #'execute-extended-command

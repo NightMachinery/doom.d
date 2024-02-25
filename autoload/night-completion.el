@@ -8,8 +8,8 @@
          ;; completion to instead use Company. You might think this
          ;; could be put in the `:bind*' declaration below, but it
          ;; seems that `bind-key*' does not work with remappings.
-         ([remap completion-at-point] . #'company-manual-begin)
-         ([remap complete-symbol] . #'company-manual-begin)
+         ;; ([remap completion-at-point] . #'company-manual-begin)
+         ;; ([remap complete-symbol] . #'company-manual-begin)
 
          ;; The following are keybindings that take effect whenever
          ;; the completions menu is visible, even if the user has not
@@ -84,7 +84,10 @@
   ;; seems to be overridden by Doom?
   ;; I am now using this function to set the frontends. [help:night/company-frontends-default]
 
-  (setq company-backends '(company-capf company-dabbrev-code company-yasnippet)) ; probably useless here, gets overridden
+  (setq company-backends '(
+                           company-capf
+                           company-dabbrev-code
+                           company-yasnippet)) ; probably useless here, gets overridden
 
 
   ;; Show quick-reference numbers in the tooltip. (Select a completion
@@ -152,9 +155,10 @@
                ;;  )
                (org-mode
                 ;; Also see `night/org-company-backends-set'
-                company-capf company-files (company-dabbrev
-                                            ;; company-ispell (makes org-babel's candidates become lost among the noise)
-                                            ) company-yasnippet)
+                company-capf
+                company-files (company-dabbrev
+                               ;; company-ispell (makes org-babel's candidates become lost among the noise)
+                               ) company-yasnippet)
                (text-mode company-capf company-files (company-dabbrev) company-yasnippet)
                (prog-mode company-capf company-dabbrev-code company-files company-yasnippet)
                (gerbil-mode company-etags company-capf company-dabbrev-code company-files company-yasnippet)
@@ -184,25 +188,6 @@
   (setq company-backends '(company-capf company-files (company-dabbrev company-ispell)))
   )
 ;;;
-;; https://stackoverflow.com/questions/2087225/about-the-fix-for-the-interference-between-company-mode-and-yasnippet
-(after! lui
-  (setq lui-completion-function #'night/company-yasnippet-or-completion))
-
-(map!
- ;; :map undo-fu-mode-map
- :nviog
- ;; C-/ seems to type C-_ on my config -_-
- "C-_" #'night/company-yasnippet-or-completion
- "C-/" #'night/company-yasnippet-or-completion)
-
-(defun night/company-yasnippet-or-completion ()
-  (interactive)
-  (let ((yas-fallback-behavior nil))
-    (unless (yas-expand)
-      ;; (call-interactively #'company-complete-common-or-cycle)
-      (call-interactively #'counsel-company)
-      )))
-
 (defvar counsel-company-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "TAB") #'ivy-next-line)

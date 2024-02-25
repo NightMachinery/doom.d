@@ -226,8 +226,11 @@
 
 (package! orderless)
 (package! vertico)
-(package! consult)
+(package! consult
+  ;; :pin "3755ed7d0f17e69a209705ff76798a96e6531441"
+  )
 (package! embark-consult)
+(package! cape)
 
 (unpin! julia-mode julia-repl eglot-jl)
 (package! julia-mode)

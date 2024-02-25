@@ -6,7 +6,10 @@
 (setq completion-styles '(orderless basic)
       completion-category-overrides
       '(
-        (file (styles basic partial-completion))
+        (file
+         (orderless basic)
+         ;; (styles basic partial-completion)
+         )
         (consult-grep (basic))))
 ;;;
 ;; [[file:night-ivy.el::(defvar *orderless-no-fuzzy*]]

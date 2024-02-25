@@ -5,8 +5,15 @@
 (after! (ivy night-ivy night-orderless vertico consult)
   (vertico-mode)
 ;;;
-  (setq consult-async-split-style 'perl)
+  (setq consult-async-split-style 'nil)
+  ;; (setq consult-async-split-style 'perl)
   ;; (setq consult-async-split-style 'comma)
+
+  (setq consult-async-min-input 3)
+  (setq consult-async-refresh-delay 0) ;; 0 was buggy in previous commits
+  ;; (setq consult-async-refresh-delay 0.01)
+  (setq consult-async-input-throttle 0)
+  (setq consult-async-input-debounce 0)
 ;;;
   (map! :map vertico-map
         :g "M-<down>" #'vertico-scroll-up
@@ -23,14 +30,17 @@
    ;; #'+ivy/switch-buffer
 
    :leader "sp"
-   #'+default/search-project
-   ;; #'consult-ripgrep
-   ;; [[id:146c8d61-d5d3-466b-979f-7e54cd0f5312][@me {Q/Bug} consult-grep (with ripgrep or ugrep) is slower than counsel-rg · Issue #950 · minad/consult]]
+   ;; #'+default/search-project
+   #'consult-ripgrep
    )
 ;;;
   ;; [[https://github.com/minad/consult/discussions/947#discussioncomment-8565359][✏️ Draft - {Q} How do I hide the line numbers in, e.g., `consult-outline`? · minad/consult · Discussion #947]]
   (consult-customize consult-outline :annotate nil)
   (consult-customize consult-line :annotate nil)
+;;;
+  (defun night/consult-line-all-buffers (&optional initial-query)
+    (interactive)
+    (consult-line-multi t initial-query))
 ;;;
   ;; [[https://github.com/minad/consult/wiki#pre-select-nearest-heading-for-consult-org-heading-and-consult-outline-using-vertico][Home · minad/consult Wiki]]
   ;; @works [[https://github.com/minad/consult/discussions/891][wiki code for pre-selecting nearest heading erroring out vertico--exhibit wrong-type-argument · minad/consult · Discussion #891]]
