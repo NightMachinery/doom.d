@@ -544,4 +544,6 @@ a link."
 			       '(font-lock-fontified t face org-meta-line))
 	  t))))))
 (advice-add 'org-fontify-meta-lines-and-blocks-1 :override #'night/org-fontify-meta-lines-and-blocks-1)
+;; [[https://git.savannah.gnu.org/cgit/emacs/org-mode.git/commit/?id=9daad41cc][emacs/org-mode.git - Emacs Org mode]]
+;; @toFuture Disable our patch if your org includes the above commit.
 ;;;

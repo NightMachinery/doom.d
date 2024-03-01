@@ -78,6 +78,7 @@ defaults to \"Password:\"."
 
         "ki" #'jupyter-org-interrupt-kernel
         "kr" #'jupyter-repl-restart-kernel
+        "kf" #'night/counsel-jupyter-forget-client
 
         "h" #'jupyter-org-hydra/body
         ))

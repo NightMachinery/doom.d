@@ -1,6 +1,6 @@
 ;;; autoload/night-completion-vertico.el -*- lexical-binding: t; -*-
 
-(after! (ivy night-ivy night-consult dabbrev cape)
+(after! (ivy night-ivy vertico vertico-multiform night-consult dabbrev cape)
 ;;;
   (advice-add 'company-capf :override #'ignore)
   ;; We disable company-capf to reduce the overhead of company.
@@ -68,13 +68,18 @@
                 (list
                  #'cape-file
 
+                 ;; @upstreamBug? The order of elements in `cape-dabbrev' is not the same as `dabbrev-expand'.
+                 #'cape-dabbrev
+                 #'cape-keyword
+
                  ;; `cape-capf-super' is experimental.
                  ;; [https://github.com/minad/cape#super-capf---merging-multiple-capfs]
                  ;; [https://github.com/minad/cape#capf-buster---cache-busting]
-                 (cape-capf-super
-                  #'cape-dabbrev
-                  ;; #'cape-dict
-                  #'cape-keyword)))
+                 ;; (cape-capf-super
+                 ;;  #'cape-dabbrev
+                 ;;  ;; #'cape-dict
+                 ;;  #'cape-keyword)
+                 ))
 
   ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
 
@@ -92,5 +97,27 @@
   ;;(add-to-list 'completion-at-point-functions #'cape-dict)
   ;;(add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
+;;;
+  (defun night/prioritize-global-capf ()
+    "Moves global capfs to the beginning of capf list, so that local capfs won't break the global capfs."
+    (interactive)
+    (setq-local
+     completion-at-point-functions
+     (cl-remove-duplicates (-filter
+                            ;; Removing =t= to avoid using the global capfs to avoid repetition:
+                            (lambda (x)
+                              (not (equal x t)))
+                            (-concat
+                             (default-value 'completion-at-point-functions)
+                             completion-at-point-functions)))))
+;;;
+  ;; [[https://github.com/minad/consult/discussions/956][Add the ability to change the initial query in `consult-completion-in-region` · minad/consult · Discussion #956]]
+  (setf (alist-get #'consult-completion-in-region vertico-multiform-commands)
+        (list (lambda (_)
+                ;; (vertico-multiform-grid)
+                ;; `vertico-multiform-grid' worked the first time I ran this code, but then it stopped working after a minute. I have no idea why.
+
+                (insert " ")
+                )))
 ;;;
   )

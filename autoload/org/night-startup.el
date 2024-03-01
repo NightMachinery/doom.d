@@ -1,5 +1,9 @@
 ;;; autoload/org/night-startup.el -*- lexical-binding: t; -*-
 
+(after! (org)
+  (modify-syntax-entry ?= "." org-mode-syntax-table)
+  (modify-syntax-entry ?/ "." org-mode-syntax-table))
+
 (defun night/org-startup ()
   (interactive)
   (org-fragtog-mode) ;; https://github.com/io12/org-fragtog

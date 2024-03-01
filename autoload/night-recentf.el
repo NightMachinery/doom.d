@@ -35,4 +35,6 @@
    (cancel-timer night/recentf-auto-save-timer))
   ;; [[https://github.com/doomemacs/doomemacs/issues/3487][{REQUEST} Continuous session autosave · Issue #3487 · doomemacs/doomemacs]]
   ;; [[https://www.emacswiki.org/emacs/RecentFiles][EmacsWiki: Recent Files]]
+;;;
+  (recentf-mode)
   )

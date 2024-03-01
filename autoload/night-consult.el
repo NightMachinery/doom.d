@@ -1,9 +1,11 @@
 ;;; autoload/night-consult.el -*- lexical-binding: t; -*-
 
 (require 'vertico)
+(require 'vertico-multiform)
 (require 'consult)
 (after! (ivy night-ivy night-orderless vertico consult)
   (vertico-mode)
+  (vertico-multiform-mode)
 ;;;
   (setq consult-async-split-style 'nil)
   ;; (setq consult-async-split-style 'perl)
