@@ -3,6 +3,7 @@
 (after! (cape)
   (require 'dabbrev)
   (setq cape-dabbrev-min-length 0
+        cape-dabbrev-check-other-buffers t
         dabbrev-case-fold-search t
         dabbrev-upcase-means-case-search t
         dabbrev-check-other-buffers t

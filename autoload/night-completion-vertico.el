@@ -43,18 +43,23 @@
     (setq lui-completion-function #'night/yasnippet-or-completion))
 ;;;
   (map!
-   :nvig
+   :nig
    "C-/"
    #'completion-at-point
    ;; #'complete-symbol
    ;; #'cape-dabbrev
    ;; #'night/company-yasnippet-or-completion
 
-   :nvig
+   :nig
    ;; C-/ seems to type C-_ on my config -_-
    "C-_"
    #'completion-at-point
    ;; #'cape-dabbrev
+
+   :nig
+   "s-."
+   #'cape-dabbrev
+   ;; #'cape-tex
    )
 ;;;
   ;; Add to the global default value of `completion-at-point-functions' which is
@@ -79,6 +84,8 @@
                  ;;  #'cape-dabbrev
                  ;;  ;; #'cape-dict
                  ;;  #'cape-keyword)
+
+                 ;; #'cape-tex
                  ))
 
   ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)

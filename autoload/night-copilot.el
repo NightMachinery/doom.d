@@ -3,12 +3,34 @@
 ;;;
 (require 'copilot)
 (after! (org copilot)
+;;;
+  (defun night/copilot-overlay-disable ()
+    (interactive)
+    (setq copilot-idle-delay nil)
+    ;; Complete immediately if set to 0.
+    ;; Disable idle completion if set to nil.
+    (message "Copilot overlays disabled.")
+    )
+
+  (defun night/copilot-overlay-enable ()
+    (interactive)
+    (setq copilot-idle-delay 0)
+    (message "Copilot overlays enabled!"))
+
+  (defun night/copilot-overlay-toggle ()
+    (interactive)
+    (cond
+     ((null copilot-idle-delay)
+      (night/copilot-overlay-enable))
+     (t
+      (night/copilot-overlay-disable))))
+;;;
   (defun night/h-copilot-clear-overlay ()
     "Like `copilot-clear-overlay', but returns `t' if the overlay was visible."
     (when (copilot--overlay-visible)
       (copilot-clear-overlay) t))
   (add-hook 'doom-escape-hook #'night/h-copilot-clear-overlay)
-
+;;;
   (map!
    :nig
    "C-." #'copilot-complete
@@ -17,6 +39,7 @@
   (map!
    :leader
    "co" #'copilot-mode
+   "c RET" #'night/copilot-overlay-toggle
    "cc" #'copilot-panel-complete
    "cv" #'copilot-next-completion
    "cx" #'copilot-previous-completion
