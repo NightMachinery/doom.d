@@ -173,6 +173,7 @@
 (night/set-leader-keys ", n" #'night/pns)
 (night/set-leader-keys ", m" #'night/paste-md2org)
 (night/set-leader-keys ", o" #'night/paste-org2md)
+(night/set-leader-keys ", p" #'night/paste-py-escape-triple-quotes)
 (night/set-leader-keys ", c" #'night/p-titlecase)
 (night/set-leader-keys ", ;" #'night/strip-prefixed-colons)
 (night/set-leader-keys ", i" #'ns-yank-image-at-point-as-image)

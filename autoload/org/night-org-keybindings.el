@@ -162,11 +162,15 @@ With ARG, repeats or can move backward if negative."
    "g8" #'night/avy-goto-org-header
 
    :n
-   "gl" #'org-open-at-point
+   "gl"
+   #'org-open-at-point-global
+   ;; #'org-open-at-point
    ;; :n "gL" #'org-insert-link-global
 
    :n
-   "zx" #'org-redisplay-inline-images
+   "zx"
+   #'night/org-redisplay-images-etc
+   ;; #'org-redisplay-inline-images
 
    :nvo
    "{" #'org-previous-visible-heading

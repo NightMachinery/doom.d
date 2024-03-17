@@ -1,7 +1,8 @@
 ;;; autoload/org/babel/night-jupyter.el -*- lexical-binding: t; -*-
 
-(require 'jupyter)
+(require 'org-src)
 (require 'ob-async)
+(require 'jupyter)
 (require 'jupyter-org-client)
 
 (after! (jupyter)

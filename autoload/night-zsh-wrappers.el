@@ -82,7 +82,20 @@
   (interactive)
   (night/brishz-async-insert
    :name $0
-   :command (list "reval-paste" "org2md")
+   :command (list "reval-paste"
+                  ;; "org2md"
+                  "org2md-escape-triple-quotes"
+                  )
+   :callback-after #'night/nop
+   :insert-fn #'night/insert-for-yank
+   :save-p nil))
+
+(night/defun-named night/paste-py-escape-triple-quotes ()
+  (interactive)
+  (night/brishz-async-insert
+   :name $0
+   :command (list "reval-paste"
+                  "py-escape-triple-quotes")
    :callback-after #'night/nop
    :insert-fn #'night/insert-for-yank
    :save-p nil))

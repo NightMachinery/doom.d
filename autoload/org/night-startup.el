@@ -2,7 +2,8 @@
 
 (after! (org)
   (modify-syntax-entry ?= "." org-mode-syntax-table)
-  (modify-syntax-entry ?/ "." org-mode-syntax-table))
+  (modify-syntax-entry ?/ "." org-mode-syntax-table)
+  (modify-syntax-entry ?* "." org-mode-syntax-table))
 
 (defun night/org-startup ()
   (interactive)
@@ -28,11 +29,18 @@
   (night/org-company-backends-set)
   (night/disable-company-frontends)
 
+  ;; (setq tab-width 4)
+  (setq-local evil-shift-width 4)
+  ;; [[id:f4799b9b-fa11-46cd-b402-cc8f0531aca0][orgmode/indent]]
+
   (run-with-timer
    0.1
    nil
    (lambda ()
      (interactive)
+     (setq-local evil-shift-width 4)
+     ;; Something keeps overriding our `evil-shift-width', so I am setting it here, too.
+
      (night/babel-ansi-all2)))
   ;; (xterm-color-colorize-buffer)
 
@@ -47,4 +55,7 @@
 ;;;
   )
 
-(add-hook 'org-mode-hook #'night/org-startup)
+(add-hook
+ 'org-mode-hook
+ ;; 'evil-org-mode-hook
+ #'night/org-startup)

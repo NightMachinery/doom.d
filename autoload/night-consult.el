@@ -11,7 +11,7 @@
   ;; (setq consult-async-split-style 'perl)
   ;; (setq consult-async-split-style 'comma)
 
-  (setq consult-async-min-input 3)
+  (setq consult-async-min-input 2)
   (setq consult-async-refresh-delay 0) ;; 0 was buggy in previous commits
   ;; (setq consult-async-refresh-delay 0.01)
   (setq consult-async-input-throttle 0)
@@ -34,6 +34,10 @@
    :leader "sp"
    ;; #'+default/search-project
    #'consult-ripgrep
+
+   :leader "sj"
+   ;; #'+ivy/jump-list
+   #'evil-collection-consult-jump-list
    )
 ;;;
   ;; [[https://github.com/minad/consult/discussions/947#discussioncomment-8565359][✏️ Draft - {Q} How do I hide the line numbers in, e.g., `consult-outline`? · minad/consult · Discussion #947]]

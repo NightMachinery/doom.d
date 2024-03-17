@@ -230,6 +230,7 @@
   ;; :pin "3755ed7d0f17e69a209705ff76798a96e6531441"
   )
 (package! embark-consult)
+(package! marginalia)
 (package! cape)
 
 (unpin! julia-mode julia-repl eglot-jl)

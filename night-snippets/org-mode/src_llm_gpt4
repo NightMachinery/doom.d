@@ -1,5 +1,5 @@
 # -*- mode: snippet -*-
-# name: llm
+# name: llm-gpt4
 # key: <l4
 # uuid: <l4
 # --
@@ -21,6 +21,6 @@ res = openai_chat_complete(
     interactive=True,
 )
 
-print_chat_streaming(res, copy_mode="chat2")
+print_chat_streaming(res, copy_mode=None) # "chat2"
 bell_gpt()
 #+end_src

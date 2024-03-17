@@ -1,5 +1,8 @@
 ;;; ~/doom.d/night-buffer.el -*- lexical-binding: t; -*-
 ;;;
+(after! (uniquify)
+       (setq uniquify-buffer-name-style 'forward))
+;;;
 (defun night/force-kill-current-buffer ()
   (interactive)
   ;; [[https://emacs.stackexchange.com/questions/59348/force-kill-a-buffer][force kill a buffer? - Emacs Stack Exchange]]
@@ -47,5 +50,16 @@
         (kill-new filename)
         (message "Yanked: %s" filename))
     (error "Couldn't find filename in current buffer")))
+(map! :leader
+      "fy" #'night/yank-buffer-filename ; overrides doom's version
+      )
+;;;
+(defun night/switch-to-last-buffer ()
+  "Switch to the most recent buffer."
+  (interactive)
+  (switch-to-buffer (other-buffer (current-buffer) 1)))
 
-(map! :leader "fy" #'night/yank-buffer-filename) ; overrides doom's version
+(map!
+ :n
+ "[[" #'night/switch-to-last-buffer)
+;;;

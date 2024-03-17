@@ -5,6 +5,9 @@
 ;;;
 (require 'ox-ipynb)
 ;;;
+(after! (ob-exp)
+  (setq org-export-use-babel nil))
+;;;
 (defun night/h-ox-ipynb-split-text (s)
   "Given a string S, split it into substrings.
 Each heading is its own string. Also, split on #+ipynb-newcell and #+attr_ipynb.
@@ -12,52 +15,91 @@ Empty strings are eliminated."
   (let* ((s1 (s-slice-at org-heading-regexp s))
          ;; split headers out
          (s2 (cl-loop for string in s1
-                   append
-                   (if (string-match org-heading-regexp string)
-                       (let ((si (split-string string "\n"))
-			     heading content)
-			 ;; The first one is definitely the heading. We may also
-			 ;; need properties.
-			 (setq heading (pop si))
-			 (when (and
-                                org-export-with-properties
-                                si (s-matches? ":PROPERTIES:" (car si)))
-			   ;; @monkeyPatched I added `org-export-with-properties' above.
-                           ;;;
-                           (setq heading (concat "\n" heading (pop si) "\n"))
-			   (while (not (s-matches? ":END:" (car si)))
-			     (setq heading (concat heading (pop si) "\n")))
-			   (setq heading (concat heading (pop si) "\n"))
-                           )
-                         (list heading
-			       (mapconcat 'identity si "\n")))
-                     (list string))))
+                      append
+                      (if (string-match org-heading-regexp string)
+                          (let ((si (split-string string "\n"))
+			        heading content)
+			    ;; The first one is definitely the heading. We may also
+			    ;; need properties.
+			    (setq heading (pop si))
+			    (when (and
+                                   org-export-with-properties
+                                   si (s-matches? ":PROPERTIES:" (car si)))
+			      ;; @monkeyPatched I added `org-export-with-properties' above.
+;;;
+                              (setq heading (concat "\n" heading (pop si) "\n"))
+			      (while (not (s-matches? ":END:" (car si)))
+			        (setq heading (concat heading (pop si) "\n")))
+			      (setq heading (concat heading (pop si) "\n"))
+                              )
+                            (list heading
+			          (mapconcat 'identity si "\n")))
+                        (list string))))
          (s3 (cl-loop for string in s2
-                   append
-                   (split-string string "#\\+ipynb-newcell")))
+                      append
+                      (split-string string "#\\+ipynb-newcell")))
 	 ;; check for paragraph metadata and split on that, but keep the attribute.
 	 (s4 (cl-loop for string in s3
-                   append
-		   ;; Note I specifically leave off the b: in this pattern so I
-		   ;; can use it in the next section
-                   (split-string string "^#\\+attr_ipyn")))
+                      append
+		      ;; Note I specifically leave off the b: in this pattern so I
+		      ;; can use it in the next section
+                      (split-string string "^#\\+attr_ipyn")))
 	 (s5 (cl-loop for string in s4 collect
-		   (if (string-prefix-p "b: " string t)
-		       (concat "#+attr_ipyn" string)
-		     string))))
+		      (if (string-prefix-p "b: " string t)
+		          (concat "#+attr_ipyn" string)
+		        string))))
 
     s5))
 (advice-add 'ox-ipynb-split-text :override #'night/h-ox-ipynb-split-text)
 ;;;
-(defun night/export-org-file-to-ipynb (&optional file)
+(defun night/export-org-file-to-ipynb (&optional file output-path)
+  "Export the current Org file to an ipynb file.
+Replaces `\[\.` with `[file:.` and `#+begin_src jupyter-python` with `#+begin_src python :eval never`.
+The output file path defaults to the current file's name with the .ipynb extension.
+Prompts for confirmation if the output file already exists."
   (interactive)
-  (let* ((file
-          (or file (buffer-file-name)))
-         (exported-rel-path
-          (ox-ipynb-export-org-file-to-ipynb-file file)))
-    (message "exported: %s" exported-rel-path)
-    (z pbadd (identity exported-rel-path))
-    ))
+  (let* ((file (or file (buffer-file-name)))
+         (default-output-path (concat (file-name-sans-extension file) ".ipynb"))
+         (output-path
+          (or
+           output-path
+           (read-file-name
+            "Output file: "
+            ;; (f-dirname default-output-path)
+            nil
+
+            ;; default-output-path
+            nil
+            nil
+            (file-name-nondirectory default-output-path))))
+         (temp-file (make-temp-file (file-name-directory file) nil ".org"))
+         (buffer-content (buffer-substring-no-properties (point-min) (point-max)))
+         exported-file)
+    ;; (message "default-output-path: %s" default-output-path)
+    (unwind-protect
+        (progn
+          (with-temp-buffer
+            (insert buffer-content)
+            (goto-char (point-min))
+            (while (re-search-forward "\\[\\." nil t)
+              (replace-match "[file:." nil t))
+            (goto-char (point-min))
+            (while (re-search-forward "#\\+begin_src jupyter-python" nil t)
+              (replace-match "#+begin_src python :eval never" nil t))
+            (write-file temp-file)
+            (setq exported-file (expand-file-name (ox-ipynb-export-org-file-to-ipynb-file temp-file)))
+            (kill-buffer (current-buffer)))
+          (when (file-exists-p output-path)
+            (unless (y-or-n-p (format "File %s already exists. Overwrite? " output-path))
+              (user-error "Aborted")))
+          (rename-file exported-file output-path t)
+          (message "Exported to: %s" output-path)
+          (z pbadd (identity output-path))
+          output-path)
+      (when (file-exists-p temp-file)
+        (delete-file temp-file))
+      (when (file-exists-p exported-file)
+        (delete-file exported-file)))))
 ;;;
 (after! ox
   (setq org-export-with-broken-links 'mark)

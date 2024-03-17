@@ -2,6 +2,6 @@
 # key: <ee
 # uuid: <ee
 # --
-#+begin_example elisp
+#+begin_src elisp :eval never
 `%`$0
-#+end_example
+#+end_src

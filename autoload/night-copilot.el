@@ -31,6 +31,14 @@
       (copilot-clear-overlay) t))
   (add-hook 'doom-escape-hook #'night/h-copilot-clear-overlay)
 ;;;
+  (defun night/copilot-ensure (&rest _)
+    (interactive)
+    (unless (bound-and-true-p copilot-mode)
+      (copilot-mode 1)
+      (night/copilot-overlay-disable)))
+
+  (advice-add 'copilot-complete :before #'night/copilot-ensure)
+;;;
   (map!
    :nig
    "C-." #'copilot-complete

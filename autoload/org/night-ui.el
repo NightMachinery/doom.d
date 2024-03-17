@@ -1,11 +1,11 @@
 ;;; autoload/org/night-ui.el -*- lexical-binding: nil; -*-
 
 (after! (org night-color)
-  ;;;
+;;;
   ;; The following make =org-verse= look the same as =org-quote=.
   (custom-set-faces
-     '(org-verse ((t (:inherit org-quote)))))
-  ;;;
+   '(org-verse ((t (:inherit org-quote)))))
+;;;
   (require 'jupyter-org-client)
   ;; to load =jupyter-org--ansi-color-apply-on-region=
 
@@ -65,6 +65,11 @@
   ;; (remove-hook 'org-babel-after-execute-hook 'night/babel-ansi)
 ;;;
   ;; (set-face-attribute 'org-level-1 nil :box  `(:line-width 30 :color ,(face-background 'default)))
+
+  (defun night/org-redisplay-images-etc ()
+    (interactive)
+    (org-redisplay-inline-images)
+    (night/babel-ansi-all2))
 
   (progn
     (face-spec-set 'org-level-5 ;; originally copied from org-level-8

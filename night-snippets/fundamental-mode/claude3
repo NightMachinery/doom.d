@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Claude3
+# key: cl3
+# uuid: claude3
+# --
+@Claude/3-opus-20240229

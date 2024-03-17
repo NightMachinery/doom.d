@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
-# name: llm
-# key: <l
-# uuid: <l
+# name: llm-gpt4t
+# key: <ll
+# uuid: <ll
 # --
 #+begin_src jupyter-python :kernel py_base :session chatgpt_1 :async yes :exports both
 res = openai_chat_complete(

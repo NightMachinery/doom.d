@@ -46,7 +46,7 @@ Use this to stop the audio files being played by org-mode links."
               )
             )
            ((and
-             (member-ignore-case ext '("mp3" "ogg" "m4a" "flac" "wav" "mp4" "avi" "mkv" "flv")))
+             (member-ignore-case ext '("mp3" "ogg" "m4a" "flac" "wav" "mp4" "avi" "mkv" "flv" "wma")))
             ;; (night/yank-buffer-filename)
             (kill-current-buffer)
             (night/hear bfn)

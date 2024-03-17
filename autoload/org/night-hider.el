@@ -64,8 +64,12 @@
     (interactive)
     (map! :map 'local
           :localleader
-          "\\\\" #'night/org-playlist-cp-to-tmp
-          "\\p" #'night/org-todo-copy
+          ;; "\\\\"
+          "pc"
+          #'night/org-playlist-cp-to-tmp
+          ;; "\\p"
+          "pC"
+          #'night/org-todo-copy
           )
     (comment
      (map! :map 'local
