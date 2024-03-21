@@ -20,3 +20,12 @@
 (require 'eredis)
 (setq redis-connection-0 (eredis-connect "localhost" 6379))
 ;;;
+(defmacro night/defface (face spec &optional doc &rest args)
+  "Define a face FACE with spec SPEC, optional documentation DOC, and custom ARGS.
+If FACE is already defined, update its spec with SPEC."
+  (declare (doc-string 3) (indent defun))
+  (let ((face-symbol (if (symbolp face) face (eval face))))
+    `(if (facep ',face-symbol)
+         (face-spec-set ',face-symbol ,spec)
+       (defface ,face ,spec ,doc ,@args))))
+;;;

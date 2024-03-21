@@ -1806,6 +1806,9 @@ Non-nil optional arg MSGP means show status messages."
    nil nil nil msgp (and current-prefix-arg  (>= (prefix-numeric-value current-prefix-arg) 0)) buffers))
 
 ;;;###autoload
+(defvar hlt-overlays nil
+  "List to store the created overlays.")
+
 (defun hlt-highlight-region (&optional start end face msgp mousep buffers)
   "Highlight either the region/buffer or new input that you type.
 Use the region if active, or the buffer otherwise.
@@ -1870,10 +1873,15 @@ Optional 6th arg BUFFERS is the list of buffers to highlight.
                 overlay)
             (setq buffer-read-only  nil)
             (cond (hlt-use-overlays-flag
-                   (setq overlay  (make-overlay start end))
+                   (setq overlay (make-overlay start end))
                    (overlay-put overlay (if mousep 'mouse-face hlt-face-prop) face)
-                   (overlay-put overlay 'hlt-highlight                face)
-                   (overlay-put overlay 'priority                     hlt-overlays-priority))
+                   (overlay-put overlay 'hlt-highlight face)
+                   (overlay-put overlay 'priority hlt-overlays-priority)
+
+                   ;; Add the overlay to the global variable
+                   (push overlay hlt-overlays)
+                   ;; (message "pushing overlay to hlt-overlays: %s" hlt-overlays)
+                   )
                   (mousep (put-text-property start end 'mouse-face face))
                   ((interactive-p)
                    (message "Text you type now will have face `%s'." face)

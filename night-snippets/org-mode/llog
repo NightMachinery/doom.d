@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: llog
+# key: llog
+# uuid: llog
+# --
+@llog
+:PROPERTIES:
+:visibility: folded
+:END:

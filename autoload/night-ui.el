@@ -1,4 +1,46 @@
 ;;;
+(setq night/at-tag-char-regex "[^][[:space:](){};\n\"=]")
+(setq night/at-tag-regex
+      (concat "\\B\\(@" night/at-tag-char-regex "+\\)"))
+
+(setq night/great-tag-regex
+      ;; "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\)[^[:space:]]*"
+      (concat "\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\)" night/at-tag-char-regex "*")
+      ;; "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\).*$"
+      )
+(setq night/urgent-tag-regex "^.*\\(@urgent\\>\\|:urgent:\\|@ASAP\\|:ASAP:\\).*$")
+(setq night/CR-tag-regex (concat "\\(@CR\\>\\)" night/at-tag-char-regex "*"))
+(setq night/done-tag-regex (concat "\\(@done\\>\\)" night/at-tag-char-regex "*"))
+(setq night/moved-tag-regex (concat "\\(@moved\\>\\)" night/at-tag-char-regex "*"))
+
+
+;; white-green background: #e9f2eb
+(night/defface zsh-macro '((t (:foreground "#1adb51" :background "#e9f1f2" :weight bold))) "This is just a doc string")
+(night/defface urgent-face '((t (
+                           :foreground "black"
+                                       ;; :background "hotpink"
+                           :background "mistyrose"
+                           ;; :background "orangered"
+                           :weight bold))) "")
+(night/defface CR-face '((t (
+                           :foreground "MintCream"
+                           ;; :foreground "thistle1"
+                           ;; :foreground "black"
+
+                           :background "orange1"
+                           :weight bold))) "")
+(night/defface done-face '((t (
+                               ;; :foreground "MintCream"
+                               ;; :foreground "PaleGreen"
+                               :foreground "DarkGreen"
+
+                               :background "LimeGreen"
+                               ;; :background "PaleGreen"
+                               ;; :background "LawnGreen"
+                               ;; :background "GreenYellow"
+                               ;; :background "Green"
+                               :weight bold))) "")
+;;;
 (defun night/disable-line-numbers ()
   (interactive)
   (display-line-numbers-mode -1))
@@ -82,19 +124,10 @@ If PROPERTIES are specified, set them for the created overlay."
 ;; How to make the highlights re-use the original background color? https://github.com/tarsius/hl-todo/issues/60 ; did not work:
 ;; :background "unspecified"
 ;; :inherit t
-(defface special-comment '((t (:inherit t :foreground "#3437eb" :weight bold))) "This is just a doc string")
+(night/defface special-comment '((t (:inherit t :foreground "#3437eb" :weight bold))) "This is just a doc string")
 
 ;;;
-
-;; white-green background: #e9f2eb
-(defface zsh-macro '((t (:foreground "#1adb51" :background "#e9f1f2" :weight bold))) "This is just a doc string")
-(defface urgent-face '((t (
-                           :foreground "black"
-                           ;; :background "hotpink"
-                           :background "mistyrose"
-                           ;; :background "orangered"
-                           :weight bold))) "")
-(defface night/async-insertion-face
+(night/defface night/async-insertion-face
   '((t (
         :foreground "black"
         :background "orchid1"
@@ -108,29 +141,39 @@ If PROPERTIES are specified, set them for the created overlay."
   (interactive)
   (progn (font-lock-add-keywords
           ;; [:punct:]
-          nil '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'special-comment t)))))
+          nil `((,night/at-tag-regex 1 'special-comment t)))))
 
 (defun night/highlight-atsign-zsh ()
   (interactive)
-  (progn (font-lock-add-keywords 'sh-mode
-                                 '(("\\B\\(@[^][[:space:](){};\n\"=]+\\)" 1 'zsh-macro t)))))
+  (progn
+    (font-lock-add-keywords
+     'sh-mode
+     `((,night/at-tag-regex 1 'zsh-macro t)))))
 
-(setq night/great-tag-regex "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\).*$")
-(setq night/urgent-tag-regex "^.*\\(@urgent\\|:urgent:\\|@ASAP\\|:ASAP:\\).*$")
 (defun night/highlight-org ()
   (interactive)
-  (progn
-    ;; (font-lock-add-keywords 'org-mode
-    ;;                         '(("^.*\\B@great\\B.*$" 1 'zsh-macro t)))
-    (font-lock-add-keywords 'org-mode
-                            `((,night/great-tag-regex . 'zsh-macro))
-                            )
-    (font-lock-add-keywords 'org-mode
-                            `((,night/urgent-tag-regex
-                               .
-                               ;; 'dired-broken-symlink
-                               'urgent-face)))
-    )
+  (comment
+   ;; @broken @bug
+   ;; When these tags are matched, the styling of the rest of the line gets affected. E.g., org headings lose their styling.
+   ;; So I have disabled them for now.
+   ;; [help:night/highlight-background] works, though it needs manual invocation to update the colors.
+   (font-lock-add-keywords
+    'org-mode
+    ;; @duplicateCode/e637f800f6aefb7d629b8e5dad00aa36
+    `(
+      (,night/urgent-tag-regex
+       .
+       ;; 'dired-broken-symlink
+       'urgent-face)
+      (,night/CR-tag-regex
+       .
+       'CR-face)
+      (,night/done-tag-regex
+       .
+       'done-face)
+      (,night/great-tag-regex . 'zsh-macro)
+      ))
+   )
   )
 
 (night/highlight-atsign-zsh)
@@ -168,7 +211,10 @@ If PROPERTIES are specified, set them for the created overlay."
           ("BUG" error bold)
           ;; For warning about a problematic or misguiding code
           ("XXX" font-lock-constant-face bold)
-          ("@[^][[:space:](){};\n\"=]+" special-comment)
+          (
+           ;; night/at-tag-regex
+           ,(concat "@" night/at-tag-char-regex "+")
+           special-comment)
           ))
   )
 ;;;
@@ -181,10 +227,40 @@ If PROPERTIES are specified, set them for the created overlay."
   )
 
 ;;;
+(defvar-local night/highlight-overlays nil
+  "Buffer-local variable to store the highlight overlays.")
+
 (defun night/highlight-background ()
-  "Highlights the background of the hardcoded patterns on the current buffer. It does NOT react to new additions of the patterns in the buffer. The highlight also is kind of sticky. It uses overlays so at least it's not overrided by hl-line, but then again, it erases the at-tags as they are not yet overlays ..."
+  "Highlights the background of the hardcoded patterns on the current buffer.
+It removes the previous highlights before applying new ones."
   (interactive)
-  (hlt-highlight-regexp-region nil nil night/great-tag-regex 'zsh-macro 1))
+  (let ((debug-p nil))
+    ;; Remove previous highlight overlays
+    (when night/highlight-overlays
+      (when debug-p
+        (message "Removing %d previous highlight overlays" (length night/highlight-overlays)))
+      (dolist (overlay night/highlight-overlays)
+        (delete-overlay overlay))
+      (setq night/highlight-overlays nil))
+
+    ;; Apply new highlights and store the overlays
+    (dolist
+        (item
+         ;; @duplicateCode/e637f800f6aefb7d629b8e5dad00aa36
+         `((,night/great-tag-regex 'zsh-macro)
+           (,night/CR-tag-regex 'CR-face)
+           (,night/done-tag-regex 'done-face)
+           (,night/urgent-tag-regex 'urgent-face)
+           (,night/moved-tag-regex 'table-cell)))
+      (let ((regex (car item))
+            (face (cadr item)))
+        (let ((hlt-overlays nil))
+          ;; `hlt-overlays' is a dynamic global var that is set in `hlt-highlight-region'.
+          (hlt-highlight-regexp-region (point-min) (point-max) regex face 'MSGP)
+          (when debug-p
+            (message "Created overlays: %s" hlt-overlays))
+          (setq night/highlight-overlays (append night/highlight-overlays hlt-overlays)))))))
+
 (defun night/hlt-set-current-face (&optional face)
 
   (let ((face
