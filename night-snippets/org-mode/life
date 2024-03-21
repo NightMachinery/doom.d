@@ -3,7 +3,9 @@
 # key: <<
 # uuid: <<
 # expand-env: ((yas-after-exit-snippet-hook #'evil-normal-state))
+# condition: (night/h-point-at-beginning-p :prefix-pattern "<<")
 # --
+`(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
 - [ ] Burning Candle [0/4]
   - [ ] $0Luna is Alive
   - [ ] 30m Exercise
