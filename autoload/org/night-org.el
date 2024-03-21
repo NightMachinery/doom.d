@@ -24,6 +24,7 @@
       (org-beamer-export-to-pdf))
 ;;;
     (when (string= "org-mode" major-mode)
+      (night/highlight-background)
 ;;;
       ;; (org-html-export-to-html)
 ;;;

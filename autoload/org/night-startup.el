@@ -25,7 +25,7 @@
 
   (when (fboundp #'night/org-show-link-display)
     (night/org-show-link-display))
-  (night/highlight-background) ;; @futureCron was this worth overcoming hl-line?
+  (night/highlight-background)
   (night/org-company-backends-set)
   (night/disable-company-frontends)
 
