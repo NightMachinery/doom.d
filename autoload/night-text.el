@@ -16,11 +16,15 @@
 
 (defun night/current-line-get ()
   "Get the current line as a string."
-
   (buffer-substring-no-properties
-
    (line-beginning-position)
    (line-end-position)))
+
+(defun night/current-line-starts-with-p (prefix)
+  "Check if the current line starts with the given PREFIX.
+Return t if the line starts with PREFIX, nil otherwise."
+  (let ((line (night/current-line-get)))
+    (string-prefix-p prefix line)))
 ;;;
 (defun kill-all-comments ()
   "Kills all the comments in the code, without putting them in the killring."

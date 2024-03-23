@@ -116,13 +116,16 @@
 ;;;
 (defun night/strip-prefixed-colons ()
   "If a region is selected, we copy it without its prefix colons.
-If no region is currently selected, we paste the clipboard without its prefix colons.
-"
+If no region is currently selected, we paste the clipboard without its prefix colons."
   (interactive)
   (cond
    ((use-region-p)
     (when-let ((text (night/region-copy)))
       (kill-new (z reval-paste strip-prefixed-colons))))
+   ((night/current-line-starts-with-p ": ")
+    ;; When the current line starts with `: `, copy the current line
+    (kill-new (night/current-line-get))
+    (kill-new (z reval-paste strip-prefixed-colons)))
    (t
     (insert-for-yank (z reval-paste strip-prefixed-colons)))))
 ;;;

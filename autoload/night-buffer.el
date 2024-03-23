@@ -6,9 +6,12 @@
 (defun night/force-kill-current-buffer ()
   (interactive)
   ;; [[https://emacs.stackexchange.com/questions/59348/force-kill-a-buffer][force kill a buffer? - Emacs Stack Exchange]]
-  ;; You can use [help:with-current-buffer] together with this to force kill any buffer.
   (let (kill-buffer-hook kill-buffer-query-functions)
     (kill-buffer)))
+
+(defun night/force-kill-buffer (buffer)
+  (with-current-buffer buffer
+    (night/force-kill-current-buffer)))
 
 (defun night/force-save-current-buffer ()
   (interactive)
@@ -16,7 +19,7 @@
   (let (
         (write-file-functions nil)
         ;; `undo-fu-session--save-safe'
-        ;;;
+;;;
         (before-save-hook nil)
         (after-save-hook nil))
     (save-buffer)))

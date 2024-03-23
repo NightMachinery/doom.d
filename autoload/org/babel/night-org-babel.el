@@ -160,7 +160,7 @@ Assumes that the source block has already been executed."
               (cl-position-if-not
 
                (lambda (line)
-                 (string-match-p "^\\(#\\+\\|:RESULTS:[ \t\n]*\\)" line))
+                 (string-match-p "^\\(#\\+\\|:RESULTS:[ \t\n]*\\|: /❂\\\)" line))
                lines))
              (last-relevant-line-index
               (cl-position-if

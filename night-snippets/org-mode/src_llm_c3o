@@ -12,7 +12,7 @@ res = openai_chat_complete(
     # model="gpt-4-0613",
     ##
     messages=[
-        # {"role": "system", "content": """You are a senior programmer. You are an expert in functional programming. You use design patterns as appropriate."""},
+        # {"role": "system", "content": """Output your changes in the unified diff format."""},
         {"role": "user", "content": r"""
         `%`$0
         """},
