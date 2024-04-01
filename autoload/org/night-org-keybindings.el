@@ -137,8 +137,7 @@ With ARG, repeats or can move backward if negative."
         ;;   (end-of-line))
 ;;;
         (cl-decf arg))
-      (if (> arg 0) (goto-char (point-max)) (beginning-of-line))
-      ))
+      (if (> arg 0) (goto-char (point-max)) (beginning-of-line))))
   (advice-add 'org-next-visible-heading :override 'night/org-next-visible-heading)
 ;;;
   (map! :map org-mode-map
@@ -209,15 +208,15 @@ With ARG, repeats or can move backward if negative."
    ;; Update IMDB
    ;; Perhaps we should add an after-advice to run =+org/open-all-folds= or =revert-buffer=? There is a bug that the inserted properties drawer can't be opened without running a workaround first ...revert-buffer a bug that the inserted properties drawer can't be opened without running a workaround first ...
 
+   "lc" #'night/org-link-chrome-current
    "lC" #'night/url2org
-   "lc" #'night/org-link-browser-current
    "le" #'night/org-link-edge-current
-   "l;" #'night/org-link-arc-current
-   )
+   "l;" #'night/org-link-browser-current
+   "l:" #'night/url2org)
   (map!
    :leader
+   "lc" #'night/org-link-chrome-current
    "lC" #'night/url2org
-   "lc" #'night/org-link-browser-current
    "le" #'night/org-link-edge-current
-   "l;" #'night/org-link-arc-current)
-  )
+   "l;" #'night/org-link-browser-current
+   "l:" #'night/url2org))

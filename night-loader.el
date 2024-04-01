@@ -41,11 +41,15 @@
 (defun night/load-config ()
   (interactive)
   (message "%s" "night/load-config started ...")
-  (require 'f)
-  (require 'a)
-  (require 'dash)
-  (require 'memoize)
-  (mapcar #'load-night '("brish" "macros" "basic" "doom-keybindings" "gui" "macos-gui"))
+  (mapcar #'load-night
+          '(
+            "packages"
+            "brish"
+            "macros"
+            "basic"
+            "doom-keybindings"
+            "gui"
+            "macos-gui"))
 
   (load-gitmodules "osx-clipboard-mode/osx-clipboard.el")
   (load-gitmodules "fzf.el/fzf.el")

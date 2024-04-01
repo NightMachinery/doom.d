@@ -33,13 +33,20 @@
   (add-to-list 'yas-snippet-dirs '+file-templates-dir 'append #'eq)
   (add-to-list 'yas-snippet-dirs 'doom-snippets-dir 'append #'eq)
 
-  (yas-reload-all)
+  (defun night/h-yas-rm-snippets (&optional &rest dummy)
+    (interactive)
+    (yas--remove-template-by-uuid (yas--table-get-create 'org-mode) "quote"))
+  (advice-add #'yas-reload-all :after #'night/h-yas-rm-snippets )
+
+  (yas-reload-all t)
 ;;;
   (setq yas-key-syntaxes ;; @userConfig
         (list #'yas-try-key-from-whitespace
               "w_.()" "w_." "w_"))
 ;;;
   (after! night-last
+    (yas-reload-all t)
+    ;;;
     ;; @seeAlso [help:night/company-keybindings-enable]
     (map!
      :map yas-minor-mode-map

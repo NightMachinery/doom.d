@@ -28,22 +28,29 @@
  ;; You can test with =-hi-\/man -wow\(ok?)= and [help:night/consult-ugrep-buffer].
  )
 
+(defun night/regex-escape-ugrep (pattern)
+  (let*
+      ((escaped pattern)
+       (escaped
+          ;; (night/regex-escape pattern)
+          ;; [[id:90e6d2fd-9259-441b-beca-41e408f9b090][{BUG} Escaped space causes an error · Issue #360 · Genivia/ugrep]]
+        (-->
+           escaped
+           (night/regex-escape-fast it)
+
+           ;; Trying to escape =--bool= syntax:
+           (replace-regexp-in-string " " "[ ]" it)
+           (replace-regexp-in-string "^-" "\\\\-" it))
+        ))
+    escaped))
+
 (defun night/regex-escape-smart (pattern)
   (let*
       ((escaped pattern)
        (escaped
         (cond
          (night/h-consult-ugrep-in-progress
-          ;; (night/regex-escape pattern)
-          ;; [[id:90e6d2fd-9259-441b-beca-41e408f9b090][{BUG} Escaped space causes an error · Issue #360 · Genivia/ugrep]]
-          (-->
-           escaped
-           (night/regex-escape-fast it)
-
-           ;; Trying to escape =--bool= syntax:
-           (replace-regexp-in-string " " "[ ]" it)
-           (replace-regexp-in-string "^-" "\\\\-" it)
-           ))
+          (night/regex-escape-ugrep escaped))
          (t (regexp-quote pattern))))
        (escaped
         (cond

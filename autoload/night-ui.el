@@ -376,3 +376,25 @@ Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
   (with-eval-after-load 'org
     (add-hook 'org-mode-hook 'night/theme-org-override)))
 ;;;
+(cl-defun night/flash-region
+    (start
+     end
+     &key
+       (delay 0.5)
+       (backend 'overlay-timer)
+       (face 'done-face))
+  "Temporarily highlight region from START to END.
+DELAY specifies the duration of the highlight in seconds; defaults to 0.5.
+BACKEND specifies the backend to use for flashing; defaults to 'overlay-timer.
+FACE specifies the face to use for flashing; defaults to 'done-face."
+  (cl-case backend
+    (overlay-timer
+     (let ((overlay (make-overlay start end)))
+       (overlay-put overlay 'face face)
+       (run-with-timer delay nil 'delete-overlay overlay)))
+    (nav-flash
+     (nav-flash-show start end face delay))
+    (t
+     (error "Invalid backend: %s" backend))))
+;;;
+(provide 'night-ui)

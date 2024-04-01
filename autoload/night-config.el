@@ -36,7 +36,7 @@
   (hl-todo-mode)
 
   (when (fboundp 'smartparens-global-mode)
-      (smartparens-global-mode -1))
+    (smartparens-global-mode -1))
 
   ;; org-babel breaks our custom TAB :(
   ;; (map!

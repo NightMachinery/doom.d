@@ -47,23 +47,28 @@ defaults to \"Password:\"."
 Also kill the associated REPL and object buffers.
 @seeAlso `night/counsel-jupyter-forget-client'"
     (interactive "sEnter session key to forget: ")
+
+    ;; Remove the client from the `org-babel-jupyter-session-clients' hash table
+    (remhash key org-babel-jupyter-session-clients)
+
     (when-let* ((client (gethash key org-babel-jupyter-session-clients)))
       (let ((repl-buffer (oref client buffer)))
+        (message "got repl-buffer")
+
         ;; Kill the REPL buffer
-        (when (buffer-live-p repl-buffer)
+        (when t ;; (buffer-live-p repl-buffer)
+          (message "killing repl-buffer ...")
           ;; (kill-buffer repl-buffer)
           ;; If we use `kill-buffer', the kill hooks will be triggered which will ask us if we want to kill the kernel. We don't, we just want to clear the garbage and leave the kernel alone.
-          (night/force-kill-buffer repl-buffer)
-          )
+          (night/force-kill-buffer repl-buffer))
         ;; Kill the object buffer
         (jupyter-with-client-buffer client
-          (when (buffer-live-p (current-buffer))
+          (message "got client-buffer")
+          (when t ;; (buffer-live-p (current-buffer))
+            (message "killing client-buffer ...")
             ;; (kill-buffer (current-buffer))
-            (night/force-kill-current-buffer)
-            )))
+            (night/force-kill-current-buffer))))
 
-      ;; Remove the client from the `org-babel-jupyter-session-clients' hash table
-      (remhash key org-babel-jupyter-session-clients)
       (message "Forgot session: %s" key)))
 
   (defun night/counsel-jupyter-forget-client ()

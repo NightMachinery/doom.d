@@ -63,6 +63,9 @@
   (switch-to-buffer (other-buffer (current-buffer) 1)))
 
 (map!
- :n
+ :nv
+ "[[" #'night/switch-to-last-buffer)
+(map! :map (evil-tex-mode-map)
+ :nv
  "[[" #'night/switch-to-last-buffer)
 ;;;

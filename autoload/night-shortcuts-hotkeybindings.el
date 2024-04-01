@@ -163,6 +163,8 @@ move COUNT - 1 screen lines forward first."
   (setq expand-region-reset-fast-key "c")
 
   (map! :leader
+        "we" #'+popup/other
+
         "b D" #'night/force-kill-current-buffer
         "b R" #'night/buffer-reopen
         ;; "f r" #'night/fzf-recentf ;; somewhat slow

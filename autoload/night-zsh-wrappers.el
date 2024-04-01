@@ -12,6 +12,11 @@
   (night/insert-for-yank-and-save
    (z org-link-edge-current)))
 
+(defun night/org-link-chrome-current ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (z org-link-chrome-current)))
+
 (defun night/org-link-arc-current ()
   (interactive)
   (night/insert-for-yank-and-save

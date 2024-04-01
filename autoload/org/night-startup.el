@@ -7,6 +7,9 @@
 
 (defun night/org-startup ()
   (interactive)
+  (night/h-yas-rm-snippets)
+  ;; @hack Somehow the snippets get through, so I just remove them again on org startup.
+
   (org-fragtog-mode) ;; https://github.com/io12/org-fragtog
 
   (when (display-graphic-p)

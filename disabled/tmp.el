@@ -195,3 +195,4 @@
 (setq consult-async-input-throttle 0.1)
 (setq consult-async-input-debounce 0.1)
 ;;;
+(+lookup/online "hmm" "Google")

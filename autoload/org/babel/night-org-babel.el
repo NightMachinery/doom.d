@@ -142,6 +142,7 @@ NO-BLOCKS-MESSAGE is a message string to display if no blocks are found in the s
              (org-babel-remove-result)))))))
 ;;;
 (defun night/org-babel-result-get ()
+  (interactive)
   "Return the result of the current source block as a string.
 Assumes that the source block has already been executed."
   (interactive)
@@ -230,7 +231,7 @@ We move between the start and beginning of blocks. `org-babel-next-src-block'/`o
       ;; Search for the source block
       (setq block-found
             (funcall search-fn
-                     "#\\+\\(begin\\|end\\)_"
+                     "^\\s-*#\\+\\(begin\\|end\\)_"
                      ;; \\(src\\|example\\|quote\\|verse\\)
                      ;; We use this for navigation, and moving to blocks of all types is actually better for us.
                      nil t)))
@@ -266,6 +267,7 @@ See `night/h-org-babel-navigate-src-block'."
         "zz" #'org-ctrl-c-ctrl-c
         "zv" #'night/org-babel-select-src-and-results
         "zc" #'night/org-babel-copy-as-chat
+        "zl" #'night/org-blacken-region
         )
 ;;;
   (comment
