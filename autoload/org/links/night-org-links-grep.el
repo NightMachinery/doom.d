@@ -43,9 +43,8 @@
                (concat "^\\s*:ID:\\s+" (night/regex-escape-ugrep path)))
               (ugrep-command
                (concat
-                "ugrep --hidden --ignore-binary --file-extension=org --json --dereference-recursive --files-with-matches --max-count=1 --line-number "
+                "ugrep --hidden --ignore-binary --file-extension=org --json --dereference-recursive --files-with-matches --max-count=1 --max-files=1 --line-number "
                 " --exclude-dir=**/DecompV-Notebooks/metrics/ " ; @hack to speed things up
-                ;; @todo0 [[id:1489eb82-74fb-47dd-9991-e773b8525ca7][max-count across all files · Issue #378 · Genivia/ugrep]]
                 (shell-quote-argument query)
                 " "
                 (shell-quote-argument dir)))

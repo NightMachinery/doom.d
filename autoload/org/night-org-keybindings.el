@@ -171,6 +171,15 @@ With ARG, repeats or can move backward if negative."
    #'night/org-redisplay-images-etc
    ;; #'org-redisplay-inline-images
 
+   :n
+   "zo"
+   #'org-fold-show-subtree
+   ;; #'+org/open-fold
+
+   :n
+   "zO"
+   #'org-fold-show-all
+
    :nvo
    "{" #'org-previous-visible-heading
 
