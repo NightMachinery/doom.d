@@ -7,11 +7,13 @@
                                 ))
   (let* ((command
           (cond
-           ((s-ends-with? ".m3u" url)
-            ;; "hear-load-playlist"
-            "hear-playlist"
-            )
-           (t "hear-loadfile-begin"))))
+            ((equalp command "auto")
+             (cond
+               ((s-ends-with? ".m3u" url)
+                ;; "hear-load-playlist"
+                "hear-playlist")
+               (t "hear-loadfile-begin")))
+            (t command))))
 
     (message "Playing audio: %s" url)
 ;;;
