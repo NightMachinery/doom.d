@@ -350,31 +350,29 @@ Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
          ;; (begin-line t)
          ;; (end-line t)
          )
-    (with-eval-after-load 'org-faces
-      ;; Override org-block
-      (set-face-attribute 'org-block frame
-                          :background inside-bg
-                          ;; :foreground "#000000"
-                          :extend extend
-                          )
+    ;; Set the foreground of the `org-hide' face to the background color of the frame:
+    (let ((bg-color (cdr (assoc 'background-color (frame-parameters)))))
+      (set-face-attribute 'org-hide nil :foreground bg-color))
 
-      ;; Override org-block-begin-line
-      (set-face-attribute 'org-block-begin-line frame
-                          :background begin-bg
-                          :overline begin-line
-                          :extend extend
-                          )
+    ;; Override org-block
+    (set-face-attribute 'org-block frame
+                        :background inside-bg
+                        ;; :foreground "#000000"
+                        :extend extend)
 
-      ;; Override org-block-end-line
-      (set-face-attribute 'org-block-end-line frame
-                          :background end-bg
-                          :underline end-line
-                          :extend extend
-                          )
-      (set-face-attribute 'org-hide frame
-                          :foreground "#dddddd")))
-  (with-eval-after-load 'org
-    (add-hook 'org-mode-hook 'night/theme-org-override)))
+    ;; Override org-block-begin-line
+    (set-face-attribute 'org-block-begin-line frame
+                        :background begin-bg
+                        :overline begin-line
+                        :extend extend)
+
+    ;; Override org-block-end-line
+    (set-face-attribute 'org-block-end-line frame
+                        :background end-bg
+                        :underline end-line
+                        :extend extend)))
+(after! (org org-faces)
+  (add-hook 'org-mode-hook 'night/theme-org-override))
 ;;;
 (cl-defun night/flash-region
     (start

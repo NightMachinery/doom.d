@@ -86,7 +86,7 @@ If FORCE-P, overwrite the destination file if it exists, without confirmation."
   ;;   )
   )
 
-(advice-add #'doom--update-files :after #'night/update-files)
+(advice-add #'doom--update-files :after #'night/update-files) ;; @toFuture/1404 Perhaps we should disable this. It sometimes makes emacs essentially hang, while its benefits are dubious.
 
 ;;;
 (after! org

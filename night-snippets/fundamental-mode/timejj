@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: timejj
+# key: timejj
+# uuid: timejj
+# --
+[jalali:`(concat (z datej))`]

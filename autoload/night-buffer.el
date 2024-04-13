@@ -30,7 +30,8 @@
                      buffer-file-name))
       (progn
         (kill-current-buffer)
-        (find-file-existing filename))
+        (let ((*night/h-interactive-buffer-force* t))
+          (find-file-existing filename)))
     (error "Couldn't find filename in current buffer")))
 ;;;
 (defun night/diff-buffers (buffer-A buffer-B)

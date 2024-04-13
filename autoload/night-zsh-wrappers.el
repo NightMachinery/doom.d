@@ -2,25 +2,26 @@
 ;;;
 (setq night/zsh-timeout-default 300)    ;; in seconds
 ;;;
-(defun night/org-link-browser-current ()
+(defun night/org-link-browser-current (&optional browser)
   (interactive)
   (night/insert-for-yank-and-save
-   (z org-link-browser-current)))
+   (cond ((equal browser "edge") (z org-link-edge-current))
+         ((equal browser "chrome") (z org-link-chrome-current))
+         ((equal browser "arc") (z org-link-arc-current))
+         (t (z org-link-browser-current))))
+  (night/org-imdb-fill-maybe))
 
 (defun night/org-link-edge-current ()
   (interactive)
-  (night/insert-for-yank-and-save
-   (z org-link-edge-current)))
+  (night/org-link-browser-current "edge"))
 
 (defun night/org-link-chrome-current ()
   (interactive)
-  (night/insert-for-yank-and-save
-   (z org-link-chrome-current)))
+  (night/org-link-browser-current "chrome"))
 
 (defun night/org-link-arc-current ()
   (interactive)
-  (night/insert-for-yank-and-save
-   (z org-link-arc-current)))
+  (night/org-link-browser-current "arc"))
 ;;;
 (defun night/p-org-fanfic ()
   (interactive)

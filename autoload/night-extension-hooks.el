@@ -80,6 +80,8 @@ Use this to stop the audio files being played by org-mode links."
 
         (night/org-hide-link-display :default nil))
 
+      (night/org-interactive-startup)
+
       (when (s-contains? (ntag "startup") bfn)
         ;; @securityRisk
         (night/org-execute-startup-block))
@@ -97,7 +99,8 @@ Use this to stop the audio files being played by org-mode links."
         (night/org-playlist-hotkeys-enable)
         ;; (org-sticky-header-mode t)
         (message "org-playlist activated")
-        ))
+        )
+      )
 
      ((member-ignore-case ext '(
                                 ;; "log"

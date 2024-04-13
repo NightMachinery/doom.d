@@ -139,6 +139,34 @@ With ARG, repeats or can move backward if negative."
         (cl-decf arg))
       (if (> arg 0) (goto-char (point-max)) (beginning-of-line))))
   (advice-add 'org-next-visible-heading :override 'night/org-next-visible-heading)
+
+;;;
+  (defun night/org-move-less-nested-heading (direction)
+  "Move to the next or previous heading that is less nested than the current one.
+DIRECTION should be 'next or 'previous."
+  (let ((move-func (if (eq direction 'next) #'outline-next-heading #'outline-previous-heading))
+        (current-level (or
+                        (org-current-level)
+                        0)))
+    ;; (unless current-level
+    ;;   (error "Not on an org heading"))
+    (funcall move-func)
+    (while (and (not (if (eq direction 'next) (eobp) (bobp)))
+                (and
+                 (org-current-level)
+                 (not (<= (org-current-level) 1))
+                 (>= (org-current-level) current-level)))
+      (funcall move-func))))
+
+(defun night/org-next-less-nested-heading ()
+  "Move to the next heading that is less nested than the current one."
+  (interactive)
+  (night/org-move-less-nested-heading 'next))
+
+(defun night/org-previous-less-nested-heading ()
+  "Move to the previous heading that is less nested than the current one."
+  (interactive)
+  (night/org-move-less-nested-heading 'previous))
 ;;;
   (map! :map org-mode-map
         :localleader
@@ -199,9 +227,10 @@ With ARG, repeats or can move backward if negative."
    :nvoi "C-<up>" #'night/org-babel-previous-src-block
    :nvoi "C-<down>" #'night/org-babel-next-src-block
 
-   :nvo "C-S-<left>" #'org-backward-heading-same-level
-   :nvo "C-S-<right>" #'org-forward-heading-same-level
-
+   :nvo "C-M-<left>" #'night/org-previous-less-nested-heading
+   :nvo "C-M-<right>" #'night/org-next-less-nested-heading
+   :nvo "C-<left>" #'org-backward-heading-same-level
+   :nvo "C-<right>" #'org-forward-heading-same-level
 
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode

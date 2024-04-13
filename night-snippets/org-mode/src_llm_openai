@@ -1,0 +1,32 @@
+# -*- mode: snippet -*-
+# name: llm-openai
+# key: <ll
+# uuid: <ll
+# --
+#+begin_src jupyter-python :kernel py_base :session llm_1 :async yes :exports both
+res = openai_chat_complete(
+    ##
+    # model="OR:anthropic/claude-3-opus:beta",
+    # model="OR:anthropic/claude-3-sonnet:beta",
+    # model="OR:anthropic/claude-3-haiku:beta",
+    # model="OR:mistralai/mistral-large",
+    # model="OR:perplexity/sonar-medium-online",
+    model="gpt-4-turbo",
+    # model="gpt-4-0314",
+    # model="gpt-4-0613",
+    # model="claude-3-opus-20240229",
+    ##
+    messages=[
+        # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
+        {"role": "user", "content": r"""
+        `%`$0
+        """},
+    ],
+    temperature=0,
+    max_tokens=4000,
+    interactive=True,
+)
+
+print_chat_streaming(res, copy_mode=None) # "chat2"
+bell_gpt()
+#+end_src

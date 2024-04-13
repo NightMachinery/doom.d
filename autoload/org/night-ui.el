@@ -66,8 +66,13 @@
 ;;;
   ;; (set-face-attribute 'org-level-1 nil :box  `(:line-width 30 :color ,(face-background 'default)))
 
+  (defun night/org-latex-preview-buffer ()
+    (interactive)
+    (org--latex-preview-region (point-min) (point-max)))
+
   (defun night/org-redisplay-images-etc ()
     (interactive)
+    (night/org-latex-preview-buffer)
     (org-redisplay-inline-images)
     (night/babel-ansi-all2))
 
@@ -101,6 +106,11 @@
       :group 'org-faces)
     (setq org-level-faces (append org-level-faces (list 'org-level-9)))
     (setq org-n-level-faces (length org-level-faces))
-    (when (display-graphic-p) ;; the current GUI theme doesn't differentiate between level 2 and 3 well, so I am just showing all the stars. It might be better this way anyway, even if the theme was fine.
+    (cond
+     ((display-graphic-p) ;; the current GUI theme doesn't differentiate between level 2 and 3 well, so I am just showing all the stars. It might be better this way anyway, even if the theme was fine.
       (setq org-hide-leading-stars nil
-            org-indent-mode-turns-on-hiding-stars nil))))
+            org-indent-mode-turns-on-hiding-stars nil))
+     (t
+      ;; We don't want to hide the leading stars ever, period. :D
+      (setq org-hide-leading-stars nil
+            org-indent-mode-turns-on-hiding-stars nil)))))

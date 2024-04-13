@@ -64,6 +64,9 @@
     (interactive)
     (map! :map 'local
           :localleader
+          "pp"
+          #'night/org-subtree-play-as-playlist
+
           ;; "\\\\"
           "pc"
           #'night/org-playlist-cp-to-tmp

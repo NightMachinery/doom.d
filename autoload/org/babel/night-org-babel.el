@@ -198,6 +198,16 @@ Assumes that the source block has already been executed."
   (interactive)
   (let* (
          (last-msg (night/org-babel-result-get))
+         (last-msg
+          (cond
+           ((s-starts-with-p "\"" last-msg)
+            (concat " " last-msg))
+           (t last-msg)))
+         (last-msg
+          (cond
+           ((s-ends-with-p "\"" last-msg)
+            (concat last-msg " "))
+           (t last-msg)))
          (assistant
           (concat
            "        {\"role\": \"assistant\", \"content\": r\"\"\""

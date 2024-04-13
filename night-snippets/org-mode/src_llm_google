@@ -1,12 +1,13 @@
 # -*- mode: snippet -*-
-# name: llm-c3o
-# key: <l
-# uuid: <l
+# name: llm-google
+# key: <lg
+# uuid: <lg
 # --
-#+begin_src jupyter-python :kernel py_base :session claude_1 :async yes :exports both
+#+begin_src jupyter-python :kernel py_base :session llm_1 :async yes :exports both
 res = openai_chat_complete(
     ##
-    model="OR:anthropic/claude-3-opus:beta",
+    model="OR:google/gemini-pro-1.5",
+    # model="OR:anthropic/claude-3-opus:beta",
     # model="OR:anthropic/claude-3-sonnet:beta",
     # model="OR:anthropic/claude-3-haiku:beta",
     # model="OR:mistralai/mistral-large",
@@ -17,7 +18,7 @@ res = openai_chat_complete(
     # model="claude-3-opus-20240229",
     ##
     messages=[
-        # {"role": "system", "content": """Output your changes in the unified diff format."""},
+        # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
         {"role": "user", "content": r"""
         `%`$0
         """},

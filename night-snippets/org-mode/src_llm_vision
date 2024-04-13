@@ -1,15 +1,16 @@
 # -*- mode: snippet -*-
 # name: llm-gpt4t
-# key: <ll
-# uuid: <ll
+# key: <lv
+# uuid: <lv
 # --
 #+begin_src jupyter-python :kernel py_base :session chatgpt_1 :async yes :exports both
 res = openai_chat_complete(
     ##
-    # model="OR:anthropic/claude-3-opus:beta",
+    # model="OR:google/gemini-pro-1.5",
+    model="OR:anthropic/claude-3-opus:beta",
     # model="gpt-4-0314",
     # model="gpt-4-0613",
-    model="gpt-4-turbo-auto-vision",
+    # model="gpt-4-turbo-auto-vision",
     # model="gpt-4-turbo",
     # model="gpt-4-vision-preview",
     # model="gpt-3.5-turbo",

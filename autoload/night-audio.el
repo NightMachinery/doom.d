@@ -9,6 +9,9 @@
           (cond
             ((equalp command "auto")
              (cond
+               ((s-ends-with? ".raw_playlist" url)
+                "hear-load-playlist"
+                )
                ((s-ends-with? ".m3u" url)
                 ;; "hear-load-playlist"
                 "hear-playlist")

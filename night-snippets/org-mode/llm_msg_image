@@ -1,0 +1,17 @@
+# -*- mode: snippet -*-
+# name: llm-msg-image
+# key: trigger-key
+# key: <li
+# uuid: <li
+# --
+{"role": "user", "content": [
+            {"type": "text", "text": r"""
+            `%`$0
+            """},
+            {"type": "image_url", "image_url": {
+                "url": openai_image_url_auto(r"""
+                    MAGIC_CLIPBOARD
+            """),
+                "detail": "high", #: high or low
+            },},
+        ]},

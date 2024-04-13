@@ -20,6 +20,7 @@
     "Read a password based off of FILENAME's TRAMP filename components.
 Use PROMPT to prompt the user for the password if needed, PROMPT
 defaults to \"Password:\"."
+    ;; (message "jupyter-password requested for: filename=%s prompt=%s" filename prompt)
     (unless (jupyter-tramp-file-name-p filename)
       (error "Not a Jupyter filename"))
     (let ((prompt (or prompt "Password: ")))
@@ -31,7 +32,7 @@ defaults to \"Password:\"."
                (tramp-current-host host)
                (tramp-current-port port))
            (tramp-read-passwd nil prompt))))
-      (password-read prompt filename)))
+      (password-read-redis prompt filename)))
   (advice-add 'jupyter-tramp-read-passwd :override #'night/jupyter-tramp-read-passwd)
 ;;;
   (defun night/jupyter-forget-client-v1 (key)
