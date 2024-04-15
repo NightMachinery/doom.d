@@ -33,7 +33,8 @@
 
    :leader "sp"
    ;; #'+default/search-project
-   #'consult-ripgrep
+   ;; #'consult-ripgrep
+   #'night/search-project
 
    :leader "sj"
    ;; #'+ivy/jump-list

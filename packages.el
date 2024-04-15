@@ -333,6 +333,10 @@
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 
 (package! gptel)
+(package! llm)
+(package! ellama)
+;;;
+(package! exec-path-from-shell)
 ;;;
 (package! nerd-icons)
 ;;;

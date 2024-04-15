@@ -22,7 +22,7 @@
   (--> pattern
        (regexp-quote it)
        ;; Replace `|` etc. with their escaped versions `\|` etc.:
-       (replace-regexp-in-string "\\([()|]\\)" "\\\\\\1" it)))
+       (replace-regexp-in-string "\\([()|{}]\\)" "\\\\\\1" it)))
 (comment
  (night/regex-escape-fast "a|b/c)")
  ;; You can test with =-hi-\/man -wow\(ok?)= and [help:night/consult-ugrep-buffer].

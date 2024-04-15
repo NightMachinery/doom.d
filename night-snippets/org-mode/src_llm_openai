@@ -6,6 +6,7 @@
 #+begin_src jupyter-python :kernel py_base :session llm_1 :async yes :exports both
 res = openai_chat_complete(
     ##
+    # model="OR:google/gemini-pro-1.5",
     # model="OR:anthropic/claude-3-opus:beta",
     # model="OR:anthropic/claude-3-sonnet:beta",
     # model="OR:anthropic/claude-3-haiku:beta",

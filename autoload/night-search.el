@@ -132,6 +132,19 @@ This variable can be bound dynamically.")
          :engine "ug"
          args))
 ;;;
+(cl-defun night/search-project (&rest args &key prompt &allow-other-keys)
+  "Search within the current project directory, modifying the prompt."
+  (interactive)
+  (let* ((project-dir (projectile-project-root))
+         (new-prompt (or
+                      prompt
+                      ;; "P> "
+                      )))
+    (apply #'night/search-dir
+           :dir project-dir
+           :prompt new-prompt
+           args)))
+;;;
 ;; (setq-default ivy-calling t)
 (setq-default ivy-calling nil)
 ;; t makes ivy follow its results but it had some issues for me before:

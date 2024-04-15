@@ -354,23 +354,25 @@ Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
     (let ((bg-color (cdr (assoc 'background-color (frame-parameters)))))
       (set-face-attribute 'org-hide nil :foreground bg-color))
 
-    ;; Override org-block
-    (set-face-attribute 'org-block frame
-                        :background inside-bg
-                        ;; :foreground "#000000"
-                        :extend extend)
+    (cond
+     ((not (memq 'kaolin-light custom-enabled-themes))
+      ;; Override org-block
+      (set-face-attribute 'org-block frame
+                          :background inside-bg
+                          ;; :foreground "#000000"
+                          :extend extend)
 
-    ;; Override org-block-begin-line
-    (set-face-attribute 'org-block-begin-line frame
-                        :background begin-bg
-                        :overline begin-line
-                        :extend extend)
+      ;; Override org-block-begin-line
+      (set-face-attribute 'org-block-begin-line frame
+                          :background begin-bg
+                          :overline begin-line
+                          :extend extend)
 
-    ;; Override org-block-end-line
-    (set-face-attribute 'org-block-end-line frame
-                        :background end-bg
-                        :underline end-line
-                        :extend extend)))
+      ;; Override org-block-end-line
+      (set-face-attribute 'org-block-end-line frame
+                          :background end-bg
+                          :underline end-line
+                          :extend extend)))))
 (after! (org org-faces)
   (add-hook 'org-mode-hook 'night/theme-org-override))
 ;;;
