@@ -376,24 +376,37 @@ Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
 (after! (org org-faces)
   (add-hook 'org-mode-hook 'night/theme-org-override))
 ;;;
+(defvar night/active-overlays nil
+  "List of active overlays. (Used by: `night/flash-region').")
+
+(defun night/clear-overlays ()
+  "Clear all overlays in `night/active-overlays`."
+  (mapc 'delete-overlay night/active-overlays)
+  (setq night/active-overlays nil))
+
+(add-hook! 'doom-escape-hook 'night/clear-overlays)
+
 (cl-defun night/flash-region
-    (start
-     end
-     &key
-       (delay 0.5)
-       (backend 'overlay-timer)
-       (face 'done-face))
+    (start end &key (delay 0.5) (backend 'overlay-timer) (face 'done-face))
   "Temporarily highlight region from START to END.
 DELAY specifies the duration of the highlight in seconds; defaults to 0.5.
+If DELAY is t, the highlight is persistent until `C-g` is pressed.
 BACKEND specifies the backend to use for flashing; defaults to 'overlay-timer.
 FACE specifies the face to use for flashing; defaults to 'done-face."
   (cl-case backend
     (overlay-timer
      (let ((overlay (make-overlay start end)))
        (overlay-put overlay 'face face)
-       (run-with-timer delay nil 'delete-overlay overlay)))
+       (push overlay night/active-overlays)
+       (unless (eq delay t)
+         (run-with-timer delay nil (lambda (ov)
+                                     (delete-overlay ov)
+                                     (setq night/active-overlays (remove ov night/active-overlays)))
+                         overlay))))
     (nav-flash
-     (nav-flash-show start end face delay))
+     (if (eq delay t)
+         (error "nav-flash backend does not support indefinite delay")
+       (nav-flash-show start end face delay)))
     (t
      (error "Invalid backend: %s" backend))))
 ;;;
