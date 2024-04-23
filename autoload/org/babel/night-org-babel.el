@@ -277,6 +277,7 @@ See `night/h-org-babel-navigate-src-block'."
         "zz" #'org-ctrl-c-ctrl-c
         "zv" #'night/org-babel-select-src-and-results
         "zc" #'night/org-babel-copy-as-chat
+        "zC" #'night/org-babel-result-get
         "zl" #'night/org-blacken-region
         )
 ;;;

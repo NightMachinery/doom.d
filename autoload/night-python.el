@@ -30,3 +30,7 @@
    ))
 (add-hook 'python-mode-hook #'night/python-startup)
 ;;;
+(map! :map python-mode-map
+      :localleader
+      "zl" #'blacken-buffer)
+;;;

@@ -2,9 +2,12 @@
 
 (require 'org-src)
 (require 'ob-async)
+(require 'ob-jupyter)
 (require 'jupyter)
 (require 'jupyter-org-client)
 
+(after! (ob-jupyter)
+  (org-babel-jupyter-aliases-from-kernelspecs))
 (after! (jupyter)
   (setq jupyter-long-timeout 20))
 (after! (ob-async)

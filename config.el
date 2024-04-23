@@ -129,7 +129,8 @@
   )
  ((display-graphic-p)
   (setq night-theme
-        'kaolin-light
+        'modus-operandi-tritanopia
+        ;; 'kaolin-light
         ;; 'solarized-selenized-white
         ;; 'doom-one-light
         ;; 'humanoid-light
@@ -138,7 +139,10 @@
         ;; 'doom-one-light
         ))
  (t
-  (setq night-theme 'kaolin-light)
+  (setq night-theme
+        'modus-operandi-tritanopia
+        ;; 'kaolin-light
+        )
 
   ;; (setq night-theme 'solarized-light)
   ;; (setq night-theme 'solarized-selenized-light) ;; @good

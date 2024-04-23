@@ -1,0 +1,23 @@
+# -*- mode: snippet -*-
+# name: llm-default
+# key: <lc
+# uuid: <lc
+# --
+#+begin_src jupyter-python :kernel py_base :session llm_complete_1 :async yes :exports both
+res = openai_text_complete(
+    ##
+    model="OR:mistralai/mixtral-8x22b",
+    # model="OR:mistralai/mixtral-8x7b",
+    # model="OR:01-ai/yi-34b",
+    ##
+    prompt=r"""
+    `%`$0
+    """,
+    max_tokens=100,
+    # temperature=1,
+    # stop=["\n"],
+)
+
+print_chat_streaming(res, copy_mode=None)
+bell_gpt()
+#+end_src
