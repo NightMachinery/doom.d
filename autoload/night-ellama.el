@@ -130,9 +130,8 @@
   (defvar night/ellama--code-context-before 1000
     "Number of characters before the point to include as context.")
 
-  (defvar night/ellama--code-dup-lines-before 10)
-  (defvar night/ellama--code-dup-lines-after 10)
-  ;; These values can't be too high, as emacs will give `Invalid regexp: "Regular expression too big"`.
+  (defvar night/ellama--code-dup-lines-before 20)
+  (defvar night/ellama--code-dup-lines-after 20)
 
   (defvar night/ellama--code-context-after 1000
     "Number of characters after the point to include as context.")
@@ -189,6 +188,7 @@
     "Capture lines before or after POINT-POS up to NUM-LINES.
 DIRECTION should be either 'before' or 'after'.
 POINT-POS defaults to current point, NUM-LINES defaults to 2."
+    ;; The returned list is ordered from more specific to less specific, i.e., from longer to shorter.
     (cl-block night/h-get-lines
       (let* ((point-pos (or point-pos (point)))
              (num-lines (or num-lines 2))
@@ -215,7 +215,6 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
   "Capture lines after POINT-POS up to NUM-LINES."
   ;; (interactive)
   (night/h-get-lines point-pos num-lines 'after))
-
 ;;;
   (defun night/ellama-complete ()
     "Complete text in current buffer."
@@ -328,16 +327,27 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
   (defun night/ellama--remove-duplicate-code (content-before-marker content-after-marker text &optional verbose-p)
     "Remove content-before-marker from the start of text and content-after-marker from the end of text if present, ignoring leading and trailing whitespace."
     (let* (
-           (whitespace-regex "\\(?:\\s-\\|\n\\|\r\\)*")
-           (before-regex (night/ellama--build-regex content-before-marker whitespace-regex t))
-           (after-regex (night/ellama--build-regex content-after-marker whitespace-regex nil)))
+           (whitespace-regex "\\(?:\\s-\\|\n\\|\r\\)*"))
       (when verbose-p
-        (message "content-before-marker: %s\n\ncontent-after-marker: %s\n\ntext:\n%s" before-regex after-regex text))
-      (setq text (night/ellama--apply-regex before-regex text t))
-      (setq text (night/ellama--apply-regex after-regex text nil))
+        (message "content-before-marker: %s\n\ncontent-after-marker: %s\n\ntext:\n%s" content-before-marker content-after-marker text))
+      (setq text (night/ellama--apply-regex-list content-before-marker whitespace-regex text t))
+      (setq text (night/ellama--apply-regex-list content-after-marker whitespace-regex text nil))
       (when verbose-p
         (message "cleaned text:\n%s" text))
       text))
+
+  
+  (defun night/ellama--apply-regex-list (content-list whitespace-regex text is-before)
+    "Apply the regex for each item in content-list to the text, removing matches from the beginning or end based on is-before."
+    (when content-list
+      (cl-block loop
+        (dolist (content (if (listp content-list) content-list (list content-list)))
+          (let* ((regex (night/ellama--build-regex content whitespace-regex is-before))
+                 (new-text (night/ellama--apply-regex regex text is-before)))
+            (unless (equal new-text text)
+              (setq text new-text)
+              (cl-return-from loop))))))
+    text)
 
   (defun night/ellama--build-regex (content whitespace-regex is-before)
     "Build a regex based on content which can be nil, a list, or a string, adding whitespace handling."
