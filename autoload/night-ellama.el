@@ -13,7 +13,15 @@
 ;; language you want ellama to translate to
 (after! (night-openai)
 ;;;
-  ;; * Ellama Providers
+;; * Ellama Providers
+  (defun night/ellama-provider-show ()
+    "Shows the current `ellama-provider'."
+    (interactive)
+    (message (format "Ellama provider: %s"
+                     (cl-struct-slot-value
+                      (type-of ellama-provider)
+                      'chat-model ellama-provider))))
+  
   (setopt
    ellama-providers
    `(
@@ -116,11 +124,7 @@
     "Prompt template for `night/ellama-code-complete'.")
 
   (defvar night/ellama--code-prefix
-    ;; "\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
-    ;; "^\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
     "\\`\\(?:.*\n\\)*?\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
-    ;; (rx (minimal-match
-    ;;      (zero-or-more anything) (literal "```") (zero-or-more anything) (+ (or "\n" "\r"))))
     )
 
   (defvar night/ellama--code-suffix
@@ -206,15 +210,15 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
             (forward-line (if (eq direction 'before) -1 1))))
         lines)))
 
-(defun night/h-get-lines-before-point (&optional point-pos num-lines)
-  "Capture lines before POINT-POS up to NUM-LINES."
-  ;; (interactive)
-  (night/h-get-lines point-pos num-lines 'before))
+  (defun night/h-get-lines-before-point (&optional point-pos num-lines)
+    "Capture lines before POINT-POS up to NUM-LINES."
+    ;; (interactive)
+    (night/h-get-lines point-pos num-lines 'before))
 
-(defun night/h-get-lines-after-point (&optional point-pos num-lines)
-  "Capture lines after POINT-POS up to NUM-LINES."
-  ;; (interactive)
-  (night/h-get-lines point-pos num-lines 'after))
+  (defun night/h-get-lines-after-point (&optional point-pos num-lines)
+    "Capture lines after POINT-POS up to NUM-LINES."
+    ;; (interactive)
+    (night/h-get-lines point-pos num-lines 'after))
 ;;;
   (defun night/ellama-complete ()
     "Complete text in current buffer."
@@ -407,6 +411,8 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
   (map! :leader
         ". ." #'night/ellama-code-fill-in-the-middle
         ". ," #'night/ellama-code-complete
+        ". /" #'ellama-provider-select
+        ". ?" #'night/ellama-provider-show
         )
 ;;;
   )
