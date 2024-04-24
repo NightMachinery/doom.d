@@ -17,6 +17,26 @@
   (advice-mapc (lambda (advice _props) (advice-remove sym advice)) sym))
 (defalias #'night/advice-remove-all #'night/unadvice)
 ;;;
+(defun night/bool (val)
+  "Convert VAL to a boolean (t or nil)."
+  (if val t nil))
+
+(defun night/bool-smart (val)
+  "Convert VAL to a boolean (t or nil).
+If VAL is a sequence with zero length, return nil."
+  (cond
+   ;; Check if val is non-nil and a sequence with zero length.
+   ((and (sequencep val) (zerop (length val)))
+    nil)
+   ;; Check if val is non-nil.
+   (val t)
+   ;; Otherwise, return nil.
+   (t nil)))
+
+(comment
+ (night/bool "")
+ (night/bool-smart ""))
+;;;
 (require 'eredis)
 (setq redis-connection-0 (eredis-connect "localhost" 6379))
 ;;;

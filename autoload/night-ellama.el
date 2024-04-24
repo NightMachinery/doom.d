@@ -14,22 +14,59 @@
 (after! (night-openai)
 ;;;
   ;; * Ellama Providers
-  (progn
-    (setopt ellama-provider
-            (make-llm-openai-compatible
-             :key (night/groq-key-get)
-             :url "https://api.groq.com/openai/v1"
-;;;
-             ;; :chat-model "microsoft/wizardlm-2-8x22b"
-             ;; :embedding-model "microsoft/wizardlm-2-8x22b"
-;;;
-             ;; :chat-model "mistralai/mixtral-8x22b"
-             ;; :embedding-model "mistralai/mixtral-8x22b"
-;;;
-             :chat-model "llama3-70b-8192"
-             :embedding-model "llama3-70b-8192"
-;;;
-             )))
+  (setopt
+   ellama-providers
+   `(
+     ("GQ-Llama3" .
+      ,(make-llm-openai-compatible
+        :key (night/groq-key-get)
+        :url "https://api.groq.com/openai/v1"
+        :chat-model "llama3-70b-8192"
+        :embedding-model "llama3-70b-8192"))
+     ("OR-Llama3" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "meta-llama/llama-3-70b-instruct:nitro"
+        :embedding-model "meta-llama/llama-3-70b-instruct:nitro"
+        ))
+     ("OR-Gemini-1.5" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "google/gemini-pro-1.5"
+        :embedding-model "google/gemini-pro-1.5"
+        ))
+     ("OR-Mixtral-8x22B" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "mistralai/mixtral-8x22b-instruct"
+        :embedding-model "mistralai/mixtral-8x22b-instruct"
+        ))
+     ("OR-WizardLM2" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "microsoft/wizardlm-2-8x22b:nitro"
+        :embedding-model "microsoft/wizardlm-2-8x22b:nitro"
+        ))
+     ("OR-Claude3-Opus" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "anthropic/claude-3-opus:beta"
+        :embedding-model "anthropic/claude-3-opus:beta"
+        ))
+     ("GPT4-Turbo" .
+      ,(make-llm-openai
+        :key (night/openai-key-get)
+        :chat-model "gpt-4-turbo"
+        :embedding-model "gpt-4-turbo"))
+     ))
+  (setopt ellama-provider (cdar ellama-providers))
+  ;; Setting the default provider to the first one in the ellama-providers list
+
   (comment
    (setopt ellama-provider
 	   (make-llm-ollama
@@ -45,22 +82,6 @@
 ;;;
 	    :chat-model "deepseek-coder:6.7b-base-q8_0"
 	    :embedding-model "deepseek-coder:6.7b-base-q8_0"
-            )))
-  (comment
-   (setopt ellama-provider
-	   (make-llm-openai-compatible
-            :key (night/openrouter-key-get)
-            :url "https://openrouter.ai/api/v1"
-;;;
-	    ;; :chat-model "microsoft/wizardlm-2-8x22b"
-	    ;; :embedding-model "microsoft/wizardlm-2-8x22b"
-;;;
-	    ;; :chat-model "mistralai/mixtral-8x22b"
-	    ;; :embedding-model "mistralai/mixtral-8x22b"
-;;;
-	    :chat-model "meta-llama/llama-3-70b-instruct"
-	    :embedding-model "meta-llama/llama-3-70b-instruct"
-;;;
             )))
 
   (comment
@@ -95,7 +116,9 @@
     "Prompt template for `night/ellama-code-complete'.")
 
   (defvar night/ellama--code-prefix
-    "^\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\([^\n\r]*\\)\\)?\\s-*[\n\r]+"
+    ;; "\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
+    ;; "^\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
+    "\\`\\(?:.*\n\\)*?\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
     ;; (rx (minimal-match
     ;;      (zero-or-more anything) (literal "```") (zero-or-more anything) (+ (or "\n" "\r"))))
     )
@@ -106,6 +129,10 @@
 
   (defvar night/ellama--code-context-before 1000
     "Number of characters before the point to include as context.")
+
+  (defvar night/ellama--code-dup-lines-before 10)
+  (defvar night/ellama--code-dup-lines-after 10)
+  ;; These values can't be too high, as emacs will give `Invalid regexp: "Regular expression too big"`.
 
   (defvar night/ellama--code-context-after 1000
     "Number of characters after the point to include as context.")
@@ -123,7 +150,13 @@
     "Marker text used to indicate where code completion should occur.")
 
   (defvar night/ellama-code-fill-in-the-middle-prompt-template
-    "Fill in the code at '%s' in the following snippet, only write new code in format ```language\n...\n```:\n```\n%s\n```"
+    ;; "Fill in the code at '%s' in the following snippet, only write new code in format ```language\n...\n```:\n```\n%s\n```"
+    ;; "Fill in at '%s' in the following snippet, only write new code in format ```language\n...\n```. Start your output from the line marked for completion:\n```\n%s\n```"
+    ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```. Sometimes you need to complete comments, sometimes code, and sometimes other miscellaneous stuff. Always use a language specifier for the code block, even if it is `plaintext`. Start your output from the line marked for completion:\n```\n%s\n```"
+    ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```. Always use a language specifier for the code block.\n\n```\n%s\n```"
+    ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```. Always use a language specifier for the code block. Always start your output from THE BEGINNING OF THE LINE marked for completion.\n\n```\n%s\n```"
+    ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```:\n\n```\n%s\n```"
+    "Fill in at '%s' in the following snippet. Only write in format ```language\n...\n```. Start your output from the line marked for completion:\n\n```\n%s\n```"
     "Prompt template for `night/ellama-code-fill-in-the-middle'.")
 
   (defun night/h-ellama-marker-comment-get ()
@@ -133,19 +166,56 @@
     "Find and remove the ellama marker comment from point to the end of the buffer.
    Highlight the region from point to where the ellama marker was."
     (interactive)
-    (let ((start (point))
-          (marker-text (night/h-ellama-marker-comment-get))
-          end)
-      ;; Search for the ellama marker comment
-      (if (search-forward marker-text nil t)
-          (progn
-            ;; Set the end point just before the marker text
-            (setq end (match-beginning 0))
-            ;; Delete the marker text
-            (delete-region (match-beginning 0) (match-end 0))
-            ;; Highlight the region from the original point to the end of the deleted comment
-            (night/flash-region start end :delay t :backend 'overlay-timer :face 'highlight))
-        (message "Ellama marker not found"))))
+    (when (night/bool-smart night/ellama--marker-text)
+      (let ((start (point))
+            (marker-text (night/h-ellama-marker-comment-get))
+            end)
+        ;; Search for the ellama marker comment
+        (if (search-forward marker-text nil t)
+            (progn
+              ;; Set the end point just before the marker text
+              (setq end (match-beginning 0))
+              ;; Delete the marker text
+              (delete-region (match-beginning 0) (match-end 0))
+              ;; Highlight the region from the original point to the end of the deleted comment
+              (night/flash-region start end :delay t :backend 'overlay-timer :face 'highlight))
+          (message "Ellama marker not found"))))
+
+    (when (eq major-mode 'org-mode)
+      (night/with-messages-suppressed
+        (org-indent-indent-buffer))))
+
+  (defun night/h-get-lines (point-pos num-lines direction)
+    "Capture lines before or after POINT-POS up to NUM-LINES.
+DIRECTION should be either 'before' or 'after'.
+POINT-POS defaults to current point, NUM-LINES defaults to 2."
+    (cl-block night/h-get-lines
+      (let* ((point-pos (or point-pos (point)))
+             (num-lines (or num-lines 2))
+             (lines '()))
+        (save-excursion
+          (goto-char point-pos)
+          (dotimes (i num-lines)
+            (push (buffer-substring-no-properties
+                   (if (eq direction 'before) (line-beginning-position) point-pos)
+                   (if (eq direction 'after) (line-end-position) point-pos))
+                  lines)
+            (if (or (and (eq direction 'before) (bobp))
+                    (and (eq direction 'after) (eobp)))
+                (cl-return-from night/h-get-lines lines))
+            (forward-line (if (eq direction 'before) -1 1))))
+        lines)))
+
+(defun night/h-get-lines-before-point (&optional point-pos num-lines)
+  "Capture lines before POINT-POS up to NUM-LINES."
+  ;; (interactive)
+  (night/h-get-lines point-pos num-lines 'before))
+
+(defun night/h-get-lines-after-point (&optional point-pos num-lines)
+  "Capture lines after POINT-POS up to NUM-LINES."
+  ;; (interactive)
+  (night/h-get-lines point-pos num-lines 'after))
+
 ;;;
   (defun night/ellama-complete ()
     "Complete text in current buffer."
@@ -165,7 +235,9 @@
   (defun night/ellama-code-complete ()
     "Complete selected code or code in current buffer."
     (interactive)
-    (let* ((done-mode "rm-marker")
+    (let* (
+           (verbose-p current-prefix-arg)
+           (done-mode "rm-marker")
            (point-pos (point))
            (beg (if (region-active-p)
                     (region-beginning)
@@ -173,13 +245,13 @@
            (end (if (region-active-p)
                     (region-end)
                   point-pos))
-           (content-before-marker (buffer-substring-no-properties beg point-pos))
+           (content-before-marker
+            (night/h-get-lines-before-point point-pos night/ellama--code-dup-lines-before))
            (content-after-marker
-            ;; (buffer-substring-no-properties point-pos end)
-            ""
+            nil
             )
            (full-text (buffer-substring-no-properties beg end)))
-      (when (>= (length night/ellama--marker-text) 1)
+      (when (night/bool-smart night/ellama--marker-text)
         (save-excursion
           (insert (night/h-ellama-marker-comment-get))))
       (ellama-stream
@@ -188,6 +260,7 @@
         full-text)
        :filter (apply-partially
                 #'night/ellama--code-filter
+                verbose-p
                 content-before-marker
                 content-after-marker)
        :point point-pos
@@ -200,12 +273,14 @@
   (defun night/ellama-code-fill-in-the-middle ()
     "Complete code around the point in the current buffer."
     (interactive)
-    (let* ((done-mode "rm-marker")
+    (let* ((verbose-p current-prefix-arg)
+           (done-mode "rm-marker")
            (point-pos (point))
            (beg (max (- point-pos night/ellama--code-context-before) (point-min)))
            (end (min (+ point-pos night/ellama--code-context-after) (point-max)))
-           (content-before-marker (buffer-substring-no-properties (line-beginning-position) (point)))
-           (content-after-marker (buffer-substring-no-properties (point) (line-end-position)))
+           (content-before-marker
+            (night/h-get-lines-before-point point-pos night/ellama--code-dup-lines-before))
+           (content-after-marker (night/h-get-lines-after-point point-pos night/ellama--code-dup-lines-after))
            (text-before (buffer-substring-no-properties beg point-pos))
            (text-after (buffer-substring-no-properties point-pos end))
            (full-text (concat text-before night/ellama--complete-here-marker text-after)))
@@ -219,6 +294,7 @@
         full-text)
        :filter (apply-partially
                 #'night/ellama--code-filter
+                verbose-p
                 content-before-marker
                 content-after-marker)
        :point point-pos
@@ -228,42 +304,72 @@
                       (goto-char point-pos)
                       (night/ellama-marker-rm)))))))
 
-  (defun night/ellama--code-filter (content-before-marker content-after-marker text)
+  (defun night/ellama--code-filter (verbose-p content-before-marker content-after-marker text)
     "Filter code prefix/suffix and optionally duplicate code from TEXT."
-    (let ((cleaned-text
-           (s-trim-right
-            (string-trim-right
-             (string-trim-left text night/ellama--code-prefix)
-             night/ellama--code-suffix))))
+    (let* ((text-before-trim text)
+           (text-after-prefix-trim (string-trim-left text night/ellama--code-prefix))
+           (cleaned-text
+            (s-trim-right
+             (string-trim-right
+              text-after-prefix-trim
+              night/ellama--code-suffix))))
+      (when verbose-p
+        (message "Text before trimming: %S" text-before-trim)
+        (message "Text after prefix trimming: %S" text-after-prefix-trim)
+        (message "Text after suffix trimming: %S" cleaned-text))
       (if night/ellama--filter-duplicate-code
           (night/ellama--remove-duplicate-code
            content-before-marker
            content-after-marker
-           cleaned-text)
+           cleaned-text
+           verbose-p)
         cleaned-text)))
 
-  (defun night/ellama--remove-duplicate-code (content-before-marker content-after-marker text)
+  (defun night/ellama--remove-duplicate-code (content-before-marker content-after-marker text &optional verbose-p)
     "Remove content-before-marker from the start of text and content-after-marker from the end of text if present, ignoring leading and trailing whitespace."
-    (let* ((verbose-p nil)
+    (let* (
            (whitespace-regex "\\(?:\\s-\\|\n\\|\r\\)*")
-           (before-regex (concat whitespace-regex (regexp-quote content-before-marker)))
-           (after-regex (concat (regexp-quote content-after-marker) whitespace-regex "\\'"))
-           (trimmed-before-regex (concat whitespace-regex (regexp-quote (s-trim content-before-marker))))
-           (trimmed-after-regex (concat (regexp-quote (s-trim content-after-marker)) whitespace-regex "\\'")))
+           (before-regex (night/ellama--build-regex content-before-marker whitespace-regex t))
+           (after-regex (night/ellama--build-regex content-after-marker whitespace-regex nil)))
       (when verbose-p
         (message "content-before-marker: %s\n\ncontent-after-marker: %s\n\ntext:\n%s" before-regex after-regex text))
-      (setq text (if (string-match before-regex text)
-                     (replace-match "" t t text)
-                   (if (string-match trimmed-before-regex text)
-                       (replace-match "" t t text)
-                     text)))
-      (setq text (if (string-match after-regex text)
-                     (replace-match "" t t text)
-                   (if (string-match trimmed-after-regex text)
-                       (replace-match "" t t text)
-                     text)))
+      (setq text (night/ellama--apply-regex before-regex text t))
+      (setq text (night/ellama--apply-regex after-regex text nil))
       (when verbose-p
         (message "cleaned text:\n%s" text))
+      text))
+
+  (defun night/ellama--build-regex (content whitespace-regex is-before)
+    "Build a regex based on content which can be nil, a list, or a string, adding whitespace handling."
+    (when content
+      (let*
+          ((content-list (if (listp content) content (list content)))
+           (anchor (if is-before "\\`" "\\'"))
+           (quoted-contents
+            (mapconcat
+             (lambda (item)
+               (concat
+                (regexp-quote item)
+                "\\|"
+                (regexp-quote (s-trim-left item))
+                "\\|"
+                (regexp-quote (s-trim item))))
+             content-list
+             "\\|"))
+           (pattern (concat "\\(?:" quoted-contents "\\)")))
+        (if is-before
+            (concat anchor whitespace-regex pattern ;; whitespace-regex
+                    )
+          (concat
+           ;; whitespace-regex
+           pattern whitespace-regex anchor)))))
+
+  (defun night/ellama--apply-regex (regex text is-before)
+    "Apply the regex to the text, removing matches from the beginning or end based on is-before."
+    (if regex
+        (if (string-match regex text)
+            (replace-match "" t t text)
+          text)
       text))
 
   (comment
@@ -290,6 +396,7 @@
         :desc "Ellama keymap" "." ellama-command-map)
   (map! :leader
         ". ." #'night/ellama-code-fill-in-the-middle
+        ". ," #'night/ellama-code-complete
         )
 ;;;
   )
