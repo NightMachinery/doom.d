@@ -149,7 +149,10 @@
   (defvar night/ellama--filter-duplicate-code t
     "Whether to filter out duplicate code at the COMPLETE_HERE marker.")
 
-  (defvar night/ellama--complete-here-marker "COMPLETE_HERE"
+  (defvar night/ellama--complete-here-marker
+    "<COMPLETE_HERE>"
+    ;; "<FILL_HERE>"
+    ;; "COMPLETE_HERE"
     "Marker text used to indicate where code completion should occur.")
 
   (defvar night/ellama-code-fill-in-the-middle-prompt-template
@@ -178,8 +181,14 @@
             (progn
               ;; Set the end point just before the marker text
               (setq end (match-beginning 0))
+
               ;; Delete the marker text
               (delete-region (match-beginning 0) (match-end 0))
+
+              ;; Heuristic for inserting new lines after the completion:
+              (when (and (eolp) (not (looking-at-p "\n\\(?:\n\\|#\\)")))
+                (insert "\n"))
+
               ;; Highlight the region from the original point to the end of the deleted comment
               (night/flash-region start end :delay t :backend 'overlay-timer :face 'highlight))
           (message "Ellama marker not found"))))
