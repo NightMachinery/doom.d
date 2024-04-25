@@ -1,7 +1,10 @@
 ;;;
 (setq night/at-tag-char-regex "[^][[:space:](){};\n\"=]")
+(setq night/at-tag-main-char-regex "[a-zA-Z0-9?!]")
 (setq night/at-tag-regex
       (concat "\\B\\(@" night/at-tag-char-regex "+\\)"))
+(setq night/at-tag-main-regex
+      (concat "\\B\\(@" night/at-tag-main-char-regex "+\\)"))
 
 (setq night/great-tag-regex
       ;; "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\)[^[:space:]]*"
@@ -15,7 +18,12 @@
 
 
 ;; white-green background: #e9f2eb
-(night/defface zsh-macro '((t (:foreground "#1adb51" :background "#e9f1f2" :weight bold))) "This is just a doc string")
+(night/defface zsh-macro '((t
+                            (
+                             :foreground "#1adb51"
+                             ;; :background "#e9f1f2"
+                             :weight bold)))
+  "Face used for global aliases in Zsh")
 (night/defface urgent-face '((t (
                            :foreground "black"
                                        ;; :background "hotpink"
@@ -124,7 +132,18 @@ If PROPERTIES are specified, set them for the created overlay."
 ;; How to make the highlights re-use the original background color? https://github.com/tarsius/hl-todo/issues/60 ; did not work:
 ;; :background "unspecified"
 ;; :inherit t
-(night/defface special-comment '((t (:inherit t :foreground "#3437eb" :weight bold))) "This is just a doc string")
+(cond
+ ((facep 'doom-themes-org-at-tag)
+  (set-face-attribute 'doom-themes-org-at-tag nil :weight 'bold)
+  ;; (copy-face 'doom-themes-org-at-tag 'at-tag-face)
+  ;; (set-face-attribute 'at-tag-face nil :weight 'bold)
+;;;
+  (put 'at-tag-face 'face-alias 'doom-themes-org-at-tag)
+  )
+ (t
+  (night/defface at-tag-face
+  '((t (:inherit t :foreground "#3437eb" :weight bold)))
+  "Face of at-tags")))
 
 ;;;
 (night/defface night/async-insertion-face
@@ -141,14 +160,16 @@ If PROPERTIES are specified, set them for the created overlay."
   (interactive)
   (progn (font-lock-add-keywords
           ;; [:punct:]
-          nil `((,night/at-tag-regex 1 'special-comment t)))))
+          nil `((,night/at-tag-regex 1 'at-tag-face t)))
+         (font-lock-fontify-buffer)))
 
 (defun night/highlight-atsign-zsh ()
   (interactive)
   (progn
     (font-lock-add-keywords
      'sh-mode
-     `((,night/at-tag-regex 1 'zsh-macro t)))))
+     `((,night/at-tag-main-regex 1 'zsh-macro t)))
+    (font-lock-fontify-buffer)))
 
 (defun night/highlight-org ()
   (interactive)
@@ -173,6 +194,7 @@ If PROPERTIES are specified, set them for the created overlay."
        'done-face)
       (,night/great-tag-regex . 'zsh-macro)
       ))
+   (font-lock-fontify-buffer)
    )
   )
 
@@ -183,13 +205,14 @@ If PROPERTIES are specified, set them for the created overlay."
 ;;a@a
 ;;@hi j
 ;;;
+(require 'hl-todo)
 (after! hl-todo
   ;; The syntax class of the characters at either end has to be `w' (which means word) in `hl-todo--syntax-table'.
   (modify-syntax-entry ?@ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?+ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?? "w" hl-todo--syntax-table)
-  (setq hl-todo-highlight-punctuation ":"
-        hl-todo-keyword-faces
+  (setq hl-todo-highlight-punctuation ":")
+  (customize-set-variable 'hl-todo-keyword-faces
         `(
           ;; For things that need to be done, just not today.
           ("TODO" warning bold)
@@ -207,14 +230,16 @@ If PROPERTIES are specified, set them for the created overlay."
           ("NOTE" success bold)
           ;; For things that just gotta go and will soon be gone.
           ("DEPRECATED" font-lock-doc-face bold)
+          ("MONKEY" font-lock-doc-face bold)
           ;; For a known bug that needs a workaround
           ("BUG" error bold)
           ;; For warning about a problematic or misguiding code
           ("XXX" font-lock-constant-face bold)
           (
            ;; night/at-tag-regex
-           ,(concat "@" night/at-tag-char-regex "+")
-           special-comment)
+           ;; ,(concat "@" night/at-tag-char-regex "+")
+           ,(concat "@" night/at-tag-main-char-regex "+")
+           at-tag-face)
           ))
   )
 ;;;
@@ -270,7 +295,7 @@ It removes the previous highlights before applying new ones."
     )
 
   (comment
-   (night/hlt-set-current-face 'special-comment)))
+   (night/hlt-set-current-face 'at-tag-face)))
 
 (defun night/hlt-counsel-face ()
   (interactive)
