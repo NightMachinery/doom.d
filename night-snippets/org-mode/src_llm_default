@@ -6,6 +6,7 @@
 #+begin_src jupyter-python :kernel py_base :session llm_1 :async yes :exports both
 res = openai_chat_complete(
     ##
+    # model="deepseek-coder",
     # model="OR:google/gemini-pro-1.5",
     # model="OR:meta-llama/llama-3-70b-instruct:nitro",
     # model="OR:mistralai/mistral-large",

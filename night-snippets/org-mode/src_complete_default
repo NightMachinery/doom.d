@@ -6,13 +6,17 @@
 #+begin_src jupyter-python :kernel py_base :session llm_complete_1 :async yes :exports both
 res = openai_text_complete(
     ##
-    model="OR:mistralai/mixtral-8x22b",
+    # model="TG:codellama/CodeLlama-70b-hf",
+    model="TG:meta-llama/Meta-Llama-3-70B",
+    # model="OR:gpt-3.5-turbo-instruct",
+    # model="OR:mistralai/mixtral-8x22b",
     # model="OR:mistralai/mixtral-8x7b",
     # model="OR:01-ai/yi-34b",
     ##
     prompt=r"""
     `%`$0
     """,
+    # suffix=r"",
     max_tokens=100,
     # temperature=1,
     # stop=["\n"],
