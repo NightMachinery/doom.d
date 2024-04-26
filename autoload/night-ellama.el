@@ -163,6 +163,7 @@
     ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```. Always use a language specifier for the code block. Always start your output from THE BEGINNING OF THE LINE marked for completion.\n\n```\n%s\n```"
     ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```:\n\n```\n%s\n```"
     "Fill in at '%s' in the following snippet. Only write in format ```language\n...\n```. Start your output from the line marked for completion:\n\n```\n%s\n```"
+    ;; You are a helpful assistant. Assistant will output only and only code as a response.
     "Prompt template for `night/ellama-code-fill-in-the-middle'.")
 
   (defun night/h-ellama-marker-comment-get ()
