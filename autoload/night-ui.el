@@ -1,6 +1,6 @@
 ;;;
 (setq night/at-tag-char-regex "[^][[:space:](){};\n\"=]")
-(setq night/at-tag-main-char-regex "[a-zA-Z0-9?!]")
+(setq night/at-tag-main-char-regex "[a-zA-Z0-9?!-]")
 (setq night/at-tag-regex
       (concat "\\B\\(@" night/at-tag-char-regex "+\\)"))
 (setq night/at-tag-main-regex
@@ -43,6 +43,18 @@
                                :foreground "DarkGreen"
 
                                :background "LimeGreen"
+                               ;; :background "PaleGreen"
+                               ;; :background "LawnGreen"
+                               ;; :background "GreenYellow"
+                               ;; :background "Green"
+                               :weight bold))) "")
+(night/defface moved-face '((t (
+                               ;; :foreground "MintCream"
+                               ;; :foreground "PaleGreen"
+                               ;; :foreground "snow"
+                               :foreground "skyblue1"
+
+                               :background "navy"
                                ;; :background "PaleGreen"
                                ;; :background "LawnGreen"
                                ;; :background "GreenYellow"
@@ -276,7 +288,7 @@ It removes the previous highlights before applying new ones."
            (,night/CR-tag-regex 'CR-face)
            (,night/done-tag-regex 'done-face)
            (,night/urgent-tag-regex 'urgent-face)
-           (,night/moved-tag-regex 'table-cell)))
+           (,night/moved-tag-regex 'moved-face)))
       (let ((regex (car item))
             (face (cadr item)))
         (let ((hlt-overlays nil))

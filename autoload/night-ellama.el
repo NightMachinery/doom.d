@@ -13,14 +13,17 @@
 ;; language you want ellama to translate to
 (after! (night-openai)
 ;;;
-;; * Ellama Providers
+  ;; * Ellama Providers
+  (defun night/ellama-provider-current-name ()
+    (cl-struct-slot-value
+     (type-of ellama-provider)
+     'chat-model ellama-provider))
+
   (defun night/ellama-provider-show ()
     "Shows the current `ellama-provider'."
     (interactive)
     (message (format "Ellama provider: %s"
-                     (cl-struct-slot-value
-                      (type-of ellama-provider)
-                      'chat-model ellama-provider))))
+                     (night/ellama-provider-current-name))))
   
   (setopt
    ellama-providers
@@ -58,6 +61,20 @@
         :url "https://openrouter.ai/api/v1"
         :chat-model "microsoft/wizardlm-2-8x22b:nitro"
         :embedding-model "microsoft/wizardlm-2-8x22b:nitro"
+        ))
+     ("OR-Claude3-Haiku" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "anthropic/claude-3-haiku:beta"
+        :embedding-model "anthropic/claude-3-haiku:beta"
+        ))
+     ("OR-Claude3-Sonnet" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "anthropic/claude-3-sonnet:beta"
+        :embedding-model "anthropic/claude-3-sonnet:beta"
         ))
      ("OR-Claude3-Opus" .
       ,(make-llm-openai-compatible
@@ -124,8 +141,7 @@
     "Prompt template for `night/ellama-code-complete'.")
 
   (defvar night/ellama--code-prefix
-    "\\`\\(?:.*\n\\)*?\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\(\\S-*\\)\\)?\\s-*[\n\r]+"
-    )
+    "\\`\\(?:.*\n\\)*?\\s-*```\\(?:\\(?:\\s-\\|\n\\|\r\\)*\\([a-zA-Z][a-zA-Z-]\\{,10\\}\\)?\\)?\\s-*[\n\r]+")
 
   (defvar night/ellama--code-suffix
     (rx (minimal-match
@@ -155,6 +171,15 @@
     ;; "COMPLETE_HERE"
     "Marker text used to indicate where code completion should occur.")
 
+  (defun find-marker-line (text marker)
+    "Find the line in TEXT that contains MARKER."
+    (let ((lines (split-string text "\n")))
+      (seq-find (lambda (line) (string-match-p (regexp-quote marker) line)) lines)
+      ;; Return the first element in SEQUENCE for which PRED returns non-nil.
+      ))
+  (comment
+   (find-marker-line "Hi.\nI am Alice.\nWho are you?" "Alice"))
+
   (defvar night/ellama-code-fill-in-the-middle-prompt-template
     ;; "Fill in the code at '%s' in the following snippet, only write new code in format ```language\n...\n```:\n```\n%s\n```"
     ;; "Fill in at '%s' in the following snippet, only write new code in format ```language\n...\n```. Start your output from the line marked for completion:\n```\n%s\n```"
@@ -162,7 +187,113 @@
     ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```. Always use a language specifier for the code block.\n\n```\n%s\n```"
     ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```. Always use a language specifier for the code block. Always start your output from THE BEGINNING OF THE LINE marked for completion.\n\n```\n%s\n```"
     ;; "Fill in at '%s' in the following snippet, only write in format ```language\n...\n```:\n\n```\n%s\n```"
-    "Fill in at '%s' in the following snippet. Only write in format ```language\n...\n```. Start your output from the line marked for completion:\n\n```\n%s\n```"
+    ;; "Fill in at '%s' in the following snippet. Only write in format ```language\n...\n```. Start your output from the line marked for completion:\n\n```\n%s\n```"
+    (lambda (query)
+      (let*
+          ((model-name (night/ellama-provider-current-name))
+           (marker-line (find-marker-line query night/ellama--complete-here-marker))
+           (marker-start (string-match night/ellama--complete-here-marker marker-line))
+           (pre-marker (if marker-start
+                                    (substring marker-line 0 marker-start)
+                                  "")))
+        (cond
+         ((and nil (s-contains-p "claude" model-name t))
+          (format
+           "Fill in at `%s` in the following snippet. Only output what should be inserted instead of `%s` in the format ```language\n...\n```.
+
+
+Query:\n```\n%s\n```
+
+Answer:
+"
+           night/ellama--complete-here-marker
+           night/ellama--complete-here-marker
+           query
+           )
+          ;; (format
+          ;;            "Fill in at `%s` in the following snippet. Only write in format ```language\n...\n```. Only output what should be inserted instead of `%s`.
+
+          ;; Example Query:
+          ;; ```
+          ;;     local noise_profile
+          ;;     noise_profile=\"$(g%s)\" @TRET
+
+          ;;     local temp_output_file
+          ;;     temp_output_file=\"$(gmktemp --suffix=\".wav\")\" @TRET
+          ;; ```
+
+          ;; Example Answer:
+          ;; ```zsh
+          ;; mktemp --suffix=\".noise\"
+          ;; ```
+
+          ;; Query:\n```\n%s\n```
+
+          ;; Answer:
+          ;; "
+          ;;            night/ellama--complete-here-marker
+          ;;            night/ellama--complete-here-marker
+          ;;            night/ellama--complete-here-marker
+          ;;            query
+          ;;            )
+          )
+         (nil
+          (format
+           ;; Only write in format ```language\n...\n```. Start your output from the line marked for completion.
+           "Fill in at `%s` in the following snippet.
+
+Example Query:
+```
+    local noise_profile
+    noise_profile=\"$(g%s)\" @TRET
+
+    local temp_output_file
+    temp_output_file=\"$(gmktemp --suffix=\".wav\")\" @TRET
+```
+
+Example Answer:
+```zsh
+    noise_profile=\"$(gmktemp --suffix=\".noise\")\" @TRET
+```
+
+Query:\n```\n%s\n```
+
+Answer:
+```
+%s
+"
+           night/ellama--complete-here-marker
+           night/ellama--complete-here-marker
+           query
+           pre-marker
+           ))
+         (nil
+          (format
+           ;; Only write in format ```language\n...\n```. Start your output from the line marked for completion.
+           "Fill in at `%s` in the following snippet.
+
+Query:\n```\n%s\n```
+
+Answer:
+```
+%s
+"
+           night/ellama--complete-here-marker
+           query
+           pre-marker
+           ))
+         (t
+          (format
+           ;; Only output a single code block without any other explanations and start your output from the beginning of the line marked for completion.
+           "Fill in at `%s` in the following snippet. Only output A SINGLE CODE BLOCK without any other explanations and START your output FROM THE BEGINNING OF THE LINE MARKED FOR COMPLETION. Ensure correct indentation.
+
+Query:\n```\n%s\n```
+
+Answer (with the correct indentation, in a code block, started from the beginning of the line marked for completion):
+"
+           night/ellama--complete-here-marker
+           query
+           )))))
     ;; You are a helpful assistant. Assistant will output only and only code as a response.
     "Prompt template for `night/ellama-code-fill-in-the-middle'.")
 
@@ -288,12 +419,20 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
     (interactive)
     (let* ((verbose-p current-prefix-arg)
            (done-mode "rm-marker")
+           (model-name (night/ellama-provider-current-name))
            (point-pos (point))
            (beg (max (- point-pos night/ellama--code-context-before) (point-min)))
            (end (min (+ point-pos night/ellama--code-context-after) (point-max)))
            (content-before-marker
-            (night/h-get-lines-before-point point-pos night/ellama--code-dup-lines-before))
-           (content-after-marker (night/h-get-lines-after-point point-pos night/ellama--code-dup-lines-after))
+            (cond
+             ((and nil (s-contains-p "claude" model-name t))
+              nil)
+             (t (night/h-get-lines-before-point point-pos night/ellama--code-dup-lines-before))))
+           (content-after-marker
+            (cond
+             ((and nil (s-contains-p "claude" model-name t))
+              nil)
+             (t (night/h-get-lines-after-point point-pos night/ellama--code-dup-lines-after))))
            (text-before (buffer-substring-no-properties beg point-pos))
            (text-after (buffer-substring-no-properties point-pos end))
            (full-text (concat text-before night/ellama--complete-here-marker text-after)))
@@ -301,9 +440,8 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         (save-excursion
           (insert (night/h-ellama-marker-comment-get))))
       (ellama-stream
-       (format
+       (funcall
         night/ellama-code-fill-in-the-middle-prompt-template
-        night/ellama--complete-here-marker
         full-text)
        :filter (apply-partially
                 #'night/ellama--code-filter
@@ -382,7 +520,11 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
              "\\|"))
            (pattern (concat "\\(?:" quoted-contents "\\)")))
         (if is-before
-            (concat anchor whitespace-regex pattern ;; whitespace-regex
+            (concat anchor
+                    ;; whitespace-regex
+                    ;; If we add `whitespace-regex` here, completions starting from the beginning of the line will have their indentation deleted, which results in a bad output. But if do not add `whitespace-regex` here, the whole thing can become less robust ...
+                    pattern
+                    ;; whitespace-regex
                     )
           (concat
            ;; whitespace-regex
