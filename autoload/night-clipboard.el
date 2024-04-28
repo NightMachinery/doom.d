@@ -151,6 +151,11 @@
     (t
      (z html2org)))))
 
+(defun night/html2md ()
+  (interactive)
+  (night/insert-for-yank
+   (z html2md-v2)))
+
 (defun night/insert-for-yank (text)
   (interactive)
   (night/evil-region-delete-on-visual-paste)
@@ -170,6 +175,7 @@
 (map! :leader
       "," nil)
 (night/set-leader-keys ", h" #'night/paste-yank-html)
+(night/set-leader-keys ", ," #'night/html2md)
 (night/set-leader-keys ", n" #'night/pns)
 (night/set-leader-keys ", m" #'night/paste-md2org)
 (night/set-leader-keys ", o" #'night/paste-org2md)
