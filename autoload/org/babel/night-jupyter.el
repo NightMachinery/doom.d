@@ -87,6 +87,39 @@ Also kill the associated REPL and object buffers.
                                   (night/jupyter-forget-client key)))
                 :caller 'night/counsel-jupyter-forget-client)))
 ;;;
+  (defun night/jupyter-python-session-get-current ()
+    "Retrieve the Jupyter Python session from the current Org headline's property.
+If the `jupyter-python-session` property is set in the current headline, this function returns its value. If not set, it defaults to '/jpy:127.0.0.1#6035:orgk1/'.
+
+For example, you can set the session for the entire file by adding the following at the beginning of your Org file:
+:PROPERTIES:
+:jupyter-python-session: /jpy:127.0.0.1#7031:orgk1/
+:END:
+
+This function should be called within an Org-mode buffer."
+    (interactive)
+    (let* (
+           (default "/jpy:127.0.0.1#6035:orgk1/")
+           (session default)
+           (session
+            (cond
+             ((derived-mode-p 'org-mode)
+              (or
+               (org-entry-get nil "jupyter-python-session" t)
+               default))
+             (t
+              ;; (error "This function must be called in an Org-mode buffer")
+              default))))
+      (when (called-interactively-p 'any)
+        (message "jupyter-python-session: %s" session))
+      session))
+
+(defun night/jupyter-python-session-orgprop-set (session)
+  "Set the `jupyter-python-session` property for the current Org headline.
+SESSION should be a string representing the Jupyter session."
+  (interactive "sEnter Jupyter session string: ")
+  (org-set-property "jupyter-python-session" session))
+;;;
   (defun night/jupyter-org-eval-line-or-region ()
     (interactive)
     (jupyter-org-with-src-block-client

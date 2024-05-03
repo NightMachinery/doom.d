@@ -5,6 +5,6 @@
 #
 #: :pandoc t
 # --
-#+begin_src jupyter-python :kernel py_base :session /jpy:127.0.0.1#6035:orgk1/ :async yes :exports both
+#+begin_src jupyter-python :kernel py_base :session `(night/jupyter-python-session-get-current)` :async yes :exports both
 `%`$0
 #+end_src
