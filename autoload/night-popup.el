@@ -4,7 +4,7 @@
 (set-popup-rule! "^\\*org-babel.*\\*$" :height 0.5 :ttl nil)
 (set-popup-rule! "^\\*Flymake.*\\*$" :height 0.5 :ttl nil)
 
-;; (set-popup-rule! "^\\*.*dict.*\\*$" :height 0.5 :ttl nil) ;; @idk doesn't seem to work
+(set-popup-rule! "^\\*.*\\(SDCV\\|dict\\).*\\*$" :height 0.5 :ttl nil) ;; @idk doesn't seem to work for =dict=, probably doesn't use `pop-to-buffer' to open its buffer ...
 
 (set-popup-rule! "^\\*eldoc.*\\*$" :ttl 60 :width 0.3 :side 'right)
 ;; (set-popup-rule! "^\\*eldoc.*\\*$" :ttl 60 :height 0.3)

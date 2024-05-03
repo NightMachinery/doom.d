@@ -336,6 +336,8 @@
 (package! llm)
 (package! ellama)
 ;;;
+(package! sdcv)
+;;;
 (package! exec-path-from-shell)
 ;;;
 (package! nerd-icons)
