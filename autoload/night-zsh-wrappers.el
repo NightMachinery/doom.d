@@ -28,6 +28,14 @@
   (night/insert-for-yank-and-save
    (z p-org-fanfic))
   (night/bell-link))
+
+(defun night/org-link-hear-get ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (concat
+    "[[audiofile:"
+    (z eval hear-get | path-abbrev-to-music-dir | org-escape-link)
+    "]]")))
 ;;;
 (defun night/p-newline2space ()
   (interactive)

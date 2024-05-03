@@ -173,6 +173,7 @@ DIRECTION should be 'next or 'previous."
         :n "] ]" #'org-beamer-export-to-pdf
         :nvi "lp" #'night/org-paste-clipboard-image
         "la" #'night/semantic-scholar-to-org
+        "lm" #'night/org-link-hear-get
         "rp" #'night/org-paste-with-files
         ;; "yi" #'night/org-value-at-point
         )
