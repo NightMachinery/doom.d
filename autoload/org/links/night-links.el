@@ -1,5 +1,7 @@
 ;;; autoload/org/night-links.el -*- lexical-binding: t; -*-
-
+;;;
+(after! (ol)
+  (setq org-link-search-must-match-exact-headline nil))
 ;;;
 ;; @todo2 [[https://discourse.doomemacs.org/t/how-do-i-load-org-in-config-el/3899][How do I load org in `config.el`? - User Support / Org - Doom Emacs Discourse]]
 ;; loading these can cause a version mismatch as they will load the builtin org version

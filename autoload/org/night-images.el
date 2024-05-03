@@ -2,6 +2,8 @@
 
 (after! night-roam
 ;;;
+  (setq org-display-remote-inline-images 'skip)
+;;;
   ;; https://emacs.stackexchange.com/a/42283/18737
   (require 'org-yt)
 
@@ -83,24 +85,24 @@
     (while (search-forward old nil t)
       (replace-match new nil t)))
 
-(defun night/image-links-move-to-dir (dir)
-  "Copy image links in the selected region or the current line to a specified directory and update the links."
-  (interactive "DDestination directory: ") ;; D prompts the user for a directory
-  (save-excursion
-    (let* ((region (if (use-region-p)
-                       (buffer-substring-no-properties (region-beginning) (region-end))
-                     (thing-at-point 'line t)))
-           (image-links (night/h-extract-image-links region)))
-      ;; (message "dir: %s" dir)
-      (dolist (link image-links)
-        ;; (message "link: %s" link)
-        (let* ((filename (file-name-nondirectory link))
-               (new-path (expand-file-name filename dir)))
+  (defun night/image-links-move-to-dir (dir)
+    "Copy image links in the selected region or the current line to a specified directory and update the links."
+    (interactive "DDestination directory: ") ;; D prompts the user for a directory
+    (save-excursion
+      (let* ((region (if (use-region-p)
+                         (buffer-substring-no-properties (region-beginning) (region-end))
+                       (thing-at-point 'line t)))
+             (image-links (night/h-extract-image-links region)))
+        ;; (message "dir: %s" dir)
+        (dolist (link image-links)
+          ;; (message "link: %s" link)
+          (let* ((filename (file-name-nondirectory link))
+                 (new-path (expand-file-name filename dir)))
 
-          (if (file-exists-p link)
-              (progn
-                (night/cp-link link new-path)
-                (night/replace-in-buffer link new-path))
-            (message "File does not exist: %s" link)))))))
+            (if (file-exists-p link)
+                (progn
+                  (night/cp-link link new-path)
+                  (night/replace-in-buffer link new-path))
+              (message "File does not exist: %s" link)))))))
 ;;;
   )

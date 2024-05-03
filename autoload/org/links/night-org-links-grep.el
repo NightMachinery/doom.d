@@ -12,7 +12,7 @@
    "notes-search"
    :follow #'night/org-link-search-notes-follow)
 ;;;
-;; * [[id:c03335c9-d71e-441d-a359-91b2a1f6a9ac][grep ID links]]
+  ;; * [[id:c03335c9-d71e-441d-a359-91b2a1f6a9ac][grep ID links]]
 
   (defun night/org-link-id-grep-follow (path arg)
     (let* ((backend-fn #'night/search-notes)
