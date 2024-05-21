@@ -4,6 +4,8 @@
 ;;;
   (org-id-update-id-locations nil t)
   ;; This loads the ID links. Without it, =(hash-table-p org-id-locations)= returned nil for me, which in turn made `org-id-store-link' not work properly.
+  (comment
+   (setq org-id-locations (a-hash-table)))
 ;;;
   (defun night/org-link-search-notes-follow (path arg)
     (let* ((backend-fn #'night/search-notes)
@@ -91,7 +93,7 @@
    "gid"
    :follow #'night/org-link-id-grep-follow-v2)
 ;;;
-  (defun night/h-org-id-find (id &optional markerp fallback-modes default-mode)
+  (cl-defun night/h-org-id-find (id &optional (markerp nil) (fallback-modes nil) (default-mode nil) (store-in-db-p t))
     "Return the location of the entry with the id ID.
 The return value is a cons cell (file-name . position), or nil
 if there is no entry with that ID.
@@ -121,11 +123,18 @@ With optional argument MARKERP, return the position as a new marker."
       (when file
         ;; (message "night/org-id-find: found file: %s" file)
         (setq where (org-id-find-id-in-file id file markerp))
-        (if where
-            where
-          (night/org-id-find id markerp
+        (when (and store-in-db-p
+                   where
+                   (equalp default-mode "id-grep")
+                   ;; only =id-grep= does not already store in the DB
+                   )
+          (org-id-add-location id file)))
+      (if where
+          where
+        (night/h-org-id-find id markerp
                              (cdr fallback-modes)
-                             (car fallback-modes))))))
+                             (car fallback-modes)
+                             store-in-db-p))))
   (defun night/org-id-find (id &optional markerp fallback-modes default-mode)
     ;; (message "night/org-id-find: id: %s" id)
     (night/h-org-id-find
