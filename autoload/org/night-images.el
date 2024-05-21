@@ -4,6 +4,17 @@
 ;;;
   (setq org-display-remote-inline-images 'skip)
 ;;;
+(cl-defun night/org-img-unused-trs (&key (files nil files-provided) (verbose t))
+  ;; [[id:750c334c-1321-4c97-b607-16cb0d3d8141][Argument Lists (Common Lisp Extensions)]]
+  ;;;
+  (interactive)
+  (unless files-provided
+    (setq files (list buffer-file-name)))
+  (dolist (f (zf org-img-unused (identity files)))
+    (night/trs f)
+    (when verbose
+      (message "Deleted unused image: %s" f))))
+;;;
   ;; https://emacs.stackexchange.com/a/42283/18737
   (require 'org-yt)
 

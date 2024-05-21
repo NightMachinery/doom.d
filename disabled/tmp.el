@@ -196,3 +196,5 @@
 (setq consult-async-input-debounce 0.1)
 ;;;
 (+lookup/online "hmm" "Google")
+
+(hash-table-p org-id-locations)

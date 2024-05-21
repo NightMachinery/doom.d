@@ -28,6 +28,11 @@
   (setopt
    ellama-providers
    `(
+     ("GPT4Omni" .
+      ,(make-llm-openai
+        :key (night/openai-key-get)
+        :chat-model "gpt-4o"
+        :embedding-model "gpt-4o"))
      ("GQ-Llama3" .
       ,(make-llm-openai-compatible
         :key (night/groq-key-get)

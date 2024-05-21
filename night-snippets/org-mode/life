@@ -6,6 +6,7 @@
 # condition: (night/h-point-at-beginning-p :prefix-pattern "<<")
 # --
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
+- [ ] Check if Pino has been continued
 - [ ] Burning Candle [0/4]
   - [ ] $0Luna is Alive
   - [ ] 30m Exercise

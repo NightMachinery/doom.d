@@ -1,5 +1,7 @@
 ;;; night-org-id-links.el ---                        -*- lexical-binding: t; -*-
 ;;;
+;; Most of the logic is in [[./night-org-links-grep.el]].
+;;;
 (defun night/org-id-path-get (id)
   (let*
       ((m (org-id-find id 'marker)))
@@ -7,6 +9,7 @@
       (error "Cannot find entry with ID \"%s\"" id))
 
     (buffer-file-name (marker-buffer m))))
+
 (defun night/org-id-line-get (id)
   (let* ((m (org-id-find id 'marker)))
     (unless m

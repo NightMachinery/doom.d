@@ -1,6 +1,10 @@
 ;;; autoload/org/links/night-org-links-grep.el -*- lexical-binding: t; -*-
 ;;;
-(after! (org ol)
+(after! (org ol org-id)
+;;;
+  (org-id-update-id-locations nil t)
+  ;; This loads the ID links. Without it, =(hash-table-p org-id-locations)= returned nil for me, which in turn made `org-id-store-link' not work properly.
+;;;
   (defun night/org-link-search-notes-follow (path arg)
     (let* ((backend-fn #'night/search-notes)
            (query path)
@@ -126,7 +130,11 @@ With optional argument MARKERP, return the position as a new marker."
     ;; (message "night/org-id-find: id: %s" id)
     (night/h-org-id-find
      id markerp
-     (or fallback-modes (list "id-grep"))
+     (or fallback-modes
+         (list
+          "id-grep"
+          ;; "update-id-locations"
+          ))
      default-mode))
   (advice-add 'org-id-find :override #'night/org-id-find)
 ;;;
