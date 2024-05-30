@@ -1,5 +1,12 @@
 ;;; autoload/night-bells.el -*- lexical-binding: t; -*-
 ;;;
+(defun night/say (text)
+  (interactive)
+  (z-async t fsay (identity text)))
+(comment
+ (night/say "hello")
+ (night/say "beautiful day!"))
+;;;
 (defun night/bell-link ()
   (z-async t "tts-glados1-cached" "link, inserted"))
 
