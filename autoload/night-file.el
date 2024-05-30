@@ -28,3 +28,8 @@
   (interactive)
   (night/change-file-extension "org"))
 ;;;
+(defun night/mkdir-for-file (filename)
+  "Create the directory for FILENAME if it does not exist."
+  (unless (file-exists-p (file-name-directory filename))
+    (make-directory (file-name-directory filename))))
+;;;
