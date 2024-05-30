@@ -3,7 +3,11 @@
 (after! (org)
   (modify-syntax-entry ?= "." org-mode-syntax-table)
   (modify-syntax-entry ?/ "." org-mode-syntax-table)
-  (modify-syntax-entry ?* "." org-mode-syntax-table))
+  (modify-syntax-entry ?* "." org-mode-syntax-table)
+
+  (modify-syntax-entry ?@ "w" org-mode-syntax-table)
+  ;; (modify-syntax-entry ?@ "w" org-mode-tags-syntax-table)
+  )
 
 (defvar *night/h-interactive-buffer-force* nil
   "Dynamically bind this to t to force `night/interactive-buffer-p' to return true.")

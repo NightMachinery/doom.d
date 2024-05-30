@@ -4,9 +4,9 @@
 # uuid: <<
 # expand-env: ((yas-after-exit-snippet-hook #'evil-normal-state))
 # condition: (night/h-point-at-beginning-p :prefix-pattern "<<")
+# - [ ] Check if Pino has been continued
 # --
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
-- [ ] Check if Pino has been continued
 - [ ] Burning Candle [0/4]
   - [ ] $0Luna is Alive
   - [ ] 30m Exercise

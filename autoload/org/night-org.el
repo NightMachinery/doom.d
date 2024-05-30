@@ -198,8 +198,7 @@ otherwise use the subtree title."
     (save-excursion
       (goto-char (point-min))
       (let ((case-fold-search t))
-        (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t))))
-  )
+        (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t)))))
 ;;;
 (defun night/org-go-to-last-heading (&optional level)
   "Go to the last heading in the current Org mode buffer."
