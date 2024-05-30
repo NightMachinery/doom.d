@@ -131,10 +131,13 @@ With optional argument MARKERP, return the position as a new marker."
           (org-id-add-location id file)))
       (if where
           where
-        (night/h-org-id-find id markerp
-                             (cdr fallback-modes)
-                             (car fallback-modes)
-                             store-in-db-p))))
+        (when (length> fallback-modes 0)
+          (let
+              ((remaining-modes (cdr fallback-modes)))
+            (night/h-org-id-find id markerp
+                                 remaining-modes
+                                 (car fallback-modes)
+                                 store-in-db-p))))))
   (defun night/org-id-find (id &optional markerp fallback-modes default-mode)
     ;; (message "night/org-id-find: id: %s" id)
     (night/h-org-id-find
