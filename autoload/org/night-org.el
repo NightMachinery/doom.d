@@ -35,51 +35,101 @@
   (setq org-image-actual-width '(800)) ; this zooms small images though and downscales big ones. It unfortunately overrides per-image attribute settings.
   ;; (setq org-image-actual-width '(fill-column))
 ;;;
+  (defun night/h-org-generate-image-filename (format)
+    "Generate a unique filename for the image with the given FORMAT."
+    (concat
+     (make-temp-name
+      (concat (file-name-nondirectory (buffer-file-name))
+              "_imgs/"
+              (format-time-string "%Y%m%d_%H%M%S_"))) format))
+
+(defun night/h-paste-image (filename arg)
+  "Capture the image and save it to FILENAME. Use ARG to determine the capture method."
+  (cond
+   ((eq system-type 'darwin)
+    (z "reval-to-stdout" "h-emc-paste-img"
+       (concat (file-name-directory (buffer-file-name)) "/" filename)
+       (if arg "y" "n"))
+    ;; take screenshot
+    ;; (call-process "screencapture" nil nil nil "-i" filename)
+    )
+   ((eq system-type 'gnu/linux)
+    (call-process "import" nil nil nil filename))))
+
+(cl-defun night/org-insert-image
+    (filename
+     &key
+     (max-height-before-split 700))
+  "Insert the image at FILENAME into the org buffer. Split if necessary based on MAX-HEIGHT-BEFORE-SPLIT."
+  (if (file-exists-p filename)
+      (let* ((width-max 900)
+             (height-orig (string-to-number (z img-height (i filename))))
+             (width-orig (string-to-number (z img-width (i filename))))
+             (width-orig (/ width-orig 1.4))
+             (width (night/h-org-calculate-image-width width-orig width-max)))
+        (if (< height-orig max-height-before-split)
+            (night/org-insert-single-image filename width)
+          (night/org-split-and-insert-image filename width)))))
+
+(defun night/h-org-calculate-image-width (width-orig width-max)
+  "Calculate the width of the image based on WIDTH-ORIG and WIDTH-MAX."
+  (cond
+   ((= width-orig 0) 800) ;; parse error has happened
+   ((<= width-orig width-max) width-orig)
+   (t width-max)))
+
+(defun night/org-insert-single-image (filename width)
+  "Insert a single image at FILENAME with WIDTH into the org buffer."
+  (insert
+   (concat
+    "#+ATTR_HTML: :width " (number-to-string (round width))
+    "\n[[file:" filename "]]\n"))
+  (org-redisplay-inline-images))
+
+(cl-defun night/org-split-and-insert-image
+    (filename
+     width
+     &key
+     (delete-original-p t)
+     )
+  "Split the image at FILENAME vertically and insert the parts with WIDTH into the org buffer."
+  (message "Splitting images vertically ...")
+
+  ;; `lexical-let' is necessary to capture these variables in the lambda.
+  (lexical-let ((filename filename)
+                (width width)
+                (delete-original-p delete-original-p))
+    (night/brishz-async-insert
+     :name "night/org-split-and-insert-image"
+     :command (list "img_vertical_split.py" filename)
+     :callback-after #'night/nop
+     :insert-fn (lambda (filenames)
+                  (let
+                      ((filenames (split-string filenames "\n" t)))
+                    (message "Images split to %s chunks." (length filenames))
+                    (when delete-original-p
+                      (night/trs filename))
+                    (dolist (filename filenames)
+                      (night/org-insert-single-image filename width))))
+     :save-p t)))
+
   (defun night/org-paste-clipboard-image (&optional arg format)
     "Paste the image in the clipboard at point.
 
 @seeAlso [agfi:org-img-unused]"
     (interactive "P")
     ;; (org-display-inline-images)
-    (let*  ((format (cond
-                     (arg ".png") ;; `arg' means remove background, so we need the alpha channel.
-                     (format format)
-                     (t ".jpg")
-                     ;; (t ".png")
-                     ))
-            (filename
-             (concat
-              (make-temp-name
-               (concat (file-name-nondirectory (buffer-file-name))
-                       "_imgs/"
-                       (format-time-string "%Y%m%d_%H%M%S_"))) format)))
-      (unless (file-exists-p (file-name-directory filename))
-        (make-directory (file-name-directory filename)))
-      (if (eq system-type 'darwin)
-          (z "reval-to-stdout" "h-emc-paste-img"
-             (concat (file-name-directory (buffer-file-name)) "/" filename)
-             (if arg
-                 "y"
-               "n"))
-                                        ; take screenshot
-        ;; (call-process "screencapture" nil nil nil "-i" filename)
-        )
-      (if (eq system-type 'gnu/linux)
-          (call-process "import" nil nil nil filename))
-                                        ; insert into file if correctly taken
+    (let*
+        ((format
+          (cond
+           (arg ".png") ;; `arg' means remove background, so we need the alpha channel.
+           (format format)
+           (t ".jpg")))
+         (filename (night/h-org-generate-image-filename format)))
+      (night/mkdir-for-file filename)
+      (night/h-paste-image filename arg)
+      (night/org-insert-image filename)))
 
-      (if (file-exists-p filename)
-          (let* (
-                 (width-max 900) ;; 800, 850 are also possible, but big images slow emacs when scrolling
-                 (width-orig (string-to-number (z img-width (i filename))))
-                 (width-orig (/ width-orig 1.4))
-                 (width (cond
-                         ((= width-orig 0) ;; parse error has happened
-                          800)
-                         ((<= width-orig width-max) width-orig)
-                         (t width-max))))
-            (insert (concat "#+ATTR_HTML: :width " (number-to-string (round width)) "\n[[file:" filename "]]\n"))))
-      (org-redisplay-inline-images)))
   (defun night/org-paste-clipboard-image-png (&optional arg)
     (interactive "P")
     (night/org-paste-clipboard-image arg ".png"))
