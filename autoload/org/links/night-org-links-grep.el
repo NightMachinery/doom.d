@@ -123,6 +123,7 @@ With optional argument MARKERP, return the position as a new marker."
       (when file
         ;; (message "night/org-id-find: found file: %s" file)
         (setq where (org-id-find-id-in-file id file markerp))
+        ;; If there is a problem in the property list of the target heading (e.g., it contains a commented line), `org-id-find-id-in-file` fails.
         (when (and store-in-db-p
                    where
                    (equalp default-mode "id-grep")

@@ -1,6 +1,6 @@
 ;;; autoload/org/night-org-keybindings.el -*- lexical-binding: t; -*-
 
-(after! (org evil-org evil)
+(after! (org evil-org evil night-backlinks)
 ;;;
   (defun night/yank-org-inner-object ()
     (interactive)
@@ -175,6 +175,7 @@ DIRECTION should be 'next or 'previous."
         :nvi "lP" #'night/org-img-unused-trs
         "la" #'night/semantic-scholar-to-org
         "lm" #'night/org-link-hear-get
+        "lM" #'night/org-link-mpv-get
         "rp" #'night/org-paste-with-files
         ;; "yi" #'night/org-value-at-point
         )
@@ -248,6 +249,7 @@ DIRECTION should be 'next or 'previous."
    ;; Update IMDB
    ;; Perhaps we should add an after-advice to run =+org/open-all-folds= or =revert-buffer=? There is a bug that the inserted properties drawer can't be opened without running a workaround first ...revert-buffer a bug that the inserted properties drawer can't be opened without running a workaround first ...
 
+   "lk" #'night/org-backlink-search
    "lc" #'night/org-link-chrome-current
    "lC" #'night/url2org
    "le" #'night/org-link-edge-current

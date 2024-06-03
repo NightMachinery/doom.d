@@ -115,155 +115,165 @@ NO-BLOCKS-MESSAGE is a message string to display if no blocks are found in the s
           (push-mark results-end t t))
       (message "Not at a src block!")))
 ;;;
-(defun night/org-babel-remove-results-from-region (start end)
-  "Remove Babel results from the specified region."
+  (defun night/org-babel-remove-results-from-region (start end)
+    "Remove Babel results from the specified region."
 
-  (interactive "r") ; When called interactively, use the current region
-  (save-excursion
-    (goto-char start)
-    (let ((end-marker (copy-marker end))) ; Use a marker to track the dynamic end position
-      (while (and (< (point) end-marker)
-                  (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" end-marker t))
-        (let ((el (org-element-context)))
-          (when (org-in-src-block-p)
-            (org-babel-remove-result)))))))
-(defun night/org-babel-remove-all-results ()
-  "Remove all Babel results in the current buffer."
-  (interactive)
-  (night/org-babel-remove-results-from-region (point-min) (point-max)))
+    (interactive "r")        ; When called interactively, use the current region
+    (save-excursion
+      (goto-char start)
+      (let ((end-marker (copy-marker end))) ; Use a marker to track the dynamic end position
+        (while (and (< (point) end-marker)
+                    (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" end-marker t))
+          (let ((el (org-element-context)))
+            (when (org-in-src-block-p)
+              (org-babel-remove-result)))))))
+  (defun night/org-babel-remove-all-results ()
+    "Remove all Babel results in the current buffer."
+    (interactive)
+    (night/org-babel-remove-results-from-region (point-min) (point-max)))
 
   (comment (defun night/org-babel-remove-all-results ()
-     (interactive)
-     (save-excursion
-       (goto-char (point-min))
-       (while (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" nil t)
-         (let ((el (org-element-context)))
-           (when (org-in-src-block-p)
-             (org-babel-remove-result)))))))
+             (interactive)
+             (save-excursion
+               (goto-char (point-min))
+               (while (search-forward-regexp "^[ \t]*#\\+BEGIN_SRC" nil t)
+                 (let ((el (org-element-context)))
+                   (when (org-in-src-block-p)
+                     (org-babel-remove-result)))))))
 ;;;
-(defun night/org-babel-result-get ()
-  (interactive)
-  "Return the result of the current source block as a string.
+  (defun night/org-babel-result-get ()
+    (interactive)
+    "Return the result of the current source block as a string.
 Assumes that the source block has already been executed."
-  (interactive)
-  (save-excursion
-    (let ((result-beg (org-babel-where-is-src-block-result))
-          result-end)
-      (unless result-beg
+    (interactive)
+    (save-excursion
+      (let ((result-beg (org-babel-where-is-src-block-result))
+            result-end)
+        (unless result-beg
 
-        (error "No result found for the current source block"))
-      (goto-char result-beg)
-      (setq result-end (org-babel-result-end))
-      (let* ((raw-result (buffer-substring-no-properties result-beg result-end))
-             (result (string-trim raw-result))
-             (lines (split-string result "\n"))
-             (first-relevant-line-index
-              (cl-position-if-not
+          (error "No result found for the current source block"))
+        (goto-char result-beg)
+        (setq result-end (org-babel-result-end))
+        (let* ((raw-result (buffer-substring-no-properties result-beg result-end))
+               (result (string-trim raw-result))
+               (lines (split-string result "\n"))
+               (first-relevant-line-index
+                (cl-position-if-not
 
-               (lambda (line)
-                 (string-match-p "^\\(#\\+\\|:RESULTS:[ \t\n]*\\|: /❂\\\)" line))
-               lines))
-             (last-relevant-line-index
-              (cl-position-if
-               (lambda (line)
-                 (not
-                  (string-match-p "^\\(: ----+\\|:END:\\)[ \t]*$" line)))
-               lines :from-end t))
-             (result
-              (mapconcat
-               'identity
-               (cl-subseq
-                lines
-                (or first-relevant-line-index 0)
-                (cond
-                 (last-relevant-line-index
-                  (+ 1 last-relevant-line-index))
-                 (t
-                  (+ 0 (length lines)))))
-               "\n"))
-             (result (replace-regexp-in-string "^\\(: \\|:$\\)" "" result t t))
+                 (lambda (line)
+                   (string-match-p "^\\(#\\+\\|:RESULTS:[ \t\n]*\\|: /❂\\\)" line))
+                 lines))
+               (last-relevant-line-index
+                (cl-position-if
+                 (lambda (line)
+                   (not
+                    (string-match-p "^\\(: ----+\\|:END:\\)[ \t]*$" line)))
+                 lines :from-end t))
+               (result
+                (mapconcat
+                 'identity
+                 (cl-subseq
+                  lines
+                  (or first-relevant-line-index 0)
+                  (cond
+                   (last-relevant-line-index
+                    (+ 1 last-relevant-line-index))
+                   (t
+                    (+ 0 (length lines)))))
+                 "\n"))
+               (result (replace-regexp-in-string "^\\(: \\|:$\\)" "" result t t))
 
-             (result (string-trim result)))
-        ;; (message "first: %s, last: %s, lines: %s" first-relevant-line-index last-relevant-line-index lines)
-        (when (called-interactively-p)
-          (kill-new result)
-          (message "%s" result))
-        result))))
+               (result (string-trim result)))
+          ;; (message "first: %s, last: %s, lines: %s" first-relevant-line-index last-relevant-line-index lines)
+          (when (called-interactively-p)
+            (kill-new result)
+            (message "%s" result))
+          result))))
 
-(defun night/org-babel-copy-as-chat ()
-  "Copies the result section of the current source block as the last message in an LLM chat.
+  (defun night/py-escape-triple-quotes-elisp (input)
+    "Replace three consecutive single or double quotes with a backslash in INPUT, unless they are already escaped.
+
+@seeAlso [agfi:py-escape-triple-quotes]"
+    (let ((pattern "\\(?:[^\\\\]\\|^\\)\\(\\(?:\"\\|'\\)\\{3\\}\\)"))
+      (replace-regexp-in-string pattern "\\\\\\1" input t nil)))
+  (comment
+   (night/py-escape-triple-quotes-elisp "Water \"\"\"cube\\\"\"\"."))
+
+  (defun night/org-babel-copy-as-chat ()
+    "Copies the result section of the current source block as the last message in an LLM chat.
 
 @seeAlso [[file:~/code/python/PyNight/pynight/common_openai.py::def chatml_response_text_process]]
 "
-  (interactive)
-  (let* (
-         (last-msg (night/org-babel-result-get))
-         (last-msg
-          (cond
-           ((s-starts-with-p "\"" last-msg)
-            (concat " " last-msg))
-           (t last-msg)))
-         (last-msg
-          (cond
-           ((s-ends-with-p "\"" last-msg)
-            (concat last-msg " "))
-           (t last-msg)))
-         (assistant
-          (concat
-           "        {\"role\": \"assistant\", \"content\": r\"\"\""
-           last-msg
-           "\"\"\"},"))
-         (chat
-          (concat
-           assistant
-           "\n        {\"role\": \"user\", \"content\": r\"\"\"\n        \n        \"\"\"},")))
-    (kill-new chat)))
+    (interactive)
+    (let* (
+           (last-msg (night/org-babel-result-get))
+           (last-msg (night/py-escape-triple-quotes-elisp last-msg))
+           (last-msg
+            (cond
+             ((s-starts-with-p "\"" last-msg)
+              (concat " " last-msg))
+             (t last-msg)))
+           (last-msg
+            (cond
+             ((s-ends-with-p "\"" last-msg)
+              (concat last-msg " "))
+             (t last-msg)))
+           (assistant
+            (concat
+             "        {\"role\": \"assistant\", \"content\": r\"\"\""
+             last-msg
+             "\"\"\"},"))
+           (chat
+            (concat
+             assistant
+             "\n        {\"role\": \"user\", \"content\": r\"\"\"\n        \n        \"\"\"},")))
+      (kill-new chat)))
 ;;;
-(cl-defun night/h-org-babel-navigate-src-block (&key (direction 'backward) (k 1))
-  "Move to the next or previous Org-mode source block depending on DIRECTION.
+  (cl-defun night/h-org-babel-navigate-src-block (&key (direction 'backward) (k 1))
+    "Move to the next or previous Org-mode source block depending on DIRECTION.
 Move the point K lines in the specified direction before starting the search.
 We move between the start and beginning of blocks. `org-babel-next-src-block'/`org-babel-previous-src-block' always moves to the beginning of blocks."
-  (let ((case-fold-search t) ;; Ensure case-insensitive search
-        (search-fn (if (eq direction 'backward)
-                       're-search-backward
-                     're-search-forward))
+    (let ((case-fold-search t) ;; Ensure case-insensitive search
+          (search-fn (if (eq direction 'backward)
+                         're-search-backward
+                       're-search-forward))
 
-        (block-found nil))
+          (block-found nil))
 
-    ;; Use save-excursion to avoid moving the point if no block is found
-    (save-excursion
-      ;; Move the point k lines in the specified direction
-      (if (eq direction 'backward)
+      ;; Use save-excursion to avoid moving the point if no block is found
+      (save-excursion
+        ;; Move the point k lines in the specified direction
+        (if (eq direction 'backward)
 
-          (forward-line (- k))
-        (forward-line k))
+            (forward-line (- k))
+          (forward-line k))
 
-      ;; Search for the source block
-      (setq block-found
-            (funcall search-fn
-                     "^\\s-*#\\+\\(begin\\|end\\)_"
-                     ;; \\(src\\|example\\|quote\\|verse\\)
-                     ;; We use this for navigation, and moving to blocks of all types is actually better for us.
-                     nil t)))
+        ;; Search for the source block
+        (setq block-found
+              (funcall search-fn
+                       "^\\s-*#\\+\\(begin\\|end\\)_"
+                       ;; \\(src\\|example\\|quote\\|verse\\)
+                       ;; We use this for navigation, and moving to blocks of all types is actually better for us.
+                       nil t)))
 
-    ;; If a block is found, move the point to the block and center the screen
-    (if block-found
-        (progn
-          (goto-char (match-beginning 0))
-          (night/screen-center))
-      (error "No %s source block found" (symbol-name direction)))))
+      ;; If a block is found, move the point to the block and center the screen
+      (if block-found
+          (progn
+            (goto-char (match-beginning 0))
+            (night/screen-center))
+        (error "No %s source block found" (symbol-name direction)))))
 
-(defun night/org-babel-previous-src-block ()
-  "Move to the previous Org-mode source block.
+  (defun night/org-babel-previous-src-block ()
+    "Move to the previous Org-mode source block.
 See `night/h-org-babel-navigate-src-block'."
-  (interactive)
-  (night/h-org-babel-navigate-src-block :direction 'backward))
+    (interactive)
+    (night/h-org-babel-navigate-src-block :direction 'backward))
 
-(defun night/org-babel-next-src-block ()
-  "Move to the next Org-mode source block.
+  (defun night/org-babel-next-src-block ()
+    "Move to the next Org-mode source block.
 See `night/h-org-babel-navigate-src-block'."
-  (interactive)
-  (night/h-org-babel-navigate-src-block :direction 'forward))
+    (interactive)
+    (night/h-org-babel-navigate-src-block :direction 'forward))
 ;;;
 
   (map! :map 'evil-org-mode-map

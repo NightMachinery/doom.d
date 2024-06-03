@@ -36,6 +36,14 @@
     "[[audiofile:"
     (z eval hear-get | path-abbrev-to-music-dir | org-escape-link)
     "]]")))
+
+(defun night/org-link-mpv-get ()
+  (interactive)
+  (night/insert-for-yank-and-save
+   (concat
+    "[[videofile:"
+    (z eval mpv-get | path-abbrev | org-escape-link)
+    "]]")))
 ;;;
 (defun night/p-newline2space ()
   (interactive)
@@ -53,10 +61,35 @@
        ;; Paper names are often capitalized differently and we do not want not to find a match for case sensitivity.
 ;;;
        ;; (message "bf: %s" (buffer-name))
-       (night/regex-escape-smart
+       (night/h-arxiv-regex-canonizer
         (s-downcase text)))
       (t text)))))
 (defalias 'night/pns #'night/p-newline2space)
+
+(defun night/h-arxiv-regex-canonizer (url)
+  (let ((url-escaped (night/regex-escape-smart url))
+        (regex-backslash?
+         ;; Elisp regexes need backslashes before certain special chars.
+         (cond
+          (night/h-consult-ugrep-in-progress
+           "")
+          (t "//"))))
+    (cond
+     ((string-match-p "arxiv\\|huggingface\.co/papers/" url)
+      (let ((arxiv-id (zf h-emc-arxiv-id-get (identity url))))
+        (cond
+         ((length> arxiv-id 0)
+          (concat
+           regex-backslash? "(?:"
+           url-escaped
+           regex-backslash? "|"
+           (night/regex-escape-smart (car arxiv-id))
+           regex-backslash? ")"))
+         (t url-escaped))))
+     (t url-escaped))))
+(comment
+ (night/h-arxiv-regex-canonizer
+  "https://export.arxiv.org/abs/1610.08401"))
 ;;;
 (defun night/semantic-scholar-to-org-sync ()
   (interactive)

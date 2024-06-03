@@ -59,7 +59,7 @@
 (cl-defun night/org-insert-image
     (filename
      &key
-     (max-height-before-split 700))
+     (max-height-before-split 900))
   "Insert the image at FILENAME into the org buffer. Split if necessary based on MAX-HEIGHT-BEFORE-SPLIT."
   (if (file-exists-p filename)
       (let* ((width-max 900)
