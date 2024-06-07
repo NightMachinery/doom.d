@@ -70,12 +70,9 @@
 
   (setq doom-modeline-buffer-file-name-style 'relative-from-project)
   ;;;
-
-  ;; Custom segment for displaying system name
   (doom-modeline-def-segment system-name
     (propertize (system-name) 'face 'mode-line))
 
-  ;; Add the custom segment to the modeline
   ;; [[doom:.local/straight/repos/doom-modeline/doom-modeline.el::(doom-modeline-def-modeline 'main]]
   (let* ((LHS
           '(
@@ -121,4 +118,7 @@
          (LHS (cond ((night/remote-p) (append (subseq LHS 0 4) '(system-name) (subseq LHS 4)))
                            (t LHS))))
     (doom-modeline-def-modeline 'main LHS RHS))
+(doom-modeline-def-modeline 'dashboard
+  '(window-number modals system-name buffer-default-directory-simple remote-host)
+  '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time))
   )
