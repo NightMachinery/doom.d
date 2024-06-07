@@ -43,13 +43,13 @@
               "_imgs/"
               (format-time-string "%Y%m%d_%H%M%S_"))) format))
 
-(defun night/h-paste-image (filename arg)
-  "Capture the image and save it to FILENAME. Use ARG to determine the capture method."
+(defun night/h-paste-image (filename transparent-p)
+  "Capture the image and save it to FILENAME. Use TRANSPARENT-P to determine the capture method."
   (cond
    ((eq system-type 'darwin)
     (z "reval-to-stdout" "h-emc-paste-img"
        (concat (file-name-directory (buffer-file-name)) "/" filename)
-       (if arg "y" "n"))
+       (if transparent-p "y" "n"))
     ;; take screenshot
     ;; (call-process "screencapture" nil nil nil "-i" filename)
     )
@@ -59,7 +59,8 @@
 (cl-defun night/org-insert-image
     (filename
      &key
-     (max-height-before-split 900))
+     (max-height-before-split 1075)
+     (max-height 800))
   "Insert the image at FILENAME into the org buffer. Split if necessary based on MAX-HEIGHT-BEFORE-SPLIT."
   (if (file-exists-p filename)
       (let* ((width-max 900)
@@ -69,7 +70,7 @@
              (width (night/h-org-calculate-image-width width-orig width-max)))
         (if (< height-orig max-height-before-split)
             (night/org-insert-single-image filename width)
-          (night/org-split-and-insert-image filename width)))))
+          (night/org-split-and-insert-image filename width max-height)))))
 
 (defun night/h-org-calculate-image-width (width-orig width-max)
   "Calculate the width of the image based on WIDTH-ORIG and WIDTH-MAX."
@@ -89,6 +90,7 @@
 (cl-defun night/org-split-and-insert-image
     (filename
      width
+     max-height
      &key
      (delete-original-p t)
      )
@@ -101,8 +103,9 @@
                 (delete-original-p delete-original-p))
     (night/brishz-async-insert
      :name "night/org-split-and-insert-image"
-     :command (list "img_vertical_split.py" filename)
-     :callback-after #'night/nop
+     :command (list "img_vertical_split.py" filename "--max-height" max-height)
+     ;; :callback-after #'night/nop
+     :callback-after #'night/bell-lm-ok
      :insert-fn (lambda (filenames)
                   (let
                       ((filenames (split-string filenames "\n" t)))
@@ -113,30 +116,41 @@
                       (night/org-insert-single-image filename width))))
      :save-p t)))
 
-  (defun night/org-paste-clipboard-image (&optional arg format)
+  (defun night/org-paste-clipboard-image (&optional arg transparent-p format)
     "Paste the image in the clipboard at point.
 
 @seeAlso [agfi:org-img-unused]"
     (interactive "P")
     ;; (org-display-inline-images)
     (let*
-        ((format
+        ((split-p (cond
+                   (arg nil)
+                   (t t)))
+         (format
           (cond
-           (arg ".png") ;; `arg' means remove background, so we need the alpha channel.
+           (transparent-p ".png") ;; `transparent-p' means remove background, so we need the alpha channel.
            (format format)
            (t ".jpg")))
-         (filename (night/h-org-generate-image-filename format)))
+         (filename (night/h-org-generate-image-filename format))
+         (opts (unless split-p
+                 (list :max-height-before-split 999999))))
       (night/mkdir-for-file filename)
-      (night/h-paste-image filename arg)
-      (night/org-insert-image filename)))
+      (night/h-paste-image filename transparent-p)
+      (apply #'night/org-insert-image
+             filename
+             opts)))
 
   (defun night/org-paste-clipboard-image-png (&optional arg)
     (interactive "P")
     (night/org-paste-clipboard-image arg ".png"))
+
   (defun night/org-paste-clipboard-image-jpg (&optional arg)
     (interactive "P")
     (night/org-paste-clipboard-image arg ".jpg"))
 
+  (defun night/org-paste-clipboard-image-transparent (&optional arg)
+    (interactive "P")
+    (night/org-paste-clipboard-image arg t))
 ;;;
   (setq org-blank-before-new-entry '(
                                      (heading . t)

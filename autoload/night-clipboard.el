@@ -182,6 +182,7 @@
 (night/set-leader-keys ", p" #'night/paste-py-escape-triple-quotes)
 (night/set-leader-keys ", c" #'night/p-titlecase)
 (night/set-leader-keys ", ;" #'night/strip-prefixed-colons)
+(night/set-leader-keys ", 3" #'night/strip-prefixed-hash-comment)
 (night/set-leader-keys ", i" #'ns-yank-image-at-point-as-image)
 (night/set-leader-keys "f Y" #'night/pbadd-current)
 ;;;

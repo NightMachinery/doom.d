@@ -1,6 +1,8 @@
 ;;; autoload/night-recentf.el -*- lexical-binding: t; -*-
 ;;;
 (after! (recentf night-macros)
+  (add-to-list 'recentf-exclude ".*\\.\\.no_recent\\.\\..*")
+
   (defun night/h-recentf-merge (old-list new-list)
     "Return a new list combining `new-list' and `old-list' with the specified order."
     (let* ((-compare-fn nil)

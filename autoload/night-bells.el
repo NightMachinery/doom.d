@@ -18,6 +18,14 @@
   (interactive)
   (z-async t bell-fail))
 
+(defun night/bell-pp-ok ()
+  (interactive)
+  (z-async t bell-pp-ok))
+
+(defun night/bell-lm-ok ()
+  (interactive)
+  (z-async t bell-lm-ok))
+
 (defun night/bell-export-completed ()
   (interactive)
   (z-async t bell-batman-cave-open))

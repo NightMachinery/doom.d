@@ -46,7 +46,11 @@
        for found = nil
        do
        (let* ((query
-               (concat "^\\s*:[iI][dD]:\\s+" (night/regex-escape-ugrep path)))
+               (concat
+                "^\\s*:[iI][dD]:\\s+"
+                (night/regex-escape-ugrep path)
+                "\\s*$"
+                ))
               (ugrep-command
                (concat
                 "ugrep --hidden --ignore-binary --file-extension=org --json --dereference-recursive --files-with-matches --max-count=1 --max-files=1 --line-number "
@@ -56,6 +60,7 @@
                 (shell-quote-argument dir)))
               (output (shell-command-to-string ugrep-command))
               (json-data (ignore-errors (json-read-from-string output))))
+         ;; (message "ugrep-command:\n%s\nugrep output:\n%s" ugrep-command output)
          (cond
           ((and json-data (vectorp json-data) (> (length json-data) 0))
            (let* ((first-match (aref json-data 0))
@@ -83,7 +88,8 @@
             (goto-char (point-min))
             (forward-line (1- line-number))
             ;; (nav-flash-show)
-            (comment
+            (;; progn
+             comment
              (message
               "Found and opened file: %s, line: %d"
               (f-filename file) line-number)))

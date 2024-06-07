@@ -175,6 +175,21 @@ If no region is currently selected, we paste the clipboard without its prefix co
     (kill-new (z reval-paste strip-prefixed-colons)))
    (t
     (insert-for-yank (z reval-paste strip-prefixed-colons)))))
+
+(defun night/strip-prefixed-hash-comment ()
+  "If a region is selected, we copy it without its prefix hash-comment.
+If no region is currently selected, we paste the clipboard without its prefix hash-comment."
+  (interactive)
+  (cond
+   ((use-region-p)
+    (when-let ((text (night/region-copy)))
+      (kill-new (z reval-paste strip-prefixed-hash-comment))))
+   ((night/current-line-matches-p "^\\s-*#")
+    ;; When the current line starts with `# `, copy the current line
+    (kill-new (night/current-line-get))
+    (kill-new (z reval-paste strip-prefixed-hash-comment)))
+   (t
+    (insert-for-yank (z reval-paste strip-prefixed-hash-comment)))))
 ;;;
 (defun night/cp-link (&rest args)
   "Copy FILES to DEST."

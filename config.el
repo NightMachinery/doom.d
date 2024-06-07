@@ -59,6 +59,23 @@
   (and (boundp 'server-name)
        (s-ends-with-p "_alt1" server-name)))
 
+(defun night/darwin-p ()
+  (interactive)
+  (cl-equalp (symbol-name system-type) "darwin"))
+
+(defun night/local-p ()
+  (interactive)
+  (or
+   (night/darwin-p)))
+
+(defun night/remote-p ()
+  (interactive)
+  (not (night/local-p)))
+
+(defun night/pino-p ()
+  (interactive)
+  (cl-equalp (system-name) "Pinocchio"))
+
 (when (not (server-running-p))
   (cond
    ((night/server-alt1-p)
@@ -117,6 +134,10 @@
   (require 'organic-green-theme)
   (require 'color-theme-sanityinc-tomorrow))
 (cond
+ ((night/pino-p)
+  (setq night-theme
+        'modus-operandi-deuteranopia
+        ))
  (;; nil
   (night/server-alt1-p)
   ;; (setq night-theme 'doom-one-light)

@@ -25,6 +25,12 @@
 Return t if the line starts with PREFIX, nil otherwise."
   (let ((line (night/current-line-get)))
     (string-prefix-p prefix line)))
+
+(defun night/current-line-matches-p (regex)
+  "Check if the current line matches the given REGEX.
+Return t if the line matches REGEX, nil otherwise."
+  (let ((line (night/current-line-get)))
+    (string-match-p regex line)))
 ;;;
 (defun kill-all-comments ()
   "Kills all the comments in the code, without putting them in the killring."
