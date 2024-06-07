@@ -1,7 +1,7 @@
 ;;; autoload/night-modeline.el -*- lexical-binding: t; -*-
 
 (after! doom-modeline
-  ;;;
+;;;
   ;; @userConfig
   (defun night/overrides-doom-modeline-buffer-file-name ()
     "Propertized variable `buffer-file-name' based on `doom-modeline-buffer-file-name-style'."
@@ -69,7 +69,7 @@
   ;; [[doom:.local/straight/repos/doom-modeline/doom-modeline-segments.el::(doom-modeline-def-segment buffer-info]]
 
   (setq doom-modeline-buffer-file-name-style 'relative-from-project)
-  ;;;
+;;;
   (doom-modeline-def-segment system-name
     (propertize (system-name) 'face 'mode-line))
 
@@ -116,9 +116,11 @@
             time
             ))
          (LHS (cond ((night/remote-p) (append (subseq LHS 0 4) '(system-name) (subseq LHS 4)))
-                           (t LHS))))
+                    (t LHS))))
     (doom-modeline-def-modeline 'main LHS RHS))
-(doom-modeline-def-modeline 'dashboard
-  '(window-number modals system-name buffer-default-directory-simple remote-host)
-  '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time))
+
+  ;; [[doom:.local/straight/repos/doom-modeline/doom-modeline.el::(doom-modeline-def-modeline 'dashboard]]
+  (doom-modeline-def-modeline 'dashboard
+    '(window-number modals system-name buffer-default-directory-simple remote-host)
+    '(compilation misc-info battery irc mu4e gnus github debug minor-modes input-method major-mode process time))
   )
