@@ -41,6 +41,7 @@
 (defun night/load-config ()
   (interactive)
   (message "%s" "night/load-config started ...")
+  (load "~/.private-config.el" t)       ;; loading the private config first
   (mapcar #'load-night
           '(
             "packages"
@@ -56,7 +57,6 @@
   ;; (load-gitmodules "emacswiki/HighLight.el")
 
   (mapcar #'load (directory-files-recursively nightal-dir "\.el$"))
-  (load "~/.private-config.el" t)
   (progn ;; with-eval-after-load 'pdf-view
     (when (not (night/server-p))
       ;; (load-gitmodules "pdf-continuous-scroll-mode.el/pdf-continuous-scroll-mode.el")
