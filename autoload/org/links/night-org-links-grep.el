@@ -2,10 +2,13 @@
 ;;;
 (after! (org ol org-id)
 ;;;
-  (org-id-update-id-locations nil t)
+  (defun night/org-id-locations-db-reset ()
+    (interactive)
+    ;; Somehow `org-id-locations' keeps getting corrupted such that =(hash-table-p org-id-locations)= returns false. This seems to be alwasy the case on emacs startup, but it happens again randomly, too.
+    (setq org-id-locations (make-hash-table)))
+  (night/org-id-locations-db-reset)
+  ;; (org-id-update-id-locations nil t)
   ;; This loads the ID links. Without it, =(hash-table-p org-id-locations)= returned nil for me, which in turn made `org-id-store-link' not work properly.
-  (comment
-   (setq org-id-locations (a-hash-table)))
 ;;;
   (defun night/org-link-search-notes-follow (path arg)
     (let* ((backend-fn #'night/search-notes)
