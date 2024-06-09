@@ -93,6 +93,14 @@ Used to preselect nearest headings and imenu items.")
                                point-pos)))
                          (length vertico--candidates)))))))
 ;;;
+  (setq consult-buffer-filter nil
+        ;; '("\\` "
+        ;;   "\\`\\*Completions\\*\\'"
+        ;;   "\\`\\*Flymake log\\*\\'"
+        ;;   "\\`\\*Semantic SymRef\\*\\'"
+        ;;   "\\`\\*tramp/.*\\*\\'")
+        )
+;;;
   (cond
    (t
     (dolist (fn
