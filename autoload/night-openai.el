@@ -11,6 +11,10 @@
 (defvar night/groq-key (z var-get "groq_api_key"))
 (defun night/groq-key-get ()
   night/groq-key)
+
+(defvar night/codestral-key (z var-get "codestral_api_key"))
+(defun night/codestral-key-get ()
+  night/codestral-key)
 ;;;
 (provide 'night-openai)
 ;;; night-openai.el ends here

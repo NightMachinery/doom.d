@@ -154,12 +154,13 @@
 
   (defvar night/ellama--code-context-before 1000
     "Number of characters before the point to include as context.")
+  (defvar night/ellama--code-context-after 1000
+    "Number of characters after the point to include as context.")
+  (defvar night/ellama--code-context-line-tol 200
+    "The context will be at line boundaries, unless doing so adds more than the given budget of characters to the prompt.")
 
   (defvar night/ellama--code-dup-lines-before 20)
   (defvar night/ellama--code-dup-lines-after 20)
-
-  (defvar night/ellama--code-context-after 1000
-    "Number of characters after the point to include as context.")
 
   (defvar night/ellama--marker-text
     ;; "..............."
@@ -567,9 +568,11 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         :desc "Ellama keymap" "." ellama-command-map)
   (map! :leader
         ". ." #'night/ellama-code-fill-in-the-middle
-        ". ," #'night/ellama-code-complete
+        ". ," #'night/mistral-fim-insert-at-point
+        ;; ". ," #'night/ellama-code-complete
         ". /" #'ellama-provider-select
         ". ?" #'night/ellama-provider-show
         )
 ;;;
+  (provide 'night/ellama)
   )

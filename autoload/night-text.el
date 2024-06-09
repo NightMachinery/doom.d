@@ -58,3 +58,11 @@ Return t if the line matches REGEX, nil otherwise."
           result))
     (error "night/erase-ansi: expected a string")))
 ;;;
+(defun night/whitespace-p (text)
+  (night/bool
+   (string-match-p "\\`\\(?:\\s-\\|\n\\)*\\'" text)))
+(comment
+ (night/whitespace-p "")
+ (night/whitespace-p "  \nhi\n  ")
+ (night/whitespace-p "  \n  	"))
+;;;
