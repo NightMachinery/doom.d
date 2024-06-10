@@ -93,12 +93,17 @@ Used to preselect nearest headings and imenu items.")
                                point-pos)))
                          (length vertico--candidates)))))))
 ;;;
-  (setq consult-buffer-filter nil
-        ;; '("\\` "
-        ;;   "\\`\\*Completions\\*\\'"
-        ;;   "\\`\\*Flymake log\\*\\'"
-        ;;   "\\`\\*Semantic SymRef\\*\\'"
-        ;;   "\\`\\*tramp/.*\\*\\'")
+  ;; [[id:448bea31-bdbc-4f75-ae6c-97b4d69ec00c][Hide some buffers]]
+  (setq consult-buffer-filter
+        ;; nil
+        '("\\` "
+          "\\`\\*\\(Async-\\)?\\([nN]ative-\\)?[cC]ompile-[lL]og\\*\\'"
+          "\\`\\*brishz-err\\*\\'"
+          "\\`\\*doom\\*\\'"
+          "\\`\\*Completions\\*\\'"
+          "\\`\\*Flymake log\\*\\'"
+          "\\`\\*Semantic SymRef\\*\\'"
+          "\\`\\*tramp/.*\\*\\'")
         )
 ;;;
   (cond
