@@ -573,6 +573,9 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         ". /" #'ellama-provider-select
         ". ?" #'night/ellama-provider-show
         )
+  (map!
+   :ngi
+   "M-." #'night/mistral-fim-insert-at-point)
 ;;;
   (provide 'night/ellama)
   )

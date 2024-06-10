@@ -81,7 +81,7 @@
          (prefix (buffer-substring-no-properties prefix-start point))
          (suffix (buffer-substring-no-properties point suffix-end)))
 
-      ;; (message "Prefix: %s\nSuffix: %s" prefix suffix)
+      ;; (message "Prefix: %s$\nSuffix: %s$" prefix suffix)
       (night/mistral-fim-get prefix
                              :suffix suffix
                              ;; :model model
@@ -117,7 +117,14 @@
      ((night/whitespace-p result)
       (message "Result is whitespace, not inserting."))
      (t
-      (let ((buffer (marker-buffer marker)))
+      (let*
+          ((buffer (marker-buffer marker)))
+
+        ;; Codestral is buggy and often returns an extra space.
+        ;; Removing the space might also introduce bad outputs sometimes, but it should at least be less common.
+        (when (equalp (substring result 0 1) " ")
+          (setq result (substring result 1)))
+
         (when buffer
           (with-current-buffer buffer
             (save-excursion
@@ -128,6 +135,10 @@
                 (night/flash-region start end
                                     :delay t
                                     :backend 'overlay-timer
-                                    :face 'highlight)))))))))
+                                    :face 'highlight))))))
+      (evil-normal-state)
+      ;; [[id:74194070-a467-45a1-9c61-35ef28a4ab42][`evil-normal-state` doesn't work when called from an async callback of plz · Issue #58 · alphapapa/plz.el]]
+      )))
+
 ;;;
   )
