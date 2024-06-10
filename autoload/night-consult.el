@@ -99,6 +99,7 @@ Used to preselect nearest headings and imenu items.")
         '("\\` "
           "\\`\\*\\(Async-\\)?\\([nN]ative-\\)?[cC]ompile-[lL]og\\*\\'"
           "\\`\\*brishz-err\\*\\'"
+          "\\`redis-localhost-"
           "\\`\\*doom\\*\\'"
           "\\`\\*Completions\\*\\'"
           "\\`\\*Flymake log\\*\\'"
