@@ -71,7 +71,7 @@
   (setq doom-modeline-buffer-file-name-style 'relative-from-project)
 ;;;
   (doom-modeline-def-segment system-name
-    (propertize (system-name) 'face 'mode-line))
+    (propertize (night/system-name) 'face 'mode-line))
 
   ;; [[doom:.local/straight/repos/doom-modeline/doom-modeline.el::(doom-modeline-def-modeline 'main]]
   (let* ((LHS

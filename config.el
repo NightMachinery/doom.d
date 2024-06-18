@@ -72,9 +72,21 @@
   (interactive)
   (not (night/local-p)))
 
+
 (defun night/pino-p ()
   (interactive)
   (cl-equalp (system-name) "Pinocchio"))
+
+(defun night/t31-p ()
+  (interactive)
+  (cl-equalp (system-name) "gpu13"))
+
+(defun night/system-name ()
+  (cond
+   ;; ((night/local-p) "Local")
+   ((night/pino-p) "Pino")
+   ((night/t31-p) "T31")
+   (t (system-name))))
 
 (when (not (server-running-p))
   (cond
@@ -137,6 +149,10 @@
  ((night/pino-p)
   (setq night-theme
         'modus-operandi-deuteranopia
+        ))
+ ((night/t31-p)
+  (setq night-theme
+        'modus-operandi-tinted
         ))
  (;; nil
   (night/server-alt1-p)
