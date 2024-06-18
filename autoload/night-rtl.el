@@ -93,8 +93,8 @@
 
 (defun night/h-latex-after-save ()
   (interactive)
-  (z-async t h-seminar-compile-emacs)
-  ;; @todo0 Delete the above line, we no longer need it.
+  ;; (z-async t h-seminar-compile-emacs)
+  ;; @done Delete the above line, we no longer need it.
   )
 (defun night/latex-rtl-opinionated ()
   (interactive)

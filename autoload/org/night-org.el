@@ -123,9 +123,7 @@
     (interactive "P")
     ;; (org-display-inline-images)
     (let*
-        ((split-p (cond
-                   (arg nil)
-                   (t t)))
+        ((split-p (not arg))
          (format
           (cond
            (transparent-p ".png") ;; `transparent-p' means remove background, so we need the alpha channel.

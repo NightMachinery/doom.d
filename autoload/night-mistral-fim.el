@@ -135,10 +135,9 @@
                 (night/flash-region start end
                                     :delay t
                                     :backend 'overlay-timer
-                                    :face 'highlight))))))
-      (evil-normal-state)
-      ;; [[id:74194070-a467-45a1-9c61-35ef28a4ab42][`evil-normal-state` doesn't work when called from an async callback of plz · Issue #58 · alphapapa/plz.el]]
-      )))
-
+                                    :face 'highlight)))
+            (evil-normal-state)
+            ;; `evil-normal-state' must be run in the correct buffer, as well.
+            ))))))
 ;;;
   )
