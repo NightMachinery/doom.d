@@ -175,8 +175,34 @@
     ;; ""
     "Text to insert as a marker in the buffer.")
 
-  (defvar night/ellama--filter-duplicate-code t
-    "Whether to filter out duplicate code at the COMPLETE_HERE marker.")
+  (defvar night/ellama--filter-duplicate-code
+    ;; t
+    '(:exclude ("anthropic/claude-3\\.5-sonnet"))
+    "Control duplicate code filtering.
+Can be t, nil, a function, or a plist with :exclude or :include keys with regex lists as values. See `night/ellama--filter-duplicate-code-get'.")
+
+  (defun night/ellama--filter-duplicate-code-get (model-name)
+  "Determine if duplicate code should be filtered for MODEL-NAME.
+Returns t if filtering should occur, nil otherwise."
+  (cond
+   ((functionp night/ellama--filter-duplicate-code)
+    (funcall night/ellama--filter-duplicate-code model-name))
+   ((and (listp night/ellama--filter-duplicate-code)
+         (or (plist-member night/ellama--filter-duplicate-code :exclude)
+             (plist-member night/ellama--filter-duplicate-code :include)
+             (assq :exclude night/ellama--filter-duplicate-code)
+             (assq :include night/ellama--filter-duplicate-code)))
+    (let* ((exclude-list (or (plist-get night/ellama--filter-duplicate-code :exclude)
+                             (alist-get :exclude night/ellama--filter-duplicate-code)))
+           (include-list (or (plist-get night/ellama--filter-duplicate-code :include)
+                             (alist-get :include night/ellama--filter-duplicate-code))))
+      (or (and exclude-list
+               (not (seq-some (lambda (regex) (string-match-p regex model-name)) exclude-list)))
+          (and include-list
+               (seq-some (lambda (regex) (string-match-p regex model-name)) include-list)))))
+   ((eq night/ellama--filter-duplicate-code t) t)
+   ((null night/ellama--filter-duplicate-code) nil)
+   (t (error "Invalid value for night/ellama--filter-duplicate-code: %S" night/ellama--filter-duplicate-code))))
 
   (defvar night/ellama--complete-here-marker
     "<COMPLETE_HERE>"
@@ -207,8 +233,9 @@
            (marker-line (find-marker-line query night/ellama--complete-here-marker))
            (marker-start (string-match night/ellama--complete-here-marker marker-line))
            (pre-marker (if marker-start
-                                    (substring marker-line 0 marker-start)
-                                  "")))
+                           (substring marker-line 0 marker-start)
+                         "")))
+        ;; (message "name: %s" model-name)
         (cond
          ((and nil (s-contains-p "claude" model-name t))
           (format
@@ -221,8 +248,7 @@ Answer:
 "
            night/ellama--complete-here-marker
            night/ellama--complete-here-marker
-           query
-           )
+           query)
           ;; (format
           ;;            "Fill in at `%s` in the following snippet. Only write in format ```language\n...\n```. Only output what should be inserted instead of `%s`.
 
@@ -278,8 +304,7 @@ Answer:
            night/ellama--complete-here-marker
            night/ellama--complete-here-marker
            query
-           pre-marker
-           ))
+           pre-marker))
          (nil
           (format
            ;; Only write in format ```language\n...\n```. Start your output from the line marked for completion.
@@ -293,8 +318,21 @@ Answer:
 "
            night/ellama--complete-here-marker
            query
-           pre-marker
-           ))
+           pre-marker))
+         ((and
+           t
+           (s-contains-p "claude-3.5" model-name t))
+          (format
+           ;; Only output a single code block without any other explanations and start your output from the beginning of the line marked for completion.
+           "Fill in at `%s` in the following snippet. Only output A SINGLE CODE BLOCK without any other explanations. Only output exactly what should be placed instead of `%s`, WITHOUT REPEATING any parts of the given query, especially the given suffix. Ensure correct indentation.
+
+Query:\n```\n%s\n```
+
+Answer (with the correct indentation, in a code block, infill without repeating the given suffix):
+"
+           night/ellama--complete-here-marker
+           night/ellama--complete-here-marker
+           query))
          (t
           (format
            ;; Only output a single code block without any other explanations and start your output from the beginning of the line marked for completion.
@@ -305,8 +343,7 @@ Query:\n```\n%s\n```
 Answer (with the correct indentation, in a code block, started from the beginning of the line marked for completion):
 "
            night/ellama--complete-here-marker
-           query
-           )))))
+           query)))))
     ;; You are a helpful assistant. Assistant will output only and only code as a response.
     "Prompt template for `night/ellama-code-fill-in-the-middle'.")
 
@@ -458,6 +495,7 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         full-text)
        :filter (apply-partially
                 #'night/ellama--code-filter
+                model-name
                 verbose-p
                 content-before-marker
                 content-after-marker)
@@ -468,7 +506,7 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
                       (goto-char point-pos)
                       (night/ellama-marker-rm)))))))
 
-  (defun night/ellama--code-filter (verbose-p content-before-marker content-after-marker text)
+  (defun night/ellama--code-filter (model-name verbose-p content-before-marker content-after-marker text)
     "Filter code prefix/suffix and optionally duplicate code from TEXT."
     (let* ((text-before-trim text)
            (text-after-prefix-trim (string-trim-left text night/ellama--code-prefix))
@@ -481,13 +519,15 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         (message "Text before trimming: %S" text-before-trim)
         (message "Text after prefix trimming: %S" text-after-prefix-trim)
         (message "Text after suffix trimming: %S" cleaned-text))
-      (if night/ellama--filter-duplicate-code
+      (if (night/ellama--filter-duplicate-code-get model-name)
           (night/ellama--remove-duplicate-code
            content-before-marker
            content-after-marker
            cleaned-text
            verbose-p)
-        cleaned-text)))
+        (progn
+          ;; (message "Skipped duplicate code removal")
+          cleaned-text))))
 
   (defun night/ellama--remove-duplicate-code (content-before-marker content-after-marker text &optional verbose-p)
     "Remove content-before-marker from the start of text and content-after-marker from the end of text if present, ignoring leading and trailing whitespace."
@@ -584,5 +624,4 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
    :ngi
    "M-." #'night/mistral-fim-insert-at-point)
 ;;;
-  (provide 'night/ellama)
-  )
+  (provide 'night/ellama))
