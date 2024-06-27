@@ -9,7 +9,7 @@
   (defun night/bookmark-reset-file ()
     (interactive)
     (let
-        ((f (concat (getenv "nightNotes") "/private/configs/" (z hostname) "/bookmarks.el")))
+        ((f (concat (getenv "nightNotes") "/private/configs/" (system-name) "/bookmarks.el")))
       (when (f-exists-p f)
         (setq bookmark-default-file f)
         (night/bookmark-reload))))

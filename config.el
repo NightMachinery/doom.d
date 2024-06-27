@@ -81,6 +81,10 @@
   (interactive)
   (cl-equalp (system-name) "gpu13"))
 
+(defun night/m17-p ()
+  (interactive)
+  (cl-equalp (system-name) "sharif"))
+
 (defun night/system-name ()
   (cond
    ;; ((night/local-p) "Local")
@@ -153,6 +157,10 @@
  ((night/t31-p)
   (setq night-theme
         'modus-operandi-tinted
+        ))
+ ((night/m17-p)
+  (setq night-theme
+        'sanityinc-tomorrow-day
         ))
  (;; nil
   (night/server-alt1-p)

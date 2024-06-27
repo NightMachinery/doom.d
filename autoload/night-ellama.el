@@ -28,6 +28,13 @@
   (setopt
    ellama-providers
    `(
+     ("OR-Claude3.5-Sonnet" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "anthropic/claude-3.5-sonnet:beta"
+        :embedding-model "anthropic/claude-3.5-sonnet:beta"
+        ))
      ("GPT4Omni" .
       ,(make-llm-openai
         :key (night/openai-key-get)

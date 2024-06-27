@@ -15,12 +15,13 @@ res = openai_chat_complete(
     # model="gpt-4o",
     # model="OR:anthropic/claude-3-haiku:beta",
     # model="OR:anthropic/claude-3-sonnet:beta",
+    # model="OR:anthropic/claude-3.5-sonnet:beta",
     model="OR:anthropic/claude-3-opus:beta",
     ##
     messages=[
         # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
         {"role": "user", "content": r"""
-        `%`$0
+`%`$0
         """},
     ],
     temperature=0,

@@ -38,6 +38,7 @@
   (defvar night/org-id-grep-search-dirs
     (list
      (getenv "nightNotes")
+     (getenv "NIGHTDIR")
      (expand-file-name "~/code/uni"))
     "The directories that `night/org-id-find-grep' searches in.")
 
