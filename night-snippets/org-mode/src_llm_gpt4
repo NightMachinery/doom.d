@@ -20,7 +20,7 @@ res = openai_chat_complete(
     messages=[
         # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
         {"role": "user", "content": r"""
-        `%`$0
+`%`$0
         """},
     ],
     temperature=0,

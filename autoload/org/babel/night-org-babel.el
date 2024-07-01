@@ -226,7 +226,9 @@ Assumes that the source block has already been executed."
            (chat
             (concat
              assistant
-             "\n        {\"role\": \"user\", \"content\": r\"\"\"\n        \n        \"\"\"},")))
+             "\n        {\"role\": \"user\", \"content\": r\"\"\"\n"
+             ;; "        "
+             "\n        \"\"\"},")))
       (kill-new chat)))
 ;;;
   (cl-defun night/h-org-babel-navigate-src-block (&key (direction 'backward) (k 1))
