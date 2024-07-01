@@ -85,6 +85,10 @@
   (interactive)
   (cl-equalp (system-name) "sharif"))
 
+(defun night/c0-p ()
+  (interactive)
+  (cl-equalp (system-name) "Taher"))
+
 (defun night/system-name ()
   (cond
    ;; ((night/local-p) "Local")
@@ -161,6 +165,10 @@
  ((night/m17-p)
   (setq night-theme
         'sanityinc-tomorrow-day
+        ))
+ ((night/c0-p)
+  (setq night-theme
+        'ef-cyprus
         ))
  (;; nil
   (night/server-alt1-p)
