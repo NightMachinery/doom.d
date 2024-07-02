@@ -217,7 +217,11 @@
 (package! deadgrep)
 (package! git-link)
 (package! neuron-mode)
-(package! nov)
+;;;
+;; (package! nov)
+;; git host of =nov= is down
+;; [jalali:1403/04/12/16:06]
+;;;
 (package! hungry-delete)
 (package! ob-tmux)
 (package! iscroll)
