@@ -77,6 +77,10 @@
   (interactive)
   (cl-equalp (system-name) "Pinocchio"))
 
+(defun night/lilf-p ()
+  (interactive)
+  (cl-equalp (system-name) "lilf.ir"))
+
 (defun night/t31-p ()
   (interactive)
   (cl-equalp (system-name) "gpu13"))
@@ -154,6 +158,10 @@
   (require 'organic-green-theme)
   (require 'color-theme-sanityinc-tomorrow))
 (cond
+ ((night/lilf-p)
+  (setq night-theme
+        'ef-frost
+        ))
  ((night/pino-p)
   (setq night-theme
         'modus-operandi-deuteranopia
