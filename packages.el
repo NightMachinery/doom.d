@@ -339,6 +339,9 @@
 (package! gptel)
 (package! llm)
 (package! ellama)
+
+(package! whisper
+  :recipe (:host github :repo "natrys/whisper.el"))
 ;;;
 (package! sdcv)
 ;;;
