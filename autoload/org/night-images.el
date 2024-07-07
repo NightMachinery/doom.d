@@ -16,28 +16,29 @@
       (message "Deleted unused image: %s" f))))
 ;;;
   ;; https://emacs.stackexchange.com/a/42283/18737
-  (require 'org-yt)
+(comment
+ (require 'org-yt)
 
-  (defun org-image-link (protocol link _description)
-    ;; * WAIT How can I use an async/callback function for =(org-link-set-parameters "imghttp" :image-data-fun #'org-image-link)=?
-    "Interpret LINK as base64-encoded image data."
-    (cl-assert (string-match "\\`img" protocol) nil
-               "Expected protocol type starting with img")
-    (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
-      (cl-assert buf nil
-                 "Download of image \"%s\" failed." link)
-      (with-current-buffer buf
-        (goto-char (point-min))
-        (re-search-forward "\r?\n\r?\n")
-        (buffer-substring-no-properties (point) (point-max)))))
+ (defun org-image-link (protocol link _description)
+   ;; * WAIT How can I use an async/callback function for =(org-link-set-parameters "imghttp" :image-data-fun #'org-image-link)=?
+   "Interpret LINK as base64-encoded image data."
+   (cl-assert (string-match "\\`img" protocol) nil
+              "Expected protocol type starting with img")
+   (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
+     (cl-assert buf nil
+                "Download of image \"%s\" failed." link)
+     (with-current-buffer buf
+       (goto-char (point-min))
+       (re-search-forward "\r?\n\r?\n")
+       (buffer-substring-no-properties (point) (point-max)))))
 
-  (org-link-set-parameters
-   "imghttp"
-   :image-data-fun #'org-image-link)
+ (org-link-set-parameters
+  "imghttp"
+  :image-data-fun #'org-image-link)
 
-  (org-link-set-parameters
-   "imghttps"
-   :image-data-fun #'org-image-link)
+ (org-link-set-parameters
+  "imghttps"
+  :image-data-fun #'org-image-link))
 ;;;
   ;; Write an elisp command `night/image-link-to-jpg` which reads the image links in the selected region or the current line, e.g., `[[file:prompts.org_imgs/20231224_160533_VhZZYl.png]]` and converts them to the jpg format with the same (sans extension), updates the links to point to this new path, and removes the the old images. You are Stallman, do a great job.
   (defun night/image-link-to-jpg ()
