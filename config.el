@@ -87,7 +87,11 @@
 
 (defun night/m17-p ()
   (interactive)
-  (cl-equalp (system-name) "sharif"))
+  (cl-equalp (system-name) "m17"))
+
+(defun night/m15-p ()
+  (interactive)
+  (cl-equalp (system-name) "m15"))
 
 (defun night/c0-p ()
   (interactive)
