@@ -43,7 +43,7 @@
     "Generate the marker file name for the given BUFFER-FILE-NAME."
     (cond
      ((not buffer-file-name)
-      (when (> night-evil-verbosity-level 0)
+      (when (> night-evil-verbosity-level 2)
         (message "Cannot generate marker file name: buffer is not associated with a file"))
       nil)
      ((string-suffix-p ".evilmarkers" buffer-file-name)
