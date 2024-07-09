@@ -102,16 +102,22 @@ OPERATION is 'read, 'write, or 'read-single. DATA is used for write operations."
             ('write
              (unless data (error "No data provided for write operation"))
              (make-directory (file-name-directory file-name) t)
-             (let ((existing-markers (night/handle-markers-file file-name 'read)))
-               (with-temp-file file-name
-                 (let ((print-level nil)
-                       (print-length nil))
-                   (prin1 (night/process-marker-alist
-                           (if (consp (car data))
-                               (append data existing-markers)
-                             (cons data existing-markers))
-                           #'night/serialize-marker)
-                          (current-buffer))))))
+             (let* ((existing-markers (night/handle-markers-file file-name 'read))
+                    (markers-to-save (night/process-marker-alist
+                                      (if (consp (car data))
+                                          (append data existing-markers)
+                                        (cons data existing-markers))
+                                      #'night/serialize-marker)))
+               (if (null markers-to-save)
+                   (progn
+                     (when (file-exists-p file-name)
+                       (delete-file file-name))
+                     (when (> night-evil-verbosity-level 1)
+                       (message "No markers to save. Deleted %s" file-name)))
+                 (with-temp-file file-name
+                   (let ((print-level nil)
+                         (print-length nil))
+                     (prin1 markers-to-save (current-buffer)))))))
             ('read-single
              (unless data (error "No marker character provided for read-single operation"))
              (when (file-exists-p file-name)
