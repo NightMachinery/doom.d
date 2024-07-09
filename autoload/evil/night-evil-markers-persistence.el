@@ -34,7 +34,7 @@
     :group 'night-evil-markers)
 
   (defcustom night-evil-global-markers-file
-    (expand-file-name ".global-evil-markers" user-emacs-directory)
+    (expand-file-name ".global.evilmarkers" user-emacs-directory)
     "File to store global evil markers."
     :type 'file
     :group 'night-evil-markers)
@@ -64,7 +64,11 @@
                           (file (buffer-file-name buf)))
                 (cons file pos)))
              ((functionp marker) nil)
-             ((consp marker) marker)
+             ((consp marker)
+              (when-let* ((file (car marker))
+                          (pos (cadr marker)))
+                (when (f-exists-p file)
+                  (cons file pos))))
              (t nil))))
       deserialized-marker))
 
