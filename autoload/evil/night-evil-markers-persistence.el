@@ -5,7 +5,8 @@
 ;; It handles both local (buffer-specific) and global markers.
 
 ;;; Code:
-
+;; @todo Use JSON instead.
+;;;
 (after! (evil
          )
   (defgroup night-evil-markers nil
@@ -33,8 +34,13 @@
     :type 'integer
     :group 'night-evil-markers)
 
+  (defcustom night-evil-markers-extension ".evilmarkers"
+    "File extension for evil marker files."
+    :type 'string
+    :group 'night-evil-markers)
+
   (defcustom night-evil-global-markers-file
-    (expand-file-name ".global.evilmarkers" user-emacs-directory)
+    (expand-file-name (concat ".global" night-evil-markers-extension) user-emacs-directory)
     "File to store global evil markers."
     :type 'file
     :group 'night-evil-markers)
@@ -46,13 +52,13 @@
       (when (> night-evil-verbosity-level 2)
         (message "Cannot generate marker file name: buffer is not associated with a file"))
       nil)
-     ((string-suffix-p ".evilmarkers" buffer-file-name)
+     ((string-suffix-p night-evil-markers-extension buffer-file-name)
       nil)
      (t
       (let* ((dir (file-name-directory buffer-file-name))
              (file (file-name-nondirectory buffer-file-name))
              (prefix (if (string-prefix-p "." file) "" ".")))
-        (concat dir prefix file ".evilmarkers")))))
+        (concat dir prefix file night-evil-markers-extension)))))
 
   (defun night/serialize-marker (marker)
     "Serialize MARKER to a storable format."
@@ -94,7 +100,7 @@
 OPERATION is 'read, 'write, or 'read-single. DATA is used for write operations."
     (unless (member operation '(read write read-single))
       (error "Invalid operation: %s" operation))
-    (when file-name  ; Only proceed if file-name is non-nil
+    (when file-name                     ; Only proceed if file-name is non-nil
       (condition-case err
           (pcase operation
             ('read
