@@ -174,9 +174,13 @@
   (setq night-theme
         'modus-operandi-tinted
         ))
- ((night/m17-p)
+ ((night/m15-p)
   (setq night-theme
         'sanityinc-tomorrow-day
+        ))
+ ((night/m17-p)
+  (setq night-theme
+        'ef-day
         ))
  ((night/c0-p)
   (setq night-theme
