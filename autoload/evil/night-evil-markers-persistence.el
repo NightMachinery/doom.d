@@ -98,8 +98,9 @@
            (res
             (cl-remove-if-not
              (lambda (entry)
-               (and (cdr entry)
-                    (not (memq (car entry) excluded-keys))))
+               (and (cdr entry)         ; nil marker
+                    (not (memq (car entry) excluded-keys)) ; excluded key
+                    ))
              (mapcar (lambda (entry)
                        (cons (car entry)
                              (funcall process-fn (cdr entry))))
