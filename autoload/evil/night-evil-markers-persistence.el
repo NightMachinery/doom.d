@@ -88,13 +88,17 @@
             serialized))))
 
   (defun night/process-marker-alist (alist process-fn)
-    "Process ALIST with PROCESS-FN and remove nil results."
-    (let* ((res
-            (cl-remove-if-not #'cdr
-                              (mapcar (lambda (entry)
-                                        (cons (car entry)
-                                              (funcall process-fn (cdr entry))))
-                                      alist)))
+    "Process ALIST with PROCESS-FN and remove nil results and excluded keys."
+    (let* ((excluded-keys '(91 93 94))  ; Keys to exclude: [, ], ^
+           (res
+            (cl-remove-if-not
+             (lambda (entry)
+               (and (cdr entry)
+                    (not (memq (car entry) excluded-keys))))
+             (mapcar (lambda (entry)
+                       (cons (car entry)
+                             (funcall process-fn (cdr entry))))
+                     alist)))
            (res (cl-remove-duplicates res :key #'car :from-end t)))
       res))
 
