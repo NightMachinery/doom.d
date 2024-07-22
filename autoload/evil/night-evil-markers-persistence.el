@@ -1,4 +1,4 @@
-;;; night-evil-markers.el --- Persistent Evil markers -*- lexical-binding: t; -*-
+;;; night-evil-markers-persistence.el --- Persistent Evil markers -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 ;; This package provides persistence for Evil markers across Emacs sessions.
@@ -9,41 +9,41 @@
 ;;;
 (after! (evil
          )
-  (defgroup night-evil-markers nil
+  (defgroup night-evil-markers-persistence nil
     "Customization group for night's evil marker persistence."
     :group 'evil)
 
   (defcustom night-evil-auto-save-markers-p nil
     "Whether to automatically save markers when quitting Emacs."
     :type 'boolean
-    :group 'night-evil-markers)
+    :group 'night-evil-markers-persistence)
 
   (defcustom night-evil-load-all-markers-p nil
     "Whether to load all saved markers or just the requested one."
     :type 'boolean
-    :group 'night-evil-markers)
+    :group 'night-evil-markers-persistence)
 
   (defcustom night-evil-save-all-markers-p nil
     "Whether to save all markers or just the current one."
     :type 'boolean
-    :group 'night-evil-markers)
+    :group 'night-evil-markers-persistence)
 
   (defcustom night-evil-verbosity-level 1
-    "Verbosity level for night-evil-markers operations.
+    "Verbosity level for night-evil-markers-persistence operations.
 0: Silent, 1: Basic information, 2: Detailed information, 3: Debug information"
     :type 'integer
-    :group 'night-evil-markers)
+    :group 'night-evil-markers-persistence)
 
-  (defcustom night-evil-markers-extension ".evilmarkers"
+  (defcustom night-evil-markers-persistence-extension ".evilmarkers"
     "File extension for evil marker files."
     :type 'string
-    :group 'night-evil-markers)
+    :group 'night-evil-markers-persistence)
 
   (defcustom night-evil-global-markers-file
-    (expand-file-name (concat ".global" night-evil-markers-extension) user-emacs-directory)
+    (expand-file-name (concat ".global" night-evil-markers-persistence-extension) user-emacs-directory)
     "File to store global evil markers."
     :type 'file
-    :group 'night-evil-markers)
+    :group 'night-evil-markers-persistence)
 
   (defun night/evil-marker-file-name (buffer-file-name)
     "Generate the marker file name for the given BUFFER-FILE-NAME."
@@ -52,13 +52,13 @@
       (when (> night-evil-verbosity-level 2)
         (message "Cannot generate marker file name: buffer is not associated with a file"))
       nil)
-     ((string-suffix-p night-evil-markers-extension buffer-file-name)
+     ((string-suffix-p night-evil-markers-persistence-extension buffer-file-name)
       nil)
      (t
       (let* ((dir (file-name-directory buffer-file-name))
              (file (file-name-nondirectory buffer-file-name))
              (prefix (if (string-prefix-p "." file) "" ".")))
-        (concat dir prefix file night-evil-markers-extension)))))
+        (concat dir prefix file night-evil-markers-persistence-extension)))))
 
   (defun night/serialize-marker (marker)
     "Serialize MARKER to a storable format."
@@ -89,11 +89,14 @@
 
   (defun night/process-marker-alist (alist process-fn)
     "Process ALIST with PROCESS-FN and remove nil results."
-    (cl-remove-if-not #'cdr
-                      (mapcar (lambda (entry)
-                                (cons (car entry)
-                                      (funcall process-fn (cdr entry))))
-                              alist)))
+    (let* ((res
+            (cl-remove-if-not #'cdr
+                              (mapcar (lambda (entry)
+                                        (cons (car entry)
+                                              (funcall process-fn (cdr entry))))
+                                      alist)))
+           (res (cl-remove-duplicates res :key #'car :from-end t)))
+      res))
 
   (defun night/handle-markers-file (file-name operation &optional data)
     "Handle marker file operations for FILE-NAME.
@@ -248,7 +251,7 @@ OPERATION is 'read, 'write, or 'read-single. DATA is used for write operations."
     (when (> night-evil-verbosity-level 0)
       (message "Global evil markers loaded.")))
 
-  (provide 'night-evil-markers)
+  (provide 'night-evil-markers-persistence)
 
-;;; night-evil-markers.el ends here
+;;; night-evil-markers-persistence.el ends here
   )
