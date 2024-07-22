@@ -44,11 +44,11 @@
             (or
              (with-demoted-errors (let ((l (length file-name)))
                                     (cond
-                                     ((> l 50)
+                                     ((> l 45)
                                       (concat
                                        (substring file-name 0 13)
                                        "ɣ"
-                                       (substring file-name (- l 37) l)))
+                                       (substring file-name (- l 32) l)))
                                      (t file-name))))
              "error98128230124"))
 ;;;

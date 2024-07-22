@@ -1,6 +1,8 @@
 ;;; autoload/night-yasnippet.el -*- lexical-binding: t; -*-
 ;;;
 (require 'yasnippet)
+
+(add-to-list 'warning-suppress-types '(yasnippet backquote-change))
 ;;;
 (cl-defun night/h-point-at-beginning-p
     (&key

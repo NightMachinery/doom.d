@@ -3,6 +3,15 @@
 (map! :m "\\" nil)
 (map!
  :ng "TAB" #'indent-for-tab-command)
+(progn
+ (map! :map prog-mode-map
+       ;; [jalali:1403/04/18/20:45]
+       ;; I added this as TAB was somehow getting mapped to [help:evil-jump-item]. I am not sure if we should bind both TAB and <tab>.
+       :ing
+       "TAB" #'indent-for-tab-command
+       :ing
+       "<tab>" #'indent-for-tab-command))
+
 (setq doom-localleader-key "\\")
 (setq doom-localleader-alt-key "M-\\")
 

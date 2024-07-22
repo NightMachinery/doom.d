@@ -201,13 +201,6 @@ move COUNT - 1 screen lines forward first."
         :nvig "TAB" #'profiler-report-toggle-entry
         :nvig "<tab>" #'profiler-report-toggle-entry
         )
-  (map!
-   ;; [jalali:1403/04/18/20:45]
-   ;; I added this as TAB was somehow getting mapped to [help:evil-jump-item]. I am not sure if we should bind both TAB and <tab>.
-   :ing
-   "TAB" #'indent-for-tab-command
-   :ing
-   "<tab>" #'indent-for-tab-command)
 
   (map! :map prog-mode-map
         :g "M-p" #'flymake-goto-prev-error
