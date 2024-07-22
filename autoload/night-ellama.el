@@ -35,6 +35,11 @@
         :chat-model "anthropic/claude-3.5-sonnet:beta"
         :embedding-model "anthropic/claude-3.5-sonnet:beta"
         ))
+     ("GPT4Omni-Mini" .
+      ,(make-llm-openai
+        :key (night/openai-key-get)
+        :chat-model "gpt-4o-mini"
+        :embedding-model "gpt-4o-mini"))
      ("GPT4Omni" .
       ,(make-llm-openai
         :key (night/openai-key-get)

@@ -15,6 +15,7 @@ res = openai_chat_complete(
     # model="gpt-4-0613",
     # model="gpt-4-turbo",
     # model="gpt-4o",
+    # model="gpt-4o-mini",
     # model="OR:01-ai/yi-large",
     # model="OR:anthropic/claude-3-opus:beta",
     model="OR:anthropic/claude-3.5-sonnet:beta",

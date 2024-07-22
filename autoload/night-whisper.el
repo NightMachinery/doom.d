@@ -1,6 +1,9 @@
 ;;; night-whisper.el ---                             -*- lexical-binding: t; -*-
 ;;;
-(require 'whisper)
+(require 'whisper nil t)
+;; does NOT throw an error if not found
+;; since we don't really depend on whisper being installed, that's okay.
+
 (after! whisper
   (setq
    whisper-install-whispercpp 'manual
@@ -32,15 +35,17 @@
     (let ((whisper-insert-text-at-point nil))
       (whisper-run)))
 
-  (map!
-   :nig
-   "M-'" #'whisper-run
-   ;; :leader
-   ;; (:prefix ("v" . "voice")
-   ;;  :desc "Transcribe last whisper" "w" #'whisper-run-buffer
-   ;;  :desc "Transcribe file" "f" #'whisper-file
-   ;;  :desc "Select audio device" "d" #'rk/select-default-audio-device)
-   )
+  (comment
+   ;; Use the system Whisper from Hammerspoon instead.
+   (map!
+    :nig
+    "M-'" #'whisper-run
+    ;; :leader
+    ;; (:prefix ("v" . "voice")
+    ;;  :desc "Transcribe last whisper" "w" #'whisper-run-buffer
+    ;;  :desc "Transcribe file" "f" #'whisper-file
+    ;;  :desc "Select audio device" "d" #'rk/select-default-audio-device)
+    ))
 ;;;
   (defun rk/get-ffmpeg-device ()
     "Gets the list of devices available to ffmpeg.
