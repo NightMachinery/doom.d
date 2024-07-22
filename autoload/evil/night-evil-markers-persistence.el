@@ -13,8 +13,13 @@
     "Customization group for night's evil marker persistence."
     :group 'evil)
 
-  (defcustom night-evil-auto-save-markers-p nil
+  (defcustom night-evil-auto-save-on-emacs-quit-markers-p nil
     "Whether to automatically save markers when quitting Emacs."
+    :type 'boolean
+    :group 'night-evil-markers-persistence)
+
+  (defcustom night-evil-auto-save-on-buffer-quit-markers-p nil
+    "Whether to automatically save markers when quitting a buffer."
     :type 'boolean
     :group 'night-evil-markers-persistence)
 
@@ -222,16 +227,22 @@ OPERATION is 'read, 'write, or 'read-single. DATA is used for write operations."
   (advice-add 'evil-set-marker :around #'night/evil-set-marker)
   (advice-add 'evil-get-marker :around #'night/evil-get-marker)
 
-  (defun night/save-evil-markers-on-quit ()
+  (defun night/save-evil-markers-on-emacs-quit ()
     "Save evil markers when quitting Emacs."
-    (when night-evil-auto-save-markers-p
+    (when night-evil-auto-save-on-emacs-quit-markers-p
       (dolist (buffer (buffer-list))
         (with-current-buffer buffer
           (when buffer-file-name
             (night/save-markers :global-p nil))))
       (night/save-markers :global-p t)))
 
-  (add-hook 'kill-emacs-hook #'night/save-evil-markers-on-quit)
+  (defun night/save-evil-markers-on-buffer-quit ()
+    "Save evil markers when quitting a buffer."
+    (when (and night-evil-auto-save-on-buffer-quit-markers-p buffer-file-name)
+      (night/save-markers :global-p nil)))
+
+  (add-hook 'kill-emacs-hook #'night/save-evil-markers-on-emacs-quit)
+  (add-hook 'kill-buffer-hook #'night/save-evil-markers-on-buffer-quit)
 
   (defun night/manually-save-evil-markers ()
     "Manually save evil markers for the current buffer and global markers."
