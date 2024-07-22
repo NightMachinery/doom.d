@@ -14,12 +14,12 @@
     :group 'evil)
 
   (defcustom night-evil-auto-save-on-emacs-quit-markers-p nil
-    "Whether to automatically save markers when quitting Emacs."
+    "Whether to automatically save markers when quitting Emacs. Auto-saving the markers might not play well with multiple simultaneously open emacs sessions."
     :type 'boolean
     :group 'night-evil-markers-persistence)
 
   (defcustom night-evil-auto-save-on-buffer-quit-markers-p nil
-    "Whether to automatically save markers when quitting a buffer."
+    "Whether to automatically save markers when quitting a buffer. Auto-saving the markers might not play well with multiple simultaneously open emacs sessions."
     :type 'boolean
     :group 'night-evil-markers-persistence)
 
