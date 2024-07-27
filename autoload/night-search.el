@@ -194,3 +194,19 @@ This variable can be bound dynamically.")
       (apply orig-fun args)))
   (advice-add 'deadgrep--find-file :around #'dotfiles--deadgrep--find-file-wrapper)
   )
+;;;
+(defun night/search-duplicate-id-from-current-line ()
+  "Extract the duplicate ID from the current line and search for it in the project."
+  (interactive)
+  (save-excursion
+    (beginning-of-line)
+    (if (re-search-forward "@duplicateCode/\\([[:alnum:]]+\\)" (line-end-position) t)
+        (let ((duplicate-id (match-string 1)))
+          (if duplicate-id
+              (night/search-project :query (concat "@duplicateCode/" duplicate-id))
+            (message "No duplicate ID found on this line.")))
+      (message "No duplicate ID pattern found on this line."))))
+(map! :map prog-mode-map
+      :localleader
+      "lk" #'night/search-duplicate-id-from-current-line)
+;;;

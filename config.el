@@ -85,6 +85,10 @@
   (interactive)
   (cl-equalp (system-name) "gpu13"))
 
+(defun night/t21-p ()
+  (interactive)
+  (cl-equalp (system-name) "gpu6"))
+
 (defun night/m17-p ()
   (interactive)
   (cl-equalp (system-name) "m17"))
@@ -102,6 +106,7 @@
    ;; ((night/local-p) "Local")
    ((night/pino-p) "Pino")
    ((night/t31-p) "T31")
+   ((night/t21-p) "T21")
    (t (system-name))))
 
 (when (not (server-running-p))
@@ -171,6 +176,10 @@
         'modus-operandi-deuteranopia
         ))
  ((night/t31-p)
+  (setq night-theme
+        'modus-operandi-tinted
+        ))
+ ((night/t21-p)
   (setq night-theme
         'modus-operandi-tinted
         ))
