@@ -57,7 +57,9 @@
       (when (> night-evil-verbosity-level 2)
         (message "Cannot generate marker file name: buffer is not associated with a file"))
       nil)
-     ((string-suffix-p night-evil-markers-persistence-extension buffer-file-name)
+     ((or
+       (string-suffix-p night-evil-markers-persistence-extension buffer-file-name)
+       (string-suffix-p ".gpg" buffer-file-name))
       nil)
      (t
       (let* ((dir (file-name-directory buffer-file-name))

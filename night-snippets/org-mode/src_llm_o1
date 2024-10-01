@@ -1,22 +1,26 @@
 # -*- mode: snippet -*-
 # name: llm-default
-# key: <l
-# uuid: <l
+# key: <ll
+# uuid: <ll
 # --
 #+begin_src jupyter-python :kernel py_base :session llm_1 :async yes :exports both
+stream_p = False
 res = openai_chat_complete(
     ##
+    # model="GAI:gemini-1.5-pro-002",
+    # model="deepseek-coder",
     # model="OR:meta-llama/llama-3.1-405b-instruct",
     # model="OR:perplexity/llama-3.1-sonar-huge-128k-online",
-    # model="OR:anthropic/claude-3-opus:beta",
+    # model="OR:mistralai/mistral-large",
     # model="gpt-4-0314",
     # model="gpt-4-turbo",
     # model="gpt-4o",
     # model="gpt-4o-mini",
+    # model="OR:01-ai/yi-large",
+    # model="OR:anthropic/claude-3-opus:beta",
+    # model="OR:anthropic/claude-3.5-sonnet:beta",
     # model="OR:openai/o1-mini",
-    # model="OR:openai/o1-preview",
-    # model="GAI:gemini-1.5-pro-002",
-    model="OR:anthropic/claude-3.5-sonnet:beta",
+    model="OR:openai/o1-preview",
     ##
     messages=[
         # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
@@ -25,10 +29,11 @@ res = openai_chat_complete(
         """},
     ],
     temperature=0,
-    max_tokens=4000,
+    stream=stream_p,
+    max_tokens=20000,
     interactive=True,
 )
 
-print_chat_streaming(res, copy_mode=None) # "chat2"
+print_chat_streaming(res, stream_p=stream_p, copy_mode=None) # "chat2"
 bell_gpt()
 #+end_src

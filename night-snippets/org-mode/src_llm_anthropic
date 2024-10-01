@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
 # name: llm-default
-# key: <ll
-# uuid: <ll
+# key: <la
+# uuid: <la
 # --
 #+begin_src jupyter-python :kernel py_base :session llm_anthropic_1 :async yes :exports both
 res = openai_chat_complete(

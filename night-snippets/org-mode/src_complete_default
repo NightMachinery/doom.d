@@ -7,7 +7,8 @@
 res = openai_text_complete(
     ##
     # model="TG:codellama/CodeLlama-70b-hf",
-    model="TG:meta-llama/Meta-Llama-3-70B",
+    # model="TG:meta-llama/Meta-Llama-3-70B",
+    model="OR:meta-llama/llama-3.1-405b",
     # model="OR:gpt-3.5-turbo-instruct",
     # model="OR:mistralai/mixtral-8x22b",
     # model="OR:mistralai/mixtral-8x7b",

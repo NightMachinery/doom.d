@@ -6,7 +6,11 @@
     (interactive)
     ;; Somehow `org-id-locations' keeps getting corrupted such that =(hash-table-p org-id-locations)= returns false. This seems to be alwasy the case on emacs startup, but it happens again randomly, too.
     (setq org-id-locations (make-hash-table)))
+  (defun night/h-maybe-org-id-locations-db-reset (&optional &rest dummy)
+    (unless (hash-table-p org-id-locations)
+      (night/org-id-locations-db-reset)))
   (night/org-id-locations-db-reset)
+  (advice-add 'org-store-link :before #'night/h-maybe-org-id-locations-db-reset)
   ;; (org-id-update-id-locations nil t)
   ;; This loads the ID links. Without it, =(hash-table-p org-id-locations)= returned nil for me, which in turn made `org-id-store-link' not work properly.
 ;;;
