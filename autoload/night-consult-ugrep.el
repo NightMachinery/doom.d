@@ -7,6 +7,7 @@
     (string-join '("ugrep"
                    "--color=never"
                    "--exclude-dir=.git/"
+                   "--ignore-files"
                    "--hidden"
                    "--ignore-binary"
                    "--smart-case"
