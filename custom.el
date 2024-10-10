@@ -44,12 +44,14 @@
  '(org-safe-remote-resources
    '("\\`https://nightmachinery\\.github\\.io/orgmode-styles/notes_1\\.org\\'"))
  '(pdf-view-midnight-colors (cons "#556b72" "#FDF6E3"))
- '(pos-tip-background-color "#eee8d5" t)
- '(pos-tip-foreground-color "#586e75" t)
+ '(pos-tip-background-color "#eee8d5")
+ '(pos-tip-foreground-color "#586e75")
  '(rustic-ansi-faces
    ["#FDF6E3" "#dc322f" "#859900" "#b58900" "#268bd2" "#d33682" "#2aa198" "#556b72"])
  '(safe-local-variable-values
-   '((coding-system-for-write . utf-8)
+   '((projectile-indexing-method . hybrid)
+     (projectile-enable-caching . t)
+     (coding-system-for-write . utf-8)
      (org-use-tag-inheritance)
      (copilot-mode . t)
      (undo-fu-session-mode . t)
@@ -99,8 +101,8 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(eldoc-box-body ((t (:background "light steel blue" :foreground "black"))))
- '(fill-column-indicator ((t (:foreground "gray80" :weight normal))))
+ '(fill-column-indicator ((t (:foreground "#CCCCCC" :weight normal))))
  '(multi-magit-repo-heading ((t (:inherit magit-section-heading :box nil))))
  '(org-verse ((t (:inherit org-quote))))
- '(speedbar-selected-face ((t (:foreground "#008B45" :underline t))))
+ '(speedbar-selected-face ((t (:foreground "#119911" :underline t))))
  '(ts-fold-replacement-face ((t (:foreground unspecified :box nil :inherit font-lock-comment-face :weight light)))))
