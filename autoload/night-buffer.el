@@ -70,3 +70,34 @@
  :nv
  "[[" #'night/switch-to-last-buffer)
 ;;;
+(defun night/close-fileless-buffers ()
+  "Close buffers that are not visiting a file, do not have an associated process,
+whose names do not start with a *, and whose file paths no longer exist."
+  (interactive)
+  (dolist (buffer
+           (buffer-list)
+
+           ;; (list (current-buffer))
+           ;; For debugging
+           )
+    (let ((file-name (buffer-file-name buffer))
+          (buffer-name (buffer-name buffer)))
+
+      ;; (message "file-name: %s\nexists: %s" file-name (file-exists-p file-name))
+      (when
+          (or
+           (and
+            file-name
+            (s-ends-with-p ".gpg" file-name)
+            ;; GPG buffers can cause emacs to ask for a password, so let's close them, too.
+            )
+           (and (or
+                 (not file-name)
+                 (not (file-exists-p file-name)))
+                (not (get-buffer-process buffer))
+                (not (string-match-p "^\\s-*\\*" buffer-name))))
+        (message "Closing buffer: %s" buffer-name)
+        (kill-buffer buffer)))))
+(map! :leader
+      "bo" #'night/close-fileless-buffers)
+;;;
