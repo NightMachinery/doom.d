@@ -7,8 +7,10 @@
 # - [ ] Check if Pino has been continued
 # --
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
+- [ ] $0Unsilence your phone
+
 - [ ] Burning Candle [0/4]
-  - [ ] $0Luna is Alive
+  - [ ] Luna is Alive
   - [ ] Meditation
   - [ ] 30m Exercise
     - Knee Exercises
