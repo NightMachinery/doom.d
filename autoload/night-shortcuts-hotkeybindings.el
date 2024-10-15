@@ -197,6 +197,11 @@ move COUNT - 1 screen lines forward first."
         "n L" #'org-insert-link-global
         )
 
+  (map! :map with-editor-mode-map
+        :nvig "C-<return>" #'with-editor-finish
+        :nvig "C-RET" #'with-editor-finish
+        :nvig "C-<escape>" #'with-editor-cancel
+        )
   (map! :map profiler-report-mode-map
         :nvig "TAB" #'profiler-report-toggle-entry
         :nvig "<tab>" #'profiler-report-toggle-entry
@@ -208,6 +213,7 @@ move COUNT - 1 screen lines forward first."
         ;; @seeAlso `previous-error'
         :g "M-n" #'flymake-goto-next-error
         )
+
   (map!
    :g
    "C-S-<up>" #'scroll-other-window-down

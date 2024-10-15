@@ -110,6 +110,9 @@
     (lispy-mode 1)
     ;; lispyville is automatically started as well.
     (global-set-key (kbd "M-O") nil)
+    (unbind-key "C-<return>" lispy-mode-map)
+    (unbind-key "C-<return>" lispy-mode-map-lispy)
+    (unbind-key "C-<return>" lispy-mode-map-evilcp)
     (unbind-key "M-DEL" lispy-mode-map)
     (unbind-key "M-O" lispy-mode-map)
     (unbind-key "M-O" lispy-mode-map-evilcp) ; Probably redundant
