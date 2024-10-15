@@ -104,7 +104,7 @@ GIT-BACKEND can be 'magit or 'git."
       (setq ext 'py))
 
     (setq ext (night/symbol-name ext))
-    (let ((filename (concat dir "/main." ext)))
+    (let ((filename (concat dir "/MAI." ext)))
       ;; Write content to the file
       (with-temp-file filename
         (insert content))
@@ -136,6 +136,9 @@ GIT-BACKEND can be 'magit or 'git."
       (find-file filename)
       )))
 
+(map!
+ :leader
+ "z a" #'night/MAI-init-git)
 ;;;
 (provide 'night-magit-ai)
 ;;; night-magit-ai.el ends here
