@@ -46,10 +46,12 @@ MODE can be:
      ;; (ext 'py)
      ;; (ext 'auto)
      (ext 'auto-emacs)
-     (git-backend 'magit))
+     (git-backend 'magit)
+     (close-old-p t))
   "Initialize a git repository from the clipboard content.
 EXT specifies the file extension.
-GIT-BACKEND can be 'magit or 'git."
+GIT-BACKEND can be 'magit or 'git.
+When CLOSE-OLD-P is non-nil, close all other open buffers in `night/mai-temp-directory'."
   (interactive)
 
   (when (use-region-p)
@@ -61,6 +63,19 @@ GIT-BACKEND can be 'magit or 'git."
          (content (night/pbpaste)))
     (unless content
       (error "Clipboard is empty"))
+
+    ;; Close other buffers in night/mai-temp-directory if close-old-p is non-nil
+    (when close-old-p
+      (dolist (buffer (buffer-list))
+        (let ((buffer-file (buffer-file-name buffer)))
+          (when (or
+                 (string-prefix-p night/mai-temp-directory buffer-file)
+                 (and
+                  (eq (buffer-local-value 'major-mode buffer) 'magit-process-mode)
+                  (let ((default-directory (buffer-local-value 'default-directory buffer)))
+                    (string-prefix-p night/mai-temp-directory default-directory))))
+            (kill-buffer buffer)))))
+
     ;; Create the directory
     (make-directory dir t)
 
