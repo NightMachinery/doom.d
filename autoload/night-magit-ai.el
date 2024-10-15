@@ -77,6 +77,11 @@ MODE can be:
 EXT specifies the file extension.
 GIT-BACKEND can be 'magit or 'git."
   (interactive)
+
+  (when (use-region-p)
+    (kill-ring-save (region-beginning) (region-end))
+    (setq deactivate-mark nil))
+
   (let* ((dir (night/h-mai-generate-temp-path
                (expand-file-name "~/tmp/mai/MAI_")))
          (content (night/pbpaste)))
@@ -116,6 +121,11 @@ GIT-BACKEND can be 'magit or 'git."
            (call-process "git" nil nil nil "add" (file-name-nondirectory filename))
            (call-process "git" nil nil nil "commit" "-m" "repo started"))
           ('magit
+           ;; Use Magit functions for Git operations without creating a magit status buffer
+           (magit-call-git "init")
+           (magit-call-git "add" (file-name-nondirectory filename))
+           (magit-call-git "commit" "-m" "repo started"))
+          ('magit-v1
            ;; Use Magit functions for Git operations
            (magit-init dir)
            (magit-stage-file (list filename))
@@ -124,9 +134,6 @@ GIT-BACKEND can be 'magit or 'git."
 
       ;; Open the file
       (find-file filename)
-
-      ;; Open Magit status
-      ;; (magit-status-setup-buffer dir)
       )))
 
 ;;;
