@@ -31,5 +31,11 @@
 (comment
  (night/arrN  (list 1 2 "3")))
 ;;;
+(defun night/symbol-name (symbol)
+  (cond
+   ((symbolp symbol) (symbol-name symbol))
+   ((stringp symbol) symbol)
+   (t (error (error "Expected a symbol or string, got: %s" symbol)))))
+;;;
 (provide 'night-util)
 ;;; night-util.el ends here
