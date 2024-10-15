@@ -4,6 +4,10 @@
 (require 'json)
 (require 'magit)
 
+(defcustom night/mai-temp-directory (expand-file-name "~/tmp/mai/MAI_")
+  "Prefix path for temporary MAI files."
+  :type 'directory
+  :group 'night-magit-ai)
 
 (cl-defun night/h-mai-generate-temp-path (prefix-path &key (mode 'simple-time))
   "Generate a directory path within PREFIX-PATH using the specified MODE.
@@ -53,7 +57,7 @@ GIT-BACKEND can be 'magit or 'git."
     (setq deactivate-mark nil))
 
   (let* ((dir (night/h-mai-generate-temp-path
-               (expand-file-name "~/tmp/mai/MAI_")))
+               (expand-file-name night/mai-temp-directory)))
          (content (night/pbpaste)))
     (unless content
       (error "Clipboard is empty"))
