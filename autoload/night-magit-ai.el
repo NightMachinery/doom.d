@@ -41,7 +41,7 @@ MODE can be:
       ;; Directory does not exist, return the base path
       full-path))))
 
-(cl-defun night/init-git-from-clipboard
+(cl-defun night/MAI-init-git
     (&key
      ;; (ext 'py)
      ;; (ext 'auto)
@@ -80,11 +80,12 @@ When CLOSE-OLD-P is non-nil, close all other open buffers in `night/mai-temp-dir
     (make-directory dir t)
 
     (cond
-     ((eq ext 'auto)
-      (setq ext (night/detect-language content :backend 'linguist))
-      (setq ext ((or (cdr (assoc ext night/lang-ext-mapping))
-                     ext))))
-
+;;;
+     ;; ((eq ext 'auto)
+     ;;  (setq ext (night/detect-language content))
+     ;;  (setq ext ((or (cdr (assoc ext night/lang-ext-mapping))
+     ;;                 ext))))
+;;;
      ((eq ext 'auto-emacs)
       (setq ext night/last-yank-ext)))
 
