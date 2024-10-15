@@ -32,18 +32,19 @@
 (defun night/h-yank-save (&rest args)
   (setq night/last-yank-pwd default-directory)
   (setq night/last-yank-filename (buffer-file-name))
-  (setq night/last-yank-ext
-        (file-name-extension night/last-yank-filename))
-  ;; If the last extension is "org", try to find the language of the current babel block
-  (when (and (string= night/last-yank-ext "org")
-             (derived-mode-p 'org-mode))
-    (let* ((info (org-babel-get-src-block-info t))
-           (lang (car info)))
-      (when lang
-        (let ((lang-name (night/symbol-name lang)))
-          (setq night/last-yank-ext
-                (or (cdr (assoc lang-name night/lang-ext-mapping))
-                    lang-name)))))))
+  (when night/last-yank-filename
+    (setq night/last-yank-ext
+          (file-name-extension night/last-yank-filename))
+    ;; If the last extension is "org", try to find the language of the current babel block
+    (when (and (string= night/last-yank-ext "org")
+               (derived-mode-p 'org-mode))
+      (let* ((info (org-babel-get-src-block-info t))
+             (lang (car info)))
+        (when lang
+          (let ((lang-name (night/symbol-name lang)))
+            (setq night/last-yank-ext
+                  (or (cdr (assoc lang-name night/lang-ext-mapping))
+                      lang-name))))))))
 
 (advice-add #'kill-new :after #'night/h-yank-save)
 ;;;
