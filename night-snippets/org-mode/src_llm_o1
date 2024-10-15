@@ -34,6 +34,6 @@ res = openai_chat_complete(
     interactive=True,
 )
 
-print_chat_streaming(res, stream_p=stream_p, copy_mode=None) # "chat2"
+print_chat_streaming(res, stream_p=stream_p, copy_mode=None)
 bell_gpt()
 #+end_src
