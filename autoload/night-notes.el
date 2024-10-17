@@ -139,7 +139,7 @@
 (defun night/browse-notes (&optional dir)
   (interactive)
   (let ((note-dir (or dir (getenv "nightNotes"))))
-    (night/browse-dir note-dir ".org$ | .gpg$ | .tex$ | .md$ | .txt$ | .json$ ")))
+    (night/browse-dir note-dir ".org$ | _archive$ | .gpg$ | .tex$ | .md$ | .txt$ | .json$ ")))
 (night/set-leader-keys " z ." #'night/browse-notes)
 
 (defun night/browse-NIGHTDIR ()

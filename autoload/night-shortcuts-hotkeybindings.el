@@ -195,6 +195,12 @@ move COUNT - 1 screen lines forward first."
         "s m" #'counsel-evil-marks
 
         "n L" #'org-insert-link-global
+;;;
+        "x x" #'smerge-vc-next-conflict
+        "x k" #'smerge-keep-upper
+        "x j" #'smerge-keep-lower
+        "x a" #'smerge-keep-all
+;;;
         )
 
   (map! :map with-editor-mode-map

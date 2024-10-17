@@ -1,5 +1,5 @@
 ;;; autoload/org/night-archive.el -*- lexical-binding: t; -*-
-
+(add-to-list 'auto-mode-alist '("\\.\\(org_archive\\)\\'" . org-mode))
 ;;;
 (defun night/org-archive-done-tasks ()
   ;; https://stackoverflow.com/questions/6997387/how-to-archive-all-the-done-tasks-using-a-single-command
