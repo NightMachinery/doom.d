@@ -83,11 +83,11 @@
 
 (defun night/t31-p ()
   (interactive)
-  (cl-equalp (system-name) "gpu13"))
+  (cl-equalp (system-name) "t31-gpu13"))
 
 (defun night/t21-p ()
   (interactive)
-  (cl-equalp (system-name) "gpu6"))
+  (cl-equalp (system-name) "t21-gpu6"))
 
 (defun night/m17-p ()
   (interactive)
