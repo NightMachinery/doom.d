@@ -125,6 +125,7 @@ Used to preselect nearest headings and imenu items.")
              '(consult-line
                consult-yank-pop
                consult-yank-from-kill-ring
+               night/consult-yank-from-kill-ring
 
                consult-buffer
                ;; [[id:3f702604-a1ae-44aa-85fa-750080f0cc50][consult/buffer]]
@@ -155,5 +156,5 @@ Used to preselect nearest headings and imenu items.")
     (add-to-list 'ivy-completing-read-handlers-alist
                  `(,fn . completing-read-default)))
 ;;;
-  (provide 'night-consult)
-  )
+;;;
+(provide 'night-consult))
