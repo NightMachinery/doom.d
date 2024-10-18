@@ -58,10 +58,31 @@
       "fy" #'night/yank-buffer-filename ; overrides doom's version
       )
 ;;;
+(defun night/popup-buffer-p (buffer-or-name)
+  "Return non-nil if BUFFER-OR-NAME is a popup buffer.
+A popup buffer is defined as one whose name starts with a space
+or is enclosed within asterisks (e.g., \"*Messages*\")."
+  (let ((name (if (stringp buffer-or-name)
+                  buffer-or-name
+                (buffer-name buffer-or-name))))
+    (and name
+         (or (string-prefix-p " " name)
+             (string-match-p "^\\s-*\\*" name)
+             ;; (string-match-p "\\`\\*.*\\*\\'" name)
+             ))))
+
 (defun night/switch-to-last-buffer ()
-  "Switch to the most recent buffer."
+  "Switch to the most recent non-popup buffer.
+Skip buffers considered as popups until a suitable buffer is found."
   (interactive)
-  (switch-to-buffer (other-buffer (current-buffer) 1)))
+  (let ((buffers (buffer-list)))
+    (catch 'found
+      (dolist (buf buffers)
+        (unless (or (eq buf (current-buffer))
+                    (night/popup-buffer-p buf))
+          (switch-to-buffer buf)
+          (throw 'found t)))
+      (message "No suitable buffer found."))))
 
 (map!
  :nv
@@ -95,7 +116,7 @@ whose names do not start with a *, and whose file paths no longer exist."
                  (not file-name)
                  (not (file-exists-p file-name)))
                 (not (get-buffer-process buffer))
-                (not (string-match-p "^\\s-*\\*" buffer-name))))
+                (not (night/popup-buffer-p buffer))))
         (message "Closing buffer: %s" buffer-name)
         (kill-buffer buffer)))))
 (map! :leader
