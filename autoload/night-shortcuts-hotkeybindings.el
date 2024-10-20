@@ -112,14 +112,24 @@ move COUNT - 1 screen lines forward first."
         "s-," #'night/pns
         :nvoig
         "<next>" #'evil-avy-goto-char
+
         :nvoig
-        "S-<up>" #'night/scroll-halfpage-down ;; scroll commands use inverted terminology
+        "S-<up>"
+        #'evil-scroll-up
+        ;; #'night/scroll-halfpage-down
+        ;; scroll commands use inverted terminology
+
         :nvoig
-        "S-<down>" #'night/scroll-halfpage-up
+        "S-<down>"
+        #'evil-scroll-down
+        ;; #'night/scroll-halfpage-up
+
         :nvoig
-        "s-<up>" #'night/scroll-precision-up ;; scroll commands use inverted terminology
+        "s-<up>"
+        #'night/scroll-precision-up ;; scroll commands use inverted terminology
         :nvoig
         "s-<down>" #'night/scroll-precision-down
+
         :nvoig
         "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
         :nvoig

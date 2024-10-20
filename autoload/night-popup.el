@@ -1,6 +1,8 @@
 ;;; night-popup.el ---                               -*- lexical-binding: t; -*-
 ;; @warn Beware =:ttl= killing process buffers!
 ;;;
+;; For Org Src, see [[DOOMDIR:autoload/org/babel/night-babel-edit.el::set-popup-rule! "^\\*Org Src"]]
+
 (set-popup-rule! "^\\*org-babel.*\\*$" :height 0.5 :ttl nil)
 (set-popup-rule! "^\\*Flymake.*\\*$" :height 0.5 :ttl nil)
 

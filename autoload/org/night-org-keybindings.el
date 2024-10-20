@@ -180,6 +180,7 @@ DIRECTION should be 'next or 'previous."
         ;; "yi" #'night/org-value-at-point
         )
   (setq org-startup-folded 'overview) ; @upstreambug https://github.com/hlissner/doom-emacs/issues/3693
+
   (map!
    :map (org-mode-map evil-org-mode-map)
    :n

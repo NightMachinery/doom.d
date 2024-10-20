@@ -67,7 +67,9 @@ or is enclosed within asterisks (e.g., \"*Messages*\")."
                 (buffer-name buffer-or-name))))
     (and name
          (or (string-prefix-p " " name)
-             (string-match-p "^\\s-*\\*" name)
+             (and
+              (string-match-p "^\\s-*\\*" name)
+              (not (string-match-p "^\\s-*\\*Org Src " name)))
              ;; (string-match-p "\\`\\*.*\\*\\'" name)
              ))))
 

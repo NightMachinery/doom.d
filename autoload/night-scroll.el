@@ -50,6 +50,7 @@
 
 (defun night/scroll-halfpage-up (&optional down?)
   (interactive)
+  ;; @alt [help:evil-scroll-up]
 ;;;
   (cl-block nil
     (let ((image-line-p nil) (scroll-bug nil))
