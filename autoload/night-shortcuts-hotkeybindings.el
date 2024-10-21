@@ -216,6 +216,7 @@ move COUNT - 1 screen lines forward first."
   (map! :map with-editor-mode-map
         :nvig "C-<return>" #'with-editor-finish
         :nvig "C-RET" #'with-editor-finish
+        :nvig "C-'" #'with-editor-cancel
         :nvig "C-<escape>" #'with-editor-cancel
         )
   (map! :map profiler-report-mode-map
