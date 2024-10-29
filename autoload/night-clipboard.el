@@ -32,7 +32,8 @@
 (defun night/h-yank-save (&rest args)
   (setq night/last-yank-pwd default-directory)
   (setq night/last-yank-filename (buffer-file-name))
-  (when night/last-yank-filename
+  (cond
+   (night/last-yank-filename
     (setq night/last-yank-ext
           (file-name-extension night/last-yank-filename))
     ;; If the last extension is "org", try to find the language of the current babel block
@@ -44,7 +45,10 @@
           (let ((lang-name (night/symbol-name lang)))
             (setq night/last-yank-ext
                   (or (cdr (assoc lang-name night/lang-ext-mapping))
-                      lang-name))))))))
+                      lang-name)))))))
+   (t
+    ;; @hack
+    (setq night/last-yank-ext "py"))))
 
 (advice-add #'kill-new :after #'night/h-yank-save)
 ;;;

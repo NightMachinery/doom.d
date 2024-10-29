@@ -30,7 +30,8 @@ res = openai_chat_complete(
     ],
     temperature=0,
     stream=stream_p,
-    max_tokens=20000,
+    max_tokens=25000,
+    max_completion_tokens=25000,
     interactive=True,
 )
 

@@ -130,7 +130,8 @@
             "env FORCE_NONINTERACTIVE=y FZF_DEFAULT_COMMAND=\"fd --no-ignore --hidden --exclude=.git --follow\" fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir)
             " fzf"
             ;; " fzf_mru.sh" ;; @disabled
-            " --tiebreak=end,length -f \"%s\"")))
+            " --tiebreak=length,begin -f \"%s\"")))
+      ;; --tiebreak=end,length
       ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
       (counsel-fzf query dir ""))
     ;;;

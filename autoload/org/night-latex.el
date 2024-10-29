@@ -1,10 +1,5 @@
 ;;; autoload/org/night-latex.el -*- lexical-binding: t; -*-
 
-(defun night/latex-to-pdf-logs ()
-  (interactive)
-  (find-file (expand-file-name "~/logs/pdflatex_emacs.ansilog"))
-  ;; @duplicateCode/f96ce923c4daa8a299a2a376062acc30
-  )
 (after! org
   ;; You can adapt the old code at http://kitchingroup.cheme.cmu.edu/blog/2015/10/09/Automatic-latex-image-toggling-when-cursor-is-on-a-fragment/ to automatically change the previews to code and vice versa when the cursor enters/leaves them.
   ;; Update: we already have automatic previews ...
@@ -53,6 +48,3 @@
     )
   (night/latex-syntax-highlighting-enable)
   )
-
-(after! (tex-mode)
-  (setq tex-indent-arg 2))

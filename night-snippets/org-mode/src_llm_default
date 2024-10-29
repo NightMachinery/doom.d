@@ -8,14 +8,12 @@ res = openai_chat_complete(
     ##
     # model="OR:meta-llama/llama-3.1-405b-instruct",
     # model="OR:perplexity/llama-3.1-sonar-huge-128k-online",
-    # model="OR:anthropic/claude-3-opus:beta",
     # model="gpt-4-0314",
     # model="gpt-4-turbo",
     # model="gpt-4o",
     # model="gpt-4o-mini",
-    # model="OR:openai/o1-mini",
-    # model="OR:openai/o1-preview",
     # model="GAI:gemini-1.5-pro-002",
+    # model="OR:anthropic/claude-3-opus:beta",
     model="OR:anthropic/claude-3.5-sonnet:beta",
     ##
     messages=[
