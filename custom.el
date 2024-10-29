@@ -60,7 +60,6 @@
      (org-tree-slide-skip-outline-level . 2)
      (diff-add-log-use-relative-names . t)
      (vc-git-annotate-switches . "-w")))
- '(smartrep-mode-line-active-bg (solarized-color-blend "#859900" "#eee8d5" 0.2) t)
  '(term-default-bg-color "#fdf6e3")
  '(term-default-fg-color "#657b83")
  '(vc-annotate-background nil t)
