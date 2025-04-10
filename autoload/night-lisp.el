@@ -101,7 +101,7 @@
   (lispyville-next-closing)
   (goto-char (+ (point) 1)))
 ;;;
-(defun my-lisp-init ()
+(defun my-lisp-init ()  ;; @AKA night/lisp-startup-hook
   (interactive)
   (progn
     ;; No need. Use the 'o' text object ;) ;; (modify-syntax-entry ?- "w") ;; Makes word-word one word.

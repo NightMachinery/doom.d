@@ -106,6 +106,15 @@
    :callback-after #'night/bell-link
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p t))
+
+(night/defun-named night/arxiv-to-org ()
+  (interactive)
+  (night/brishz-async-insert
+   :name $0
+   :command (list "reval-timeout" night/zsh-timeout-default "reval-paste" "arxiv-to-org")
+   :callback-after #'night/bell-link
+   :insert-fn #'night/org-insert-and-fix-levels
+   :save-p t))
 ;;;
 (night/defun-named night/url2org ()
   (interactive)

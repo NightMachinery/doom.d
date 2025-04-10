@@ -174,6 +174,7 @@ DIRECTION should be 'next or 'previous."
         :nvi "lp" #'night/org-paste-clipboard-image
         :nvi "lP" #'night/org-img-unused-trs
         "la" #'night/semantic-scholar-to-org
+        "lA" #'night/arxiv-to-org
         "lm" #'night/org-link-hear-get
         "lM" #'night/org-link-mpv-get
         "rp" #'night/org-paste-with-files
@@ -239,8 +240,6 @@ DIRECTION should be 'next or 'previous."
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode
    :localleader
-   "K" #'night/org-babel-remove-all-results
-
    "rs" #'avy-org-refile-as-child
    ;; "sr" #'avy-org-refile-as-child
    "rf" #'+org/refile-to-file

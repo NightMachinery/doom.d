@@ -12,6 +12,8 @@
     :config
     (setq! gptel-api-key (night/openai-key-get))
     (setq gptel-default-mode #'org-mode)
+    (setq gptel-org-branching-context t)
+    (setq gptel-log-level 'info)
 
     ;; (add-hook 'gptel-post-stream-hook 'gptel-auto-scroll)
     ;; (add-hook 'gptel-post-response-hook 'gptel-end-of-response)

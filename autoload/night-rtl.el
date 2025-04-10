@@ -56,7 +56,7 @@
  )
 ;;;
 
-(defun night/enable-bidirectional ()
+(defun night/enable-bidirectional ()    ;; night/enable-rtl
   (interactive)
 
   (when (fboundp 'set-fontset-font)
@@ -131,6 +131,7 @@
                 ))
   (setq-local company-minimum-prefix-length 3)
   )
+(add-hook 'text-mode-hook 'night/enable-bidirectional)
 (add-hook 'org-mode-hook 'night/enable-bidirectional)
 (add-hook 'markdown-mode-hook 'night/enable-bidirectional)
 (add-hook 'LaTeX-mode-hook 'night/enable-bidirectional)

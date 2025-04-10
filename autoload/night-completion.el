@@ -140,6 +140,9 @@
              ;; [help:+company--backends]
              ;; uses parent modes' backends, too
              '(
+               (emacs-lisp-mode
+                company-dabbrev-code
+                )
                ;; (julia-mode
                ;;  company-dabbrev-code ; default
                ;;  )

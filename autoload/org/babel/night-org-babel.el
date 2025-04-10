@@ -132,6 +132,7 @@ NO-BLOCKS-MESSAGE is a message string to display if no blocks are found in the s
     "Remove all Babel results in the current buffer."
     (interactive)
     (night/org-babel-remove-results-from-region (point-min) (point-max)))
+  (defalias 'night/org-babel-rm-all-results #'night/org-babel-remove-all-results)
 
   (comment (defun night/org-babel-remove-all-results ()
              (interactive)
@@ -281,6 +282,8 @@ See `night/h-org-babel-navigate-src-block'."
 
   (map! :map 'evil-org-mode-map
         :localleader
+        "zK" #'night/org-babel-remove-all-results
+
         "za" #'night/org-babel-execute-maybe-and-backward
         "zx" #'night/org-babel-execute-maybe-and-forward
         "zs" #'org-babel-execute-subtree
@@ -288,10 +291,14 @@ See `night/h-org-babel-navigate-src-block'."
         "zn" #'night/org-babel-execute-after
         "zp" #'night/org-babel-execute-before
         "zz" #'org-ctrl-c-ctrl-c
+
         "zv" #'night/org-babel-select-src-and-results
         "zc" #'night/org-babel-copy-as-chat
         "zC" #'night/org-babel-result-get
+
         "zl" #'night/org-blacken-region
+
+        "zt" #'org-babel-tangle
         )
 ;;;
   (comment

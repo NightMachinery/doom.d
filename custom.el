@@ -49,7 +49,8 @@
  '(rustic-ansi-faces
    ["#FDF6E3" "#dc322f" "#859900" "#b58900" "#268bd2" "#d33682" "#2aa198" "#556b72"])
  '(safe-local-variable-values
-   '((projectile-indexing-method . hybrid)
+   '((org-export-use-babel . t)
+     (projectile-indexing-method . hybrid)
      (projectile-enable-caching . t)
      (coding-system-for-write . utf-8)
      (org-use-tag-inheritance)

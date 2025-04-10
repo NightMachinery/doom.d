@@ -119,6 +119,14 @@
 (defun night/org-paste-escaped ()
   (interactive)
   (night/insert-for-yank (org-escape-code-in-string (current-kill 0))))
+
+(defun night/org-paste-escaped-in-md-code-block ()
+  (interactive)
+  (night/insert-for-yank
+   (concat
+    "```org\n"
+    (org-escape-code-in-string (current-kill 0))
+    "```")))
 ;;;
 (defun ns-yank-image-at-point-as-image ()
   "Yank the image at point to the X11 clipboard as image/png."

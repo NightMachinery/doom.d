@@ -6,6 +6,9 @@
 (require 'jupyter)
 (require 'jupyter-org-client)
 
+(require 'zmq)
+(zmq-load)
+
 (after! (ob-jupyter)
   (org-babel-jupyter-aliases-from-kernelspecs))
 (after! (jupyter)
@@ -114,11 +117,34 @@ This function should be called within an Org-mode buffer."
         (message "jupyter-python-session: %s" session))
       session))
 
-(defun night/jupyter-python-session-orgprop-set (session)
-  "Set the `jupyter-python-session` property for the current Org headline.
+  (defun night/jupyter-python-session-orgprop-set (session)
+    "Set the `jupyter-python-session` property for the current Org headline.
 SESSION should be a string representing the Jupyter session."
-  (interactive "sEnter Jupyter session string: ")
-  (org-set-property "jupyter-python-session" session))
+    (interactive "sEnter Jupyter session string: ")
+    (org-set-property "jupyter-python-session" session))
+;;;
+  (defun night/search-for-jupyter-error ()
+    "Search forward for Jupyter error patterns.
+The pattern matches lines starting with : followed by any non-whitespace
+characters and ending with 'Error:'."
+    (interactive)
+    (if (fboundp 'evil-mode)
+        (cond
+         (t
+          (progn
+            ;; Set the search direction to forward
+            (setq evil-ex-search-direction 'forward)
+            ;; Update the last search pattern
+            (setq evil-ex-search-pattern
+                  (let ((evil-ex-search-vim-style-regexp nil))
+                    (evil-ex-make-search-pattern "^:\\s-\\S-+\\(Error\\|Exception\\):")))
+            ;; Highlight all matches
+            (evil-ex-search-activate-highlight evil-ex-search-pattern)
+            ;; Move to the next occurrence
+            (evil-ex-search-next 1)))
+         (t
+          (evil-search "^:\\s-\\S-+Error:" t t)))
+      (message "evil-mode is not available. Please ensure evil is loaded.")))
 ;;;
   (defun night/jupyter-org-eval-line-or-region ()
     (interactive)

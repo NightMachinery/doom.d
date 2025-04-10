@@ -58,7 +58,9 @@ Replaces `\[\.` with `[file:.` and `#+begin_src jupyter-python` with `#+begin_sr
 The output file path defaults to the current file's name with the .ipynb extension.
 Prompts for confirmation if the output file already exists.
 
-It seems PNG files are exported as 'image/png' base64 in the ipynb file itself, while JPG files are exported using their paths?"
+It seems PNG files are exported as 'image/png' base64 in the ipynb file itself, while JPG files are exported using their paths?
+
+Quote blocks seem to cause problems when they are followed by a code block."
   (interactive)
   (let* ((file (or file (buffer-file-name)))
          (default-output-path (concat (file-name-sans-extension file) ".ipynb"))

@@ -166,7 +166,7 @@
 ;;;
 (package! vundo ;; needs at least emacs@28
   :recipe (:host github :repo "casouri/vundo"))
-
+(unpin! vundo)
 ;;;
 ;; this git repo was outdated, I am installing directly from emacswiki
 ;; (package! highlight
@@ -313,8 +313,8 @@
 (package! company-quickhelp) ;; uses pos-tip which only works in GUI
 (package! company-quickhelp-terminal)
 
-(unpin! company-box)
 (package! company-box)
+(unpin! company-box)
 
 (package! eldoc-box)                    ;; GUI-only: https://github.com/casouri/eldoc-box/issues/35
 
@@ -342,8 +342,13 @@
 
 (package! whisper
   :recipe (:host github :repo "natrys/whisper.el"))
+
+(unpin! gptel llm ellama copilot)
 ;;;
 (package! sdcv)
+;;;
+(package! compat)
+(unpin! compat)
 ;;;
 (package! exec-path-from-shell)
 ;;;

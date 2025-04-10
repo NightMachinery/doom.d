@@ -82,8 +82,6 @@ Otherwise, it will be one level below."
         :localleader
         :n "." #'night/outline-goto)
 
-  (map! :leader
-        :n "/" #'night/goto-org-heading)
   (progn
    (map!
     :localleader

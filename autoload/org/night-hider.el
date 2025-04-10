@@ -62,6 +62,17 @@
 
   (defun night/org-playlist-hotkeys-enable ()
     (interactive)
+    ;;;
+    (comment
+     (map! :map 'local
+           :leader
+           :n "/" #'night/search-random-instance-smart))
+    (map! :map 'local
+     ;; :n "gh" #'night/search-random-instance
+     :n "<DEL><DEL>" #'night/search-random-instance-smart
+     :n "<backspace><backspace>" #'night/search-random-instance-smart
+     )
+    ;;;
     (map! :map 'local
           :localleader
           "pp"

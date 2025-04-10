@@ -210,3 +210,47 @@ This variable can be bound dynamically.")
       :localleader
       "lk" #'night/search-duplicate-id-from-current-line)
 ;;;
+(defun night/h-get-current-evil-search-pattern ()
+  "Return the current Evil search pattern.
+
+If the `evil-ex-search-pattern' variable is bound and non-nil, return its first element.
+Otherwise, signal an error indicating that no current search pattern is available."
+  (cond
+   ((and (boundp 'evil-ex-search-pattern) evil-ex-search-pattern)
+    (car evil-ex-search-pattern))
+   (t (error "No current evil search pattern found."))))
+
+(defun night/h-get-search-positions (pattern)
+  "Return a list of buffer positions where PATTERN matches in the current buffer.
+
+PATTERN should be a regular expression string. The search is performed over the entire buffer."
+  (let (positions)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward pattern nil t)
+        (push (match-beginning 0) positions)))
+    (nreverse positions)))
+
+(cl-defun night/search-random-instance
+    (&key (pattern #'night/h-get-current-evil-search-pattern)
+          (search-fn #'night/h-get-search-positions))
+  "Jump to a random instance of the current Evil search pattern in the buffer.
+
+The PATTERN parameter can be a function that returns a search pattern or a string/regex directly.
+The SEARCH-FN parameter should be a function that takes a pattern and returns a list of matching positions.
+If matches are found, the point is moved to one of them at random; otherwise, a message indicates no matches were found."
+  (interactive)
+  (let ((verbosity-level 0))
+    (condition-case err
+        (let* ((pattern (if (functionp pattern)
+                            (funcall pattern)
+                          pattern))
+               (positions (funcall search-fn pattern)))
+          (cond
+           (positions
+            (let ((target (nth (random (length positions)) positions)))
+              (goto-char target)
+              (message "Jumped to a random instance at position %d" target)))
+           (t (message "No matches found."))))
+      (error (message "Error: %s" err)))))
+;;;

@@ -10,6 +10,7 @@
       (z awaysh open (identity expanded-path))))
 
   (org-link-set-parameters "open" :follow #'night/org-link-open-follow)
+  ;; See `open-zf' for opening with `night/path-unabbrev'.
 ;;;
   (defun night/org-link-zopen-follow (path arg)
     (let* (
