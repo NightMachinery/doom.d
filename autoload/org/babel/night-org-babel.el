@@ -197,13 +197,14 @@ previous block again."
 
                ;; --- Case 2: No result found AND already retried ---
                (retry-attempted ; This clause is only reached if result-beg is nil
-                (error "No result found for current or previous source block"))
+                (error "No result found!"))
 
                ;; --- Case 3: No result found AND this is the first attempt ---
                (t ; This is the default case, reached if result-beg is nil and retry-attempted is nil
                 (message "No result found for current block, trying previous...")
                 ;; Move point (within save-excursion)
                 (night/org-babel-previous-src-block)
+                ;; Note that `night/org-babel-previous-src-block' goes to the start of the current block if already in one. So it's safe to call.
                 ;; Recursively call, passing t. The return value of the recursive
                 ;; call becomes the value of this cond clause.
                 (night/org-babel-result-get t))))
@@ -317,8 +318,11 @@ RETRY-ATTEMPTED and CHAT-STRING-ARG are for internal recursive use."
                   ;; Insert newline + chat string.
                   ;; Assuming night/insert-for-yank handles indentation etc.
                   ;; and leaves point at the end of inserted text.
-                  (night/insert-for-yank (concat "\n" chat-string))
+                  (night/insert-for-yank
+                   (org-escape-code-in-string
+                    (concat "\n" chat-string)))
                   (previous-line)       ; Move the point to the previous line so the user can start typing their next message immediately.
+                  (evil-insert-state)
                   t) ; Indicate success for the cond branch
 
               ;; Not Found: Error
@@ -397,7 +401,9 @@ See `night/h-org-babel-navigate-src-block'."
         "zz" #'org-ctrl-c-ctrl-c
 
         "zv" #'night/org-babel-select-src-and-results
-        "zc" #'night/org-babel-copy-as-chat
+        "zc"
+        #'night/org-babel-insert-as-chat
+        ;; #'night/org-babel-copy-as-chat
         "zC" #'night/org-babel-result-get
 
         "zl" #'night/org-blacken-region
