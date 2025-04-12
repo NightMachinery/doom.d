@@ -46,7 +46,7 @@
   (interactive)
   (find-file (concat
               (getenv "nightNotesPrivate")
-              "/subjects/chatlog/chatgpt/megalog/gen.org")))
+              "/subjects/chatlog/chatgpt/megalog/gen..no-directives..org")))
 
 (defun night/bookmarks-open-latex-ocr ()
   (interactive)

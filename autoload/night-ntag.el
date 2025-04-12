@@ -10,17 +10,35 @@
  (ntag "hi"))
 
 ;;;
-(defun night/buffer-playlistp (&optional buffer)
+(defun night/buffer-tag-p (tag &optional buffer)
   "Return non-nil if the file name associated with BUFFER (or the current buffer)
-contains the tag 'org-playlist'.
+contains the TAG, processed by `night/ntag`.
 
+TAG is the string tag to check for (e.g., \"org-playlist\").
 BUFFER can be either a buffer or a string representing a file name.
 Defaults to the current buffer if BUFFER is nil."
+  ;; Ensure tag is a string, otherwise night/ntag might error later
+  (unless (stringp tag)
+    (error "TAG argument must be a string, got %S" tag))
+
   (let ((bfn (cond
-              ((stringp buffer) buffer)
-              ((bufferp buffer) (buffer-file-name buffer))
-              (t (buffer-file-name (current-buffer))))))
-    (and bfn (s-contains? (night/ntag "org-playlist") bfn))))
+              ((stringp buffer) buffer) ; If buffer is already a filename string
+              ((bufferp buffer) (buffer-file-name buffer)) ; If buffer is a buffer object
+              ((null buffer) (buffer-file-name (current-buffer))) ; Default to current buffer
+              (t (error "BUFFER argument must be a string, buffer, or nil, got %S" buffer))))) ; Handle invalid buffer arg
+    ;; Check if bfn is non-nil (i.e., associated with a file)
+    ;; and if the filename contains the processed tag.
+    (and bfn (s-contains? (night/ntag tag) bfn))))
+
+(defun night/buffer-playlistp (&optional buffer)
+  "Return non-nil if the file name associated with BUFFER
+contains the tag 'org-playlist'."
+  (night/buffer-tag-p "org-playlist" buffer))
+
+(defun night/buffer-no-night-directives-p (&optional buffer)
+  "Return non-nil if the file name associated with BUFFER
+contains the tag 'org-playlist'."
+  (night/buffer-tag-p "no-directives" buffer))
 
 (cl-defun night/search-random-instance-smart (&optional arg)
   "Jump to a random instance of a search pattern with smart behavior for playlists.

@@ -118,7 +118,8 @@
 
 (defun night/org-paste-escaped ()
   (interactive)
-  (night/insert-for-yank (org-escape-code-in-string (current-kill 0))))
+  (night/insert-for-yank
+   (org-escape-code-in-string (current-kill 0))))
 
 (defun night/org-paste-escaped-in-md-code-block ()
   (interactive)
@@ -226,9 +227,11 @@
 
 (map! :leader
       "," nil)
+
+(night/set-leader-keys ", ," #'night/org-paste-escaped-in-md-code-block)
 (night/set-leader-keys ", h" #'night/paste-yank-html)
-(night/set-leader-keys ", ," #'night/html2md)
 (night/set-leader-keys ", n" #'night/pns)
+(night/set-leader-keys ", M" #'night/html2md)
 (night/set-leader-keys ", m" #'night/paste-md2org)
 (night/set-leader-keys ", o" #'night/paste-org2md)
 (night/set-leader-keys ", p" #'night/paste-py-escape-triple-quotes)

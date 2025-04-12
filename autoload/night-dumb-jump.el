@@ -1,5 +1,6 @@
 ;;; autoload/night-dumb-jump.el -*- lexical-binding: t; -*-
 
+(require 'dumb-jump)
 (after! (dumb-jump)
   (setq dumb-jump-force-searcher 'rg)
 ;;;

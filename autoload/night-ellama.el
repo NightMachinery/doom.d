@@ -28,6 +28,13 @@
   (setopt
    ellama-providers
    `(
+     ("OR-Gemini-2-Flash-Thinking-Free" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "google/gemini-2.0-flash-thinking-exp:free"
+        :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
+        ))
      ("GPT4Omni-Mini" .
       ,(make-llm-openai
         :key (night/openai-key-get)
@@ -58,19 +65,19 @@
         :chat-model "meta-llama/llama-3-70b-instruct:nitro"
         :embedding-model "meta-llama/llama-3-70b-instruct:nitro"
         ))
-     ("OR-Gemini-2-Flash-Thinking-Free" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "google/gemini-2.0-flash-thinking-exp:free"
-        :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
-        ))
      ("OR-Gemini-1.5" .
       ,(make-llm-openai-compatible
         :key (night/openrouter-key-get)
         :url "https://openrouter.ai/api/v1"
         :chat-model "google/gemini-pro-1.5"
         :embedding-model "google/gemini-pro-1.5"
+        ))
+     ("OR-Gemini-2.5-Free" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "google/gemini-2.5-pro-exp-03-25:free"
+        :embedding-model "google/gemini-2.5-pro-exp-03-25:free"
         ))
      ("OR-Mixtral-8x22B" .
       ,(make-llm-openai-compatible

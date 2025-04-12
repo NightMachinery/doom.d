@@ -210,10 +210,16 @@ otherwise use the subtree title."
 ;;;
   (defun night/org-night-directive-present-p (directive)
     "Check if a given DIRECTIVE is present in the current org buffer, ignoring case."
-    (save-excursion
-      (goto-char (point-min))
-      (let ((case-fold-search t))
-        (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t)))))
+    (cond
+     ((night/buffer-no-night-directives-p)
+      nil
+      ;; manually disable all directives for this file
+      ;; useful for, e.g., chatting with LLMs where directives might be pasted from other files
+      )
+     (t (save-excursion
+        (goto-char (point-min))
+        (let ((case-fold-search t))
+          (re-search-forward (format "^#[[:space:]]*NIGHT_DIRECTIVE:[[:space:]]*%s[[:space:]]*$" directive) nil t)))))))
 ;;;
 (defun night/org-go-to-last-heading (&optional level)
   "Go to the last heading in the current Org mode buffer."
