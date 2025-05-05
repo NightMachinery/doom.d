@@ -10,6 +10,7 @@
 (after! (evil
          )
   (require 'cl-lib)
+  (require 'debug)
   (require 'filenotify) ; Needed for backup file naming logic. Should be built-in.
 
   (defgroup night-evil-markers-persistence nil
@@ -64,29 +65,35 @@
       backup-filename))
 
   (defun night/h-backup-file-with-log (file-name error-data)
-    "Backup FILE-NAME to a numbered version and save ERROR-DATA traceback."
-    (condition-case backup-err
-        (when (file-exists-p file-name)
-          (let* ((backup-file (night/h-find-next-backup-filename file-name))
-                 (log-file (concat backup-file ".log")))
-            (rename-file file-name backup-file t) ; Use backup numbering feature of rename-file
+  "Backup FILE-NAME to a numbered version and save ERROR-DATA traceback."
+  (condition-case backup-err
+      (when (file-exists-p file-name)
+        (let* ((backup-file (night/h-find-next-backup-filename file-name))
+               (log-file (concat backup-file ".log")))
+          (rename-file file-name backup-file t) ; Use backup numbering feature
 
-            ;; Save traceback
-            (with-temp-buffer
-              (insert (format "Error occurred while processing %s:\n\n" file-name))
-              (let ((standard-output (current-buffer))
-                    (print-escape-newlines t))
-                (debugger-batch-print-backtrace error-data))
-              (write-region (point-min) (point-max) log-file nil 'silent))
+          ;; Save error message and backtrace
+          (with-temp-buffer
+            (insert (format "Error occurred while processing %s:\n\n" file-name))
+            ;; Insert the specific error message captured by condition-case
+            (insert (format "Error: %s\n\n" (error-message-string error-data)))
+            ;; Insert the backtrace at the point of the error
+            (insert "Backtrace:\n")
+            (let ((backtrace-str (condition-case nil ; Avoid error if backtrace itself fails
+                                     (backtrace-to-string (backtrace))
+                                   (error "Failed to generate backtrace"))))
+              (insert backtrace-str))
+            ;; Write the collected info to the log file
+            (write-region (point-min) (point-max) log-file nil 'silent))
 
-            (message "Error processing marker file %s. Backed up to %s. See %s for details."
-                     file-name backup-file log-file)
-            backup-file))
-      (error
-       ;; Error during backup process itself
-       (message "Critical error: Failed to backup corrupted marker file %s. Error: %s"
-                file-name (error-message-string backup-err))
-       nil)))
+          (message "Error processing marker file %s. Backed up to %s. See %s for details."
+                   file-name backup-file log-file)
+          backup-file))
+    (error
+     ;; Error during backup process itself
+     (message "Critical error: Failed to backup corrupted marker file %s. Error: %s"
+              file-name (error-message-string backup-err))
+     nil)))
 
   (defun night/evil-marker-file-name (buffer-file-name)
     "Generate the marker file name for the given BUFFER-FILE-NAME."
