@@ -165,3 +165,23 @@
 (advice-add 'evil-next-line :override #'night/evil-next-line)
 (advice-add 'evil-previous-line :override #'night/evil-previous-line)
 ;;;
+(defun night/enable-visible-rtl-bidi-chars ()
+  "Make BiDi control characters like U+202C visible."
+  (interactive)
+  (let ((display-table (or buffer-display-table (make-display-table))))
+    ;; U+202C POP DIRECTIONAL FORMATTING
+    (set-char-table-range display-table #x202C
+                          ["[PDF]"]
+                          ;; ["P"]
+                          )
+    ;; You might want to add others too:
+    (set-char-table-range display-table #x202A ["[LRE]"]) ; Left-to-Right Embedding
+    (set-char-table-range display-table #x202B ["[RLE]"]) ; Right-to-Left Embedding
+    (set-char-table-range display-table #x202D ["[LRO]"]) ; Left-to-Right Override
+    (set-char-table-range display-table #x202E ["[RLO]"]) ; Right-to-Left Override
+    ;; Maybe even Zero Width Space (U+200B)
+    (set-char-table-range display-table #x200B ["[ZWS]"])
+
+    ;; Set it as the buffer-local display table
+    (setq buffer-display-table display-table)))
+;;;

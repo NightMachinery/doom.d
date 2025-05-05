@@ -12,6 +12,11 @@
 (defun night/groq-key-get ()
   night/groq-key)
 
+;; gemini-key
+(defvar night/gemini-key (z var-get "gemini_api_key"))
+(defun night/gemini-key-get ()
+  night/gemini-key)
+
 (defvar night/codestral-key (z var-get "codestral_api_key"))
 (defun night/codestral-key-get ()
   night/codestral-key)

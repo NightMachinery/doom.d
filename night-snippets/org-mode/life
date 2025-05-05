@@ -4,12 +4,15 @@
 # uuid: <<
 # expand-env: ((yas-after-exit-snippet-hook #'evil-normal-state))
 # condition: (night/h-point-at-beginning-p :prefix-pattern "<<")
-# - [ ] Check if Pino has been continued
+# [[id:256b6907-2829-4274-824d-8c918c9c3567][snippets/life]]
 # --
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
 - [ ] $0Unsilence your phone
 
-- [ ] Burning Candle [0/4]
+- [ ] Call Mi for Good Morning
+- [ ] Call Mi for Good Night
+
+- [ ] Burning Candle [0/7]
   - [ ] Luna is Alive
   - [ ] Meditation
   - [ ] 30m Exercise
@@ -25,14 +28,18 @@
   - [ ] Don't Eat After 11
   - [ ] Sleep Before Midnight
 
-- [ ] Abstinence [0/3]
+- [ ] Abstinence [0/1]
+  - [ ] No Mobile (Wrist)
+
+- [ ] Plans & Routines [0/5]
+  - [ ] No Rumination
+  - [ ] No Wallowing
   - [ ] No News
   - [ ] No Entertainment
   - [ ] No Sugar
 
-- [ ] Reticence [0/1]
-  - [ ] Telegram [0/2]
-    - [ ] No Excessive Text Chatting
-    - [ ] No Loitering
+- [ ] Telegram [0/2]
+  - [ ] No Excessive Text Chatting
+  - [ ] No Loitering
 
 - [ ] Out of This Circle of Blood

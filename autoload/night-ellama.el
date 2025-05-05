@@ -4,6 +4,7 @@
 ;; could be llm-openai for example
 (require 'llm-ollama)
 (require 'llm-openai)
+(require 'llm-gemini)
 (require 'ellama)
 
 (setq llm-warn-on-nonfree nil)
@@ -28,6 +29,23 @@
   (setopt
    ellama-providers
    `(
+     ("Gemini-2.5-Flash" .
+      ,(make-llm-gemini
+        :key (night/gemini-key-get)
+        :chat-model "gemini-2.5-flash-preview-04-17"
+        :embedding-model "text-embedding-004"))
+     ("Gemini-2.5-Pro" .
+      ,(make-llm-gemini
+        :key (night/gemini-key-get)
+        :chat-model "gemini-2.5-pro-exp-03-25"
+        :embedding-model "text-embedding-004"))
+     ("OR-Gemini-2-Flash-Thinking-Free" .
+      ,(make-llm-openai-compatible
+        :key (night/openrouter-key-get)
+        :url "https://openrouter.ai/api/v1"
+        :chat-model "google/gemini-2.0-flash-thinking-exp:free"
+        :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
+        ))
      ("OR-Gemini-2-Flash-Thinking-Free" .
       ,(make-llm-openai-compatible
         :key (night/openrouter-key-get)

@@ -5,16 +5,18 @@
 # --
 #+begin_src jupyter-python :kernel py_base :session llm_1 :async yes :exports both
 res = openai_chat_complete(
-    ##
+    ###
     # model="gpt-4o",
     # model="gpt-4o-mini",
     # model="o1-preview",
     # model="OR:anthropic/claude-3-opus:beta",
     # model="OR:anthropic/claude-3.7-sonnet:beta",
-    # model="GAI:gemini-2.5-pro-exp-03-25",
-    # model="OR:google/gemini-2.5-pro-preview-03-25",
-    model="OR:google/gemini-2.5-pro-exp-03-25:free",
+    # model="GAI:gemini-2.0-flash",
     ##
+    # model="OR:google/gemini-2.5-pro-preview-03-25",
+    # model="OR:google/gemini-2.5-pro-exp-03-25:free",
+    model="GAI:gemini-2.5-pro-exp-03-25",
+    ###
     messages=[
         # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
         {"role": "user", "content": r"""
