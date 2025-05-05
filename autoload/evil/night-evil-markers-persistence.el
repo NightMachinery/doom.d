@@ -114,21 +114,23 @@
 
   (defun night/serialize-marker (marker)
     "Serialize MARKER to a storable format."
-    (let* ((deserialized-marker
+    (let* ((serialized-marker
             (cond
              ((markerp marker)
               (when-let* ((pos (marker-position marker))
                           (buf (marker-buffer marker))
                           (file (buffer-file-name buf)))
                 (cons file pos)))
-             ((functionp marker) nil) ; Functions cannot be serialized
+             ((functionp marker) nil)   ; Functions cannot be serialized
              ((consp marker)
-              (when-let* ((file (car marker))
-                          (pos (cadr marker)))
-                (when (and file (stringp file) (file-exists-p file) pos (integerp pos))
-                  (cons file pos))))
+              ;; Check if it's *already* the serialized (file . pos) form
+              (let ((file (car marker))
+                    (pos (cdr marker)))
+                (when (and file (stringp file) pos (integerp pos))
+                  ;; It's already serialized correctly, just return it
+                  marker)))
              (t nil))))
-      deserialized-marker))
+      serialized-marker))
 
   (defun night/deserialize-marker (serialized)
     "Deserialize the SERIALIZED marker."
