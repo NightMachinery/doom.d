@@ -1,7 +1,8 @@
 ;;; autoload/night-recentf.el -*- lexical-binding: t; -*-
 ;;;
 (after! (recentf night-macros)
-  (add-to-list 'recentf-exclude ".*\\.\\.no_recent\\.\\..*")
+  (add-to-list 'recentf-exclude ".*\\.\\.no_recent\\.\\..*" )
+  ;; You can add an exclusion pattern and call [help:recentf-cleanup] to remove that from the list.
 
   (defun night/h-recentf-merge (old-list new-list)
     "Return a new list combining `new-list' and `old-list' with the specified order."
