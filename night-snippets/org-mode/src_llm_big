@@ -7,22 +7,8 @@
 stream_p = True
 res = openai_chat_complete(
     ##
-    # model="GAI:gemini-1.5-pro-002",
-    # model="deepseek-coder",
-    # model="OR:meta-llama/llama-3.1-405b-instruct",
-    # model="OR:perplexity/llama-3.1-sonar-huge-128k-online",
-    # model="OR:mistralai/mistral-large",
-    # model="gpt-4-0314",
-    # model="gpt-4-turbo",
-    # model="gpt-4o",
-    # model="gpt-4o-mini",
-    # model="OR:01-ai/yi-large",
-    # model="OR:anthropic/claude-3-opus:beta",
-    # model="OR:anthropic/claude-3.5-sonnet:beta",
-    # model="OR:openai/o1-mini",
-    # model="OR:openai/o1-preview",
-    # model="o1-preview",
-    model="gpt-4.5-preview",
+    # model="GAI:gemini-2.5-flash",
+    model="GAI:gemini-2.5-pro",
     ##
     messages=[
         # {"role": "system", "content": """Output your changes in the unified diff format. When appropriate, refactor so that you don't repeat yourself (DRY)."""},
