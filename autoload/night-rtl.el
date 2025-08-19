@@ -56,7 +56,7 @@
  )
 ;;;
 
-(defun night/enable-bidirectional ()    ;; night/enable-rtl
+(defun night/enable-bidirectional () ;; night/enable-rtl
   (interactive)
 
   (when (fboundp 'set-fontset-font)
@@ -72,17 +72,21 @@
      'arabic
      night/persian-font
      ))
-  ;;;
+;;;
   (setq face-font-rescale-alist `((,night/persian-font . 1.30)))
   (setq bidi-paragraph-direction 'nil)
   (setq bidi-paragraph-separate-re "^"
-        bidi-paragraph-start-re "^"))
+        bidi-paragraph-start-re "^")
+
+  )
 
 (defun night/enable-bidirectional-extras ()
   (interactive)
   ;;;
   (setq-local line-move-ignore-invisible nil)
   ;; [[id:ff0eb77c-aa38-4cb1-8633-c7d255e479a3][Scrolling Bug]]
+  ;;;
+  (add-to-list 'jit-lock-functions #'night/manual-rtl-setup-in-region)
   ;;;
   )
 
@@ -97,6 +101,7 @@
   ;; @done Delete the above line, we no longer need it.
   )
 (defun night/latex-rtl-opinionated ()
+  "You need to activate this yourself manually if you want it."
   (interactive)
   (map! :map 'local
         :i "\\" (lambda () (interactive)
@@ -184,4 +189,47 @@
 
     ;; Set it as the buffer-local display table
     (setq buffer-display-table display-table)))
+;;;
+(defun night/line-is-rtl-p ()
+  "Return non-nil if current line should be displayed RTL.
+
+A line is considered RTL if it starts with a backslash followed
+by a character with a right-to-left bidi-class (e.g., Persian)."
+  ;; save-excursion preserves the point (cursor position).
+  (save-excursion
+    ;; Go to the beginning of the current line to ensure a consistent check.
+    (goto-char (line-beginning-position))
+    ;; The actual check:
+    ;; 1. Does the line look like it starts with a backslash?
+    ;; 2. Is the character after the backslash an RTL character?
+    (and (looking-at "\\\\")
+         (let ((char (char-after (1+ (point)))))
+           (and char (memq (get-char-code-property char 'bidi-class) '(R AL)))))))
+
+(defun night/current-line-rtl-p ()
+  "Interactively check and report if the current line is considered RTL.
+This calls the predicate `night/line-is-rtl-p`."
+  (interactive)
+  (message "Current line is considered RTL: %s"
+           (if (night/line-is-rtl-p) "yes" "no")))
+
+(defun night/manual-rtl-setup-in-region (start end)
+  "Apply or remove RTL display property for lines in the region from START to END.
+
+This function, intended for `jit-lock-functions`, iterates
+through lines in the region and uses `night/line-is-rtl-p` to
+set the `bidi-paragraph-direction` text property.
+
+Bug: This failed when the document started with an empty line and then a backslash-rtl-char line. But adding another empty line at the beginning fixed it."
+  (save-excursion
+    (goto-char start)
+    (while (< (point) end)
+      ;; For each line, check if it should be RTL using the predicate.
+      (if (night/line-is-rtl-p)
+          ;; If yes, apply the RTL property.
+          (put-text-property (point) (line-end-position) 'bidi-paragraph-direction 'right-to-left)
+        ;; If no, explicitly remove the property. This is crucial for when
+        ;; you edit a line to no longer be RTL.
+        (put-text-property (point) (line-end-position) 'bidi-paragraph-direction nil))
+      (forward-line 1))))
 ;;;
