@@ -32,12 +32,17 @@
      ("Gemini-2.5-Flash" .
       ,(make-llm-gemini
         :key (night/gemini-key-get)
-        :chat-model "gemini-2.5-flash-preview-04-17"
+        :chat-model "gemini-2.5-flash"
+        :embedding-model "text-embedding-004"))
+     ("Gemini-2.5-Flash-Lite" .
+      ,(make-llm-gemini
+        :key (night/gemini-key-get)
+        :chat-model "gemini-2.5-flash-lite"
         :embedding-model "text-embedding-004"))
      ("Gemini-2.5-Pro" .
       ,(make-llm-gemini
         :key (night/gemini-key-get)
-        :chat-model "gemini-2.5-pro-exp-03-25"
+        :chat-model "gemini-2.5-pro"
         :embedding-model "text-embedding-004"))
      ("OR-Gemini-2-Flash-Thinking-Free" .
       ,(make-llm-openai-compatible
