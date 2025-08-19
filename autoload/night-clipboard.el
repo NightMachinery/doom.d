@@ -1,6 +1,8 @@
 ;;; ~/doom.d/night-clipboard.el -*- lexical-binding: t; -*-
 ;;;
 (require 'clipetty)
+(require 'subr-x) ; For string-empty-p, string-prefix-p
+
 ;; (global-clipetty-mode 1)
 (comment
  ;;[[id:19422cda-0bda-412f-96b4-5026f5563955][spudlyo/clipetty: Manipulate the system (clip)board with (e)macs from a (tty)]]
@@ -116,10 +118,71 @@
       result)))
 (advice-add 'current-kill :around #'night/h-current-kill)
 
-(defun night/org-paste-escaped ()
+(comment
+ (defun night/org-paste-escaped ()
+   (interactive)
+   (night/insert-for-yank
+    (org-escape-code-in-string (current-kill 0)))))
+
+(cl-defun night/org-paste-escaped (&key (smart nil))
+  "Paste text from kill ring, escaping Org syntax characters.
+
+With optional argument :SMART (default nil):
+If :SMART is nil (default) or the point is at the beginning of
+the line, escape the entire string normally using
+`org-escape-code-in-string`.
+
+If :SMART is t and the point is *not* at the beginning of the line,
+try to avoid escaping characters that only have special meaning
+at the start of an Org line (like '-', '+', '*', '#+'). This is
+achieved by temporarily prepending a dummy character ('A') before
+escaping and removing it afterwards. 'A' is assumed not to be
+escaped itself by `org-escape-code-in-string`.
+
+Interactively, call with a prefix argument (e.g., `C-u M-x ...`)
+to enable smart mode (:SMART t). Otherwise, smart mode is disabled."
+  ;; Interactive specification: :smart is nil by default (no prefix arg),
+  ;; :smart is t if called with a prefix arg (current-prefix-arg is non-nil).
+  (interactive (list :smart (not (null current-prefix-arg))))
+  (let ((verbosity-level 0)
+        (text (current-kill 0)))
+    (cond
+     ((string-empty-p text)
+      (message "Kill ring is empty."))
+     (t
+      (let ((escaped-text
+             (cond
+              ;; Not smart mode, or at BOL: escape normally
+              ((or (not smart) (bolp))
+               (when (> verbosity-level 0)
+                 (message "Pasting with standard escape (smart=%s, bolp=%s)." smart (bolp)))
+               (org-escape-code-in-string text))
+              ;; Smart mode and not at BOL: use dummy char trick
+              (t
+               (when (> verbosity-level 0) (message "Pasting mid-line with smart escape."))
+               (let* ((dummy "A") ; Assumed not to escape itself
+                      (text-with-dummy (concat dummy text))
+                      (escaped-with-dummy (org-escape-code-in-string text-with-dummy)))
+                 (cond
+                  ;; Check if the escaped string starts with the dummy char
+                  ((string-prefix-p dummy escaped-with-dummy)
+                   ;; Remove the dummy prefix
+                   (substring escaped-with-dummy (length dummy)))
+                  ;; Fallback: Unexpected result
+                  (t
+                   (when (> verbosity-level 0)
+                     (message "Warning: Smart escape prefix removal failed for '%s'. Pasting potentially over-escaped text."
+                              escaped-with-dummy))
+                   escaped-with-dummy)))))))
+        (night/insert-for-yank escaped-text))))))
+
+(defun night/org-paste-escaped-smart ()
+  "Paste text from kill ring, using smart Org syntax escaping.
+This is a convenience wrapper for `night/org-paste-escaped`
+called with :SMART t. See that function's documentation for details
+on the smart escaping behavior."
   (interactive)
-  (night/insert-for-yank
-   (org-escape-code-in-string (current-kill 0))))
+  (night/org-paste-escaped :smart t))
 
 (defun night/org-paste-escaped-in-md-code-block ()
   (interactive)
@@ -157,7 +220,7 @@
 
 ;;;
 (defun night/org-insert-and-fix-levels (text &optional level)
-  "@seeAlso [agfi:org-header-indent-to-current]"
+  "@seeAlso [agfi:org-header-indent-to-current], [help:org-yank-adjusted-subtrees]"
   (let*
       ((level
         (or level

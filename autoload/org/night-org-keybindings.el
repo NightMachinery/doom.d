@@ -190,6 +190,9 @@ DIRECTION should be 'next or 'previous."
    "TAB" 'org-force-cycle-archived
    ;; (setq org-cycle-open-archived-trees t)  ;; https://emacs.stackexchange.com/questions/64067/expand-an-archived-subtree-with-just-tab/
 
+   ;; :nvig
+   ;; "s-v" #'night/org-paste-escaped-smart
+
    :nvo
    "g8" #'night/avy-goto-org-header
 
