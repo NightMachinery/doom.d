@@ -199,5 +199,7 @@
 
 (hash-table-p org-id-locations)
 ;;;
-
+(org-escape-code-in-string "*hi*")
 ;;;
+(night/org-insert-and-fix-levels
+   (night/pbpaste))
