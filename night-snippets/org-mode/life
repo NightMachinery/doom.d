@@ -9,14 +9,10 @@
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
 - [ ] $0Unsilence your phone
 
-- [ ] Call Mi for Good Morning
-- [ ] Call Mi for Good Night
-
 - [ ] Burning Candle [0/7]
   - [ ] Luna is Alive
   - [ ] Meditation
   - [ ] 30m Exercise
-    - Knee Exercises
     - Wrist Exercises
   - [ ] Teeth [0/3]
     - [ ] Brush [0/2]
@@ -28,15 +24,15 @@
   - [ ] Don't Eat After 11
   - [ ] Sleep Before Midnight
 
-- [ ] Abstinence [0/1]
+- [ ] Abstinence [0/5]
   - [ ] No Mobile (Wrist)
-
-- [ ] Plans & Routines [0/5]
   - [ ] No Rumination
-  - [ ] No Wallowing
   - [ ] No News
   - [ ] No Entertainment
   - [ ] No Sugar
+
+- [ ] Plans & Routines [0/1]
+  - [ ] Nightly Journal
 
 - [ ] Telegram [0/2]
   - [ ] No Excessive Text Chatting
