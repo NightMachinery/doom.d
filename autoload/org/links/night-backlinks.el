@@ -15,5 +15,20 @@
              (night/regex-escape-ugrep query))))
       (funcall backend-fn query)
     (message "No ID found.")))
+(cl-defun night/org-internal-backlink-search
+    (&key
+     (query nil query-set-p)
+     (backend-fn #'swiper-isearch))
+  (interactive)
+  (if-let (
+           (query (cond
+                   (query-set-p query)
+                   (t (night/org-nearest-id-get))))
+           (query
+            (concat
+             "\\[#"
+             (night/regex-escape-ugrep query))))
+      (funcall backend-fn query)
+    (message "No ID found.")))
 ;;;
 (provide 'night-backlinks)

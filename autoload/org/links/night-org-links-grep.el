@@ -47,8 +47,11 @@
     "The directories that `night/org-id-find-grep' searches in.")
 
   (defun night/org-id-find-grep (path &optional search-dirs)
-    (let ((search-dirs
-           night/org-id-grep-search-dirs))
+    (let* (
+           (base-dirs (or search-dirs night/org-id-grep-search-dirs))
+           ;; Normalize paths and ensure PWD is first
+           (pwd (directory-file-name (expand-file-name default-directory)))
+           (search-dirs (delete-dups (cons pwd (mapcar #'expand-file-name base-dirs)))))
       (cl-loop
        for dir in search-dirs
        for found = nil
