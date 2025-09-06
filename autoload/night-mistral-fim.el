@@ -93,8 +93,8 @@
 
   (defun night/h-llm-code-context-bounds (point)
     "Return a cons cell (prefix-start . suffix-end) for the code context around POINT."
-    (let* ((before-point (max (point-min) (- point night/ellama--code-context-before)))
-           (after-point (min (point-max) (+ point night/ellama--code-context-after)))
+    (let* ((before-point (max (point-min) (- point night/ellama--code-context-before-fast)))
+           (after-point (min (point-max) (+ point night/ellama--code-context-after-fast)))
            (start-of-line-before (save-excursion
                                    (goto-char before-point)
                                    (forward-line 0)

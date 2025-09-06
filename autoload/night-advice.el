@@ -1,3 +1,13 @@
+;;;
+(defun night/fn-sans-without-advice (sym)
+  ;; [[id:fadaf9d5-7486-48bb-a6cf-04d38ae58401][Call function without using advices defined on it]]
+  "Get original function defined at SYM, sans advices."
+  (if (advice--p (symbol-function sym))
+      (advice--cd*r (symbol-function sym))
+    (if (fboundp 'ad-get-orig-definition)
+        (ad-get-orig-definition sym)
+      sym)))
+;;;
 (after! org
   (advice-add #'better-jumper-jump-backward :after #'night/screen-center-ni)
   (advice-add #'better-jumper-jump-forward :after #'night/screen-center-ni)

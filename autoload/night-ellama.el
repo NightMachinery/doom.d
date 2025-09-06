@@ -201,9 +201,13 @@
     (rx (minimal-match
          (literal "```") (zero-or-more anything))))
 
-  (defvar night/ellama--code-context-before 1000
+  (defvar night/ellama--code-context-before 10000
     "Number of characters before the point to include as context.")
-  (defvar night/ellama--code-context-after 1000
+  (defvar night/ellama--code-context-after 10000
+    "Number of characters before the point to include as context.")
+  (defvar night/ellama--code-context-before-fast 1000
+    "Number of characters before the point to include as context.")
+  (defvar night/ellama--code-context-after-fast 1000
     "Number of characters after the point to include as context.")
   (defvar night/ellama--code-context-line-tol 200
     "The context will be at line boundaries, unless doing so adds more than the given budget of characters to the prompt.")

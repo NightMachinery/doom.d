@@ -54,6 +54,22 @@
 
 (advice-add #'kill-new :after #'night/h-yank-save)
 ;;;
+(defvar night/advice-kill-new-unescape-org-enabled-p t
+  "Control whether automatic unescape for org-mode is enabled in advice. E.g., `,*` at start of the line becomes `*`.
+This variable can be bound dynamically.")
+
+(defun night/org-copy-escaped ()
+  "Copy the selected region with `night/advice-kill-new-unescape-org-enabled-p' set to nil."
+  (interactive)
+  (let ((night/advice-kill-new-unescape-org-enabled-p nil))
+    (kill-ring-save (region-beginning) (region-end))))
+
+(defun night/org-kill-escaped ()
+  "Kill the selected region with `night/advice-kill-new-unescape-org-enabled-p' set to nil."
+  (interactive)
+  (let ((night/advice-kill-new-unescape-org-enabled-p nil))
+    (kill-region (region-beginning) (region-end))))
+
 (defun night/h-kill-skip-whitespace (orig-fn string &optional rest)
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
   (let* (
@@ -69,6 +85,7 @@
           (progn
             (cond
              ((and
+               night/advice-kill-new-unescape-org-enabled-p
                (equalp major-mode 'org-mode)
                (> (length (split-string string-raw "\n" nil)) 1))
               (org-unescape-code-in-string string))

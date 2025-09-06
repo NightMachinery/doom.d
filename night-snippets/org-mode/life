@@ -7,10 +7,16 @@
 # [[id:256b6907-2829-4274-824d-8c918c9c3567][snippets/life]]
 # --
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
+`(make-string (+ 2 (night/org-current-level)) ?*)` Rumination
+
+`(make-string (+ 2 (night/org-current-level)) ?*)` Plan
+
+`(make-string (+ 2 (night/org-current-level)) ?*)` Life Checklist
 - [ ] $0Unsilence your phone
 
 - [ ] Burning Candle [0/7]
   - [ ] Luna is Alive
+  - [ ] Wash your ears
   - [ ] Meditation
   - [ ] 30m Exercise
     - Wrist Exercises
