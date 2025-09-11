@@ -145,13 +145,15 @@
 
 (defun night/browse-NIGHTDIR ()
   (interactive)
-  (night/browse-dir (getenv "NIGHTDIR"))
-  )
+  (night/browse-dir (getenv "NIGHTDIR")))
+(defun night/browse-NIGHTDIR-prompts ()
+  (interactive)
+  (night/browse-dir
+   (getenv "night_prompt_dir")))
 
 (defun night/browse-DOOMDIR ()
   (interactive)
-  (night/browse-dir (getenv "DOOMDIR"))
-  )
+  (night/browse-dir (getenv "DOOMDIR")))
 
 (defun night/browse-HOME ()
   (interactive)
