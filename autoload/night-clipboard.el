@@ -205,7 +205,7 @@ on the smart escaping behavior."
   (interactive)
   (night/insert-for-yank
    (concat
-    "```org\n"
+    "```\n"
     (org-escape-code-in-string (current-kill 0))
     "```")))
 ;;;
@@ -308,7 +308,8 @@ on the smart escaping behavior."
 (map! :leader
       "," nil)
 
-(night/set-leader-keys ", ," #'night/org-paste-escaped-in-md-code-block)
+(night/set-leader-keys ", ," #'night/org-paste-escaped)
+(night/set-leader-keys ", <" #'night/org-paste-escaped-in-md-code-block)
 (night/set-leader-keys ", h" #'night/paste-yank-html)
 (night/set-leader-keys ", n" #'night/pns)
 (night/set-leader-keys ", M" #'night/html2md)
