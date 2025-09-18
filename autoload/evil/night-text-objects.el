@@ -13,8 +13,10 @@
 
   (targets-define-to pipe "|" nil separator
                      :bind t :keys "|")
+  (targets-define-to cell "\\(?:\"\\|'\\)\\{3\\}.*" nil separator
+                     :bind t :keys "B")
   (targets-define-to cell "\\(?:#\\{2,\\}\\|;\\{3,\\}\\).*" nil separator
-                     :bind t :keys "c") ;; @seeAlso `night/cell-select'
+                     :bind t :keys "c")  ;; @seeAlso `night/cell-select'
 
   (targets-define-to shfun
                      ;; "function "
