@@ -121,10 +121,12 @@
          (dir (or dir default-directory "/"))
          (default-directory dir)
          (query (or query "")))
+    ;;;
+    ;; assert dir exists
+    (unless (file-directory-p dir) (user-error "Directory does not exist: %s" dir))
+;;;
     ;; (counsel-find-file dir)
     ;; (counsel-file-jump "" dir) ; we used this one before using fzf
-
-    ;;;
     (let ((counsel-fzf-cmd
            (concat
             "env FORCE_NONINTERACTIVE=y FZF_DEFAULT_COMMAND=\"fd --no-ignore --hidden --exclude=.git --follow\" fzf_mru_minquery=5 fzf_mru_iteration_count=1 fzf_mru_nostdin=y fzf_mru_context=" (shell-quote-argument dir)
@@ -134,7 +136,7 @@
       ;; --tiebreak=end,length
       ;; @FR Make counsel-fzf sort the entries it feeds to fzf by MRU https://github.com/abo-abo/swiper/issues/2832
       (counsel-fzf query dir ""))
-    ;;;
+;;;
     ))
 
 (defun night/browse-notes (&optional dir)
@@ -146,6 +148,8 @@
 (defun night/browse-NIGHTDIR ()
   (interactive)
   (night/browse-dir (getenv "NIGHTDIR")))
+(night/set-leader-keys " z /" #'night/browse-NIGHTDIR)
+
 (defun night/browse-NIGHTDIR-prompts ()
   (interactive)
   (night/browse-dir
