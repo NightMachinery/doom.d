@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(after! (org evil)
+(after! (org night-org-overrides evil)
   (require 'org-element)
   (require 'subr-x)
   (require 'evil-traces)

@@ -547,3 +547,4 @@ a link."
 ;; [[https://git.savannah.gnu.org/cgit/emacs/org-mode.git/commit/?id=9daad41cc][emacs/org-mode.git - Emacs Org mode]]
 ;; @toFuture Disable our patch if your org includes the above commit.
 ;;;
+(provide 'night-org-overrides)
