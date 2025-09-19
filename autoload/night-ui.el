@@ -429,7 +429,10 @@ Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
 DELAY specifies the duration of the highlight in seconds; defaults to 0.5.
 If DELAY is t, the highlight is persistent until `C-g` is pressed.
 BACKEND specifies the backend to use for flashing; defaults to 'overlay-timer.
-FACE specifies the face to use for flashing; defaults to 'done-face."
+FACE specifies the face to use for flashing; defaults to 'done-face.
+
+See Also:
+- `pulse-momentary-highlight-region'"
   (cl-case backend
     (overlay-timer
      (let ((overlay (make-overlay start end)))
