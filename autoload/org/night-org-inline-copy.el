@@ -1,7 +1,7 @@
 ;;; night-org-inline-copy.el --- DWIM-copy inline (=...=, ~...~) and block contents -*- lexical-binding: t; -*-
 
 ;; Author: You
-;; Version: 0.7
+;; Version: 0.8
 ;; Package-Requires: ((emacs "27.1") (org "9.1"))
 ;; Keywords: outlines, convenience
 ;; URL: https://example.invalid/night-org-inline-copy
@@ -16,12 +16,14 @@
 ;; can call `night/org-inline-copy-dwim` interactively or wire it into your
 ;; own DWIM command.
 ;;
-;; Key refactor notes (v0.7):
-;; - Centralized “compute payload + flash range” for inline & blocks
-;; - Single copy+flash function with optional trimming
-;; - Kept fixed-width semantics (payload via :value, flash actual region)
-;; - Same user options and surface API
-
+;; v0.8 highlights:
+;; - Add `night/org-inline-copy-stop-lineage-from`: object types (e.g. `link`)
+;;   that should *not* escalate to a block ancestor.
+;; - Inline (configured) and stop-types take precedence; only climb when neither
+;;   applies.
+;; - Keep centralized “compute payload + flash range” path and fixed-width
+;;   semantics (payload via :value, flash actual region).
+;;
 ;;; Code:
 
 (after! (org night-org-overrides evil)
@@ -55,6 +57,45 @@
                            (const verse-block)
                            (const center-block)
                            (const fixed-width)))
+    :group 'night/org-inline-copy)
+
+  (defcustom night/org-inline-copy-stop-lineage-from
+    '(link
+      inline-src-block
+      ;; latex-fragment
+      footnote-reference
+      citation
+      citation-reference
+      timestamp
+      radio-target
+      target
+      ;; bold
+      ;; italic
+      ;; underline
+      ;; strike-through
+      ;; subscript
+      ;; superscript
+      ;; entity
+      )
+    "Org object types that should *not* be escalated to a block ancestor.
+When point is inside one of these, keep the local context and do
+not climb with `org-element-lineage`."
+    :type '(repeat (choice (const link)
+                           (const inline-src-block)
+                           (const latex-fragment)
+                           (const footnote-reference)
+                           (const citation)
+                           (const citation-reference)
+                           (const timestamp)
+                           (const radio-target)
+                           (const target)
+                           (const bold)
+                           (const italic)
+                           (const underline)
+                           (const strike-through)
+                           (const subscript)
+                           (const superscript)
+                           (const entity)))
     :group 'night/org-inline-copy)
 
   (defcustom night/org-inline-copy-trim-blocks t
@@ -150,7 +191,10 @@ flash range matches buffer contents (so visuals reflect the real region)."
                           (or (and cb ce (buffer-substring-no-properties cb ce))
                               (org-element-property :value ctx)))))
           (when (and (stringp payload))
-            (list :payload payload :flash (and cb ce (cons cb ce))))))
+            (list :payload (if night/org-inline-copy-trim-blocks
+                               (string-trim-right payload)
+                             payload)
+                  :flash (and cb ce (cons cb ce))))))
 
        (t nil))))
 
@@ -170,11 +214,7 @@ so that callers can choose to suppress the original DWIM."
                (range   (plist-get info :flash)))
           (if (and payload (> (length payload) 0))
               (progn
-                (night/org-inline-copy--kill
-                 payload
-                 ;; Only trim for blocks (inline markers rarely include trailing NLs)
-                 (memq (org-element-type ctx) night/org-inline-copy-blocks)
-                 )
+                (night/org-inline-copy--kill payload nil)
                 (when (consp range)
                   (night/org-inline-copy--flash (car range) (cdr range))))
             (message "Block is empty; nothing to copy."))
@@ -186,8 +226,13 @@ so that callers can choose to suppress the original DWIM."
     "Copy inline or block content at point if it matches user prefs.
 Return non-nil if we handled the situation (even if nothing was copied)."
     (let* ((ctx0 (org-element-context))
-           ;; If inside a paragraph within a block, climb to the block.
-           (ctx  (or (org-element-lineage ctx0 night/org-inline-copy-blocks t) ctx0))
+           (typ0 (and ctx0 (org-element-type ctx0)))
+           ;; Prefer configured inline types first; then stop list; only climb otherwise.
+           (ctx  (cond
+                  ((memq typ0 night/org-inline-copy-inline)             ctx0)
+                  ((memq typ0 night/org-inline-copy-stop-lineage-from)  ctx0)
+                  (t (or (org-element-lineage ctx0 night/org-inline-copy-blocks t)
+                         ctx0))))
            (typ  (and ctx (org-element-type ctx))))
       (cond
        ((memq typ night/org-inline-copy-inline)
@@ -222,6 +267,7 @@ Otherwise, do nothing (return nil). Intended for use as a DWIM action."
 
   ;; Only advise if Doom's DWIM exists.
   ;; (when (fboundp '+org/dwim-at-point))
+  ;; Update: Actually advise even if it doesn't exist yet, as I think advices work this way.
   (advice-add '+org/dwim-at-point :around #'night/org-inline-copy--around-dwim)
 
   (provide 'night-org-inline-copy)
