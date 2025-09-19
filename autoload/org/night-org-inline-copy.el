@@ -1,7 +1,7 @@
 ;;; night-org-inline-copy.el --- DWIM-copy inline (=...=, ~...~) and block contents -*- lexical-binding: t; -*-
 
 ;; Author: You
-;; Version: 0.6
+;; Version: 0.7
 ;; Package-Requires: ((emacs "27.1") (org "9.1"))
 ;; Keywords: outlines, convenience
 ;; URL: https://example.invalid/night-org-inline-copy
@@ -16,21 +16,18 @@
 ;; can call `night/org-inline-copy-dwim` interactively or wire it into your
 ;; own DWIM command.
 ;;
-;; Highlights:
-;; - Inline objects: verbatim (=...=) and code (~...~)
-;; - Blocks (configurable defaults): example/src/export/special/dynamic/comment,
-;;   quote/verse/center, and fixed-width
-;; - First tries :contents-begin / :contents-end when available; otherwise
-;;   falls back to robust fence detection (#+BEGIN…/#+END… or #+BEGIN:/#+END:)
-;; - Fixed-width: copies payload **without** leading colons (via :value),
-;;   but flashes the actual buffer region
-;; - Gentle visual flash of the copied region
+;; Key refactor notes (v0.7):
+;; - Centralized “compute payload + flash range” for inline & blocks
+;; - Single copy+flash function with optional trimming
+;; - Kept fixed-width semantics (payload via :value, flash actual region)
+;; - Same user options and surface API
 
 ;;; Code:
 
-(after! org
+(after! (org evil)
   (require 'org-element)
   (require 'subr-x)
+  (require 'evil-traces)
 
   (defgroup night/org-inline-copy nil
     "Copy inline Org contents when triggering DWIM."
@@ -65,34 +62,17 @@
     :type 'boolean
     :group 'night/org-inline-copy)
 
+  ;; ---------- Visuals ----------
+
   (defun night/org-inline-copy--flash (beg end)
     "Briefly highlight region from BEG to END."
-    (cond
-     ((fboundp 'night/flash-region)
-      (ignore-errors
-        (night/flash-region beg end :delay 0.1 :face 'evil-traces-copy-preview)))
-     ((fboundp 'pulse-momentary-highlight-region)
-      (ignore-errors
-        (pulse-momentary-highlight-region beg end)))
-     (t
-      (let ((ov (make-overlay beg end)))
-        (overlay-put ov 'face 'highlight)
-        (run-with-timer 0.15 nil #'delete-overlay ov)))))
+    (night/flash-region beg end :delay 0.1 :face 'evil-traces-copy-preview))
 
-  (defun night/org-inline-copy--copy-inline (ctx)
-    "Copy inline object value from CTX (verbatim/code)."
-    (let ((val (org-element-property :value ctx)))
-      (if (not val)
-          (message "No value found for copying!")
-        (kill-new val)
-        (let* ((b (org-element-property :begin ctx))
-               (e (org-element-property :end ctx))
-               (pb (or (org-element-property :post-blank ctx) 0))
-               ;; Markers for =...= or ~...~ are one char on each side:
-               (ib (1+ b))
-               (ie (- e pb 1)))
-          (when (< ib ie)
-            (night/org-inline-copy--flash ib ie))))))
+  (defun night/org-inline-copy--kill (string &optional trimp)
+    "Put STRING on the kill-ring; when TRIMP is non-nil, trim trailing newlines."
+    (kill-new (if trimp (string-trim-right string) string)))
+
+  ;; ---------- Bounds helpers ----------
 
   (defun night/org-inline-copy--fence-ranges (b e)
     "Best-effort (CB . CE) inside Org BEGIN/END fences between B and E.
@@ -125,59 +105,95 @@ Otherwise return nil."
            (pb (or (org-element-property :post-blank ctx) 0))
            (typ (org-element-type ctx)))
       (cond
-       ;; 1) Explicit contents bounds provided by Org
+       ;; 1) Org-provided content bounds
        ((and (integerp cb) (integerp ce) (< cb ce))
         (cons cb ce))
-
-       ;; 2) Try BEGIN/END fence heuristic (covers example/src/export/special/dynamic/comment)
-       ((let ((pair (night/org-inline-copy--fence-ranges b e)))
-          (and pair pair)))
-
-       ;; 3) Fixed-width: no fences; use raw element bounds minus post-blank
+       ;; 2) Fences
+       ((night/org-inline-copy--fence-ranges b e))
+       ;; 3) Fixed-width: raw element minus post-blank
        ((eq typ 'fixed-width)
         (let ((cb2 b) (ce2 (- e pb)))
           (and (< cb2 ce2) (cons cb2 ce2))))
-
-       ;; No luck
        (t nil))))
 
-  (defun night/org-inline-copy--copy-block (ctx)
-    "Copy block contents from CTX.
-Uses :contents-begin/:contents-end when available; otherwise,
-falls back to fence-based ranges or (for fixed-width) the raw element."
-    (let* ((typ    (org-element-type ctx))
-           (bounds (night/org-inline-copy--contents-bounds ctx))
-           (cb     (car bounds))
-           (ce     (cdr bounds))
-           ;; Choose payload for the kill ring:
-           ;; - For fixed-width, always use :value to drop leading colons.
-           ;; - Otherwise, prefer the buffer substring so flashing matches exactly.
-           (payload (if (eq typ 'fixed-width)
-                        (org-element-property :value ctx)
-                      (or (and cb ce (buffer-substring-no-properties cb ce))
-                          (org-element-property :value ctx)))))
-      (if (and payload (> (length payload) 0))
-          (progn
-            (kill-new (if night/org-inline-copy-trim-blocks
-                          (string-trim-right payload)
-                        payload))
-            (when (and cb ce) (night/org-inline-copy--flash cb ce)))
-        (message "Block is empty; nothing to copy."))))
+  ;; ---------- Central “compute” path ----------
+
+  (defun night/org-inline-copy--compute (ctx)
+    "Compute payload and flash range for CTX.
+Returns a plist: (:payload STRING :flash (BEG . END)) or nil.
+For fixed-width, payload is from :value (strips leading colons) while the
+flash range matches buffer contents (so visuals reflect the real region)."
+    (let* ((typ (org-element-type ctx))
+           (b   (org-element-property :begin ctx))
+           (e   (org-element-property :end   ctx))
+           (pb  (or (org-element-property :post-blank ctx) 0)))
+      (cond
+       ;; Inline objects
+       ((memq typ night/org-inline-copy-inline)
+        (let* ((val (org-element-property :value ctx))
+               ;; markers are one char on each side (= or ~)
+               (ib  (1+ b))
+               (ie  (- e pb 1)))
+          (when (and val (integerp ib) (integerp ie) (< ib ie))
+            (list :payload val :flash (cons ib ie)))))
+
+       ;; Blocks
+       ((memq typ night/org-inline-copy-blocks)
+        (let* ((bounds  (night/org-inline-copy--contents-bounds ctx))
+               (cb      (car bounds))
+               (ce      (cdr bounds))
+               ;; payload choice:
+               ;; - fixed-width => :value (drop leading colons)
+               ;; - others => prefer exact buffer slice so flash matches precisely
+               (payload (if (eq typ 'fixed-width)
+                            (org-element-property :value ctx)
+                          (or (and cb ce (buffer-substring-no-properties cb ce))
+                              (org-element-property :value ctx)))))
+          (when (and (stringp payload))
+            (list :payload payload :flash (and cb ce (cons cb ce))))))
+
+       (t nil))))
+
+  (defun night/org-inline-copy--copy-dispatch (ctx)
+    "Copy contents computed from CTX and flash the range when available.
+Always returns non-nil when CTX belongs to configured inline/block sets,
+so that callers can choose to suppress the original DWIM."
+    (let ((info (night/org-inline-copy--compute ctx)))
+      (cond
+       ((not info)
+        ;; We matched a supported element but couldn't compute a payload.
+        ;; Keep behavior gentle: just say nothing to copy.
+        (message "Nothing to copy.")
+        t)
+       (t
+        (let* ((payload (plist-get info :payload))
+               (range   (plist-get info :flash)))
+          (if (and payload (> (length payload) 0))
+              (progn
+                (night/org-inline-copy--kill
+                 payload
+                 ;; Only trim for blocks (inline markers rarely include trailing NLs)
+                 (memq (org-element-type ctx) night/org-inline-copy-blocks)
+                 )
+                (when (consp range)
+                  (night/org-inline-copy--flash (car range) (cdr range))))
+            (message "Block is empty; nothing to copy."))
+          t)))))
+
+  ;; ---------- Entry points ----------
 
   (defun night/org-inline-copy--maybe-copy-at-point ()
     "Copy inline or block content at point if it matches user prefs.
-Return non-nil if something was copied."
+Return non-nil if we handled the situation (even if nothing was copied)."
     (let* ((ctx0 (org-element-context))
-           ;; If we're inside a paragraph within a block, climb to the block:
-           (ctx (or (org-element-lineage ctx0 night/org-inline-copy-blocks t) ctx0))
-           (typ (and ctx (org-element-type ctx))))
+           ;; If inside a paragraph within a block, climb to the block.
+           (ctx  (or (org-element-lineage ctx0 night/org-inline-copy-blocks t) ctx0))
+           (typ  (and ctx (org-element-type ctx))))
       (cond
        ((memq typ night/org-inline-copy-inline)
-        (night/org-inline-copy--copy-inline ctx)
-        t)
+        (night/org-inline-copy--copy-dispatch ctx))
        ((memq typ night/org-inline-copy-blocks)
-        (night/org-inline-copy--copy-block ctx)
-        t)
+        (night/org-inline-copy--copy-dispatch ctx))
        (t nil))))
 
   (defun night/org-inline-copy-dwim (&optional _arg)
@@ -187,7 +203,8 @@ Otherwise, do nothing (return nil). Intended for use as a DWIM action."
     (when (derived-mode-p 'org-mode)
       (night/org-inline-copy--maybe-copy-at-point)))
 
-  ;; Advice Doom's +org/dwim-at-point if available, otherwise do nothing.
+  ;; ---------- Doom integration ----------
+
   (defun night/org-inline-copy--around-dwim (orig-fn &rest args)
     "Around advice to inject copying behavior into ORIG-FN with ARGS."
     (if (derived-mode-p 'org-mode)
@@ -204,8 +221,8 @@ Otherwise, do nothing (return nil). Intended for use as a DWIM action."
       (apply orig-fn args)))
 
   ;; Only advise if Doom's DWIM exists.
-  (when (fboundp '+org/dwim-at-point)
-    (advice-add '+org/dwim-at-point :around #'night/org-inline-copy--around-dwim))
+  ;; (when (fboundp '+org/dwim-at-point))
+  (advice-add '+org/dwim-at-point :around #'night/org-inline-copy--around-dwim)
 
   (provide 'night-org-inline-copy)
   )
