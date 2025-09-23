@@ -89,7 +89,8 @@ Skip buffers considered as popups until a suitable buffer is found."
 (map!
  :nv
  "[[" #'night/switch-to-last-buffer)
-(map! :map (dired-mode-map
+(map! :map (org-mode-map
+            dired-mode-map
             evil-tex-mode-map)
  :nv
  "[[" #'night/switch-to-last-buffer)
