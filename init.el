@@ -185,3 +185,58 @@
        :config
        ;;literate
        (default +bindings )) ;; +smartparens
+
+;;;
+(defvar +doom-straight-retries 3
+  "How many times to retry VC operations.")
+
+(defvar +doom-straight-retry-methods
+  '(clone
+    fetch
+    fetch-from-remote
+    fetch-from-upstream
+    merge-from-remote
+    merge-from-upstream
+    check-out-commit)
+  "Which `straight-vc' methods to retry, if they fail.")
+
+(defadvice! doom-straight--retry-a (fn method type &rest args)
+  :around #'straight-vc
+  (if (or (not noninteractive)
+          (memq type '(nil built-in))
+          (not (memq method +doom-straight-retry-methods)))
+      (apply fn method type args)
+    (let ((n +doom-straight-retries)
+          res)
+      (while (> n 0)
+        (condition-case-unless-debug err
+            (setq res (apply fn method type args)
+                  n 0)
+          (error
+           (cl-decf n)
+           (unless (> n 0)
+             (signal (car err) (cdr err)))
+           (print! (warn "Failed %S %S operation, retrying (attempt %d/%d)...")
+                   type method n
+                   +doom-straight-retries))))
+      res)))
+
+;; HACK: In some edge cases, git silently fails to clone a package without
+;;   triggering an catchable error (and thus evading the auto-retry logic in
+;;   `doom-straight--retry-a') and leaves behind an empty directory. This
+;;   detects this and forces straight to emit a catchable error.
+(defadvice! doom-straight--clone-emit-error-a (fn recipe)
+  :around #'straight-vc-clone
+  (prog1 (funcall fn recipe)
+    (when noninteractive
+      (straight--with-plist recipe (package type local-repo)
+        (let* ((local-repo (or local-repo package))
+               (repo-dir (straight--repos-dir local-repo))
+               (build-dir (straight--build-dir local-repo)))
+          (when (file-in-directory-p repo-dir straight-base-dir)
+            (unless (or (file-directory-p (doom-path repo-dir ".git"))
+                        (file-exists-p (doom-path repo-dir ".straight-commit")))
+              (delete-directory repo-dir t)
+              (delete-directory build-dir t)
+              (error "Failed to clone %S..." package))))))))
+;;;
