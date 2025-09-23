@@ -27,7 +27,11 @@
     (night/org-latex-preview-buffer))
 
   (when (fboundp #'night/org-show-link-display)
-    (night/org-show-link-display))
+    ;; Only call if `#+STARTUP: descriptivelinks` option is not in the file:
+    ;; Update: It seems this is no longer needed.
+    ;; Even with this disabled, the above startup option does not correctly set [help:org-link-descriptive].
+    (when nil
+      (night/org-show-link-display)))
   (night/highlight-background)
 
   (run-with-timer

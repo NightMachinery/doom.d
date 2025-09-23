@@ -44,10 +44,11 @@
     (night/org-show-link-display :hide t :default default))
 
   (comment
-   ;; @upstreamRegression [jalali:1401/09/07] [help:org-toggle-link-display] seems to need to be called in org buffers now, so we can't just call it here. Added to [help:night/org-startup] instead.
+   ;; @upstreamRegression [jalali:1401/09/07] [help:org-toggle-link-display] seems to need to be called in org buffers now, so we can't just call it here. Added to [help:night/org-interactive-startup] instead.
+   )
+  ;; Update [jalali:1404/06/30/22:09]: reverted this and disabled the line in night/org-interactive-startup
    (night/org-show-link-display)
    ;; this will cause the links to be displayed fully on startup:
-   )
 
 ;;;
   ;; (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)

@@ -14,7 +14,7 @@
 
   (setq org-fold-core-style 'overlays)
 
-  (defun org-activate-links (limit)
+  (defun night/org-activate-links (limit)
     "Add link properties to links.
 This includes angle, plain, and bracket links."
     (catch :exit
@@ -74,10 +74,13 @@ This includes angle, plain, and bracket links."
                 (remove-text-properties start end '(invisible nil))
                 (ov-clear 'ov-org-link t start end )
                 (let ((hidden
-                       (append `(invisible
-                                 ,(or (org-link-get-parameter type :display)
-                                      'org-link))
-                               properties)))
+                       (if org-link-descriptive
+		         (progn
+                           (append `(invisible
+			             ,(or (org-link-get-parameter type :display)
+				          'org-link))
+			           properties))
+                       properties)))
                   (add-text-properties start visible-start hidden)
 
 ;;; @monkeyPatched
@@ -130,5 +133,7 @@ This includes angle, plain, and bracket links."
                 (when (functionp f)
                   (funcall f start end path (eq style 'bracket))))
               (throw :exit t)))))       ;signal success
-      nil)))
+      nil))
+  (advice-add 'org-activate-links :override 'night/org-activate-links)
+)
 ;;;
