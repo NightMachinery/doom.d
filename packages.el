@@ -345,6 +345,8 @@
 
 (unpin! gptel llm ellama copilot)
 ;;;
+(package! osx-plist)
+;;;
 (package! sdcv)
 ;;;
 (package! compat)
