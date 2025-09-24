@@ -141,6 +141,9 @@
 (add-hook 'markdown-mode-hook 'night/enable-bidirectional)
 (add-hook 'LaTeX-mode-hook 'night/enable-bidirectional)
 (add-hook 'LaTeX-mode-hook 'night/enable-bidirectional-extras)
+
+;; Enabling RTL for magit will cause the diff coloring to go somewhat off. (E.g., removed characters are supposed to be colored more darkly, but on RTL lines, this doesn't happen.)
+;; (add-hook 'magit-mode-hook 'night/enable-bidirectional)
 ;;;
 (defun night/evil-line-move-with-bidi-workaround (count)
   "Move the cursor COUNT lines, considering the bidirectional paragraph direction."
