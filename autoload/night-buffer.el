@@ -91,7 +91,8 @@ Skip buffers considered as popups until a suitable buffer is found."
  "[[" #'night/switch-to-last-buffer)
 (map! :map (org-mode-map
             dired-mode-map
-            evil-tex-mode-map)
+            evil-tex-mode-map
+            magit-mode-map)
  :nv
  "[[" #'night/switch-to-last-buffer)
 ;;;
