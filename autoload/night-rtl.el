@@ -241,17 +241,96 @@ Bug: This failed when the document started with an empty line and then a backsla
         (put-text-property (point) (line-end-position) 'bidi-paragraph-direction nil))
       (forward-line 1))))
 ;;;
-;; Make minibuffer inherit the input method from the buffer that opened it
-(defun night/minibuffer-inherit-input-method ()
-  "Make the minibuffer use the IM from the calling buffer (works with Evil)."
-  (let* ((win (minibuffer-selected-window))
-         (buf (when (window-live-p win) (window-buffer win)))
-         (im  (or (and buf (buffer-local-value 'current-input-method buf))
-                  (and buf (buffer-local-value 'evil-input-method buf)))))
-    ;; (message "from %s: current=%s evil=%s"
-    ;;          buf
-    ;;          (and buf (buffer-local-value 'current-input-method buf))
-    ;;          (and buf (buffer-local-value 'evil-input-method buf)))
-    (when im (set-input-method im))))
-(add-hook 'minibuffer-setup-hook #'night/minibuffer-inherit-input-method)
+;; * Targeted minibuffer input method inheritance
+(defcustom night/minibuffer-im-inherit-commands
+  '(
+    consult-line
+    ;;;
+    ;; consult--grep
+    night/search-project
+    night/search-dir-inherit-input-method
+    ;;;
+    evil-ex-search-forward)
+  "Commands for which the minibuffer should inherit the caller buffer's input method."
+  :type '(repeat function))
+
+(defcustom night/minibuffer-im-inherit-force-disabled-commands
+  '()
+  "Commands for which input-method inheritance is forcefully disabled."
+  :type '(repeat function))
+
+(defvar night/h-im-inherit-active nil) ; nil | t | 'force-disabled
+(defvar night/h-im-inherit-advised-commands nil)
+
+(defun night/h-minibuffer-inherit-input-method ()
+  "Copy input method from the calling buffer into the minibuffer when enabled."
+  (let ((verbosity-level 0))
+    (cond
+     ((eq night/h-im-inherit-active t)
+      (condition-case err
+          (let* ((win (minibuffer-selected-window))
+                 (buf (and win (window-live-p win) (window-buffer win)))
+                 (im  (and buf
+                           (or (buffer-local-value 'current-input-method buf)
+                               (and (boundp 'evil-input-method)
+                                    (buffer-local-value 'evil-input-method buf))))))
+            (cond
+             (im
+              (set-input-method im)
+              (when (> verbosity-level 0)
+                (message "night: inherited input method %s" im)))))
+        (error (message "night: IM inheritance failed: %S" err))))
+     ((eq night/h-im-inherit-active 'force-disabled)
+      (when (> verbosity-level 0)
+        (message "night: IM inheritance force-disabled")))
+     (t nil))))
+
+(defun night/h-im-inherit-around (orig-fn &rest args)
+  "Around-advice: control inheritance state for this minibuffer session."
+  (let* ((cmd this-command)
+         (night/h-im-inherit-active
+          (cond
+           ((eq night/h-im-inherit-active 'force-disabled) 'force-disabled)
+           ((memq cmd night/minibuffer-im-inherit-force-disabled-commands) 'force-disabled)
+           (t t))))
+    (apply orig-fn args)))
+
+(defun night/h-reset-im-inherit-advice ()
+  "Remove advice from previously advised commands."
+  (let ((verbosity-level 0))
+    (condition-case err
+        (progn
+          (dolist (cmd night/h-im-inherit-advised-commands)
+            (advice-remove cmd #'night/h-im-inherit-around))
+          (setq night/h-im-inherit-advised-commands nil))
+      (error (message "night: reset advice error: %S" err)))))
+
+(defun night/enable-minibuffer-im-inherit ()
+  "Enable targeted input-method inheritance.
+Safe to call before the commands are defined; advice attaches to the symbols."
+  (let ((verbosity-level 0))
+    (condition-case err
+        (progn
+          (add-hook 'minibuffer-setup-hook #'night/h-minibuffer-inherit-input-method)
+          (night/h-reset-im-inherit-advice)
+          (let* ((targets (delete-dups
+                           (append night/minibuffer-im-inherit-commands
+                                   night/minibuffer-im-inherit-force-disabled-commands
+                                   nil))))
+            (dolist (cmd targets)
+              (advice-add cmd :around #'night/h-im-inherit-around)
+              (push cmd night/h-im-inherit-advised-commands))))
+      (error (message "night: enable failed: %S" err)))))
+
+(defun night/disable-minibuffer-im-inherit ()
+  "Disable targeted inheritance and remove all advice."
+  (let ((verbosity-level 0))
+    (condition-case err
+        (progn
+          (remove-hook 'minibuffer-setup-hook #'night/h-minibuffer-inherit-input-method)
+          (night/h-reset-im-inherit-advice))
+      (error (message "night: disable failed: %S" err)))))
+
+;; (night/disable-minibuffer-im-inherit)
+(night/enable-minibuffer-im-inherit)
 ;;;

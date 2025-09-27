@@ -110,7 +110,12 @@ This variable can be bound dynamically.")
        #'consult--ripgrep-make-builder
        paths
        query)))))
+
 (defalias 'night/search-dir-consult 'night/search-dir)
+
+;; This way, `night/search-dir-inherit-input-method' can be advised independently of `night/search-dir'.
+(defalias 'night/search-dir-inherit-input-method 'night/search-dir)
+
 
 (advice-add 'counsel-rg :around #'night/h-advice-ivy-calling)
 

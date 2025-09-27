@@ -203,7 +203,8 @@ move COUNT - 1 screen lines forward first."
         "s h f" #'night/hlt-counsel-face
 
         "s d" ;; overrides @doom's default search pwd function
-        #'night/search-dir
+        #'night/search-dir-inherit-input-method
+        ;; #'night/search-dir
         ;; #'night/search-dir-limited
         "s D" #'night/search-doom
         "s a" #'night/agsi
