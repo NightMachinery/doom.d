@@ -241,3 +241,17 @@ Bug: This failed when the document started with an empty line and then a backsla
         (put-text-property (point) (line-end-position) 'bidi-paragraph-direction nil))
       (forward-line 1))))
 ;;;
+;; Make minibuffer inherit the input method from the buffer that opened it
+(defun night/minibuffer-inherit-input-method ()
+  "Make the minibuffer use the IM from the calling buffer (works with Evil)."
+  (let* ((win (minibuffer-selected-window))
+         (buf (when (window-live-p win) (window-buffer win)))
+         (im  (or (and buf (buffer-local-value 'current-input-method buf))
+                  (and buf (buffer-local-value 'evil-input-method buf)))))
+    ;; (message "from %s: current=%s evil=%s"
+    ;;          buf
+    ;;          (and buf (buffer-local-value 'current-input-method buf))
+    ;;          (and buf (buffer-local-value 'evil-input-method buf)))
+    (when im (set-input-method im))))
+(add-hook 'minibuffer-setup-hook #'night/minibuffer-inherit-input-method)
+;;;
