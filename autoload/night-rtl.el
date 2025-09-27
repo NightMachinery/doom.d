@@ -97,8 +97,12 @@
 
 (defun night/h-latex-after-save ()
   (interactive)
-  ;; (z-async t h-seminar-compile-emacs)
-  ;; @done Delete the above line, we no longer need it.
+  ;; When in latex major mode:
+  (when (derived-mode-p 'latex-mode)
+    ;; (z-async t h-seminar-compile-emacs)
+    (z-async t h-thesis-build-emacs)
+    ;; @todo Delete the above line, we no longer need it.
+    )
   )
 (defun night/latex-rtl-opinionated ()
   "You need to activate this yourself manually if you want it."
@@ -141,6 +145,7 @@
 (add-hook 'markdown-mode-hook 'night/enable-bidirectional)
 (add-hook 'LaTeX-mode-hook 'night/enable-bidirectional)
 (add-hook 'LaTeX-mode-hook 'night/enable-bidirectional-extras)
+(add-hook 'LaTeX-mode-hook 'night/latex-rtl-opinionated)
 
 ;; Enabling RTL for magit will cause the diff coloring to go somewhat off. (E.g., removed characters are supposed to be colored more darkly, but on RTL lines, this doesn't happen.)
 ;; (add-hook 'magit-mode-hook 'night/enable-bidirectional)
