@@ -7,7 +7,7 @@
 stream_p = True
 res = openai_chat_complete(
     ##
-    # model="GAI:gemini-2.5-flash",
+    # model="GAI:gemini-flash-latest",
     model="GAI:gemini-2.5-pro",
     ##
     messages=[
