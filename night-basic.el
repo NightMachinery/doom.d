@@ -1,4 +1,9 @@
 ;;; ~/doom.d/night-basic.el -*- lexical-binding: t; -*-
+(defgroup night nil
+  "Customizations for Night utilities."
+  :group 'tools
+  :prefix "night/")
+;;;
 (setenv "SHELL" "/bin/bash")
 
 (setq shell-file-name "/bin/bash")
