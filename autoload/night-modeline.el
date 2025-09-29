@@ -93,6 +93,8 @@
          (RHS
           '(
             input-method
+            github
+            vcs
             compilation
             objed-state
             misc-info
@@ -102,7 +104,6 @@
             irc
             mu4e
             gnus
-            github
             debug
             repl
             lsp
@@ -111,7 +112,6 @@
             buffer-encoding
             major-mode
             process
-            vcs
             check
             time
             ))
