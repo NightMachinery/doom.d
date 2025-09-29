@@ -354,6 +354,9 @@
 ;;;
 (package! exec-path-from-shell)
 ;;;
+;; (package! pinentry)
+;; [[id:009289d7-7de0-4d0b-b43f-b22dfdf0ef1f][gpg: use emacs' minibuffer for passphrase entry (pinentry)]]
+;;;
 (package! nerd-icons)
 ;;;
 (disable-packages!
