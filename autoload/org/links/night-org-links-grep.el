@@ -48,6 +48,8 @@
 
   (defun night/org-id-find-grep (path &optional search-dirs)
     (let* (
+           ;; Split path to ignore ::... suffix
+           (id (car (split-string path "::")))
            (base-dirs (or search-dirs night/org-id-grep-search-dirs))
            ;; Normalize paths and ensure PWD is first
            (pwd (directory-file-name (expand-file-name default-directory)))
@@ -59,7 +61,7 @@
        (let* ((query
                (concat
                 "^\\s*:[iI][dD]:\\s+"
-                (night/regex-escape-ugrep path)
+                (night/regex-escape-ugrep id)
                 "\\s*$"
                 ))
               (ugrep-command
