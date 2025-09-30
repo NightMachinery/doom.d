@@ -29,119 +29,129 @@
   (setopt
    ellama-providers
    `(
-     ("Gemini-2.5-Flash" .
+     ("Gemini-flash-latest" .
       ,(make-llm-gemini
         :key (night/gemini-key-get)
-        :chat-model "gemini-2.5-flash"
+        :chat-model "gemini-flash-latest"
         :embedding-model "text-embedding-004"))
-     ("Gemini-2.5-Flash-Lite" .
+     ("Gemini-flash-lite-latest" .
       ,(make-llm-gemini
         :key (night/gemini-key-get)
-        :chat-model "gemini-2.5-flash-lite"
+        :chat-model "gemini-flash-lite-latest"
         :embedding-model "text-embedding-004"))
+     ;; ("Gemini-2.5-Flash" .
+     ;;  ,(make-llm-gemini
+     ;;    :key (night/gemini-key-get)
+     ;;    :chat-model "gemini-2.5-flash"
+     ;;    :embedding-model "text-embedding-004"))
+     ;; ("Gemini-2.5-Flash-Lite" .
+     ;;  ,(make-llm-gemini
+     ;;    :key (night/gemini-key-get)
+     ;;    :chat-model "gemini-2.5-flash-lite"
+     ;;    :embedding-model "text-embedding-004"))
      ("Gemini-2.5-Pro" .
       ,(make-llm-gemini
         :key (night/gemini-key-get)
         :chat-model "gemini-2.5-pro"
         :embedding-model "text-embedding-004"))
-     ("OR-Gemini-2-Flash-Thinking-Free" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "google/gemini-2.0-flash-thinking-exp:free"
-        :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
-        ))
-     ("OR-Gemini-2-Flash-Thinking-Free" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "google/gemini-2.0-flash-thinking-exp:free"
-        :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
-        ))
-     ("GPT4Omni-Mini" .
-      ,(make-llm-openai
-        :key (night/openai-key-get)
-        :chat-model "gpt-4o-mini"
-        :embedding-model "gpt-4o-mini"))
-     ("GPT4Omni" .
-      ,(make-llm-openai
-        :key (night/openai-key-get)
-        :chat-model "gpt-4o"
-        :embedding-model "gpt-4o"))
-     ("OR-Claude3.5-Sonnet" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "anthropic/claude-3.5-sonnet:beta"
-        :embedding-model "anthropic/claude-3.5-sonnet:beta"
-        ))
-     ("GQ-Llama3" .
-      ,(make-llm-openai-compatible
-        :key (night/groq-key-get)
-        :url "https://api.groq.com/openai/v1"
-        :chat-model "llama3-70b-8192"
-        :embedding-model "llama3-70b-8192"))
-     ("OR-Llama3" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "meta-llama/llama-3-70b-instruct:nitro"
-        :embedding-model "meta-llama/llama-3-70b-instruct:nitro"
-        ))
-     ("OR-Gemini-1.5" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "google/gemini-pro-1.5"
-        :embedding-model "google/gemini-pro-1.5"
-        ))
-     ("OR-Gemini-2.5-Free" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "google/gemini-2.5-pro-exp-03-25:free"
-        :embedding-model "google/gemini-2.5-pro-exp-03-25:free"
-        ))
-     ("OR-Mixtral-8x22B" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "mistralai/mixtral-8x22b-instruct"
-        :embedding-model "mistralai/mixtral-8x22b-instruct"
-        ))
-     ("OR-WizardLM2" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "microsoft/wizardlm-2-8x22b:nitro"
-        :embedding-model "microsoft/wizardlm-2-8x22b:nitro"
-        ))
-     ("OR-Claude3-Haiku" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "anthropic/claude-3-haiku:beta"
-        :embedding-model "anthropic/claude-3-haiku:beta"
-        ))
-     ("OR-Claude3-Sonnet" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "anthropic/claude-3-sonnet:beta"
-        :embedding-model "anthropic/claude-3-sonnet:beta"
-        ))
-     ("OR-Claude3-Opus" .
-      ,(make-llm-openai-compatible
-        :key (night/openrouter-key-get)
-        :url "https://openrouter.ai/api/v1"
-        :chat-model "anthropic/claude-3-opus:beta"
-        :embedding-model "anthropic/claude-3-opus:beta"
-        ))
-     ("GPT4-Turbo" .
-      ,(make-llm-openai
-        :key (night/openai-key-get)
-        :chat-model "gpt-4-turbo"
-        :embedding-model "gpt-4-turbo"))
+     ;; ("OR-Gemini-2-Flash-Thinking-Free" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "google/gemini-2.0-flash-thinking-exp:free"
+     ;;    :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
+     ;;    ))
+     ;; ("OR-Gemini-2-Flash-Thinking-Free" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "google/gemini-2.0-flash-thinking-exp:free"
+     ;;    :embedding-model "google/gemini-2.0-flash-thinking-exp:free"
+     ;;    ))
+     ;; ("GPT4Omni-Mini" .
+     ;;  ,(make-llm-openai
+     ;;    :key (night/openai-key-get)
+     ;;    :chat-model "gpt-4o-mini"
+     ;;    :embedding-model "gpt-4o-mini"))
+     ;; ("GPT4Omni" .
+     ;;  ,(make-llm-openai
+     ;;    :key (night/openai-key-get)
+     ;;    :chat-model "gpt-4o"
+     ;;    :embedding-model "gpt-4o"))
+     ;; ("OR-Claude3.5-Sonnet" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "anthropic/claude-3.5-sonnet:beta"
+     ;;    :embedding-model "anthropic/claude-3.5-sonnet:beta"
+     ;;    ))
+     ;; ("GQ-Llama3" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/groq-key-get)
+     ;;    :url "https://api.groq.com/openai/v1"
+     ;;    :chat-model "llama3-70b-8192"
+     ;;    :embedding-model "llama3-70b-8192"))
+     ;; ("OR-Llama3" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "meta-llama/llama-3-70b-instruct:nitro"
+     ;;    :embedding-model "meta-llama/llama-3-70b-instruct:nitro"
+     ;;    ))
+     ;; ("OR-Gemini-1.5" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "google/gemini-pro-1.5"
+     ;;    :embedding-model "google/gemini-pro-1.5"
+     ;;    ))
+     ;; ("OR-Gemini-2.5-Free" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "google/gemini-2.5-pro-exp-03-25:free"
+     ;;    :embedding-model "google/gemini-2.5-pro-exp-03-25:free"
+     ;;    ))
+     ;; ("OR-Mixtral-8x22B" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "mistralai/mixtral-8x22b-instruct"
+     ;;    :embedding-model "mistralai/mixtral-8x22b-instruct"
+     ;;    ))
+     ;; ("OR-WizardLM2" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "microsoft/wizardlm-2-8x22b:nitro"
+     ;;    :embedding-model "microsoft/wizardlm-2-8x22b:nitro"
+     ;;    ))
+     ;; ("OR-Claude3-Haiku" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "anthropic/claude-3-haiku:beta"
+     ;;    :embedding-model "anthropic/claude-3-haiku:beta"
+     ;;    ))
+     ;; ("OR-Claude3-Sonnet" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "anthropic/claude-3-sonnet:beta"
+     ;;    :embedding-model "anthropic/claude-3-sonnet:beta"
+     ;;    ))
+     ;; ("OR-Claude3-Opus" .
+     ;;  ,(make-llm-openai-compatible
+     ;;    :key (night/openrouter-key-get)
+     ;;    :url "https://openrouter.ai/api/v1"
+     ;;    :chat-model "anthropic/claude-3-opus:beta"
+     ;;    :embedding-model "anthropic/claude-3-opus:beta"
+     ;;    ))
+     ;; ("GPT4-Turbo" .
+     ;;  ,(make-llm-openai
+     ;;    :key (night/openai-key-get)
+     ;;    :chat-model "gpt-4-turbo"
+     ;;    :embedding-model "gpt-4-turbo"))
      ))
   (setopt ellama-provider (cdar ellama-providers))
   ;; Setting the default provider to the first one in the ellama-providers list

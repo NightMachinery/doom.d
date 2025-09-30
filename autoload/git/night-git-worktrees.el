@@ -21,7 +21,7 @@ One of: `name', `branch', `path', or nil (keep Git's order)."
                  (const :tag "Path (alphabetical)" path)
                  (const :tag "Git order (no sort)" nil)))
 
-(cl-defun night/consult-worktrees (&key selector git root)
+(cl-defun night/git-worktree-switch (&key selector git root)
   "List worktrees and visit the current file in the chosen one.
 
 Prompts for a worktree belonging to the repo that contains the
@@ -135,9 +135,11 @@ Optional keyword args:
                       (find-file dest)
                       dest)))))))))
       (quit
-       (message "night/consult-worktrees: quit")
+       (message "night/git-worktree-switch: quit")
        nil)
       (error
-       (message "night/consult-worktrees error: %s" (error-message-string err))
+       (message "night/git-worktree-switch error: %s" (error-message-string err))
        nil))))
+
+(map! :leader "gw" #'night/git-worktree-switch)
 ;;;

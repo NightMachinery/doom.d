@@ -98,9 +98,11 @@
 (defun night/h-latex-after-save ()
   (interactive)
   ;; When in latex major mode:
-  (when (derived-mode-p 'latex-mode)
+  (when (and
+         (derived-mode-p 'latex-mode)
+         buffer-file-name)
     ;; (z-async t h-seminar-compile-emacs)
-    (z-async t h-thesis-build-emacs)
+    (z-async t h-thesis-build-emacs (identity buffer-file-name))
     ;; @todo Delete the above line, we no longer need it.
     )
   )
