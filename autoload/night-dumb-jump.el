@@ -19,30 +19,38 @@
   (night/h-dumb-jump-add-python-rules-to-org)
 ;;;
   ;; Define the main function to jump to the LaTeX file at point
-  (defun night/latex-jump-to-file ()
-    "Jump to the LaTeX file specified in \\input{...} or \\include{...} at point."
+  (cl-defun night/latex-jump-to-file (&optional (verbosity-level 1))
+    "Jump to the LaTeX file specified in \\input{...} or \\include{...} at point.
+VERBOSITY-LEVEL controls messages: 0=silent, 1+=verbose. Defaults to 1.
+Returns t on success, nil on failure."
     (interactive)
-    (let* ((verbosity-level 0)  ; Controls the verbosity (hardcoded to 0)
-           (current-dir (night/h-get-project-root))
+    (let* ((current-dir (night/h-get-project-root))
            (file-path (night/h-get-latex-file-path-at-point))
            (full-path (and file-path (expand-file-name file-path current-dir)))
            (full-path-tex (and file-path (concat full-path ".tex"))))
       (condition-case err
           (cond
            ((not file-path)
-            (message "No file path found at point."))
+            (when (> verbosity-level 0)
+              (message "No file path found at point."))
+            nil)
            ((file-exists-p full-path)
             (find-file full-path)
             (when (> verbosity-level 0)
-              (message "Opened file: %s" full-path)))
+              (message "Opened file: %s" full-path))
+            t)
            ((file-exists-p full-path-tex)
             (find-file full-path-tex)
             (when (> verbosity-level 0)
-              (message "Opened file: %s" full-path-tex)))
+              (message "Opened file: %s" full-path-tex))
+            t)
            (t
-            (message "File not found: %s" file-path)))
+            (when (> verbosity-level 0)
+              (message "File not found: %s" file-path))
+            nil))
         (error
-         (message "Error: %s" (error-message-string err))))))
+         (message "Error: %s" (error-message-string err))
+         nil))))
 
   ;; Define an internal helper function to extract the file path at point
   (defun night/h-get-latex-file-path-at-point ()

@@ -8,6 +8,13 @@
 (after! (tex-mode dumb-jump)
   (setq tex-indent-arg 2)
 
+  (defun night/latex-definition-handler (_identifier)
+    "Lookup handler for LaTeX definitions."
+    (night/latex-jump-to-file 0))
+
+  (set-lookup-handlers! '(latex-mode LaTeX-mode plain-TeX-mode TeX-mode)
+    :definition #'night/latex-definition-handler)
+
   (comment
    ;; This did not work, but I just removed the dictionary backend globally in [[DOOMDIR:autoload/night-lookup.el]], which worked.
    (set-lookup-handlers!
