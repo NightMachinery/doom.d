@@ -18,9 +18,9 @@
   (comment
    ;; This did not work, but I just removed the dictionary backend globally in [[DOOMDIR:autoload/night-lookup.el]], which worked.
    (set-lookup-handlers!
-     'latex-mode
-     'TeX-latex-mode
-     :definition
-     #'dumb-jump-go
+     '(latex-mode
+       TeX-latex-mode)
+     ;; :definition
+     ;; #'dumb-jump-go
      ;; nil
      :xref-backend #'dumb-jump-xref-activate)))
