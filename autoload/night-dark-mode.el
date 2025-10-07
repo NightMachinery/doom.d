@@ -101,5 +101,8 @@ nil - Don't follow system appearance
   (setq night/dark-mode-follow-system-mode value)
   (night/h-setup-system-appearance-sync))
 
+(after! night-brish
+  (night/h-setup-system-appearance-sync))
+
 ;;;
 (provide 'night-dark-mode)

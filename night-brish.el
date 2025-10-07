@@ -465,3 +465,4 @@
      :command command
      :callback callback)))
 ;;;
+(provide 'night-brish)

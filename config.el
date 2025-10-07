@@ -222,9 +222,7 @@
   ;; (setq night/current-theme-light 'solarized-selenized-light) ;; @good
   ;; (setq night/current-theme-light 'doom-solarized-light) ; subtly different
   ))
-
-(load! "night-dark-mode")
-(night/h-setup-system-appearance-sync)
+(setq doom-theme night/current-theme-light)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
