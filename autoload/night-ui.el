@@ -353,6 +353,8 @@ It removes the previous highlights before applying new ones."
 (defun night/h-local-theme-workaround ()
   ;; @bug also disables our highlighting of at-tags, and I can't fix it even invoking `night/highlight-atsign'
   ;; @bug it generally messes up some details of the main theme
+  ;; @workaround for reseting the main theme to some random theme
+  ;; (enable-theme doom-theme)
   (night/enable-current-theme))
 
 (after! (counsel)

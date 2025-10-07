@@ -49,9 +49,9 @@ nil - Don't follow system appearance
     (cond
      (theme
       (mapc #'disable-theme custom-enabled-themes)
-      (load-theme theme t)
       (setq doom-theme theme)
       (setq night/h-dark-mode-active dark-mode-p)
+      (load-theme theme t)
       (message "Theme set for %s mode" (if dark-mode-p "dark" "light")))
      (t
       (message "Warning: Theme not set for %s mode" (if dark-mode-p "dark" "light"))))))
