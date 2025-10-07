@@ -8,7 +8,8 @@
 (defvar night/h-dark-mode-active nil
   "Internal variable tracking whether dark mode is currently active.")
 
-(defcustom night/dark-mode-poll-interval 15
+(defcustom night/dark-mode-poll-interval 60
+  ;; Note that our [agfi:dark-mode-toggle] sets this anyway.
   "Interval in seconds to poll system appearance."
   :type 'number
   :group 'night)
@@ -18,8 +19,10 @@
   'poll
   "How to synchronize with system appearance.
 nil - Don't follow system appearance
+'manual - Sync manually via `night/sync-with-system-appearance'
 'poll - Poll system appearance periodically"
   :type '(choice (const :tag "Don't follow system" nil)
+          (const :tag "Manual sync" manual)
           (const :tag "Poll system appearance" poll))
   :group 'night)
 
@@ -63,8 +66,9 @@ nil - Don't follow system appearance
   (night/h-setup-system-appearance-sync)
   (night/h-apply-theme (not night/h-dark-mode-active)))
 
-(defun night/h-sync-with-system-appearance ()
+(defun night/sync-with-system-appearance ()
   "Synchronize Emacs theme with system appearance."
+  (interactive)
   (let ((system-dark-mode (night/h-os-dark-mode-p)))
     (when (not (eq system-dark-mode night/h-dark-mode-active))
       (night/h-apply-theme system-dark-mode))))
@@ -73,7 +77,7 @@ nil - Don't follow system appearance
   "Start polling system appearance."
   (night/h-stop-system-appearance-polling)
   (setq night/h-system-appearance-timer
-        (run-with-timer 0 night/dark-mode-poll-interval #'night/h-sync-with-system-appearance)))
+        (run-with-timer 0 night/dark-mode-poll-interval #'night/sync-with-system-appearance)))
 
 (defun night/h-stop-system-appearance-polling ()
   "Stop polling system appearance."
@@ -88,6 +92,9 @@ nil - Don't follow system appearance
      ((eq night/dark-mode-follow-system-mode 'poll)
       (night/h-stop-system-appearance-polling)
       (night/h-start-system-appearance-polling))
+     ((eq night/dark-mode-follow-system-mode 'manual)
+      (night/h-stop-system-appearance-polling)
+      (night/sync-with-system-appearance))
      (t
       (night/h-stop-system-appearance-polling)
       (night/enable-current-theme)))))
@@ -96,7 +103,7 @@ nil - Don't follow system appearance
   "Set `night/dark-mode-follow-system-mode' to VALUE and update sync behavior."
   (interactive
    (list (intern (completing-read "Follow system mode: "
-                                  '("nil" "poll")
+                                  '("nil" "manual" "poll")
                                   nil t))))
   (setq night/dark-mode-follow-system-mode value)
   (night/h-setup-system-appearance-sync))
