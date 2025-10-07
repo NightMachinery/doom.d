@@ -168,46 +168,40 @@
   (require 'color-theme-sanityinc-tomorrow))
 (cond
  ((night/lilf-p)
-  (setq night-theme
-        'ef-frost
-        ))
+  (setq night/current-theme-light 'ef-frost
+        night/current-theme-dark 'ef-winter))
  ((night/pino-p)
-  (setq night-theme
-        'modus-operandi-deuteranopia
-        ))
+  (setq night/current-theme-light 'modus-operandi-deuteranopia
+        night/current-theme-dark 'modus-vivendi-deuteranopia))
  ((night/t31-p)
-  (setq night-theme
-        'modus-operandi-tinted
-        ))
+  (setq night/current-theme-light 'modus-operandi-tinted
+        night/current-theme-dark 'modus-vivendi-tinted))
  ((night/t21-p)
-  (setq night-theme
-        'modus-operandi-tinted
-        ))
+  (setq night/current-theme-light 'modus-operandi-tinted
+        night/current-theme-dark 'modus-vivendi-tinted))
  ((night/m15-p)
-  (setq night-theme
-        'sanityinc-tomorrow-day
-        ))
+  (setq night/current-theme-light 'sanityinc-tomorrow-day
+        night/current-theme-dark 'sanityinc-tomorrow-night))
  ((night/m17-p)
-  (setq night-theme
-        'ef-day
-        ))
+  (setq night/current-theme-light 'ef-day
+        night/current-theme-dark 'ef-night))
  ((night/c0-p)
-  (setq night-theme
-        'ef-cyprus
-        ))
+  (setq night/current-theme-light 'ef-cyprus
+        night/current-theme-dark 'ef-dark))
  (;; nil
   (night/server-alt1-p)
-  ;; (setq night-theme 'doom-one-light)
+  ;; (setq night/current-theme-light 'doom-one-light)
   ;; [[id:c0713162-d1bd-46fc-9ef4-f5495d7ff16f][doom/bugs, issues:@upstreamBug hlissner/doom-emacs#5629 {BUG} Some themes fail to build]]
 
 
-  (setq night-theme 'solarized-selenized-white)
-  ;; (setq night-theme 'tsdh-light)
-  ;; (setq night-theme 'solarized-light)
+  (setq night/current-theme-light 'solarized-selenized-white
+        night/current-theme-dark 'solarized-selenized-dark)
+  ;; (setq night/current-theme-light 'tsdh-light)
+  ;; (setq night/current-theme-light 'solarized-light)
   )
  ((display-graphic-p)
-  (setq night-theme
-        'modus-operandi-tritanopia
+  (setq night/current-theme-light 'modus-operandi-tritanopia
+        night/current-theme-dark 'modus-vivendi-tritanopia
         ;; 'kaolin-light
         ;; 'solarized-selenized-white
         ;; 'doom-one-light
@@ -217,16 +211,20 @@
         ;; 'doom-one-light
         ))
  (t
-  (setq night-theme
-        'modus-operandi-tritanopia
+  (setq night/current-theme-light 'modus-operandi-tritanopia
+        night/current-theme-dark
+        'modus-vivendi-deuteranopia
+        ;; 'modus-vivendi-tritanopia
         ;; 'kaolin-light
         )
 
-  ;; (setq night-theme 'solarized-light)
-  ;; (setq night-theme 'solarized-selenized-light) ;; @good
-  ;; (setq night-theme 'doom-solarized-light) ; subtly different
+  ;; (setq night/current-theme-light 'solarized-light)
+  ;; (setq night/current-theme-light 'solarized-selenized-light) ;; @good
+  ;; (setq night/current-theme-light 'doom-solarized-light) ; subtly different
   ))
-(setq doom-theme night-theme)
+
+(load! "night-dark-mode")
+(night/h-setup-system-appearance-sync)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!

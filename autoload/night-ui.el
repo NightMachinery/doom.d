@@ -353,18 +353,20 @@ It removes the previous highlights before applying new ones."
 (defun night/h-local-theme-workaround ()
   ;; @bug also disables our highlighting of at-tags, and I can't fix it even invoking `night/highlight-atsign'
   ;; @bug it generally messes up some details of the main theme
-  (enable-theme night-theme) ;; @workaround for reseting the main theme to some random theme
-  )
+  (night/enable-current-theme))
 
 (after! (counsel)
   (defun counsel-load-theme-action (x)
   "Disable current themes and load theme X."
   (condition-case nil
       (progn
-        (mapc #'disable-theme custom-enabled-themes)
         (let ((theme (intern x)))
-          (setq night-theme theme)      ;; @monkeyPatched
-          (load-theme theme t))
+          (cond
+           ((night/dark-mode-p)
+            (setq night/current-theme-dark theme))
+           (t
+            (setq night/current-theme-light theme)))
+          (night/enable-current-theme))
         (when (fboundp 'powerline-reset)
           (powerline-reset)))
     (error "Problem loading theme %s" x))))
