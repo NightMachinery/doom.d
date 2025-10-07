@@ -16,7 +16,8 @@
 
 (defcustom night/dark-mode-follow-system-mode
   ;; nil
-  'poll
+  ;; 'poll
+  'manual
   "How to synchronize with system appearance.
 nil - Don't follow system appearance
 'manual - Sync manually via `night/sync-with-system-appearance'
