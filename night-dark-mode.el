@@ -1,13 +1,24 @@
 ;;;
+(defvar night/current-theme-light nil
+  "Theme to use in light mode.")
+
+(defvar night/current-theme-dark nil
+  "Theme to use in dark mode.")
+
 (defvar night/h-dark-mode-active nil
   "Internal variable tracking whether dark mode is currently active.")
+
+(defcustom night/dark-mode-poll-interval 15
+  "Interval in seconds to poll system appearance."
+  :type 'number
+  :group 'night)
 
 (defcustom night/dark-mode-follow-system-mode
   ;; nil
   'poll
   "How to synchronize with system appearance.
 nil - Don't follow system appearance
-'poll - Poll system appearance periodically (every 5 seconds)"
+'poll - Poll system appearance periodically"
   :type '(choice (const :tag "Don't follow system" nil)
           (const :tag "Poll system appearance" poll))
   :group 'night)
@@ -55,32 +66,31 @@ nil - Don't follow system appearance
 (defun night/h-sync-with-system-appearance ()
   "Synchronize Emacs theme with system appearance."
   (let ((system-dark-mode (night/h-os-dark-mode-p)))
-    ;; (message "System dark mode: %s, eq: %s" system-dark-mode (eq system-dark-mode night/h-dark-mode-active))
     (when (not (eq system-dark-mode night/h-dark-mode-active))
-      ;; (message "Applying theme for system dark mode: %s" system-dark-mode)
       (night/h-apply-theme system-dark-mode))))
 
 (defun night/h-start-system-appearance-polling ()
   "Start polling system appearance."
-  (when (not night/h-system-appearance-timer)
-    (setq night/h-system-appearance-timer
-          (run-with-timer 0 5 #'night/h-sync-with-system-appearance))))
+  (night/h-stop-system-appearance-polling)
+  (setq night/h-system-appearance-timer
+        (run-with-timer 0 night/dark-mode-poll-interval #'night/h-sync-with-system-appearance)))
 
 (defun night/h-stop-system-appearance-polling ()
-  "Stop polling macOS system appearance."
+  "Stop polling system appearance."
   (when night/h-system-appearance-timer
     (cancel-timer night/h-system-appearance-timer)
     (setq night/h-system-appearance-timer nil)))
 
 (defun night/h-setup-system-appearance-sync ()
   "Setup system appearance synchronization based on `night/dark-mode-follow-system-mode'."
-  (cond
-   ((eq night/dark-mode-follow-system-mode 'poll)
-    (night/h-stop-system-appearance-polling)
-    (night/h-start-system-appearance-polling))
-   (t
-    (night/h-stop-system-appearance-polling)
-    (night/enable-current-theme))))
+  (when (and night/current-theme-light night/current-theme-dark)
+    (cond
+     ((eq night/dark-mode-follow-system-mode 'poll)
+      (night/h-stop-system-appearance-polling)
+      (night/h-start-system-appearance-polling))
+     (t
+      (night/h-stop-system-appearance-polling)
+      (night/enable-current-theme)))))
 
 (defun night/dark-mode-follow-system-mode-set (value)
   "Set `night/dark-mode-follow-system-mode' to VALUE and update sync behavior."
