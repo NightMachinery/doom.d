@@ -125,6 +125,13 @@ move COUNT - 1 screen lines forward first."
         ;; #'night/scroll-halfpage-up
 
         :nvoig
+        "C-k"
+        #'evil-scroll-up
+        :nvoig
+        "C-j"
+        #'evil-scroll-down
+
+        :nvoig
         "s-<up>"
         #'night/scroll-precision-up ;; scroll commands use inverted terminology
         :nvoig
@@ -245,6 +252,12 @@ move COUNT - 1 screen lines forward first."
    :g
    "C-S-<down>" #'scroll-other-window
    ;; "C-M-<down>" #'scroll-other-window
+
+   :g
+   "C-S-k" #'scroll-other-window-down
+   :g
+   "C-S-j" #'scroll-other-window
+
 
    :map (minibuffer-mode-map
          ivy-minibuffer-map

@@ -243,6 +243,13 @@ DIRECTION should be 'next or 'previous."
    :nvo "C-<left>" #'org-backward-heading-same-level
    :nvo "C-<right>" #'org-forward-heading-same-level
 
+   :nvoig
+   "C-k"
+   #'evil-scroll-up
+   :nvoig
+   "C-j"
+   #'evil-scroll-down
+
    :i
    "M-S-<left>" #'org-promote-subtree   ; already bound in normal mode
    :localleader

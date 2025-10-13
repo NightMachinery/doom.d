@@ -57,6 +57,9 @@
 
          ("S-<up>" . #'scroll-other-window-down)
          ("S-<down>" . #'scroll-other-window)
+
+         ("C-k" . #'scroll-other-window-down)
+         ("C-j" . #'scroll-other-window)
          )
 
   :bind* (;; The default keybinding for `completion-at-point' and

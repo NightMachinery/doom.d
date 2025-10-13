@@ -278,13 +278,21 @@ word or non-word."
 
 
  :nviog
+ "M-h" #'night/backward-word
  "M-<left>" #'night/backward-word
  ;; "M-<left>" #'evil-backward-WORD-end
 
  :nviog
+ "M-l" #'night/forward-word
  "M-<right>" #'night/forward-word
  ;; "M-<right>" #'evil-forward-WORD-end
 
  ;; "M-<left>" #'evil-backward-word-begin
  ;; "M-<right>" #'evil-forward-word-end
+ )
+(map! :map lispyville-mode-map
+ :nviog
+ "M-h" #'night/backward-word
+ :nviog
+ "M-l" #'night/forward-word
  )

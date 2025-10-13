@@ -1,6 +1,4 @@
-;;; B
-;;; ~
-;;; /doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
+;;; ~/doom.d/autoload/night-ivy.el -*- lexical-binding: t; -*-
 (after! (night-orderless ivy counsel ivy-rich)
 ;;;
   (setq ivy-height 14)
@@ -218,6 +216,23 @@
 
   (define-key ivy-minibuffer-map (kbd "S-<right>") 'forward-char)
   (define-key ivy-minibuffer-map (kbd "S-<left>") 'backward-char)
+  (map! :map ivy-minibuffer-map
+        ;; C-j, C-k are already bound by default
+        ;; "M-j" #'ivy-next-line
+        ;; "M-k" #'ivy-previous-line
+;;;
+        ;; not supported on Kitty yet:
+        ;; "S-M-l" #'forward-char
+        ;; "S-M-h" #'backward-char
+;;;
+        "M-<down>" #'night/ivy-halfpage-down
+        "M-<up>" #'night/ivy-halfpage-up
+        "M-j" #'night/ivy-halfpage-up
+        "M-k" #'night/ivy-halfpage-down
+;;;
+        "M-<right>" #'night/ivy-set-to-sel
+        "M-l" #'night/ivy-set-to-sel
+        )
 ;;;
   (defun night/ivy-halfpage-up ()
     (interactive)
@@ -229,8 +244,6 @@
     (ivy-next-line 10)
     (minibuffer-recenter-top-bottom nil))
 
-  (define-key ivy-minibuffer-map (kbd "M-<up>") #'night/ivy-halfpage-up)
-  (define-key ivy-minibuffer-map (kbd "M-<down>") #'night/ivy-halfpage-down)
 ;;;
   (defun night/ivy-mark-toggle ()
     "Mark/unmark the selected candidate."
@@ -274,7 +287,6 @@
         (save-excursion (insert "\n"))
         ;; we need to compensate for the lines we have killed
         )))
-  (define-key ivy-minibuffer-map (kbd "M-<right>") #'night/ivy-set-to-sel)
 ;;;
   (defun night/ivy-show-doc-buffer ()
     "@broken"
