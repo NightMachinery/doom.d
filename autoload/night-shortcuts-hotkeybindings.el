@@ -101,87 +101,88 @@ move COUNT - 1 screen lines forward first."
   (unbind-key "C-<wheel-down>" global-map) ;; bound to various functions of [help:text-scale-adjust]
   (unbind-key "C-<wheel-up>" global-map)
 ;;;
-  (map! :n
-        "J" #'counsel-dash-at-point     ; originally joined the two lines.
-        :nvig
-        "C-s" #'night/save-buffer
-        :nv "P" #'night/paste-yank-html
-        ;; :nv "P" #'evil-paste-before
-        :nv "p" #'evil-paste-before
-        :nvig
-        "s-," #'night/pns
-        :nvoig
-        "<next>" #'evil-avy-goto-char
+  (map! :map (global-map magit-mode-map)
+   :n
+   "J" #'counsel-dash-at-point          ; originally joined the two lines.
+   :nvig
+   "C-s" #'night/save-buffer
+   :nv "P" #'night/paste-yank-html
+   ;; :nv "P" #'evil-paste-before
+   :nv "p" #'evil-paste-before
+   :nvig
+   "s-," #'night/pns
+   :nvoig
+   "<next>" #'evil-avy-goto-char
 
-        :nvoig
-        "S-<up>"
-        #'evil-scroll-up
-        ;; #'night/scroll-halfpage-down
-        ;; scroll commands use inverted terminology
+   :nvoig
+   "S-<up>"
+   #'evil-scroll-up
+   ;; #'night/scroll-halfpage-down
+   ;; scroll commands use inverted terminology
 
-        :nvoig
-        "S-<down>"
-        #'evil-scroll-down
-        ;; #'night/scroll-halfpage-up
+   :nvoig
+   "S-<down>"
+   #'evil-scroll-down
+   ;; #'night/scroll-halfpage-up
 
-        :nvoig
-        "C-k"
-        #'evil-scroll-up
-        :nvoig
-        "C-j"
-        #'evil-scroll-down
+   :nvoig
+   "C-k"
+   #'evil-scroll-up
+   :nvoig
+   "C-j"
+   #'evil-scroll-down
 
-        :nvoig
-        "s-<up>"
-        #'night/scroll-precision-up ;; scroll commands use inverted terminology
-        :nvoig
-        "s-<down>" #'night/scroll-precision-down
+   :nvoig
+   "s-<up>"
+   #'night/scroll-precision-up ;; scroll commands use inverted terminology
+   :nvoig
+   "s-<down>" #'night/scroll-precision-down
 
-        :nvoig
-        "s-k"
-        #'night/scroll-precision-up ;; scroll commands use inverted terminology
-        :nvoig
-        "s-j" #'night/scroll-precision-down
+   :nvoig
+   "s-k"
+   #'night/scroll-precision-up ;; scroll commands use inverted terminology
+   :nvoig
+   "s-j" #'night/scroll-precision-down
 
-        :nvoig
-        "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
-        :nvoig
-        "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol
-        (:prefix "g"
-         :n
-         "s l" #'link-hint-open-link
-         :n
-         "l" #'org-open-at-point-global)
-        :nvo
-        "g s 9" #'night/avy-goto-opening-paren
-        :nvo
-        "g s 0" #'night/avy-goto-closing-paren
-        :nvo
-        "g s s" #'avy-goto-char
-        :nvo
-        "g s SPC" #'avy-goto-char-2 ; check its default binding if you want to unbind this
+   :nvoig
+   "C-a" #'evil-first-non-blank ;; #'evil-beginning-of-line-or-visual-line
+   :nvoig
+   "C-e" #'evil-end-of-line-or-visual-line ; @alt: doom/forward-to-last-non-comment-or-eol
+   (:prefix "g"
+    :n
+    "s l" #'link-hint-open-link
+    :n
+    "l" #'org-open-at-point-global)
+   :nvo
+   "g s 9" #'night/avy-goto-opening-paren
+   :nvo
+   "g s 0" #'night/avy-goto-closing-paren
+   :nvo
+   "g s s" #'avy-goto-char
+   :nvo
+   "g s SPC" #'avy-goto-char-2 ; check its default binding if you want to unbind this
 ;;;
-        :nvo
-        "0" #'evil-beginning-of-line-or-visual-line
-        :nvo
-        "$" #'evil-end-of-line-or-visual-line
+   :nvo
+   "0" #'evil-beginning-of-line-or-visual-line
+   :nvo
+   "$" #'evil-end-of-line-or-visual-line
 
-        :nvo
-        "j" #'evil-next-line
-        :nvio
-        "<down>" #'evil-next-line
-        ;; We can't remap these in the global mode, or =ivy= breaks
+   :nvo
+   "j" #'evil-next-line
+   :nvio
+   "<down>" #'evil-next-line
+   ;; We can't remap these in the global mode, or =ivy= breaks
 
-        :nvio
-        "<up>" #'evil-previous-line
-        :nvo
-        "k" #'evil-previous-line
+   :nvio
+   "<up>" #'evil-previous-line
+   :nvo
+   "k" #'evil-previous-line
 
-        :nvo
-        "] \\" #'night/repeat-command
-        :nvo
-        "] x" #'er/expand-region
-        )
+   :nvo
+   "] \\" #'night/repeat-command
+   :nvo
+   "] x" #'er/expand-region
+   )
   (setq expand-region-contract-fast-key "z")
   (setq expand-region-reset-fast-key "c")
 

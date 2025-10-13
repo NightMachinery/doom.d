@@ -5,6 +5,9 @@
         ;; Disable magit's =y= keybindings so that we can use the normal ones:
         :nvig "y" nil
         :nvig "Y" nil
+
+        :nvig "M-j" #'magit-section-forward
+        :nvig "M-k" #'magit-section-backward
         )
 ;;;
 (defun night/git-patch-apply ()
