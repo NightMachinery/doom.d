@@ -42,18 +42,23 @@
   ))
 ;;;
 (defun night/setup-input-decode ()
+  ;;;
   (dotimes (i 26)
     ;; This loop adds cmd + all the lower case letters.
-    ;;;
     (let ((letter (char-to-string (+ i ?a)))
           (code (+ i 97)))              ; 97 is the ASCII code for 'a'
       (define-key input-decode-map (format "\e[27;33;%d~" code) (kbd (format "s-%s" letter)))))
+  ;;;
   ;; (define-key input-decode-map "\e[27;33;105~" [?\s-i])
   ;; (define-key input-decode-map "\e[27;33;107~" [?\s-k])
   (define-key input-decode-map "\e[27;33;44~" [?\s-,])
   ;; @GPT4 The issue is with the `[s-,]` part. The correct syntax for a key sequence in Emacs Lisp is a vector of symbols or characters, not a list. You should use a vector instead of a list, =[?\s-,]=.
 ;;; Adding Shift modified keys:
-(define-key input-decode-map "\e[27;2;32~" [?\S- ])
+  (define-key input-decode-map "\e[27;2;32~" [?\S- ])
+;;; Adding Control modified keys:
+  ;; [[id:358c2e2a-d423-45c0-a81f-51c4bba97816][=C-m=]]
+  ;; C-m is the same as RET for emacs. We CAN rebind to a custom event in the TTY, but not in the GUI, so why bother.
+  ;; (define-key input-decode-map "\e[27;5;109~" [?\C-m])
 ;;;
   (progn
     (comment

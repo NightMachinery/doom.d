@@ -215,15 +215,10 @@ DIRECTION should be 'next or 'previous."
    #'org-fold-show-subtree
    ;; #'+org/open-fold
 
-   :n
-   "zO"
-   #'org-fold-show-all
+   :n "zO" #'org-fold-show-all
 
-   :nvo
-   "{" #'org-previous-visible-heading
-
-   :nvo
-   "}" #'org-next-visible-heading
+   :nvo "{" #'org-previous-visible-heading
+   :nvo "}" #'org-next-visible-heading
 
    ;; :nivo "C-<up>" #'org-backward-heading-same-level
    ;; :nivo "C-<down>" #'org-forward-heading-same-level
@@ -237,11 +232,18 @@ DIRECTION should be 'next or 'previous."
    ;; :nvoi "C-<down>" #'org-babel-next-src-block
    :nvoi "C-<up>" #'night/org-babel-previous-src-block
    :nvoi "C-<down>" #'night/org-babel-next-src-block
+   :nvoi "C-," #'night/org-babel-previous-src-block
+   :nvoi "C-." #'night/org-babel-next-src-block
 
    :nvo "C-M-<left>" #'night/org-previous-less-nested-heading
    :nvo "C-M-<right>" #'night/org-next-less-nested-heading
+   :nvo "C-M-h" #'night/org-previous-less-nested-heading
+   :nvo "C-M-l" #'night/org-next-less-nested-heading
+
    :nvo "C-<left>" #'org-backward-heading-same-level
    :nvo "C-<right>" #'org-forward-heading-same-level
+   :nvo "C-h" #'org-backward-heading-same-level
+   :nvo "C-l" #'org-forward-heading-same-level
 
    :nvoig
    "C-k"
