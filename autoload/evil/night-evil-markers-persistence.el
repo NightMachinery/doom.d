@@ -62,15 +62,17 @@ Similar to `bookmark-search-size'."
     :type 'integer
     :group 'night-evil-markers-persistence)
 
-  (defcustom night-evil-markers-context-search-strategy 'bookmark-default
+  (defcustom night-evil-markers-context-search-strategy
+    ;; 'bookmark-default
+    'backward-then-forward
     "Strategy for searching context strings when deserializing markers.
 `bookmark-default': Search forward first, then backward from forward position (mimics bookmark.el).
 `forward-fail-to-backward': Try forward from saved position, if fails try backward from saved position,
                             if fails try backward from end of buffer.
 `backward-then-forward': Search backward first, then forward from backward position (reverse of bookmark.el)."
     :type '(choice (const :tag "Bookmark default" bookmark-default)
-                   (const :tag "Forward fail to backward" forward-fail-to-backward)
-                   (const :tag "Backward then forward" backward-then-forward))
+            (const :tag "Forward fail to backward" forward-fail-to-backward)
+            (const :tag "Backward then forward" backward-then-forward))
     :group 'night-evil-markers-persistence)
 
   (defconst night-evil-markers-file-version 0.1
