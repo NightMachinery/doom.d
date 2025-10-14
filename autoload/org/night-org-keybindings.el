@@ -242,8 +242,11 @@ DIRECTION should be 'next or 'previous."
 
    :nvo "C-<left>" #'org-backward-heading-same-level
    :nvo "C-<right>" #'org-forward-heading-same-level
-   :nvo "C-h" #'org-backward-heading-same-level
-   :nvo "C-l" #'org-forward-heading-same-level
+   ;; :nvo "C-h" #'org-backward-heading-same-level
+   ;; :nvo "C-l" #'org-forward-heading-same-level
+
+   :nvo "C-h" #'org-shiftleft
+   :nvo "C-l" #'org-shiftright
 
    :nvoig
    "C-k"
