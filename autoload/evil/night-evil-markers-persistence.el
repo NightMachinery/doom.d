@@ -37,11 +37,33 @@
     :type 'boolean
     :group 'night-evil-markers-persistence)
 
-  (defcustom night-evil-verbosity-level 1
+  (defcustom night-evil-verbosity-level
+    1
+    ;; 3
     "Verbosity level for night-evil-markers-persistence operations.
 0: Silent, 1: Basic information, 2: Detailed information, 3: Debug information"
     :type 'integer
     :group 'night-evil-markers-persistence)
+
+  (defcustom night-evil-markers-persist-mode
+    ;; 'point
+    'context
+    "Mode for persisting marker positions.
+`point': Store only the point position (faster, less resilient).
+`context': Store position with surrounding context strings (slower, more resilient to file changes)."
+    :type '(choice (const :tag "Point only" point)
+            (const :tag "Point with context" context))
+    :group 'night-evil-markers-persistence)
+
+  (defcustom night-evil-markers-context-search-size 16
+    "Number of characters to capture as context before and after marker position.
+Only used when `night-evil-markers-persist-mode' is `context'.
+Similar to `bookmark-search-size'."
+    :type 'integer
+    :group 'night-evil-markers-persistence)
+
+  (defconst night-evil-markers-file-version 0.1
+    "Version number for evil markers persistence file format.")
 
   (defcustom night-evil-markers-persistence-extension ".evilmarkers"
     "File extension for evil marker files."
@@ -113,38 +135,87 @@
         (concat dir prefix file night-evil-markers-persistence-extension)))))
 
   (defun night/serialize-marker (marker)
-    "Serialize MARKER to a storable format."
-    (let* ((serialized-marker
-            (cond
-             ((markerp marker)
-              (when-let* ((pos (marker-position marker))
-                          (buf (marker-buffer marker))
-                          (file (buffer-file-name buf)))
-                (cons file pos)))
-             ((functionp marker) nil)   ; Functions cannot be serialized
-             ((consp marker)
-              ;; Check if it's *already* the serialized (file . pos) form
-              (let ((file (car marker))
-                    (pos (cdr marker)))
-                (when (and file (stringp file) pos (integerp pos))
-                  ;; It's already serialized correctly, just return it
-                  marker)))
-             (t nil))))
-      serialized-marker))
+    "Serialize MARKER to a storable format using bookmark record."
+    (require 'bookmark)
+    (let ((bookmark-search-size night-evil-markers-context-search-size))
+      (cond
+       ((markerp marker)
+        (when-let* ((pos (marker-position marker))
+                    (buf (marker-buffer marker))
+                    (file (buffer-file-name buf)))
+          (with-current-buffer buf
+            (save-excursion
+              (goto-char pos)
+              (let* ((no-context (eq night-evil-markers-persist-mode 'point))
+                     (record (bookmark-make-record-default nil no-context)))
+                (cond
+                 (no-context
+                  (cons (alist-get 'filename record)
+                        (alist-get 'position record)))
+                 (t
+                  (cons (alist-get 'filename record)
+                        (list :position (alist-get 'position record)
+                              :front-context-string (alist-get 'front-context-string record)
+                              :rear-context-string (alist-get 'rear-context-string record))))))))))
+       ((functionp marker) nil)
+       ((consp marker)
+        (let ((file (car marker))
+              (data (cdr marker)))
+          (cond
+           ((and (listp data) (plist-get data :position))
+            (when (and file (stringp file))
+              marker))
+           ((integerp data)
+            (when (and file (stringp file))
+              marker))
+           (t nil))))
+       (t nil))))
 
   (defun night/deserialize-marker (serialized)
-    "Deserialize the SERIALIZED marker."
+    "Deserialize the SERIALIZED marker using bookmark handler."
+    (require 'bookmark)
     (when (consp serialized)
-      (let ((file (car serialized))
-            (pos (cdr serialized)))
-        (when (and file (stringp file) pos (integerp pos))
-          (or (when-let ((buf (find-buffer-visiting file)))
-                (set-marker (make-marker) pos buf))
-              serialized))))) ; Return serialized form if buffer not found
+      (when (> night-evil-verbosity-level 2)
+        (message "Deserializing marker: serialized=%S" serialized))
+      (let* ((file (car serialized))
+             (rest (cdr serialized)))
+        (when (> night-evil-verbosity-level 2)
+          (message "  file=%s, rest=%S" file rest))
+        (condition-case err
+            (cond
+             ;; Context format: (file :position POS :front-context-string STR :rear-context-string STR)
+             ((and (listp rest) (plist-get rest :position))
+              (let* ((expanded-file (when (and file (stringp file))
+                                      (expand-file-name file)))
+                     (record `(evil-marker-temp
+                               (filename . ,expanded-file)
+                               (position . ,(plist-get rest :position))
+                               (front-context-string . ,(plist-get rest :front-context-string))
+                               (rear-context-string . ,(plist-get rest :rear-context-string)))))
+                (when (> night-evil-verbosity-level 2)
+                  (message "Deserializing context marker: file=%s, record=%S" expanded-file record)
+                  (message "  bookmark-get-filename returns: %s" (bookmark-get-filename record))
+                  (message "  file-readable-p: %s" (file-readable-p expanded-file)))
+                (cond
+                 ((and expanded-file (stringp expanded-file))
+                  (bookmark-default-handler record)
+                  (set-marker (make-marker) (point) (current-buffer)))
+                 (t (message "evil-markers-persistence: Invalid file: %s" file)))))
+             ;; Point-only format: (file . pos)
+             ((and (integerp rest) file (stringp file))
+              (let ((buf (or (find-buffer-visiting file)
+                             (find-file-noselect file))))
+                (set-marker (make-marker) rest buf)))
+             (t
+              (message "evil-markers-persistence: Invalid marker format: %s" marker)))
+          (error
+           (when (> night-evil-verbosity-level 1)
+             (message "Failed to deserialize marker for %s: %s" file (error-message-string err)))
+           nil)))))
 
   (defun night/process-marker-alist (alist process-fn)
     "Process ALIST with PROCESS-FN and remove nil results and excluded keys."
-    (let* ((excluded-keys '(91 93 94))  ; Keys to exclude: [, ], ^
+    (let* ((excluded-keys '(91 93 94 version))  ; Keys to exclude: [, ], ^, version
            (res
             (cl-remove-if-not
              (lambda (entry)
@@ -173,13 +244,23 @@ On error, attempts to backup the problematic file and returns nil."
                (with-temp-buffer
                  (insert-file-contents file-name)
                  (goto-char (point-min))
-                 (night/process-marker-alist (read (current-buffer)) #'night/deserialize-marker))))
+                 (let ((markers (read (current-buffer))))
+                   (cond
+                    ((and (consp markers)
+                          (assoc 'version markers)
+                          (equal (alist-get 'version markers) night-evil-markers-file-version))
+                     (night/process-marker-alist markers #'night/deserialize-marker))
+                    (t
+                     (when (> night-evil-verbosity-level 0)
+                       (message "Incompatible or missing version in %s. Deleting file." file-name))
+                     (delete-file file-name)
+                     nil))))))
             ('write
              (unless data (error "No data provided for write operation"))
-             (make-directory (file-name-directory file-name) t) ; Ensure directory exists
-             (let* ((existing-markers (night/handle-markers-file file-name 'read)) ; Read might fail, handled by outer condition-case
+             (make-directory (file-name-directory file-name) t)
+             (let* ((existing-markers (night/handle-markers-file file-name 'read))
                     (markers-to-save (night/process-marker-alist
-                                      (if (consp (car data)) ; Check if data is a list of markers or a single one
+                                      (if (consp (car data))
                                           (append data existing-markers)
                                         (cons data existing-markers))
                                       #'night/serialize-marker)))
@@ -191,20 +272,31 @@ On error, attempts to backup the problematic file and returns nil."
                        (message "No markers to save. Deleted %s" file-name)))
                  (with-temp-file file-name
                    (let ((print-level nil)
-                         (print-length nil))
-                     (prin1 markers-to-save (current-buffer)))))))
+                         (print-length nil)
+                         (versioned-markers (cons (cons 'version night-evil-markers-file-version)
+                                                  markers-to-save)))
+                     (prin1 versioned-markers (current-buffer)))))))
             ('read-single
              (unless data (error "No marker character provided for read-single operation"))
              (when (file-exists-p file-name)
                (with-temp-buffer
                  (insert-file-contents file-name)
                  (goto-char (point-min))
-                 (when-let* ((markers (read (current-buffer))) ; read can signal an error
-                             (marker-entry (assoc data markers)))
-                   (when marker-entry ; Ensure entry exists
-                     (let ((deserialized (night/deserialize-marker (cdr marker-entry))))
-                       (when deserialized ; Ensure deserialization worked
-                         (cons (car marker-entry) deserialized)))))))))
+                 (let ((markers (read (current-buffer))))
+                   (cond
+                    ((and (consp markers)
+                          (assoc 'version markers)
+                          (equal (alist-get 'version markers) night-evil-markers-file-version))
+                     (when-let ((marker-entry (assoc data markers)))
+                       (when marker-entry
+                         (let ((deserialized (night/deserialize-marker (cdr marker-entry))))
+                           (when deserialized
+                             (cons (car marker-entry) deserialized))))))
+                    (t
+                     (when (> night-evil-verbosity-level 0)
+                       (message "Incompatible or missing version in %s. Deleting file." file-name))
+                     (delete-file file-name)
+                     nil)))))))
         ;; Error handler for the main operations
         (error
          ;; Backup the file and log the error
