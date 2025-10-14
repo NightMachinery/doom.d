@@ -4,9 +4,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(mv:*)",
-      "Bash(emacs:*)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Read(//opt/homebrew/Cellar/emacs-plus@29/29.2/share/emacs/29.2/lisp/**)"
     ],
     "deny": [],
     "ask": []
