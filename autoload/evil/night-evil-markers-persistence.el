@@ -198,8 +198,9 @@ Similar to `bookmark-search-size'."
                   (message "  file-readable-p: %s" (file-readable-p expanded-file)))
                 (cond
                  ((and expanded-file (stringp expanded-file))
-                  (bookmark-default-handler record)
-                  (set-marker (make-marker) (point) (current-buffer)))
+                  (save-excursion
+                    (bookmark-default-handler record)
+                    (set-marker (make-marker) (point) (current-buffer))))
                  (t (message "evil-markers-persistence: Invalid file: %s" file)))))
              ;; Point-only format: (file . pos)
              ((and (integerp rest) file (stringp file))
