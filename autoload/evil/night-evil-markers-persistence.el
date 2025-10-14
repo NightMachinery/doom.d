@@ -62,12 +62,15 @@ Similar to `bookmark-search-size'."
     :type 'integer
     :group 'night-evil-markers-persistence)
 
-  (defcustom night-evil-markers-context-search-mode 'bookmark-default
-    "Mode for searching context strings when deserializing markers.
+  (defcustom night-evil-markers-context-search-strategy 'bookmark-default
+    "Strategy for searching context strings when deserializing markers.
 `bookmark-default': Search forward first, then backward from forward position (mimics bookmark.el).
-`forward-fail-to-backward': Try forward, if it fails try backward from original position."
+`forward-fail-to-backward': Try forward from saved position, if fails try backward from saved position,
+                            if fails try backward from end of buffer.
+`backward-then-forward': Search backward first, then forward from backward position (reverse of bookmark.el)."
     :type '(choice (const :tag "Bookmark default" bookmark-default)
-                   (const :tag "Forward fail to backward" forward-fail-to-backward))
+                   (const :tag "Forward fail to backward" forward-fail-to-backward)
+                   (const :tag "Backward then forward" backward-then-forward))
     :group 'night-evil-markers-persistence)
 
   (defconst night-evil-markers-file-version 0.1
@@ -162,7 +165,7 @@ If FILE is absolute, return it unchanged."
   (defun night/h-bookmark-handler-return-marker (bmk-record)
     "Like `bookmark-default-handler' but returns a marker instead of moving point.
 BMK-RECORD is a bookmark record. Returns a marker to the found position,
-or nil on error. Uses `night-evil-markers-context-search-mode' for search strategy."
+or nil on error. Uses `night-evil-markers-context-search-strategy' for search strategy."
     (require 'bookmark)
     (condition-case err
         (let ((file          (bookmark-get-filename bmk-record))
@@ -180,8 +183,8 @@ or nil on error. Uses `night-evil-markers-context-search-mode' for search strate
                    (signal 'bookmark-error-no-filename (list 'stringp file))))))
             (with-current-buffer target-buf
               (let ((final-pos
-                     (cond
-                      ((eq night-evil-markers-context-search-mode 'forward-fail-to-backward)
+                     (pcase night-evil-markers-context-search-strategy
+                      ('forward-fail-to-backward
                        (or (and forward-str
                                 (save-excursion
                                   (goto-char place)
@@ -192,8 +195,21 @@ or nil on error. Uses `night-evil-markers-context-search-mode' for search strate
                                   (goto-char place)
                                   (when (search-backward behind-str (point-min) t)
                                     (match-end 0))))
+                           (and behind-str
+                                (save-excursion
+                                  (goto-char (point-max))
+                                  (when (search-backward behind-str (point-min) t)
+                                    (match-end 0))))
                            place))
-                      (t
+                      ('backward-then-forward
+                       (save-excursion
+                         (goto-char place)
+                         (when (and behind-str (search-backward behind-str (point-min) t))
+                           (goto-char (match-end 0)))
+                         (when (and forward-str (search-forward forward-str (point-max) t))
+                           (goto-char (match-beginning 0)))
+                         (point)))
+                      (_
                        (save-excursion
                          (goto-char place)
                          (when (and forward-str (search-forward forward-str (point-max) t))
