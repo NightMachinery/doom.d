@@ -62,6 +62,14 @@ Similar to `bookmark-search-size'."
     :type 'integer
     :group 'night-evil-markers-persistence)
 
+  (defcustom night-evil-markers-context-search-mode 'bookmark-default
+    "Mode for searching context strings when deserializing markers.
+`bookmark-default': Search forward first, then backward from forward position (mimics bookmark.el).
+`forward-fail-to-backward': Try forward, if it fails try backward from original position."
+    :type '(choice (const :tag "Bookmark default" bookmark-default)
+                   (const :tag "Forward fail to backward" forward-fail-to-backward))
+    :group 'night-evil-markers-persistence)
+
   (defconst night-evil-markers-file-version 0.1
     "Version number for evil markers persistence file format.")
 
@@ -134,8 +142,74 @@ Similar to `bookmark-search-size'."
              (prefix (if (string-prefix-p "." file) "" ".")))
         (concat dir prefix file night-evil-markers-persistence-extension)))))
 
-  (defun night/serialize-marker (marker)
-    "Serialize MARKER to a storable format using bookmark record."
+  (defun night/h-make-relative-path (file marker-file)
+    "Make FILE path relative to MARKER-FILE directory.
+Returns relative path if possible, otherwise returns FILE unchanged."
+    (condition-case nil
+        (let ((relative (file-relative-name file (file-name-directory marker-file))))
+          (if (string-prefix-p ".." relative)
+              file
+            relative))
+      (error file)))
+
+  (defun night/h-expand-relative-path (file marker-file)
+    "Expand FILE path relative to MARKER-FILE directory if FILE is relative.
+If FILE is absolute, return it unchanged."
+    (if (file-name-absolute-p file)
+        file
+      (expand-file-name file (file-name-directory marker-file))))
+
+  (defun night/h-bookmark-handler-return-marker (bmk-record)
+    "Like `bookmark-default-handler' but returns a marker instead of moving point.
+BMK-RECORD is a bookmark record. Returns a marker to the found position,
+or nil on error. Uses `night-evil-markers-context-search-mode' for search strategy."
+    (require 'bookmark)
+    (condition-case err
+        (let ((file          (bookmark-get-filename bmk-record))
+              (buf           (bookmark-prop-get bmk-record 'buffer))
+              (forward-str   (bookmark-get-front-context-string bmk-record))
+              (behind-str    (bookmark-get-rear-context-string bmk-record))
+              (place         (bookmark-get-position bmk-record)))
+          (let ((target-buf
+                 (cond
+                  ((and file (file-readable-p file) (not (buffer-live-p buf)))
+                   (find-file-noselect file))
+                  ((and buf (get-buffer buf))
+                   (get-buffer buf))
+                  (t
+                   (signal 'bookmark-error-no-filename (list 'stringp file))))))
+            (with-current-buffer target-buf
+              (let ((final-pos
+                     (cond
+                      ((eq night-evil-markers-context-search-mode 'forward-fail-to-backward)
+                       (or (and forward-str
+                                (save-excursion
+                                  (goto-char place)
+                                  (when (search-forward forward-str (point-max) t)
+                                    (match-beginning 0))))
+                           (and behind-str
+                                (save-excursion
+                                  (goto-char place)
+                                  (when (search-backward behind-str (point-min) t)
+                                    (match-end 0))))
+                           place))
+                      (t
+                       (save-excursion
+                         (goto-char place)
+                         (when (and forward-str (search-forward forward-str (point-max) t))
+                           (goto-char (match-beginning 0)))
+                         (when (and behind-str (search-backward behind-str (point-min) t))
+                           (goto-char (match-end 0)))
+                         (point))))))
+                (set-marker (make-marker) final-pos target-buf)))))
+      (error
+       (when (> night-evil-verbosity-level 1)
+         (message "night/h-bookmark-handler-return-marker error: %s" (error-message-string err)))
+       nil)))
+
+  (defun night/serialize-marker (marker marker-file-path)
+    "Serialize MARKER to a storable format using bookmark record.
+MARKER-FILE-PATH is used to calculate relative paths."
     (require 'bookmark)
     (let ((bookmark-search-size night-evil-markers-context-search-size))
       (cond
@@ -147,13 +221,15 @@ Similar to `bookmark-search-size'."
             (save-excursion
               (goto-char pos)
               (let* ((no-context (eq night-evil-markers-persist-mode 'point))
-                     (record (bookmark-make-record-default nil no-context)))
+                     (record (bookmark-make-record-default nil no-context))
+                     (abs-file (alist-get 'filename record))
+                     (rel-file (night/h-make-relative-path abs-file marker-file-path)))
                 (cond
                  (no-context
-                  (cons (alist-get 'filename record)
+                  (cons rel-file
                         (alist-get 'position record)))
                  (t
-                  (cons (alist-get 'filename record)
+                  (cons rel-file
                         (list :position (alist-get 'position record)
                               :front-context-string (alist-get 'front-context-string record)
                               :rear-context-string (alist-get 'rear-context-string record))))))))))
@@ -171,51 +247,54 @@ Similar to `bookmark-search-size'."
            (t nil))))
        (t nil))))
 
-  (defun night/deserialize-marker (serialized)
-    "Deserialize the SERIALIZED marker using bookmark handler."
+  (defun night/deserialize-marker (serialized marker-file-path)
+    "Deserialize the SERIALIZED marker using bookmark handler.
+MARKER-FILE-PATH is used to expand relative paths."
     (require 'bookmark)
     (when (consp serialized)
       (when (> night-evil-verbosity-level 2)
         (message "Deserializing marker: serialized=%S" serialized))
       (let* ((file (car serialized))
-             (rest (cdr serialized)))
+             (rest (cdr serialized))
+             (expanded-file (when (and file (stringp file))
+                              (night/h-expand-relative-path file marker-file-path))))
         (when (> night-evil-verbosity-level 2)
-          (message "  file=%s, rest=%S" file rest))
+          (message "  file=%s, expanded-file=%s, rest=%S" file expanded-file rest))
         (condition-case err
             (cond
              ;; Context format: (file :position POS :front-context-string STR :rear-context-string STR)
              ((and (listp rest) (plist-get rest :position))
-              (let* ((expanded-file (when (and file (stringp file))
-                                      (expand-file-name file)))
+              (let* ((abs-file (and expanded-file
+                                    (expand-file-name expanded-file)))
                      (record `(evil-marker-temp
-                               (filename . ,expanded-file)
+                               (filename . ,abs-file)
                                (position . ,(plist-get rest :position))
                                (front-context-string . ,(plist-get rest :front-context-string))
                                (rear-context-string . ,(plist-get rest :rear-context-string)))))
                 (when (> night-evil-verbosity-level 2)
-                  (message "Deserializing context marker: file=%s, record=%S" expanded-file record)
+                  (message "Deserializing context marker: file=%s, record=%S" abs-file record)
                   (message "  bookmark-get-filename returns: %s" (bookmark-get-filename record))
-                  (message "  file-readable-p: %s" (file-readable-p expanded-file)))
+                  (message "  file-readable-p: %s" (file-readable-p abs-file)))
                 (cond
-                 ((and expanded-file (stringp expanded-file))
-                  (save-excursion
-                    (bookmark-default-handler record)
-                    (set-marker (make-marker) (point) (current-buffer))))
-                 (t (message "evil-markers-persistence: Invalid file: %s" file)))))
+                 ((and abs-file (stringp abs-file))
+                  (night/h-bookmark-handler-return-marker record))
+                 (t (message "evil-markers-persistence: Invalid file: %s" file)
+                    nil))))
              ;; Point-only format: (file . pos)
-             ((and (integerp rest) file (stringp file))
-              (let ((buf (or (find-buffer-visiting file)
-                             (find-file-noselect file))))
+             ((and (integerp rest) expanded-file (stringp expanded-file))
+              (let ((buf (or (find-buffer-visiting expanded-file)
+                             (find-file-noselect expanded-file))))
                 (set-marker (make-marker) rest buf)))
              (t
-              (message "evil-markers-persistence: Invalid marker format: %s" marker)))
+              (message "evil-markers-persistence: Invalid marker format: %s" serialized)))
           (error
            (when (> night-evil-verbosity-level 1)
              (message "Failed to deserialize marker for %s: %s" file (error-message-string err)))
            nil)))))
 
-  (defun night/process-marker-alist (alist process-fn)
-    "Process ALIST with PROCESS-FN and remove nil results and excluded keys."
+  (defun night/process-marker-alist (alist process-fn marker-file-path)
+    "Process ALIST with PROCESS-FN and remove nil results and excluded keys.
+MARKER-FILE-PATH is passed to PROCESS-FN for relative path calculations."
     (let* ((excluded-keys '(91 93 94 version))  ; Keys to exclude: [, ], ^, version
            (res
             (cl-remove-if-not
@@ -226,7 +305,7 @@ Similar to `bookmark-search-size'."
              (mapcar (lambda (entry)
                        (when (consp entry) ; Process only valid pairs
                          (cons (car entry)
-                               (funcall process-fn (cdr entry)))))
+                               (funcall process-fn (cdr entry) marker-file-path))))
                      alist)))
            (res (cl-remove-duplicates res :key #'car :from-end t)))
       res))
@@ -250,7 +329,7 @@ On error, attempts to backup the problematic file and returns nil."
                     ((and (consp markers)
                           (assoc 'version markers)
                           (equal (alist-get 'version markers) night-evil-markers-file-version))
-                     (night/process-marker-alist markers #'night/deserialize-marker))
+                     (night/process-marker-alist markers #'night/deserialize-marker file-name))
                     (t
                      (when (> night-evil-verbosity-level 0)
                        (message "Incompatible or missing version in %s. Deleting file." file-name))
@@ -264,7 +343,8 @@ On error, attempts to backup the problematic file and returns nil."
                                       (if (consp (car data))
                                           (append data existing-markers)
                                         (cons data existing-markers))
-                                      #'night/serialize-marker)))
+                                      #'night/serialize-marker
+                                      file-name)))
                (if (null markers-to-save)
                    (progn
                      (when (file-exists-p file-name)
@@ -290,7 +370,7 @@ On error, attempts to backup the problematic file and returns nil."
                           (equal (alist-get 'version markers) night-evil-markers-file-version))
                      (when-let ((marker-entry (assoc data markers)))
                        (when marker-entry
-                         (let ((deserialized (night/deserialize-marker (cdr marker-entry))))
+                         (let ((deserialized (night/deserialize-marker (cdr marker-entry) file-name)))
                            (when deserialized
                              (cons (car marker-entry) deserialized))))))
                     (t
