@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Claude4.5-sonnet
+# key: s4
+# uuid: s4
+# --
+@Sonnet4.5T

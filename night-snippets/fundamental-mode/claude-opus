@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Claude-Opus
+# key: op
+# uuid: op
+# --
+@Opus4.1T
