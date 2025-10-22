@@ -8,7 +8,10 @@
   ;; (org-link-set-parameters "file" :face 'night/org-link-files)
 ;;;
 
-  (defface night/org-link-mouse-face '((t (:background "white" :weight bold))) "org links' mouse hover face")
+  (defface night/org-link-mouse-face
+    '((((background dark)) (:background "#3a3a3a" :weight bold))
+      (((background light)) (:background "white" :weight bold)))
+    "org links' mouse hover face")
 ;;;
   (require 'ov)
 

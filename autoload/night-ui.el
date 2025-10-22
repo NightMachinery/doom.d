@@ -24,9 +24,14 @@
                              ;; :background "#e9f1f2"
                              :weight bold)))
   "Face used for global aliases in Zsh")
-(night/defface urgent-face '((t (
+(night/defface urgent-face
+  '((((background dark)) (
+                          :foreground "white"
+                          :background "#8B4C5C"
+                          :weight bold))
+    (((background light)) (
                            :foreground "black"
-                                       ;; :background "hotpink"
+                           ;; :background "hotpink"
                            :background "mistyrose"
                            ;; :background "orangered"
                            :weight bold))) "")
@@ -154,18 +159,26 @@ If PROPERTIES are specified, set them for the created overlay."
   )
  (t
   (night/defface at-tag-face
-  '((t (:inherit t :foreground "#3437eb" :weight bold)))
-  "Face of at-tags")))
+    '((((background dark)) (:inherit t :foreground "#6B8FFF" :weight bold))
+      (((background light)) (:inherit t :foreground "#3437eb" :weight bold)))
+    "Face of at-tags")))
 
 ;;;
 (night/defface night/async-insertion-face
-  '((t (
-        :foreground "black"
-        :background "orchid1"
-        ;; :weight bold
-        :extend t
-        ;; extend makes the face go to the end of the line, but it also makes it extend to new lines if you create them. This latter property seems like an upstream bug.
-        ))) "")
+  '((((background dark)) (
+                          :foreground "white"
+                          :background "#8B4789"
+                          ;; :weight bold
+                          :extend t
+                          ;; extend makes the face go to the end of the line, but it also makes it extend to new lines if you create them. This latter property seems like an upstream bug.
+                          ))
+    (((background light)) (
+                           :foreground "black"
+                           :background "orchid1"
+                           ;; :weight bold
+                           :extend t
+                           ;; extend makes the face go to the end of the line, but it also makes it extend to new lines if you create them. This latter property seems like an upstream bug.
+                           ))) "")
 
 (defun night/highlight-atsign ()
   "DEPRECATED: We now customize hl-todo instead."
@@ -380,7 +393,10 @@ Alternatively, `(setq modus-themes-org-blocks 'gray-background)`.
 "
   (interactive)
   (let* ((frame nil)
-         (inside-bg "#eeeeee")
+         (dark-mode-p (night/dark-mode-p))
+         (inside-bg (cond
+                     (dark-mode-p "#2a2a2a")
+                     (t "#eeeeee")))
          (begin-bg inside-bg)
          ;; (begin-bg "#dddddd")
          (end-bg begin-bg)
