@@ -1,0 +1,30 @@
+#+TITLE: My Emacs Doom Config
+
+* Dependencies
+** =ugrep=
+** =fd=
+** =fzf=
+
+** Environment Variables
+*** =nightNotes=
+
+** Brish
+*** =night.sh=
+**** [help:night/codestral-key-get], etc. use =z var-get=
+***** @todo
+#+BEGIN_SRC markdown
+Create a helper function `night/z-var-get` which, when brish is available (`night/brish-p`), uses `z var-get`, but falls back on `getenv` when it's not. Use it everywhere we currently use `z var-get`.
+#+END_SRC
+
+**** [help:night/org-link-browser-current]
+
+**** [help:night/paste-yank-html]
+***** [agfi:pbpaste-html]
+
+***** [help:night/org-insert-and-fix-levels]
+****** Falls back to doing nothing and returning the input as is
+
+** macOS
+*** [help:night/org-link-safari-current]
+**** Uses Applescript directly
+
