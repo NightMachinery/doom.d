@@ -9,6 +9,8 @@
 `(make-string (+ 1 (night/org-current-level)) ?*)` [jalali:`(concat (z datej))`]
 `(make-string (+ 2 (night/org-current-level)) ?*)` CBT
 
+`(make-string (+ 2 (night/org-current-level)) ?*)` Done Tasks
+
 `(make-string (+ 2 (night/org-current-level)) ?*)` Life Checklist
 - [ ] $0Unsilence your phone
 

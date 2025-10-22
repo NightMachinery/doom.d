@@ -271,6 +271,7 @@ DIRECTION should be 'next or 'previous."
    "lc" #'night/org-link-chrome-current
    "lC" #'night/url2org
    "le" #'night/org-link-edge-current
+   "ls" #'night/org-link-safari-current
    "l;" #'night/org-link-browser-current
    "l:" #'night/url2org)
   (map!
@@ -278,5 +279,6 @@ DIRECTION should be 'next or 'previous."
    "lc" #'night/org-link-chrome-current
    "lC" #'night/url2org
    "le" #'night/org-link-edge-current
+   "ls" #'night/org-link-safari-current
    "l;" #'night/org-link-browser-current
    "l:" #'night/url2org))

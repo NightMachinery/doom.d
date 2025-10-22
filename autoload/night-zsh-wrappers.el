@@ -22,6 +22,10 @@
 (defun night/org-link-arc-current ()
   (interactive)
   (night/org-link-browser-current "arc"))
+
+(defun night/org-link-safari-current ()
+  (interactive)
+  (org-mac-link-safari-insert-frontmost-url))
 ;;;
 (defun night/p-org-fanfic ()
   (interactive)

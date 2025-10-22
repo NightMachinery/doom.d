@@ -290,9 +290,10 @@ word or non-word."
  ;; "M-<left>" #'evil-backward-word-begin
  ;; "M-<right>" #'evil-forward-word-end
  )
-(map! :map (lispyville-mode-map evil-org-mode-map)
- :nviog
- "M-h" #'night/backward-word
- :nviog
- "M-l" #'night/forward-word
- )
+(after! (lispyville evil-org)
+  (map! :map (lispyville-mode-map evil-org-mode-map org-mode-map)
+        :nviog
+        "M-h" #'night/backward-word
+        :nviog
+        "M-l" #'night/forward-word
+        ))

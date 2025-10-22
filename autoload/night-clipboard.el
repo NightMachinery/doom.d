@@ -237,7 +237,7 @@ on the smart escaping behavior."
 
 ;;;
 (defun night/org-insert-and-fix-levels (text &optional level)
-  "@seeAlso [agfi:org-header-indent-to-current], [help:org-yank-adjusted-subtrees]"
+  "@seeAlso [agfi:org-header-indent-to-current], [help:org-yank-adjusted-subtrees], [help:org-paste-subtree]"
   (let*
       ((level
         (or level
