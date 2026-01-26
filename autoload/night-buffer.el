@@ -124,6 +124,7 @@ whose names do not start with a *, and whose file paths no longer exist."
                 (not (night/popup-buffer-p buffer))))
         (message "Closing buffer: %s" buffer-name)
         (kill-buffer buffer)))))
+(defalias 'night/kill-fileless-buffers 'night/close-fileless-buffers)
 (map! :leader
       "bo" #'night/close-fileless-buffers)
 ;;;

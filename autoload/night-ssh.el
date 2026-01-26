@@ -67,6 +67,10 @@
   (interactive)
   (find-file-existing "/ssh:eva@82.102.11.148:/home/eva/code/betterborg/stdplugins/"))
 
+(defun night/ssh-hpc-izadi ()
+  (interactive)
+  (dired "/ssh:hpc_izadi_mmd:/home/mmd/Casual_Attribution"))
+
 (defun night/ssh-eva ()
   (interactive)
   (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))

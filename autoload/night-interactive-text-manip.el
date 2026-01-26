@@ -294,6 +294,9 @@ word or non-word."
   (map! :map (lispyville-mode-map evil-org-mode-map org-mode-map)
         :nviog
         "M-h" #'night/backward-word
+        "M-<left>" #'night/backward-word
+
         :nviog
         "M-l" #'night/forward-word
+        "M-<right>" #'night/forward-word
         ))

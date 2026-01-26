@@ -102,20 +102,21 @@
          (derived-mode-p 'latex-mode 'tex-mode)
          buffer-file-name)
     ;; (z-async t h-seminar-compile-emacs)
-    (z-async t h-thesis-build-emacs (identity buffer-file-name))
-    ;; @todo Delete the above line, we no longer need it.
+    ;; (z-async t h-thesis-build-emacs (identity buffer-file-name))
+    ;; @done Delete the above line, we no longer need it.
     )
   )
 (defun night/latex-rtl-opinionated ()
   "You need to activate this yourself manually if you want it."
   (interactive)
-  (map! :map 'local
-        :i "\\" (lambda () (interactive)
-                  (activate-input-method nil)
-                  (insert "\\"))
-        :i "<return>" #'night/h-rtl-enter
-        :i "RET" #'night/h-rtl-enter
-        )
+  (comment
+   (map! :map 'local
+         :i "\\" (lambda () (interactive)
+                   (activate-input-method nil)
+                   (insert "\\"))
+         :i "<return>" #'night/h-rtl-enter
+         :i "RET" #'night/h-rtl-enter
+         ))
 ;;;
   (add-hook 'after-save-hook
             #'night/h-latex-after-save
