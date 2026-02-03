@@ -62,6 +62,10 @@ This variable can be bound dynamically.")
                                 ;; (counsel--git-root)
                                 default-directory))
          (dir default-directory)
+         (engine
+          (if (file-remote-p default-directory)
+              "ivy-rg"
+            engine))
          (args
           (concat args " --hidden --glob=!.git "))
 ;;;
