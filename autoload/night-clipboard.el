@@ -64,6 +64,13 @@ This variable can be bound dynamically.")
   (let ((night/advice-kill-new-unescape-org-enabled-p nil))
     (kill-ring-save (region-beginning) (region-end))))
 
+(defun night/org-paste-raw ()
+  "Paste with `night/advice-kill-new-unescape-org-enabled-p' set to nil. This function shouldn't be needed, as its behavior should be the default."
+  (interactive)
+  (let ((night/advice-kill-new-unescape-org-enabled-p nil))
+    (night/insert-for-yank
+     (current-kill 0))))
+
 (defun night/org-kill-escaped ()
   "Kill the selected region with `night/advice-kill-new-unescape-org-enabled-p' set to nil."
   (interactive)
@@ -122,7 +129,9 @@ This variable can be bound dynamically.")
 ;; @seeAlso [help:filter-buffer-substring]
 ;;;
 (defun night/h-current-kill (orig-fun &rest args)
-  (let ((result (apply orig-fun args)))
+  (let* ((night/advice-kill-new-unescape-org-enabled-p nil)
+         ;; We need to disable this advice to get the raw value from the clipboard.
+         (result (apply orig-fun args)))
     (if (and (stringp result))
         (cond
          ((and
