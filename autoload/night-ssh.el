@@ -71,6 +71,10 @@
   (interactive)
   (dired "/ssh:hpc_izadi_mmd:/home/mmd/Casual_Attribution"))
 
+(defun night/ssh-pinky ()
+  (interactive)
+  (dired "/ssh:pinky:base"))
+
 (defun night/ssh-eva ()
   (interactive)
   (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))
