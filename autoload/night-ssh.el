@@ -75,6 +75,10 @@
   (interactive)
   (dired "/ssh:pinky:base"))
 
+(defun night/ssh-tealy ()
+  (interactive)
+  (dired "/ssh:tealy:"))
+
 (defun night/ssh-eva ()
   (interactive)
   (dired "/ssh:eva@82.102.11.148:/home/eva/scripts/"))
