@@ -1,5 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 
+;; (add-to-list 'auto-mode-alist '("\\.\\(zip\\)\\'" . archive-mode))
+;;;
 (defvar night/marker-audio "emacs-audio-file-playing")
 
 (defun night/marker-audio-kill ()
@@ -46,7 +48,7 @@ Use this to stop the audio files being played by org-mode links."
               )
             )
            ((and
-             (member-ignore-case ext '("m3u" "mp3" "ogg" "m4a" "flac" "wav" "mp4" "avi" "mkv" "flv" "wma")))
+             (member-ignore-case ext '("m3u" "mp3" "ogg" "m4a" "flac" "wav" "mp4" "avi" "mkv" "flv" "wma" "aac")))
             ;; (night/yank-buffer-filename)
             (kill-current-buffer)
             (night/hear bfn)
