@@ -87,6 +87,7 @@
             (or (ignore-errors ;; with-demoted-errors ;; ignore-errors
                   (--> bfn
                        (funcall preserve it "resources?")
+                       (funcall preserve it "online")
                        (funcall preserve it "linux")
                        (funcall preserve it "macos")
                        (funcall preserve it "miscs?")
