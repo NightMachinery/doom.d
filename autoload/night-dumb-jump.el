@@ -24,7 +24,9 @@
 VERBOSITY-LEVEL controls messages: 0=silent, 1+=verbose. Defaults to 1.
 Returns t on success, nil on failure."
     (interactive)
-    (let* ((current-dir (night/h-get-project-root))
+    (let* ((current-dir (or (night/current-project-root)
+                            (and (buffer-file-name)
+                                 (file-name-directory (buffer-file-name)))))
            (file-path (night/h-get-latex-file-path-at-point))
            (full-path (and file-path (expand-file-name file-path current-dir)))
            (full-path-tex (and file-path (concat full-path ".tex"))))
@@ -67,19 +69,6 @@ Returns t on success, nil on failure."
          ((re-search-backward regexp (line-beginning-position) t)
           (setq result (match-string 2)))))
       result))
-
-  ;; Define an internal helper function to get the current project root directory
-  (defun night/h-get-project-root ()
-    "Get the root directory of the current project."
-    (or
-     ;; Use 'projectile' if available
-     (when (fboundp 'projectile-project-root)
-       (projectile-project-root))
-     ;; Use built-in 'project' package if available
-     (when (fboundp 'project-current)
-       (car (project-roots (project-current))))
-     ;; Fallback to the directory of the current buffer's file
-     (file-name-directory (buffer-file-name))))
 
   (comment
    ;; @o1 @broken

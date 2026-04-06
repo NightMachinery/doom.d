@@ -46,14 +46,26 @@
      (expand-file-name "~/code/uni"))
     "The directories that `night/org-id-find-grep' searches in.")
 
+  (defun night/org-id-grep-search-roots (&optional search-dirs directory)
+    "Return ordered directories for `night/org-id-find-grep'."
+    (let* ((default-directory (or directory default-directory))
+           (raw-dirs
+            (append
+             (list (night/current-project-root) default-directory)
+             (or search-dirs night/org-id-grep-search-dirs)))
+           normalized-dirs)
+      (dolist (dir raw-dirs (nreverse normalized-dirs))
+        (when dir
+          (let ((normalized-dir (directory-file-name (expand-file-name dir))))
+            (when (and (file-directory-p normalized-dir)
+                       (not (member normalized-dir normalized-dirs)))
+              (push normalized-dir normalized-dirs)))))))
+
   (defun night/org-id-find-grep (path &optional search-dirs)
     (let* (
            ;; Split path to ignore ::... suffix
            (id (car (split-string path "::")))
-           (base-dirs (or search-dirs night/org-id-grep-search-dirs))
-           ;; Normalize paths and ensure PWD is first
-           (pwd (directory-file-name (expand-file-name default-directory)))
-           (search-dirs (delete-dups (cons pwd (mapcar #'expand-file-name base-dirs)))))
+           (search-dirs (night/org-id-grep-search-roots search-dirs)))
       (cl-loop
        for dir in search-dirs
        for found = nil
