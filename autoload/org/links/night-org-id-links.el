@@ -121,6 +121,12 @@ Stored as a plist with keys :link and :file.")
      (org-link-make-string
       (concat "id-to:" project "::" payload)
       desc))))
+
+(map!
+     :map org-mode-map
+     :leader
+     "n;" #'night/paste-id-to-link
+     )
 ;;;
 (after! (org ol org-id)
   (advice-add 'org-id-store-link :after #'night/h-org-record-last-stored-id-link)
