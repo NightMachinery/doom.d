@@ -4,6 +4,10 @@
 ;;;
 (require 'subr-x)
 ;;;
+(defvar night/org-last-stored-id-link-info nil
+  "Most recent stored Org ID link context.
+Stored as a plist with keys :link and :file.")
+
 (defun night/org-id-path-get (id)
   (let*
       ((m (org-id-find id 'marker)))
@@ -27,20 +31,8 @@
  (night/org-id-path-get "61d2cdd6-23fd-4e31-a27b-1a1c61759be4")
  (night/org-id-line-get "61d2cdd6-23fd-4e31-a27b-1a1c61759be4"))
 ;;;
-(defun night/org-id-link-target-id (payload)
-  "Return the bare ID from Org ID PAYLOAD, stripping any ::SEARCH suffix."
-  (car (split-string payload "::")))
-
-(defun night/org-id-link-path-get (payload &optional directory)
-  "Return the file path for Org ID PAYLOAD.
-PAYLOAD may include an optional ::SEARCH suffix.
-When DIRECTORY is non-nil, use it as `default-directory' while resolving."
-  (let ((default-directory (or directory default-directory)))
-    (night/org-id-path-get
-     (night/org-id-link-target-id payload))))
-
 (defun night/org-id-to-parse (path)
-  "Parse id-to PATH and return a plist with :project and :payload."
+  "Parse id-to PATH and return (:project PROJECT :payload PAYLOAD)."
   (unless (string-match "\\`\\([^:]+\\)::\\(.+\\)\\'" path)
     (user-error "Malformed id-to link: %s" path))
   (list
@@ -63,29 +55,6 @@ When DIRECTORY is non-nil, use it as `default-directory' while resolving."
        project-ref))
     root))
 
-(defun night/org-id-to-path-get (path)
-  "Return the target file path for id-to PATH."
-  (let* ((parsed (night/org-id-to-parse path))
-         (project (plist-get parsed :project))
-         (payload (plist-get parsed :payload))
-         (root (night/org-id-to-project-root-resolve project)))
-    (condition-case err
-        (night/org-id-link-path-get payload (file-name-as-directory root))
-      (error
-       (user-error
-        "Cannot resolve id-to target in project `%s': %s"
-        project
-        (error-message-string err))))))
-
-(defun night/org-link-target-file-get (link)
-  "Return a best-effort target file path for LINK."
-  (cond
-   ((string-prefix-p "id-to:" link)
-    (night/org-id-to-path-get (substring link (length "id-to:"))))
-   ((string-prefix-p "id:" link)
-    (night/org-id-link-path-get (substring link (length "id:"))))
-   (t link)))
-
 (defun night/org-link-id-to-follow (path arg)
   "Follow id-to PATH with ARG."
   (let* ((parsed (night/org-id-to-parse path))
@@ -96,29 +65,47 @@ When DIRECTORY is non-nil, use it as `default-directory' while resolving."
          (default-directory (file-name-as-directory root)))
     (org-id-open payload arg)))
 
+(defun night/h-org-record-last-stored-id-link (&rest _)
+  "Remember the latest stored id link and its source file."
+  (let* ((link (plist-get org-store-link-plist :link))
+         (file (buffer-file-name (buffer-base-buffer))))
+    (when (and (stringp link)
+               (string-prefix-p "id:" link)
+               (stringp file))
+      (setq night/org-last-stored-id-link-info
+            (list :link link :file file)))))
+
 (defun night/org-stored-link-latest-get ()
   "Return the most recent entry from `org-stored-links'."
   (or (car org-stored-links)
       (user-error "No stored Org links available")))
 
 (defun night/org-stored-link-id-payload-get (link)
-  "Return the full ID PAYLOAD from stored LINK."
+  "Return the full ID payload from stored LINK."
   (unless (and (stringp link)
                (string-prefix-p "id:" link))
     (user-error "Latest stored link is not an id: link: %S" link))
   (substring link (length "id:")))
 
-(defun night/org-id-to-link-from-stored-link (&optional entry)
-  "Build an id-to link plist from stored Org link ENTRY."
-  (let* ((entry (or entry (night/org-stored-link-latest-get)))
-         (stored-link (car-safe entry))
-         (stored-desc-raw (cadr entry))
-         (stored-desc
-          (and (stringp stored-desc-raw)
-               (not (string-empty-p stored-desc-raw))
-               stored-desc-raw))
+(defun night/org-last-stored-id-link-file-get (link)
+  "Return the cached source file for stored id LINK."
+  (let ((cached-link (plist-get night/org-last-stored-id-link-info :link))
+        (cached-file (plist-get night/org-last-stored-id-link-info :file)))
+    (unless (and (equal link cached-link)
+                 (stringp cached-file)
+                 (file-exists-p cached-file))
+      (user-error
+       "No cached file context for the latest stored id link; store the link again"))
+    cached-file))
+
+(defun night/paste-id-to-link ()
+  "Insert an id-to link from the latest stored id link."
+  (interactive)
+  (let* ((entry (night/org-stored-link-latest-get))
+         (stored-link (car entry))
+         (desc (cadr entry))
          (payload (night/org-stored-link-id-payload-get stored-link))
-         (target-file (night/org-id-link-path-get payload))
+         (target-file (night/org-last-stored-id-link-file-get stored-link))
          (project-root
           (night/current-project-root
            (file-name-directory target-file)))
@@ -130,22 +117,13 @@ When DIRECTORY is non-nil, use it as `default-directory' while resolving."
       (user-error
        "Cannot derive a project root for stored ID target: %s"
        target-file))
-    (let* ((link (concat "id-to:" project "::" payload))
-           (desc
-            (or stored-desc
-                (when (functionp org-link-make-description-function)
-                  (funcall org-link-make-description-function link nil)))))
-      (list :link link :desc desc))))
-
-(defun night/paste-id-to-link ()
-  "Insert an id-to link based on the latest stored `id:' link."
-  (interactive)
-  (let* ((link-data (night/org-id-to-link-from-stored-link))
-         (link (plist-get link-data :link))
-         (desc (plist-get link-data :desc)))
-    (insert (org-link-make-string link desc))))
+    (insert
+     (org-link-make-string
+      (concat "id-to:" project "::" payload)
+      desc))))
 ;;;
 (after! (org ol org-id)
+  (advice-add 'org-id-store-link :after #'night/h-org-record-last-stored-id-link)
   (org-link-set-parameters "id-to" :follow #'night/org-link-id-to-follow))
 ;;;
 (cl-defun night/org-ensure-heading-ids (&key scope skip)
@@ -157,24 +135,24 @@ SKIP if non-nil should be 'archive or 'comment to skip those trees."
   (let ((verbosity-level 0)
         (scope (or scope
                    (if (and (region-active-p)
-                           (use-region-p))
+                            (use-region-p))
                        'region
                      'file))))
     (condition-case err
         (cl-labels ((log-message (level fmt &rest args)
-                     (when (>= verbosity-level level)
-                       (apply #'message fmt args)))
+                      (when (>= verbosity-level level)
+                        (apply #'message fmt args)))
 
-                   (night/h-heading-needs-id-p ()
-                     "Check if current heading needs an ID."
-                     (not (or (org-entry-get nil "ID")
-                             (org-entry-get nil "CUSTOM_ID"))))
+                    (night/h-heading-needs-id-p ()
+                      "Check if current heading needs an ID."
+                      (not (or (org-entry-get nil "ID")
+                               (org-entry-get nil "CUSTOM_ID"))))
 
-                   (night/h-process-heading ()
-                     "Process a single heading, adding ID if needed."
-                     (when (night/h-heading-needs-id-p)
-                       (log-message 1 "Adding ID to heading: %s" (org-get-heading t t t t))
-                       (org-id-get-create))))
+                    (night/h-process-heading ()
+                      "Process a single heading, adding ID if needed."
+                      (when (night/h-heading-needs-id-p)
+                        (log-message 1 "Adding ID to heading: %s" (org-get-heading t t t t))
+                        (org-id-get-create))))
           ;; Main processing logic
           (org-map-entries #'night/h-process-heading nil scope skip)
           (log-message 0 "Finished adding IDs to headings"))

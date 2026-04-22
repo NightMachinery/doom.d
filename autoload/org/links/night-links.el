@@ -166,9 +166,8 @@
     (with-demoted-errors "Error in night/org-description-formatter: %S"
       (let* (
              (file
-              (if (or (string-prefix-p "id:" link)
-                      (string-prefix-p "id-to:" link))
-                  (night/org-link-target-file-get link)
+              (if (s-starts-with? "id:" link t)
+                  (car (org-id-find (s-chop-prefix "id:" link)))
                 link))
              (parent
               (if file
