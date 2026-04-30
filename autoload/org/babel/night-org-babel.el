@@ -375,17 +375,23 @@ We move between the start and beginning of blocks. `org-babel-next-src-block'/`o
             (night/screen-center))
         (error "No %s source block found" (symbol-name direction)))))
 
-  (defun night/org-babel-previous-src-block ()
+  (evil-define-motion night/org-babel-previous-src-block (count)
     "Move to the previous Org-mode source block.
 See `night/h-org-babel-navigate-src-block'."
-    (interactive)
-    (night/h-org-babel-navigate-src-block :direction 'backward))
+    :type line
+    :jump t
+    (night/h-org-babel-navigate-src-block
+     :direction 'backward
+     :k (or count 1)))
 
-  (defun night/org-babel-next-src-block ()
+  (evil-define-motion night/org-babel-next-src-block (count)
     "Move to the next Org-mode source block.
 See `night/h-org-babel-navigate-src-block'."
-    (interactive)
-    (night/h-org-babel-navigate-src-block :direction 'forward))
+    :type line
+    :jump t
+    (night/h-org-babel-navigate-src-block
+     :direction 'forward
+     :k (or count 1)))
 ;;;
 
   (map! :map 'evil-org-mode-map
