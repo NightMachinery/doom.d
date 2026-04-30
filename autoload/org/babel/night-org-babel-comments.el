@@ -3,31 +3,25 @@
 (after! org
   (require 'org-src)
 
-  (defun night/org-example-block-language (element)
-    "Return language tag for Org example-block ELEMENT, or nil.
+  (defun night/org-example-block-context-at (pos)
+    "Return language and body bounds for a tagged example block at POS.
 
-This supports blocks written as `#+begin_example LANG'.  Org does not
-record a language property for example blocks, so we parse the block
-header directly."
-    (when (and element (org-element-type-p element 'example-block))
-      (save-excursion
-        (goto-char (org-element-property :begin element))
-        (let ((case-fold-search t))
-          (when (looking-at "^[[:space:]]*#\\+begin_example[[:space:]]+\\([^[:space:]]+\\)")
-            (match-string-no-properties 1))))))
-
-  (defun night/org-block-body-region (element)
-    "Return `(BEG END)' for ELEMENT's body, excluding Org block markers."
-    (when-let* ((begin (org-element-property :begin element))
-                (end (org-element-property :end element)))
-      (save-excursion
-        (goto-char begin)
-        (forward-line 1)
-        (let ((body-beg (point)))
-          (goto-char end)
-          (let ((case-fold-search t))
-            (when (re-search-backward "^[[:space:]]*#\\+end_\\(?:src\\|example\\)" begin t)
-              (list body-beg (line-beginning-position))))))))
+The return value is `(LANG BODY-BEG BODY-END)'.  This intentionally uses
+nearby block-marker regexps instead of `org-element-at-point', because huge
+example blocks can make the parser path noticeably slow during `gcc'."
+    (save-excursion
+      (goto-char pos)
+      (let ((case-fold-search t)
+            lang body-beg body-end)
+        (when (re-search-backward "^[[:space:]]*#\\+begin_example[[:space:]]+\\([^[:space:]]+\\)" nil t)
+          (setq lang (match-string-no-properties 1))
+          (forward-line 1)
+          (setq body-beg (point))
+          (when (and (<= body-beg pos)
+                     (re-search-forward "^[[:space:]]*#\\+end_example" nil t))
+            (setq body-end (match-beginning 0))
+            (when (< pos body-end)
+              (list lang body-beg body-end)))))))
 
   (defun night/org-region-strictly-in-region-p (beg end outer-beg outer-end)
     "Return non-nil when BEG..END is inside OUTER-BEG..OUTER-END."
@@ -58,13 +52,11 @@ Return non-nil when LANG resolved to an available major mode."
     "Comment or uncomment BEG..END as an example block's language.
 
 Return non-nil when the region was handled."
-    (let* ((element (save-excursion
-                    (goto-char beg)
-                    (org-element-at-point)))
-           (lang (night/org-example-block-language element))
-           (body (and lang (night/org-block-body-region element))))
-      (and body
-           (night/org-region-strictly-in-region-p beg end (nth 0 body) (nth 1 body))
+    (when-let* ((context (night/org-example-block-context-at beg))
+                (lang (nth 0 context))
+                (body-beg (nth 1 context))
+                (body-end (nth 2 context)))
+      (and (night/org-region-strictly-in-region-p beg end body-beg body-end)
            (night/org-comment-region-as-language beg end lang))))
 
   (defun night/org-comment-or-uncomment-region-a (old-fn beg end &rest args)
@@ -76,4 +68,17 @@ Return non-nil when the region was handled."
   (unless (advice-member-p #'night/org-comment-or-uncomment-region-a
                             #'org-comment-or-uncomment-region)
     (advice-add #'org-comment-or-uncomment-region
-                :around #'night/org-comment-or-uncomment-region-a)))
+                :around #'night/org-comment-or-uncomment-region-a))
+
+  (after! evil-nerd-commenter
+    (defun night/evilnc-comment-or-uncomment-region (start end)
+      "Comment START..END, delegating Org buffers to Org's shared comment path.
+
+This avoids Evil Nerd Commenter's slow Org parser path in huge blocks while
+preserving EvilNC's normal behavior outside Org."
+      (if (derived-mode-p 'org-mode)
+          (comment-or-uncomment-region start end)
+        (evilnc-comment-or-uncomment-region-internal start end)))
+
+    (setq evilnc-comment-or-uncomment-region-function
+          #'night/evilnc-comment-or-uncomment-region)))
