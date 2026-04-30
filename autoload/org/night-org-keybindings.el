@@ -231,7 +231,7 @@ DIRECTION should be 'next or 'previous."
    ;; :nvoi "C-<up>" #'org-babel-previous-src-block
    ;; :nvoi "C-<down>" #'org-babel-next-src-block
    :nvoi "C-<up>" #'night/org-babel-previous-src-block
-   :nvoi "C-<down>" #'night/org-babel-next-src-block
+   :nvoim "C-<down>" #'night/org-babel-next-src-block
    :nvoi "C-," #'night/org-babel-previous-src-block
    :nvoi "C-." #'night/org-babel-next-src-block
 
