@@ -118,6 +118,7 @@
                        (funcall preserve it "backends?")
                        (funcall preserve it "clients?")
                        (funcall preserve it "servers?")
+                       (funcall preserve it "AI")
                        (funcall preserve it "ML")
                        (funcall preserve it "PE")
                        (funcall preserve it "online")
