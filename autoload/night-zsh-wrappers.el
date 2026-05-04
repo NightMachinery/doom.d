@@ -2,13 +2,24 @@
 ;;;
 (setq night/zsh-timeout-default 300)    ;; in seconds
 ;;;
-(defun night/org-link-browser-current (&optional browser)
+(cl-defun night/org-link-browser-current (&optional browser (auto-searchify-p t))
   (interactive)
-  (night/insert-for-yank-and-save
-   (cond ((equal browser "edge") (z org-link-edge-current))
-         ((equal browser "chrome") (z org-link-chrome-current))
-         ((equal browser "arc") (z org-link-arc-current))
-         (t (z org-link-browser-current))))
+  (let ((link (cond ((equal browser "edge") (z org-link-edge-current))
+                    ((equal browser "chrome") (z org-link-chrome-current))
+                    ((equal browser "arc") (z org-link-arc-current))
+                    (t (z org-link-browser-current)))))
+    (when auto-searchify-p
+      (require 'url-util)
+      (setq link (replace-regexp-in-string
+                  "\\`\\(?:\\[\\[\\)?https?://\\(?:www\\.\\)?google\\.[a-z.]+/search\\(?:\\?[^]]*?\\)?[?&]q=\\([^]&]+\\)[^]]*\\(?:\\]\\[[^]]*\\]\\]\\|\\]\\]\\)?\\'"
+                  (lambda (m)
+                    (save-match-data
+                      (let* ((q (match-string 1 m))
+                             (decoded (url-unhex-string (replace-regexp-in-string "\\+" " " q t t))))
+                        (format "[[search:%s]]"
+                                (org-link-escape decoded)))))
+                  link t t)))
+    (night/insert-for-yank-and-save link))
   (night/org-imdb-fill-maybe))
 
 (defun night/org-link-edge-current ()
