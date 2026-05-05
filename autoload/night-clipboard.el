@@ -64,6 +64,64 @@ This variable can be bound dynamically.")
   (let ((night/advice-kill-new-unescape-org-enabled-p nil))
     (kill-ring-save (region-beginning) (region-end))))
 
+(defconst night/org-copy-smart--fence-re
+  "^[ \t]*#\\+\\(begin\\|end\\)\\(?:_\\([[:alnum:]-]+\\)\\|:\\)\\(?:[ \t].*\\)?[ \t]*$"
+  "Regexp matching Org BEGIN/END block fence lines.")
+
+(defun night/org-copy-smart--fence-kind ()
+  "Return the kind of the current Org block fence match."
+  (match-string-no-properties 1))
+
+(defun night/org-copy-smart--fence-name ()
+  "Return the normalized name of the current Org block fence match."
+  (or (match-string-no-properties 2) ":"))
+
+(defun night/org-copy-smart--block-body-bounds-at (pos)
+  "Return fenced Org block body bounds around POS, using regex only."
+  (save-excursion
+    (save-match-data
+      (let ((case-fold-search t)
+            begin-name body-begin body-end)
+        (goto-char pos)
+        (beginning-of-line)
+        (when (and (re-search-backward night/org-copy-smart--fence-re nil t)
+                   (string= (night/org-copy-smart--fence-kind) "begin"))
+          (setq begin-name (downcase (night/org-copy-smart--fence-name)))
+          (forward-line 1)
+          (setq body-begin (point))
+          (goto-char pos)
+          (end-of-line)
+          (when (and (re-search-forward night/org-copy-smart--fence-re nil t)
+                     (string= (night/org-copy-smart--fence-kind) "end")
+                     (string= begin-name
+                              (downcase (night/org-copy-smart--fence-name))))
+            (setq body-end (match-beginning 0))))
+        (when (and body-begin body-end (<= body-begin body-end))
+          (cons body-begin body-end))))))
+
+(defun night/org-copy-smart--inside-block-body-p (beg end)
+  "Return non-nil when BEG..END is wholly inside one Org block body."
+  (when (and (derived-mode-p 'org-mode) (< beg end))
+    (let ((bounds (night/org-copy-smart--block-body-bounds-at beg)))
+      (and bounds
+           (>= beg (car bounds))
+           (<= end (cdr bounds))))))
+
+(defun night/org-copy-smart (beg end)
+  "Copy region, unescaping Org block-body text only when appropriate.
+
+When BEG..END is wholly inside an Org block body, copy
+`org-unescape-code-in-string' of the selected text.  Otherwise copy
+the region exactly as it appears in the buffer."
+  (interactive "r")
+  (let* ((text (buffer-substring-no-properties beg end))
+         (smart-text (if (night/org-copy-smart--inside-block-body-p beg end)
+                         (org-unescape-code-in-string text)
+                       text))
+         (night/advice-kill-new-unescape-org-enabled-p nil))
+    (kill-new smart-text)
+    (setq deactivate-mark t)))
+
 (defun night/org-paste-raw ()
   "Paste with `night/advice-kill-new-unescape-org-enabled-p' set to nil. This function shouldn't be needed, as its behavior should be the default."
   (interactive)
