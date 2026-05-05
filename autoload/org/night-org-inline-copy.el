@@ -109,9 +109,18 @@ not climb with `org-element-lineage`."
     "Briefly highlight region from BEG to END."
     (night/flash-region beg end :delay 0.1 :face 'evil-traces-copy-preview))
 
-  (defun night/org-inline-copy--kill (string &optional trimp)
-    "Put STRING on the kill-ring; when TRIMP is non-nil, trim trailing newlines."
-    (kill-new (if trimp (string-trim-right string) string)))
+  (defun night/org-inline-copy--kill (string &optional trimp smart-bounds)
+    "Put STRING on the kill-ring; when TRIMP is non-nil, trim trailing newlines.
+When SMART-BOUNDS is non-nil, expose those source bounds to smart Org copy
+unescaping."
+    (let ((string (if trimp (string-trim-right string) string)))
+      (if (and smart-bounds
+               (boundp 'night/org-copy-smart--bounds)
+               (boundp 'night/advice-kill-new-unescape-org-enabled-p))
+          (let ((night/org-copy-smart--bounds smart-bounds)
+                (night/advice-kill-new-unescape-org-enabled-p 'smart))
+            (kill-new string))
+        (kill-new string))))
 
   ;; ---------- Bounds helpers ----------
 
@@ -194,7 +203,8 @@ flash range matches buffer contents (so visuals reflect the real region)."
             (list :payload (if night/org-inline-copy-trim-blocks
                                (string-trim-right payload)
                              payload)
-                  :flash (and cb ce (cons cb ce))))))
+                  :flash (and cb ce (cons cb ce))
+                  :smart-bounds (and cb ce (cons cb ce))))))
 
        (t nil))))
 
@@ -211,10 +221,11 @@ so that callers can choose to suppress the original DWIM."
         t)
        (t
         (let* ((payload (plist-get info :payload))
-               (range   (plist-get info :flash)))
+               (range   (plist-get info :flash))
+               (smart-bounds (plist-get info :smart-bounds)))
           (if (and payload (> (length payload) 0))
               (progn
-                (night/org-inline-copy--kill payload nil)
+                (night/org-inline-copy--kill payload nil smart-bounds)
                 (when (consp range)
                   (night/org-inline-copy--flash (car range) (cdr range))))
             (message "Block is empty; nothing to copy."))

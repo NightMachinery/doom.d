@@ -40,3 +40,7 @@ copy commands that preserve source bounds, including `kill-ring-save`,
 `copy-region-as-kill`, and Evil yank.  Bind
 `night/advice-kill-new-unescape-org-enabled-p` to `t` for the older broad
 multiline Org unescape behavior, or to nil for raw copying.
+
+`+org/dwim-at-point` can also copy block contents through
+`night/org-inline-copy`; that path passes its block content bounds into the same
+smart `kill-new` advice.
