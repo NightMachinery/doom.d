@@ -36,5 +36,7 @@ does not parse large Org buffers just to copy a small region.  If smart mode
 cannot see trusted copy bounds, it falls back to raw copy.
 
 `night/org-copy-smart` explicitly enables `smart` behavior around
-`kill-ring-save`.  Bind `night/advice-kill-new-unescape-org-enabled-p` to `t`
-for the older broad multiline Org unescape behavior, or to nil for raw copying.
+copy commands that preserve source bounds, including `kill-ring-save`,
+`copy-region-as-kill`, and Evil yank.  Bind
+`night/advice-kill-new-unescape-org-enabled-p` to `t` for the older broad
+multiline Org unescape behavior, or to nil for raw copying.

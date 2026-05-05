@@ -124,12 +124,15 @@ This variable can be bound dynamically.")
               (end (cdr bounds)))
     (night/org-copy-smart--inside-block-body-p beg end)))
 
-(defun night/org-copy-smart--around-kill-ring-save (orig-fn beg end &rest args)
+(defun night/org-copy-smart--around-copy-with-bounds (orig-fn beg end &rest args)
   "Capture trusted BEG..END bounds for smart Org unescape."
   (let ((night/org-copy-smart--bounds (cons beg end)))
     (apply orig-fn beg end args)))
 
-(advice-add 'kill-ring-save :around #'night/org-copy-smart--around-kill-ring-save)
+(advice-remove 'kill-ring-save #'night/org-copy-smart--around-kill-ring-save)
+(advice-add 'kill-ring-save :around #'night/org-copy-smart--around-copy-with-bounds)
+(advice-add 'copy-region-as-kill :around #'night/org-copy-smart--around-copy-with-bounds)
+(advice-add 'evil-yank :around #'night/org-copy-smart--around-copy-with-bounds)
 
 (defun night/org-copy-smart (beg end)
   "Copy region, unescaping Org block-body text only when appropriate.
