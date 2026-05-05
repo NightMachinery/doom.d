@@ -54,9 +54,19 @@
 
 (advice-add #'kill-new :after #'night/h-yank-save)
 ;;;
-(defvar night/advice-kill-new-unescape-org-enabled-p t
-  "Control whether automatic unescape for org-mode is enabled in advice. E.g., `,*` at start of the line becomes `*`.
+(defvar night/advice-kill-new-unescape-org-enabled-p 'smart
+  "Control whether automatic unescape for org-mode is enabled in advice.
+
+When nil, never unescape copied Org text.
+When t, preserve legacy multiline Org unescape behavior.
+When `smart', unescape only when trusted copy bounds are wholly
+inside a fenced Org block body.  If bounds are unavailable, copy raw.
+
 This variable can be bound dynamically.")
+(setq night/advice-kill-new-unescape-org-enabled-p 'smart)
+
+(defvar night/org-copy-smart--bounds nil
+  "Trusted bounds for smart Org unescaping during `kill-new' advice.")
 
 (defun night/org-copy-escaped ()
   "Copy the selected region with `night/advice-kill-new-unescape-org-enabled-p' set to nil."
@@ -107,6 +117,20 @@ This variable can be bound dynamically.")
            (>= beg (car bounds))
            (<= end (cdr bounds))))))
 
+(defun night/org-copy-smart--unescape-p ()
+  "Return non-nil when smart Org unescape should apply."
+  (when-let* ((bounds night/org-copy-smart--bounds)
+              (beg (car bounds))
+              (end (cdr bounds)))
+    (night/org-copy-smart--inside-block-body-p beg end)))
+
+(defun night/org-copy-smart--around-kill-ring-save (orig-fn beg end &rest args)
+  "Capture trusted BEG..END bounds for smart Org unescape."
+  (let ((night/org-copy-smart--bounds (cons beg end)))
+    (apply orig-fn beg end args)))
+
+(advice-add 'kill-ring-save :around #'night/org-copy-smart--around-kill-ring-save)
+
 (defun night/org-copy-smart (beg end)
   "Copy region, unescaping Org block-body text only when appropriate.
 
@@ -114,12 +138,9 @@ When BEG..END is wholly inside an Org block body, copy
 `org-unescape-code-in-string' of the selected text.  Otherwise copy
 the region exactly as it appears in the buffer."
   (interactive "r")
-  (let* ((text (buffer-substring-no-properties beg end))
-         (smart-text (if (night/org-copy-smart--inside-block-body-p beg end)
-                         (org-unescape-code-in-string text)
-                       text))
-         (night/advice-kill-new-unescape-org-enabled-p nil))
-    (kill-new smart-text)
+  (let ((night/advice-kill-new-unescape-org-enabled-p 'smart)
+        (night/org-copy-smart--bounds (cons beg end)))
+    (kill-ring-save beg end)
     (setq deactivate-mark t)))
 
 (defun night/org-paste-raw ()
@@ -150,9 +171,14 @@ the region exactly as it appears in the buffer."
           (progn
             (cond
              ((and
-               night/advice-kill-new-unescape-org-enabled-p
+               (eq night/advice-kill-new-unescape-org-enabled-p t)
                (equalp major-mode 'org-mode)
                (> (length (split-string string-raw "\n" nil)) 1))
+              (org-unescape-code-in-string string))
+             ((and
+               (eq night/advice-kill-new-unescape-org-enabled-p 'smart)
+               (equalp major-mode 'org-mode)
+               (night/org-copy-smart--unescape-p))
               (org-unescape-code-in-string string))
              (t string))))
          (skip-p
