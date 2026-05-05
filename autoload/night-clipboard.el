@@ -79,8 +79,8 @@ This variable can be bound dynamically.")
   "Regexp matching Org BEGIN/END block fence lines.")
 
 (defun night/org-copy-smart--fence-kind ()
-  "Return the kind of the current Org block fence match."
-  (match-string-no-properties 1))
+  "Return the normalized kind of the current Org block fence match."
+  (downcase (match-string-no-properties 1)))
 
 (defun night/org-copy-smart--fence-name ()
   "Return the normalized name of the current Org block fence match."
