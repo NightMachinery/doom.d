@@ -20,3 +20,10 @@
         "s c" #'flyspell-correct-word-before-point)
   ;;;
   )
+;;;
+(after! (ispell)
+  (setq ispell-personal-dictionary
+        (concat
+         doom-user-dir
+         "/data/ispell-personal-dictionary")))
+;;;
