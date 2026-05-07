@@ -9,9 +9,14 @@
   :type 'boolean
   :group 'night)
 
+(defcustom night/sentence-case-always-replacements
+  '(("i" . "I"))
+  "Ordered whole-word replacements always applied by `night/sentence-case'."
+  :type '(alist :key-type string :value-type string)
+  :group 'night)
+
 (defcustom night/sentence-case-replacements
-  '(("i" . "I")
-    ("sth" . "something")
+  '(("sth" . "something")
     ("smth" . "something")
     ("smt" . "something")
     ("tho" . "though")
@@ -106,11 +111,11 @@
     (night/h-sentence-case-upcase-initial target))
    (t target)))
 
-(defun night/h-sentence-case-apply-replacements (text)
-  "Apply `night/sentence-case-replacements' to whole words in TEXT."
+(defun night/h-sentence-case-apply-replacements (text replacements)
+  "Apply REPLACEMENTS to whole words in TEXT."
   (let ((case-fold-search t)
         (result text))
-    (dolist (replacement night/sentence-case-replacements result)
+    (dolist (replacement replacements result)
       (let ((source (car replacement))
             (target (cdr replacement)))
         (setq result
@@ -127,11 +132,17 @@
 
 (defun night/h-sentence-case-transform (text replacements-p)
   "Return TEXT with sentence-starting words capitalized."
-  (let* ((replaced-text
+  (let* ((always-replaced-text
+          (night/h-sentence-case-apply-replacements
+           text
+           night/sentence-case-always-replacements))
+         (replaced-text
           (cond
            (replacements-p
-            (night/h-sentence-case-apply-replacements text))
-           (t text)))
+            (night/h-sentence-case-apply-replacements
+             always-replaced-text
+             night/sentence-case-replacements))
+           (t always-replaced-text)))
          (normalized-text
           (cond
            ((night/h-sentence-case-all-uppercase-p replaced-text)

@@ -10,12 +10,13 @@
 The command capitalizes the first alphabetic character at the start of text,
 after `.`, `?`, `!`, and after newlines.  Non-starting words keep their original
 case, so names and existing acronyms are left alone in mixed-case text.  Before
-capitalizing sentences, it can also apply whole-word replacements from
-`night/sentence-case-replacements`, such as standalone `i` to `I`, `sth` to
-`something`, informal shorthand like `tho` to `though`, and common
-missing-apostrophe contractions.
+capitalizing sentences, it always applies whole-word replacements from
+`night/sentence-case-always-replacements`, such as standalone `i` to `I`.  It
+can also apply optional whole-word replacements from
+`night/sentence-case-replacements`, such as `sth` to `something`, informal
+shorthand like `tho` to `though`, and common missing-apostrophe contractions.
 
-Replacement behavior is enabled by default via
+Optional replacement behavior is enabled by default via
 `night/sentence-case-enable-replacements`.  Non-interactive callers can pass
 `:replacements-p` to override that default for a call:
 `(night/sentence-case text :replacements-p nil)` disables replacements, and
@@ -44,6 +45,9 @@ Examples:
 
 (night/sentence-case "whats up" :replacements-p nil)
 ;; => "Whats up"
+
+(night/sentence-case "i know whats up" :replacements-p nil)
+;; => "I know whats up"
 
 (night/sentence-case "HELLO WORLD. HOW ARE YOU?")
 ;; => "Hello world. How are you?"
