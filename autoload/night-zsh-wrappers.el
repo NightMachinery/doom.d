@@ -162,6 +162,28 @@
    :insert-fn #'night/h-org-insert-sentence-cased-and-fix-levels
    :save-p nil))
 
+(defun night/h-org-md-src-block-p ()
+  "Return non-nil when point is inside an Org md/markdown source block."
+  (and (derived-mode-p 'org-mode)
+       (org-in-src-block-p)
+       (let* ((element (org-element-context))
+              (language (org-element-property :language element)))
+         (not
+          (null
+           (member (downcase (or language ""))
+                   '("md" "markdown")))))))
+
+(defun night/smart-text-paste ()
+  "Sentence-case paste, converting Markdown to Org in Org prose."
+  (interactive)
+  (cond
+   ((and (derived-mode-p 'org-mode)
+         (not (night/h-org-md-src-block-p)))
+    (night/paste-md2org-sentencecased))
+   (t
+    (night/insert-for-yank
+     (night/sentence-case (night/pbpaste))))))
+
 (night/defun-named night/paste-org2md ()
   (interactive)
   (night/brishz-async-insert

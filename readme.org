@@ -27,6 +27,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** [help:night/paste-md2org-sentencecased]
 ***** Converts Markdown clipboard text to Org, sentence-cases it, and inserts it with Org level adjustment.
 
+**** [help:night/smart-text-paste]
+***** Bound to =leader , s=.
+***** In Org buffers outside =md=/=markdown= source blocks, converts Markdown clipboard text to Org before sentence-cased insertion.
+***** Elsewhere, sentence-cases and inserts the clipboard text directly.
+
 ** macOS
 *** [help:night/org-link-safari-current]
 **** Uses Applescript directly
