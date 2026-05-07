@@ -15,10 +15,10 @@ capitalizing sentences, it can also apply whole-word replacements from
 `something`, and common missing-apostrophe contractions.
 
 Replacement behavior is enabled by default via
-`night/sentence-case-enable-replacements`.  Non-interactive callers can pass a
-third argument to override that default for a call:
-`(night/sentence-case text nil nil)` disables replacements, and
-`(night/sentence-case text nil t)` enables them.
+`night/sentence-case-enable-replacements`.  Non-interactive callers can pass
+`:replacements-p` to override that default for a call:
+`(night/sentence-case text :replacements-p nil)` disables replacements, and
+`(night/sentence-case text :replacements-p t)` enables them.
 
 If the input contains letters but no lowercase letters, it is treated as shouted
 or all-caps text: the whole text is downcased first, then sentence-cased.
@@ -35,7 +35,7 @@ Examples:
 (night/sentence-case "whats up? dont use sth")
 ;; => "What's up? Don't use something"
 
-(night/sentence-case "whats up" nil nil)
+(night/sentence-case "whats up" :replacements-p nil)
 ;; => "Whats up"
 
 (night/sentence-case "HELLO WORLD. HOW ARE YOU?")

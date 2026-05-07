@@ -106,7 +106,7 @@
     (apply #'string (nreverse result))))
 
 ;;;###autoload
-(cl-defun night/sentence-case (&optional text insert-p (replacements-p nil replacements-p-supplied-p))
+(cl-defun night/sentence-case (text &key insert-p (replacements-p night/sentence-case-enable-replacements))
   "Sentence-case TEXT.
 
 Apply optional whole-word replacements, then capitalize sentence-starting
@@ -119,7 +119,7 @@ the replacement pass.
 
 Interactively, read text from the clipboard/kill-ring and insert the
 result at point."
-  (interactive (list (current-kill 0) t))
+  (interactive (list (current-kill 0) :insert-p t))
   (let ((result
          (night/h-sentence-case-transform
           (cond
@@ -127,10 +127,7 @@ result at point."
             text)
            (t
             (error "night/sentence-case: expected a string")))
-          (cond
-           (replacements-p-supplied-p
-            replacements-p)
-           (t night/sentence-case-enable-replacements)))))
+          replacements-p)))
     (cond
      (insert-p
       (night/insert-for-yank result))
