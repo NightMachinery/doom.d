@@ -39,7 +39,12 @@
           ((memq char '(?. ?? ?! ?\n))
            (setq capitalize-next-p t)))))
      normalized-text)
-    (apply #'string (nreverse result))))
+    (replace-regexp-in-string
+     "\\_<i\\_>"
+     "I"
+     (apply #'string (nreverse result))
+     nil
+     t)))
 
 ;;;###autoload
 (defun night/sentence-case (&optional text insert-p)

@@ -10,6 +10,7 @@
 The command capitalizes the first alphabetic character at the start of text,
 after `.`, `?`, `!`, and after newlines.  Non-starting words keep their original
 case, so names and existing acronyms are left alone in mixed-case text.
+Standalone lowercase `i` is also capitalized to `I`.
 
 If the input contains letters but no lowercase letters, it is treated as shouted
 or all-caps text: the whole text is downcased first, then sentence-cased.
@@ -19,6 +20,9 @@ Examples:
 ```elisp
 (night/sentence-case "hello iPhone. use API")
 ;; => "Hello iPhone. Use API"
+
+(night/sentence-case "hello i think i can")
+;; => "Hello I think I can"
 
 (night/sentence-case "HELLO WORLD. HOW ARE YOU?")
 ;; => "Hello world. How are you?"
