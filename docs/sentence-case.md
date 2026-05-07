@@ -12,7 +12,8 @@ after `.`, `?`, `!`, and after newlines.  Non-starting words keep their original
 case, so names and existing acronyms are left alone in mixed-case text.  Before
 capitalizing sentences, it can also apply whole-word replacements from
 `night/sentence-case-replacements`, such as standalone `i` to `I`, `sth` to
-`something`, and common missing-apostrophe contractions.
+`something`, informal shorthand like `tho` to `though`, and common
+missing-apostrophe contractions.
 
 Replacement behavior is enabled by default via
 `night/sentence-case-enable-replacements`.  Non-interactive callers can pass
@@ -34,6 +35,12 @@ Examples:
 
 (night/sentence-case "whats up? dont use sth")
 ;; => "What's up? Don't use something"
+
+(night/sentence-case "pls dont do that tho")
+;; => "Please don't do that though"
+
+(night/sentence-case "theyre sure itll work")
+;; => "They're sure it'll work"
 
 (night/sentence-case "whats up" :replacements-p nil)
 ;; => "Whats up"
