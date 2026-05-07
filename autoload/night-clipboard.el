@@ -351,8 +351,13 @@ on the smart escaping behavior."
          )))))
 
 (defun night/pbpaste ()
-  "Returns the last copied string."
-  (current-kill 0))
+  "Return the latest clipboard text.
+
+Locally clear `osx-clipboard-last-selected-text' so
+`osx-clipboard-paste-function' does not suppress the current macOS clipboard as
+already seen."
+  (let ((osx-clipboard-last-selected-text nil))
+    (current-kill 0)))
 
 (defun night/pbcopy (&optional text)
   (interactive)

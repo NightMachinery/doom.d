@@ -24,6 +24,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 ***** [help:night/org-insert-and-fix-levels]
 ****** Falls back to doing nothing and returning the input as is
 
+**** [help:night/pbpaste]
+***** Wraps =current-kill= while locally clearing =osx-clipboard-last-selected-text= so terminal macOS clipboard sync is not suppressed as already seen.
+
 **** [help:night/paste-md2org-sentencecased]
 ***** Converts Markdown clipboard text to Org, sentence-cases it, and inserts it with Org level adjustment.
 
