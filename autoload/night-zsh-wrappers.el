@@ -149,6 +149,19 @@
    :insert-fn #'night/org-insert-and-fix-levels
    :save-p nil))
 
+(defun night/h-org-insert-sentence-cased-and-fix-levels (text)
+  (night/org-insert-and-fix-levels
+   (night/sentence-case text)))
+
+(night/defun-named night/paste-md2org-sentencecased ()
+  (interactive)
+  (night/brishz-async-insert
+   :name $0
+   :command (list "reval-paste" "md2org")
+   :callback-after #'night/nop
+   :insert-fn #'night/h-org-insert-sentence-cased-and-fix-levels
+   :save-p nil))
+
 (night/defun-named night/paste-org2md ()
   (interactive)
   (night/brishz-async-insert

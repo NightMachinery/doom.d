@@ -24,7 +24,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 ***** [help:night/org-insert-and-fix-levels]
 ****** Falls back to doing nothing and returning the input as is
 
+**** [help:night/paste-md2org-sentencecased]
+***** Converts Markdown clipboard text to Org, sentence-cases it, and inserts it with Org level adjustment.
+
 ** macOS
 *** [help:night/org-link-safari-current]
 **** Uses Applescript directly
-

@@ -6,6 +6,9 @@
   `(night/sentence-case "hello. world?")` returns `"Hello. World?"`.
 - Interactive use reads from the clipboard/kill-ring and inserts the transformed
   text at point.  It is bound under the paste-transform leader group as `, s`.
+- `night/paste-md2org-sentencecased` converts the clipboard from Markdown to
+  Org with `md2org`, sentence-cases the converted text, and inserts it with the
+  same Org level adjustment used by `night/paste-md2org`.
 
 The command capitalizes the first alphabetic character at the start of text,
 after `.`, `?`, `!`, and after newlines.  Non-starting words keep their original
