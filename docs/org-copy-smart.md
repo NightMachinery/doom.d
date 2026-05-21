@@ -44,3 +44,9 @@ multiline Org unescape behavior, or to nil for raw copying.
 `+org/dwim-at-point` can also copy block contents through
 `night/org-inline-copy`; that path passes its block content bounds into the same
 smart `kill-new` advice.
+
+The `kill-new` advice must forward optional arguments with `&rest`, because
+Emacs passes `kill-new`'s optional REPLACE argument as a scalar boolean.
+Forwarding that value as a single optional "rest" value makes `apply` receive a
+non-list tail, raising `wrong-type-argument listp t` during calls such as
+`kill-append`.

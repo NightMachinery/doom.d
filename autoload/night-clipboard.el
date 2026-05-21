@@ -159,7 +159,7 @@ the region exactly as it appears in the buffer."
   (let ((night/advice-kill-new-unescape-org-enabled-p nil))
     (kill-region (region-beginning) (region-end))))
 
-(defun night/h-kill-skip-whitespace (orig-fn string &optional rest)
+(defun night/h-kill-skip-whitespace (orig-fn string &rest args)
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
   (let* (
          (string-raw (substring-no-properties string))
@@ -197,7 +197,7 @@ the region exactly as it appears in the buffer."
        ;; t ;; disable this modification entirely
        (not skip-p))
       (progn
-        (apply orig-fn string rest)
+        (apply orig-fn string args)
         (when (night/ssh-p)
           ;; could have used [help:interprogram-cut-function]
           (night/call-process-async

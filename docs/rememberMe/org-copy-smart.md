@@ -25,3 +25,8 @@ Generated or transformed strings should usually keep the no-bounds behavior.
 Examples include Babel result formatting, checklist regex helpers, zsh wrapper
 outputs, and other commands where the copied text is no longer a direct slice of
 the Org buffer.
+
+`kill-new` around advice should keep forwarded optional arguments in an `&rest`
+list.  `kill-new`'s optional REPLACE argument is commonly the boolean t, and
+passing that scalar directly as the final argument to `apply` raises
+`wrong-type-argument listp t`.

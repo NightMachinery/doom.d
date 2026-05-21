@@ -27,6 +27,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** [help:night/pbpaste]
 ***** Wraps =current-kill= while locally clearing =osx-clipboard-last-selected-text= so terminal macOS clipboard sync is not suppressed as already seen.
 
+**** [help:night/h-kill-skip-whitespace]
+***** Wraps =kill-new= and must forward optional arguments with =&rest= so boolean =REPLACE= values from =kill-append= remain valid =apply= tails.
+
 **** [help:night/paste-md2org-sentencecased]
 ***** Converts Markdown clipboard text to Org, sentence-cases it, and inserts it with Org level adjustment.
 
