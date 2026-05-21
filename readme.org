@@ -41,3 +41,8 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 ** macOS
 *** [help:night/org-link-safari-current]
 **** Uses Applescript directly
+
+* Notes
+** Yasnippet
+*** Stale active field state
+**** See [[file:docs/yasnippet.md][docs/yasnippet.md]].

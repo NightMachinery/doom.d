@@ -21,6 +21,41 @@
       (when (looking-at pattern)
         (let ((match-end (match-end 0)))
           (= point-start match-end))))))
+
+(defun night/h-yas-active-field ()
+  "Return Yasnippet's active field when it is structurally valid."
+  (let ((active-field (and (overlayp yas--active-field-overlay)
+                           (overlay-get yas--active-field-overlay 'yas--field))))
+    (when (and active-field
+               (yas--field-p active-field))
+      active-field)))
+
+(defun night/h-yas-field-live-snippet (field)
+  "Return the active snippet covering FIELD, or nil for stale FIELD state."
+  (car (yas-active-snippets (yas--field-start field)
+                            (yas--field-end field))))
+
+(defun night/h-yas-clear-stale-active-field ()
+  "Clear stale active-field overlays left after Yasnippet state drifts."
+  (when (overlayp yas--active-field-overlay)
+    (delete-overlay yas--active-field-overlay))
+  (when (boundp 'yas--field-protection-overlays)
+    (mapc #'delete-overlay yas--field-protection-overlays)
+    (setq yas--field-protection-overlays nil)))
+
+(defun night/h-yas-next-field-around (oldfun &rest args)
+  "Avoid `yas-next-field' errors when Yasnippet has stale field state."
+  (let ((active-field (night/h-yas-active-field)))
+    (cond
+     ((and active-field
+           (night/h-yas-field-live-snippet active-field))
+      (apply oldfun args))
+     (t
+      (night/h-yas-clear-stale-active-field)
+      nil))))
+
+(unless (advice-member-p #'night/h-yas-next-field-around #'yas-next-field)
+  (advice-add #'yas-next-field :around #'night/h-yas-next-field-around))
 ;;;
 (after! yasnippet
   (setq +snippets-dir (concat (getenv "DOOMDIR") "/" "night-snippets/"))
