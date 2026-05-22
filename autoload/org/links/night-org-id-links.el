@@ -98,7 +98,7 @@ Stored as a plist with keys :link and :file.")
        "No cached file context for the latest stored id link; store the link again"))
     cached-file))
 
-(defun night/paste-id-to-link ()
+(defun night/org-insert-id-to-project-link ()
   "Insert an id-to link from the latest stored id link."
   (interactive)
   (let* ((entry (night/org-stored-link-latest-get))
@@ -125,7 +125,7 @@ Stored as a plist with keys :link and :file.")
 (map!
      :map org-mode-map
      :leader
-     "n;" #'night/paste-id-to-link
+     "n;" #'night/org-insert-id-to-project-link
      )
 ;;;
 (after! (org ol org-id)
