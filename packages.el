@@ -55,6 +55,12 @@
 
 (unpin! hl-todo)
 
+(package! yasnippet
+  :recipe (:host github
+           :repo "NightMachinery/yasnippet"
+           :branch "fix-stale-active-field"))
+(unpin! yasnippet)
+
 ;;;
 ;; (package! flycheck
 ;;     :recipe (:build (:not native-compile compile)))
