@@ -41,7 +41,7 @@
       (consult--lookup-member
        (consult--read
         (consult--remove-dups
-         (or (if consult-yank-rotate
+         (or (if yank-from-kill-ring-rotate
                  (append kill-ring-yank-pointer
                          (butlast kill-ring (length kill-ring-yank-pointer)))
                kill-ring)
@@ -69,7 +69,7 @@ This command behaves like `consult-yank-from-kill-ring', but respects
       (push-mark)
       (insert-for-yank string)
       (setq this-command 'yank)
-      (when consult-yank-rotate
+      (when yank-from-kill-ring-rotate
         (if-let ((pos (seq-position kill-ring string)))
             (setq kill-ring-yank-pointer (nthcdr pos kill-ring))
           (kill-new string)))
