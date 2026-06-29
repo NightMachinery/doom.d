@@ -6,7 +6,11 @@
       "Bash(mv:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Read(//opt/homebrew/Cellar/emacs-plus@29/29.2/share/emacs/29.2/lisp/**)"
+      "Read(//opt/homebrew/Cellar/emacs-plus@29/29.2/share/emacs/29.2/lisp/**)",
+      "Bash(sh /Users/evar/.claude/statusline-command.sh)",
+      "Read(//Users/evar/notes/private/configs/claude-code/**)",
+      "Bash(command -v python3)",
+      "Read(//Users/evar/.claude/**)"
     ],
     "deny": [],
     "ask": []
