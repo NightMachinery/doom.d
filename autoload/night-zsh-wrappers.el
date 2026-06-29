@@ -2,6 +2,25 @@
 ;;;
 (setq night/zsh-timeout-default 300)    ;; in seconds
 ;;;
+(defun night/h-url-decode-query-component (component)
+  "Decode URL query COMPONENT as UTF-8 text."
+  (require 'url-util)
+  (decode-coding-string
+   (url-unhex-string (replace-regexp-in-string "\\+" " " component t t))
+   'utf-8))
+
+(defun night/h-org-google-search-url-to-link (link)
+  "Convert a Google search URL LINK to an Org search link when possible."
+  (replace-regexp-in-string
+   "\\`\\(?:\\[\\[\\)?https?://\\(?:www\\.\\)?google\\.[a-z.]+/search\\(?:\\?[^]]*?\\)?[?&]q=\\([^]&]+\\)[^]]*\\(?:\\]\\[[^]]*\\]\\]\\|\\]\\]\\)?\\'"
+   (lambda (m)
+     (save-match-data
+       (let* ((q (match-string 1 m))
+              (decoded (night/h-url-decode-query-component q)))
+         (format "[[search:%s]]"
+                 (org-link-escape decoded)))))
+   link t t))
+
 (cl-defun night/org-link-browser-current (&optional browser (auto-searchify-p t))
   (interactive)
   (let ((link (cond ((equal browser "edge") (z org-link-edge-current))
@@ -9,16 +28,7 @@
                     ((equal browser "arc") (z org-link-arc-current))
                     (t (z org-link-browser-current)))))
     (when auto-searchify-p
-      (require 'url-util)
-      (setq link (replace-regexp-in-string
-                  "\\`\\(?:\\[\\[\\)?https?://\\(?:www\\.\\)?google\\.[a-z.]+/search\\(?:\\?[^]]*?\\)?[?&]q=\\([^]&]+\\)[^]]*\\(?:\\]\\[[^]]*\\]\\]\\|\\]\\]\\)?\\'"
-                  (lambda (m)
-                    (save-match-data
-                      (let* ((q (match-string 1 m))
-                             (decoded (url-unhex-string (replace-regexp-in-string "\\+" " " q t t))))
-                        (format "[[search:%s]]"
-                                (org-link-escape decoded)))))
-                  link t t)))
+      (setq link (night/h-org-google-search-url-to-link link)))
     (night/insert-for-yank-and-save link))
   (night/org-imdb-fill-maybe))
 

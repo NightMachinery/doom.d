@@ -17,6 +17,7 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 #+END_SRC
 
 **** [help:night/org-link-browser-current]
+***** Converts Google search URLs to =search:= Org links, including UTF-8 queries such as Persian text. See [[file:docs/org-link-browser-current.md][docs/org-link-browser-current.md]].
 
 **** [help:night/paste-yank-html]
 ***** [agfi:pbpaste-html]
