@@ -12,19 +12,41 @@ even though a GUI Emacs is clearly running.
 
 ## Root cause
 
-The GUI Emacs calls `server-start` **before** the config sets
-`server-name`/`server-socket-dir`. At that point `server-name` is still the
-default `"server"` and the socket directory is derived from
-`XDG_RUNTIME_DIR` (e.g. `/tmp/runtime-sth`), so the socket is created at:
+There are several independent `server-start` call sites, and a race between
+two of them creates the mismatch:
 
-```
-$XDG_RUNTIME_DIR/emacs/server        # e.g. /tmp/runtime-sth/emacs/server
-```
+1. **`config.el:119`** — the intended one. Runs during user-config load,
+   *after* `server-socket-dir` (config.el:37) and `server-name`
+   (config.el:56, from `$emacs_night_server_name`) are set. Guarded by
+   `(when (not (server-running-p)) ...)`.
+2. **Doom core, `~/.emacs.d/lisp/doom-editor.el:404-412`** — a lazy
+   `use-package! server` block with
+   `:after-call doom-first-input-hook doom-first-file-hook focus-out-hook`
+   and `:defer 1`. `doom-editor.el` is required from Doom's core `init.el`,
+   so these triggers are armed **before** config.el loads. If one of them
+   fires early (e.g. `focus-out-hook` when you switch to another app while
+   the slow Doom startup is still running), `server-start` runs with the
+   **default** `server-name` (`"server"`) and **default** `server-socket-dir`
+   (`$XDG_RUNTIME_DIR/emacs`), binding e.g. `/tmp/runtime-sth/emacs/server`.
+   It also overrides `server-name` from `$EMACS_SERVER_NAME` if that is
+   exported (it normally is not).
+3. **`with-editor--setup`** (magit commits etc.) — if `server-process` is
+   dead it may *rename* `server-name` to `server<PID>` and `server-start`.
+4. **`+default/restart-server`** (interactive command) and daemon launches
+   (`--bg-daemon=PATH`, socket bound in C before any config) — benign.
 
-Later the config sets `server-name` to the absolute path
-`/Users/evar/tmp/.emacs-servers/server_gui` (from `$EMACS_GUI_SOCKET_NAME`),
-but since `server-start` is not run again, the variable and the actual
-listening socket disagree. Inspecting the running Emacs shows the mismatch:
+Normally the early default-socket bind from (2) self-heals: config.el:119's
+`server-start` kills the previous server process and rebinds at the correct
+`server_gui` path. The bug manifests only when **an older GUI Emacs is still
+alive and listening on `server_gui`** at the moment config.el:112 runs its
+`server-running-p` check: the check returns t (someone *is* serving that
+name), so the new instance skips `server-start` and keeps the stray
+default socket. When the old Emacs later exits, it removes the `server_gui`
+socket file — leaving *no* listener on the expected path. That is why the
+problem appears only after launching a new GUI Emacs while the previous one
+was still running.
+
+Inspecting the running Emacs shows the mismatch:
 
 - `server-name` ⇒ `/Users/evar/tmp/.emacs-servers/server_gui`
 - actual socket (via `lsof -p <emacs-pid> | grep unix`) ⇒
@@ -62,9 +84,16 @@ works and `/Users/evar/tmp/.emacs-servers/server_gui` exists.
 
 ## Proper fix (TODO)
 
-Ensure the GUI startup path sets `server-name` (from
-`$EMACS_GUI_SOCKET_NAME` / `emacs_night_server_name`) **before** the first
-`server-start` runs, or call `server-start` again after setting it.
+The `server-running-p` guard at config.el:112 conflates "*this* Emacs serves
+`server_gui`" with "*someone* serves `server_gui`". Options:
+
+- Check `(process-live-p server-process)` (did *we* start a server?) instead
+  of / in addition to `server-running-p`, and if another instance holds the
+  name, either take it over (`server-force-delete` + `server-start`) or pick
+  an alternate name — decide policy first.
+- Additionally, re-assert the correct socket from `doom-after-init-hook` so
+  a stray early bind by Doom's lazy `use-package! server` block
+  (doom-editor.el) is always corrected.
 
 ## Notes
 
