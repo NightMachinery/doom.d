@@ -116,8 +116,22 @@ Instead of reflowing, [`math-env.lua`](./math-env.lua) converts each
 block (emitted as a raw org block). Org parses `\begin{...}`/`\end{...}`
 line-wise as a `latex-environment` *element*, so interior lone `+`/`-`/`=`
 lines are harmless — no reliance on the fragile `\[...\]` fragment
-heuristics. Inline math, and display math mixed inside a text paragraph
-(which cannot become a block), are still reflowed onto one line.
+heuristics.
+
+The filter runs three passes for robustness:
+
+1. **Tables** — cells cannot hold multi-line blocks (the org table writer
+   would smear the equation across rows), so cell display math becomes a
+   single-line raw `\[ ... \]`.
+2. **Standalone display-math paragraphs** (including inside list items)
+   become `equation*` environments. The raw block is wrapped in a `Div`
+   because pandoc's org writer glues bare raw blocks to their neighbors
+   with no blank line; the Div restores normal blank-line separation
+   (without it, consecutive equations and following text are still
+   *parsed* correctly by org, but the source is unreadable).
+3. **Leftover display math** sits in inline-only contexts (headings,
+   emphasis, mixed text paragraphs) and is reflowed onto one line, as is
+   all inline math.
 
 Verified properties:
 
