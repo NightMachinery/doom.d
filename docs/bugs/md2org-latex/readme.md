@@ -134,6 +134,23 @@ Choose by taste: `reflow-math.lua` keeps `\[...\]` but flattens equations
 onto (possibly very long) single lines; `math-env.lua` keeps the source's
 line structure at the cost of rewriting the delimiters.
 
+### Why not a `#+begin_...` block?
+
+Tested empirically (Org 9.7.34); none work for math:
+
+| block                  | previewable | HTML export                                     |
+|------------------------|-------------|-------------------------------------------------|
+| `#+begin_export latex` | no          | dropped entirely (latex-backend only)           |
+| `#+begin_equation`     | no          | `<div class="equation">` with the body parsed as
+  *org prose* (`_{...}` → `<sub>`, `\times` → `&times;`) — mangled          |
+| `#+begin_src latex`    | no          | code listing, not math                          |
+
+`org-format-latex`/`org-latex-preview` only process latex *fragments* and
+latex *environments* — zero previews were generated for any of the three.
+A bare `\begin{equation*}...\end{equation*}` at column 0 **is** org's
+explicit block construct for math; the `#+begin_` machinery is for
+prose/export/code content.
+
 ## Reproduction commands
 
 ```zsh
