@@ -102,6 +102,38 @@ Caveats:
   `tex_math_single_backslash`; pre-convert the delimiters to `$$`/`$`
   first, or use `--from=markdown+...` anyway.
 
+## Alternative: explicit environments (preserves newlines)
+
+Instead of reflowing, [`math-env.lua`](./math-env.lua) converts each
+*standalone* display-math paragraph into an explicit
+
+```
+\begin{equation*}
+...original lines, newlines preserved...
+\end{equation*}
+```
+
+block (emitted as a raw org block). Org parses `\begin{...}`/`\end{...}`
+line-wise as a `latex-environment` *element*, so interior lone `+`/`-`/`=`
+lines are harmless — no reliance on the fragile `\[...\]` fragment
+heuristics. Inline math, and display math mixed inside a text paragraph
+(which cannot become a block), are still reflowed onto one line.
+
+Verified properties:
+
+- org-element parses the result as `latex-environment` (no stray
+  `plain-list`), including indented occurrences inside list items.
+- **Previewable**: `org-format-latex`/`org-latex-preview` compiled the
+  multi-line environment to SVG via dvisvgm without errors.
+- **HTML export**: the environment is passed through verbatim for MathJax
+  (default `org-html-with-latex` handling), same as `\[...\]`.
+- Rendering semantics match `\[...\]` (`equation*` = unnumbered display
+  math; needs amsmath, which org's default preview/export preamble loads).
+
+Choose by taste: `reflow-math.lua` keeps `\[...\]` but flattens equations
+onto (possibly very long) single lines; `math-env.lua` keeps the source's
+line structure at the cost of rewriting the delimiters.
+
 ## Reproduction commands
 
 ```zsh
