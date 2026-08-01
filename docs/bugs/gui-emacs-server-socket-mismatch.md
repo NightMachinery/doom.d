@@ -82,18 +82,32 @@ EMACS_GUI_SOCKET_NAME=<actual-socket-path> withemcgui emc-eval \
 Then verify `withemcgui emc-eval '(list :ok (window-system) server-name)'`
 works and `/Users/evar/tmp/.emacs-servers/server_gui` exists.
 
-## Proper fix (TODO)
+## Implemented fix (2026-08-01)
 
-The `server-running-p` guard at config.el:112 conflates "*this* Emacs serves
-`server_gui`" with "*someone* serves `server_gui`". Options:
+`config.el` now starts the server via `night/server-start-carefully`
+(defined next to the old call site) instead of the raw
+`server-running-p`-guarded `server-start`:
 
-- Check `(process-live-p server-process)` (did *we* start a server?) instead
-  of / in addition to `server-running-p`, and if another instance holds the
-  name, either take it over (`server-force-delete` + `server-start`) or pick
-  an alternate name — decide policy first.
-- Additionally, re-assert the correct socket from `doom-after-init-hook` so
-  a stray early bind by Doom's lazy `use-package! server` block
-  (doom-editor.el) is always corrected.
+1. **Owner check** — if `server-process` is live AND
+   `(process-contact server-process :service)` equals
+   `(expand-file-name server-name server-socket-dir)`, we already serve the
+   correct socket; do nothing. The `process-contact` path comparison is what
+   catches the Doom stray-early-bind case (`process-live-p` alone would
+   wrongly skip).
+2. Otherwise, if another process listens on our name, wait up to
+   `night/server-occupied-wait-seconds` (default 10), printing a
+   "waiting for ... to be released" message each second.
+3. If the socket is freed (or was never taken), `server-start` — this also
+   kills our own stray wrong-path server, if any.
+4. If still occupied, `display-warning` and follow
+   `night/server-occupied-policy`:
+   - `no-server` (default): this Emacs runs without a server.
+   - `alt-name`: start under the first free `<server-name>_<n>` and warn
+     about the name used.
+
+Covered by batch-mode tests during development: free socket → normal start;
+occupied → wait + warning + no server; occupied + `alt-name` → `..._1`
+socket; live stray wrong-path server → rebound at the expected path.
 
 ## Notes
 

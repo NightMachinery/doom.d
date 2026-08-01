@@ -109,7 +109,16 @@
    ((night/t21-p) "T21")
    (t (system-name))))
 
-(when (not (server-running-p))
+(defvar night/server-occupied-policy 'no-server
+  "What to do when another process still serves `server-name' after waiting.
+- `no-server': do not start a server at all (default).
+- `alt-name': append a numeric suffix (e.g., \"_1\") to `server-name' and
+  start the server under the first free such name.")
+
+(defvar night/server-occupied-wait-seconds 10
+  "How long to wait for an occupied server socket to be released.")
+
+(defun night/h-server-start ()
   (cond
    ((night/server-alt1-p)
     ;; (night/unadvice #'ivy--switch-buffer-action)
@@ -117,6 +126,58 @@
    ;; @note +irc--ivy-switch-to-buffer-action will also call ivy--switch-buffer-action
    )
   (server-start))
+
+(defun night/server-start-carefully ()
+  "Start the Emacs server unless this Emacs already serves `server-name'.
+
+If another process is listening on our socket, wait up to
+`night/server-occupied-wait-seconds' for it to be released; if it is still
+occupied afterwards, warn and follow `night/server-occupied-policy'.
+
+See ./docs/bugs/gui-emacs-server-socket-mismatch.md for the bug this
+guards against."
+  (interactive)
+  (let ((expected (expand-file-name server-name server-socket-dir)))
+    (cond
+     ;; We already own the correct socket; nothing to do. `process-live-p'
+     ;; alone is not enough: an early `server-start' (e.g., from Doom's lazy
+     ;; `use-package! server' in doom-editor.el) can leave `server-process'
+     ;; live but bound to a default path instead of `expected'.
+     ((and (process-live-p server-process)
+           (equal (process-contact server-process :service) expected))
+      t)
+     (t
+      (let ((waited 0))
+        (while (and (server-running-p server-name)
+                    (< waited night/server-occupied-wait-seconds))
+          (message "night/server: waiting for %s to be released (%ds/%ds) ..."
+                   expected waited night/server-occupied-wait-seconds)
+          (sleep-for 1)
+          (setq waited (1+ waited))))
+      (cond
+       ((not (server-running-p server-name))
+        (night/h-server-start))
+       (t
+        (display-warning
+         'night-server
+         (format "could not start the server: %s is still served by another process"
+                 expected))
+        (cond
+         ((eq night/server-occupied-policy 'alt-name)
+          (let ((n 1))
+            (while (server-running-p (format "%s_%d" server-name n))
+              (setq n (1+ n)))
+            (setq server-name (format "%s_%d" server-name n))
+            (night/h-server-start)
+            (display-warning
+             'night-server
+             (format "started the server under the alternate name %s instead"
+                     server-name))))
+         (t
+          ;; `no-server' (default): leave this Emacs without a server.
+          nil))))))))
+
+(night/server-start-carefully)
 
 ;;;
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
