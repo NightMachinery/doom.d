@@ -7,6 +7,10 @@
 
    :dir (getenv "nightNotes")
 
+   :extra-paths (list
+                 (getenv "bigWalletDir")
+                 )
+
    :query initial-query
    :include-extensions '("org" "org_archive" "md" "tex" "txt" "json" "csv" "zsh" "py")
    :exclude-globs '("*chrome*bookmarks.org"))
