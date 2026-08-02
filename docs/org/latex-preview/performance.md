@@ -24,14 +24,23 @@ pins `:foreground "black"` which keeps hashes theme-stable).
 `autoload/org/night-latex-preview-lazy.el`:
 
 - One `org-element` parse collects all fragment positions (no LaTeX).
-- Fragments visible in the window compile first (one chunk immediately);
-  the rest drain from **idle timers** in chunks of
-  `night/org-latex-preview-lazy-chunk-size` (default 2), so between chunks
-  Emacs is fully responsive.
-- Scrolling re-prioritizes the queue toward the viewport
-  (`window-scroll-functions`).
+- Fragments visible in the window compile first (one chunk immediately if
+  the buffer is displayed); the rest drain from **idle timers** in chunks
+  of `night/org-latex-preview-lazy-chunk-size` (default 2), so between
+  chunks Emacs is fully responsive.
+- Each tick re-prioritizes the queue toward the current viewport, so
+  previews follow where you are looking.
 - `night/org-latex-preview-lazy-stop` cancels; already-previewed fragments
   (existing overlays) are skipped.
+
+**Lazy is the default for whole-buffer previews**: `org-latex-preview` is
+advised so that the `'(16)` whole-buffer path — which includes org's
+`#+STARTUP: latexpreview` handling during `org-mode` initialization
+(org.el ~line 5102), i.e. the case where Emacs would freeze *before the
+user can run any command* — goes through the lazy machinery instead.
+Opening a `#+STARTUP: latexpreview` file with many fragments is instant;
+previews fill in on idle. Section-level previews (`C-c C-x C-l` with no
+prefix) stay synchronous since sections are small.
 
 Total CPU work is unchanged — this converts "frozen for minutes" into
 "progressive and responsive". Pauses of up to ~1-2 s per chunk can still be

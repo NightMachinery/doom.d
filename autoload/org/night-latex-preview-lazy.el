@@ -89,14 +89,6 @@ distance from the window."
                   (< (night/h-olpl-priority a ws we)
                      (night/h-olpl-priority b ws we)))))))
 
-(defun night/h-olpl-on-scroll (win _start)
-  "Re-prioritize the queue of WIN's buffer towards the new viewport."
-  (let ((buf (window-buffer win)))
-    (when (buffer-local-value 'night/h-olpl-queue buf)
-      (with-current-buffer buf
-        (with-selected-window win
-          (night/h-olpl-resort))))))
-
 (defun night/h-olpl-schedule (buf)
   "Schedule the next tick for BUF.
 While Emacs stays idle, chunks continue back-to-back (idle timers only
@@ -112,10 +104,16 @@ period."
            nil #'night/h-olpl-tick buf))))
 
 (defun night/h-olpl-tick (buf)
-  "Compile one chunk of BUF's queue, then reschedule or finish."
+  "Compile one chunk of BUF's queue, then reschedule or finish.
+The queue is re-prioritized towards BUF's current viewport first, so
+previews always follow where the user is looking."
   (when (buffer-live-p buf)
     (with-current-buffer buf
       (setq night/h-olpl-timer nil)
+      (let ((win (get-buffer-window buf)))
+        (when win
+          (with-selected-window win
+            (night/h-olpl-resort))))
       (let ((n night/org-latex-preview-lazy-chunk-size))
         (while (and night/h-olpl-queue (> n 0))
           (night/h-olpl-preview-1 (pop night/h-olpl-queue))
@@ -135,8 +133,7 @@ period."
   (dolist (frag night/h-olpl-queue)
     (set-marker (car frag) nil)
     (set-marker (cdr frag) nil))
-  (setq night/h-olpl-queue nil)
-  (remove-hook 'window-scroll-functions #'night/h-olpl-on-scroll t))
+  (setq night/h-olpl-queue nil))
 
 (defun night/org-latex-preview-lazy ()
   "Preview all LaTeX fragments progressively without freezing Emacs.
@@ -163,8 +160,33 @@ queue towards the viewport. Stop with
      ((not night/h-olpl-queue)
       (message "night/org-latex-preview-lazy: no LaTeX fragments found"))
      (t
-      (night/h-olpl-resort)
-      (add-hook 'window-scroll-functions #'night/h-olpl-on-scroll nil t)
       (message "night/org-latex-preview-lazy: previewing %d fragments ..."
                (length night/h-olpl-queue))
-      (night/h-olpl-tick (current-buffer)))))))
+      (cond
+       ;; Displayed buffer: compile the first (viewport) chunk right away
+       ;; for immediate feedback.
+       ((get-buffer-window (current-buffer))
+        (night/h-olpl-tick (current-buffer)))
+       ;; Not displayed yet (e.g. startup preview during `org-mode'
+       ;; initialization): keep the file open instant; the idle timer
+       ;; starts compiling once the buffer is shown and Emacs is idle.
+       (t
+        (night/h-olpl-schedule (current-buffer)))))))))
+
+;;;
+;; Make lazy previewing the DEFAULT for whole-buffer previews: both
+;; `#+STARTUP: latexpreview' (org.el calls `(org-latex-preview '(16))'
+;; during `org-mode' initialization, which would freeze Emacs before the
+;; user can intervene) and interactive `C-u C-u org-latex-preview'.
+;; Section-level previews (no prefix) stay synchronous: they are small.
+(defun night/h-olpl-around-org-latex-preview (orig-fn &optional arg)
+  (cond
+   ((and (equal arg '(16))
+         (not (night/org-latex-preview-new-system-p))
+         (fboundp 'org--latex-preview-region))
+    (night/org-latex-preview-lazy))
+   (t (funcall orig-fn arg))))
+
+(after! org
+  (advice-add #'org-latex-preview
+              :around #'night/h-olpl-around-org-latex-preview))
