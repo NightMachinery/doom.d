@@ -245,6 +245,40 @@ preview — that is org's own overlay behavior, independent of fragtog."
     (org-fragtog-mode 1)
     (message "night/org-latex-preview-pin-toggle: unpinned (fragtog on)"))))
 
+(defvar night/org-latex-preview-pin-global-p nil
+  "Whether LaTeX previews are pinned globally (org-fragtog suppressed).
+Consulted by `night/org-interactive-startup' when opening new org
+buffers; toggle with `night/org-latex-preview-pin-global-toggle'.")
+
+(defun night/org-latex-preview-pin-global-toggle ()
+  "Toggle pinned previews across all org buffers, current and future.
+
+Simple stomp semantics: pinning disables `org-fragtog-mode' in every
+existing org buffer (restoring raw fragments lazily) and suppresses it
+for future buffers via `night/org-latex-preview-pin-global-p';
+unpinning re-enables fragtog in all org buffers of graphical sessions
+(mirroring `night/org-interactive-startup'). Per-buffer overrides made
+with `night/org-latex-preview-pin-toggle' survive only until the next
+global toggle."
+  (interactive)
+  (setq night/org-latex-preview-pin-global-p
+        (not night/org-latex-preview-pin-global-p))
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (derived-mode-p 'org-mode)
+        (cond
+         (night/org-latex-preview-pin-global-p
+          (when (bound-and-true-p org-fragtog-mode)
+            (org-fragtog-mode -1)
+            (night/org-latex-preview-lazy)))
+         (t
+          (when (display-graphic-p)
+            (org-fragtog-mode 1)))))))
+  (message "night/org-latex-preview-pin-global-toggle: %s"
+           (cond
+            (night/org-latex-preview-pin-global-p "pinned globally")
+            (t "unpinned globally (fragtog on)"))))
+
 ;;;
 ;; Make lazy previewing the DEFAULT for whole-buffer previews: both
 ;; `#+STARTUP: latexpreview' (org.el calls `(org-latex-preview '(16))'

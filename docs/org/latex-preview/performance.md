@@ -82,6 +82,13 @@ explicit toggles; the hide-under-cursor behavior comes from
 buffer and lazily restores the fragments it left raw; toggling again
 re-enables fragtog.
 
+**Global pinning** (`night/org-latex-preview-pin-global-toggle`): same
+idea for all org buffers, current and future — sweeps `(buffer-list)`
+and sets `night/org-latex-preview-pin-global-p`, which
+`night/org-interactive-startup` consults for newly opened files. Simple
+stomp semantics: per-buffer overrides survive only until the next
+global toggle; unpinning re-enables fragtog in graphical sessions.
+
 ### 2. Cache warming (not implemented)
 
 Point `org-preview-latex-image-directory` at one absolute shared dir and

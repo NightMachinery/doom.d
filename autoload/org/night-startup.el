@@ -21,8 +21,9 @@
 (defun night/org-interactive-startup ()
   (interactive)
   (when (display-graphic-p)
-    (org-fragtog-mode)
-    ;; https://github.com/io12/org-fragtog
+    (unless (bound-and-true-p night/org-latex-preview-pin-global-p)
+      ;; https://github.com/io12/org-fragtog
+      (org-fragtog-mode))
 
     (night/org-latex-preview-buffer))
 
