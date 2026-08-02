@@ -142,9 +142,13 @@ guards against."
      ;; We already own the correct socket; nothing to do. `process-live-p'
      ;; alone is not enough: an early `server-start' (e.g., from Doom's lazy
      ;; `use-package! server' in doom-editor.el) can leave `server-process'
-     ;; live but bound to a default path instead of `expected'.
+     ;; live but bound to a default path instead of `expected'. The
+     ;; `file-exists-p' check catches another process having bound and later
+     ;; unlinked our socket path (e.g., `emacsclient -a ""' auto-spawning a
+     ;; daemon on it): our listener would survive but be unreachable.
      ((and (process-live-p server-process)
-           (equal (process-contact server-process :service) expected))
+           (equal (process-contact server-process :service) expected)
+           (file-exists-p expected))
       t)
      (t
       (let ((waited 0))
@@ -178,6 +182,25 @@ guards against."
           nil))))))))
 
 (night/server-start-carefully)
+
+(defun night/h-server-reassert-on-focus (&rest _)
+  "Rebind the server socket if its file vanished from under us.
+
+A stray daemon (e.g., auto-spawned by `emacsclient -a \"\"') can bind our
+socket path and unlink it again when it dies, leaving our live server
+unreachable. This runs on focus changes, is cheap (a `file-exists-p'),
+and simply rebinds. If another process still occupies the path,
+`server-start' itself refuses and warns instead of stealing."
+  (when (and (frame-focus-state)
+             (process-live-p server-process)
+             (not (file-exists-p (expand-file-name server-name server-socket-dir))))
+    (message "night/server: socket file for %s vanished; re-asserting"
+             server-name)
+    (server-start)))
+
+(when (display-graphic-p)
+  (add-function :after after-focus-change-function
+                #'night/h-server-reassert-on-focus))
 
 ;;;
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
