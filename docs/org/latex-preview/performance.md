@@ -42,11 +42,15 @@ pins `:foreground "black"` which keeps hashes theme-stable).
   and stretch the opening command itself (observed: a ~1 s open stretched
   to minutes). Redisplay-time hooks (`window-buffer-change-functions`)
   are unsafe for the same reason.
-- Once armed, chunks of `night/org-latex-preview-lazy-chunk-size`
-  (default 2) compile with wall-clock rests
-  (`night/org-latex-preview-lazy-rest-delay`) in between so the event
-  loop breathes; the drain parks on an idle timer whenever the user is
-  active or in the minibuffer.
+- Once armed, each tick works until a wall-clock budget is spent
+  (`night/org-latex-preview-lazy-tick-seconds`, default 0.5), with
+  wall-clock rests (`night/org-latex-preview-lazy-rest-delay`) in
+  between so the event loop breathes; the drain parks on an idle timer
+  whenever the user is active or in the minibuffer. The time budget
+  (rather than a fragment count) is what makes warm caches fast: a
+  cache-hit render costs ~1ms (no LaTeX runs), so a previously-previewed
+  buffer drains in bulk — measured 539 warm fragments in 0.13s — while a
+  cold compile (~0.3-1s) naturally caps a tick at about one fragment.
 - Each tick re-prioritizes the queue toward the current viewport, so
   previews follow where you are looking.
 - `night/org-latex-preview-lazy-stop` cancels; already-previewed fragments

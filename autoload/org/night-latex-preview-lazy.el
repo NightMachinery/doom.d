@@ -24,10 +24,12 @@ org-latex-preview.el library; stock org <= 9.7 defines
    "The new async org-latex-preview system has landed! The lazy-preview code in autoload/org/night-latex-preview-lazy.el targets the old synchronous system and needs updating; the new system previews asynchronously natively. See docs/org/latex-preview/performance.md."))
 
 ;;;
-(defvar night/org-latex-preview-lazy-chunk-size 2
-  "How many fragments to compile per tick.
-Each fragment blocks Emacs for roughly 0.3-1s, so this bounds the pause
-length between which Emacs stays responsive.")
+(defvar night/org-latex-preview-lazy-tick-seconds 0.5
+  "Wall-clock work budget per tick.
+Bounds how long each tick may block Emacs. Cache-hit fragments render in
+about a millisecond (no LaTeX runs), so a warm-cache buffer drains
+almost immediately — hundreds of fragments per tick; a cold compile
+(~0.3-1s) naturally caps a tick at roughly one fragment.")
 
 (defvar night/org-latex-preview-lazy-idle-delay 0.5
   "Idle seconds the user must be before compiling starts (or resumes).")
@@ -163,12 +165,12 @@ and the drain parks on an idle timer instead."
           (when win
             (with-selected-window win
               (night/h-olpl-resort))))
-        ;; Compile up to chunk-size fragments; skipping already-previewed
-        ;; or dead fragments does not consume chunk slots.
-        (let ((n night/org-latex-preview-lazy-chunk-size))
-          (while (and night/h-olpl-queue (> n 0))
-            (when (night/h-olpl-preview-1 (pop night/h-olpl-queue))
-              (setq n (1- n)))))
+        ;; Work until the tick's time budget is spent: cache hits and
+        ;; skips cost ~1ms each and flow through in bulk, cold compiles
+        ;; cap the tick at about one fragment.
+        (let ((deadline (+ (float-time) night/org-latex-preview-lazy-tick-seconds)))
+          (while (and night/h-olpl-queue (< (float-time) deadline))
+            (night/h-olpl-preview-1 (pop night/h-olpl-queue))))
         (cond
          (night/h-olpl-queue (night/h-olpl-schedule buf 'resting))
          (t
