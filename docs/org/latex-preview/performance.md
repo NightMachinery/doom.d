@@ -6,7 +6,7 @@ Stock org (<= 9.7) previews LaTeX **synchronously, one fragment at a
 time**: each fragment spawns its own `latex` run (re-reading the entire
 preamble every time, ~0.3-1 s) plus `dvisvgm`. A file with hundreds of
 fragments (e.g. LLM-generated notes converted via
-[md2org](../../bugs/md2org-latex/readme.md) — 539 fragments) freezes Emacs
+[md2org](~/scripts/docs/md2org-latex/readme.md) — 539 fragments) freezes Emacs
 for **minutes**.
 
 **The actual trigger in this config** (found 2026-08-02 during
@@ -135,4 +135,4 @@ The lazy command also refuses to run under the new system.
 - Scaling analysis: <https://karthinks.com/software/scaling-latex-previews-in-emacs/>
 - Overhaul thread: <https://list.orgmode.org/orgmode/87lek2up0w.fsf@tec.tecosaur.net/>
 - Todo/issue tracker: <https://github.com/tecosaur/org-latex-preview-todos>
-- Related local bug doc: [md2org-latex](../../bugs/md2org-latex/readme.md)
+- Related bug doc: `~/scripts/docs/md2org-latex/readme.md` (moved to the scripts repo, where the md2org tooling lives)
