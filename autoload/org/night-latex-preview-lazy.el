@@ -225,6 +225,27 @@ queue towards the viewport. Stop with
       (night/h-olpl-request-arm (current-buffer)))))))
 
 ;;;
+(defun night/org-latex-preview-pin-toggle ()
+  "Toggle whether LaTeX previews stay rendered when point enters them.
+
+Stock org previews are sticky: they only disappear on text modification
+or explicit toggling. The auto-hide-under-cursor behavior comes from
+`org-fragtog-mode' (enabled per buffer by
+`night/org-interactive-startup'). Pinning simply disables fragtog in
+this buffer and restores the fragments it left raw; unpinning re-enables
+fragtog. Note that *editing* a fragment's text still removes its
+preview — that is org's own overlay behavior, independent of fragtog."
+  (interactive)
+  (cond
+   ((bound-and-true-p org-fragtog-mode)
+    (org-fragtog-mode -1)
+    (night/org-latex-preview-lazy)
+    (message "night/org-latex-preview-pin-toggle: pinned (fragtog off)"))
+   (t
+    (org-fragtog-mode 1)
+    (message "night/org-latex-preview-pin-toggle: unpinned (fragtog on)"))))
+
+;;;
 ;; Make lazy previewing the DEFAULT for whole-buffer previews: both
 ;; `#+STARTUP: latexpreview' (org.el calls `(org-latex-preview '(16))'
 ;; during `org-mode' initialization, which would freeze Emacs before the

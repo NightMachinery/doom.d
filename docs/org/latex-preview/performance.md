@@ -74,6 +74,14 @@ Total CPU work is unchanged — this converts "frozen for minutes" into
 "progressive and responsive". Pauses of up to ~1-2 s per chunk can still be
 felt while it works through the queue.
 
+**Pinning previews** (`night/org-latex-preview-pin-toggle`, same file):
+stock org previews are sticky — they only disappear on text edits or
+explicit toggles; the hide-under-cursor behavior comes from
+`org-fragtog-mode` (enabled per buffer by
+`night/org-interactive-startup`). The toggle disables fragtog in the
+buffer and lazily restores the fragments it left raw; toggling again
+re-enables fragtog.
+
 ### 2. Cache warming (not implemented)
 
 Point `org-preview-latex-image-directory` at one absolute shared dir and
