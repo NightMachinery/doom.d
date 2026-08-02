@@ -152,12 +152,13 @@ line structure at the cost of rewriting the delimiters.
 
 Tested empirically (Org 9.7.34); none work for math:
 
-| block                  | previewable | HTML export                                     |
-|------------------------|-------------|-------------------------------------------------|
-| `#+begin_export latex` | no          | dropped entirely (latex-backend only)           |
-| `#+begin_equation`     | no          | `<div class="equation">` with the body parsed as
-  *org prose* (`_{...}` → `<sub>`, `\times` → `&times;`) — mangled          |
-| `#+begin_src latex`    | no          | code listing, not math                          |
+- `#+begin_export latex` — not previewable; dropped entirely from HTML
+  export (latex-backend only).
+- `#+begin_equation` (special block) — not previewable; HTML export wraps
+  it in `<div class="equation">` with the body parsed as *org prose*
+  (`_{...}` → `<sub>`, `\times` → `&times;`) — mangled.
+- `#+begin_src latex` — not previewable; HTML-exports as a code listing,
+  not math.
 
 `org-format-latex`/`org-latex-preview` only process latex *fragments* and
 latex *environments* — zero previews were generated for any of the three.
