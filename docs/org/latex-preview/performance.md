@@ -9,6 +9,16 @@ fragments (e.g. LLM-generated notes converted via
 [md2org](../../bugs/md2org-latex/readme.md) — 539 fragments) freezes Emacs
 for **minutes**.
 
+**The actual trigger in this config** (found 2026-08-02 during
+verification): `night/org-latex-preview-buffer`
+(autoload/org/night-ui.el) is called by `night/org-interactive-startup`
+on every graphical org-file open and used to call the internal
+`org--latex-preview-region` over the whole buffer directly — a
+synchronous whole-buffer compile on open, regardless of `#+STARTUP:
+latexpreview`. It now routes through the lazy machinery below. (The
+`org-latex-preview` advice alone did not help this path, since the
+internal function was called directly.)
+
 Note the flip side of org's design: preview images are cached by a content
 hash in `org-preview-latex-image-directory` (default `ltximg/` next to the
 file), so *re*-opening an unchanged file is fast. The hang is first-ever
@@ -24,14 +34,28 @@ pins `:foreground "black"` which keeps hashes theme-stable).
 `autoload/org/night-latex-preview-lazy.el`:
 
 - One `org-element` parse collects all fragment positions (no LaTeX).
-- Fragments visible in the window compile first (one chunk immediately if
-  the buffer is displayed); the rest drain from **idle timers** in chunks
-  of `night/org-latex-preview-lazy-chunk-size` (default 2), so between
-  chunks Emacs is fully responsive.
+- **Nothing compiles synchronously and no timer is scheduled directly.**
+  The drain arms via a one-shot `post-command-hook`: timers (idle *or*
+  wall-clock) fire during any `sit-for` — including ones inside the very
+  command/eval that opened the file, since Lisp execution does not reset
+  the user-idle clock — so scheduling immediately lets the drain hijack
+  and stretch the opening command itself (observed: a ~1 s open stretched
+  to minutes). Redisplay-time hooks (`window-buffer-change-functions`)
+  are unsafe for the same reason.
+- Once armed, chunks of `night/org-latex-preview-lazy-chunk-size`
+  (default 2) compile with wall-clock rests
+  (`night/org-latex-preview-lazy-rest-delay`) in between so the event
+  loop breathes; the drain parks on an idle timer whenever the user is
+  active or in the minibuffer.
 - Each tick re-prioritizes the queue toward the current viewport, so
   previews follow where you are looking.
 - `night/org-latex-preview-lazy-stop` cancels; already-previewed fragments
-  (existing overlays) are skipped.
+  (existing overlays) are skipped without consuming chunk slots.
+
+Verified 2026-08-02 in an isolated Doom instance on the 539-fragment
+file with a cold cache: open 1.4 s (was minutes); eval latency during
+the drain 0.1-1 s typical; drain ~2 fragments/s, completing in ~5 min
+with all 539 preview overlays present.
 
 **Lazy is the default for whole-buffer previews**: `org-latex-preview` is
 advised so that the `'(16)` whole-buffer path — which includes org's

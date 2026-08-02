@@ -30,13 +30,49 @@ Each fragment blocks Emacs for roughly 0.3-1s, so this bounds the pause
 length between which Emacs stays responsive.")
 
 (defvar night/org-latex-preview-lazy-idle-delay 0.5
-  "Idle seconds to wait before compiling the next chunk.")
+  "Idle seconds the user must be before compiling starts (or resumes).")
+
+(defvar night/org-latex-preview-lazy-rest-delay 0.3
+  "Wall-clock seconds to rest between chunks while draining.
+This gap lets the event loop process pending input, process output, and
+server requests between chunks; without it, back-to-back chunks starve
+I/O and Emacs appears frozen despite the timers.")
 
 (defvar-local night/h-olpl-queue nil
   "Pending fragments, a list of (BEGIN-MARKER . END-MARKER) conses.")
 
 (defvar-local night/h-olpl-timer nil
   "The scheduled idle timer for the next chunk, if any.")
+
+(defvar night/h-olpl-pending-buffers nil
+  "Buffers whose drain is queued but not yet armed.
+Arming is deferred to a command-loop boundary: timers (idle or
+wall-clock) fire during any `sit-for' — including ones inside the very
+command that opened the file, since Lisp execution does not reset the
+user-idle clock. Scheduling a timer immediately would therefore let the
+drain hijack and stretch the opening command itself (observed: a 1s
+`find-file' stretched to minutes). `post-command-hook' is the only safe
+start signal: redisplay-time hooks like
+`window-buffer-change-functions' are unsafe too, since redisplay also
+runs inside the opening command's `sit-for's. The cost: for a buffer
+opened by a background server eval, the drain starts only at the user's
+next command.")
+
+(defun night/h-olpl-request-arm (buf)
+  "Arm BUF's drain at the next command-loop boundary."
+  (cl-pushnew buf night/h-olpl-pending-buffers)
+  (add-hook 'post-command-hook #'night/h-olpl-arm-pending))
+
+(defun night/h-olpl-arm-pending ()
+  "Start the drains of all pending buffers. Self-removing."
+  (remove-hook 'post-command-hook #'night/h-olpl-arm-pending)
+  (let ((bufs night/h-olpl-pending-buffers))
+    (setq night/h-olpl-pending-buffers nil)
+    (dolist (buf bufs)
+      (when (and (buffer-live-p buf)
+                 (buffer-local-value 'night/h-olpl-queue buf))
+        (with-current-buffer buf
+          (night/h-olpl-schedule buf))))))
 
 (defun night/h-olpl-fragments ()
   "Collect all LaTeX fragments/environments as marker-pair conses."
@@ -54,8 +90,9 @@ length between which Emacs stays responsive.")
 
 (defun night/h-olpl-preview-1 (frag)
   "Compile the preview for FRAG, a (BEGIN-MARKER . END-MARKER) cons.
-Frees the markers afterwards; errors are reported but do not abort the
-queue."
+Returns non-nil when a compile actually ran (as opposed to skipping a
+dead or already-previewed fragment). Frees the markers afterwards;
+errors are reported but do not abort the queue."
   (let ((beg (marker-position (car frag)))
         (end (marker-position (cdr frag))))
     (unwind-protect
@@ -67,7 +104,8 @@ queue."
               (org--latex-preview-region beg end)
             (error
              (message "night/org-latex-preview-lazy: error at %d: %s"
-                      beg (error-message-string err))))))
+                      beg (error-message-string err))))
+          t))
       (set-marker (car frag) nil)
       (set-marker (cdr frag) nil))))
 
@@ -89,44 +127,59 @@ distance from the window."
                   (< (night/h-olpl-priority a ws we)
                      (night/h-olpl-priority b ws we)))))))
 
-(defun night/h-olpl-schedule (buf)
+(defun night/h-olpl-schedule (buf &optional resting)
   "Schedule the next tick for BUF.
-While Emacs stays idle, chunks continue back-to-back (idle timers only
-fire once per idle period, so the continuation must extend the current
-idle time); once the user is active again, wait for the next idle
-period."
-  (let ((idle (current-idle-time)))
-    (setq night/h-olpl-timer
-          (run-with-idle-timer
-           (cond
-            (idle (time-add idle night/org-latex-preview-lazy-idle-delay))
-            (t night/org-latex-preview-lazy-idle-delay))
-           nil #'night/h-olpl-tick buf))))
+With RESTING non-nil, the drain is in progress and the next chunk runs
+after a short wall-clock rest (so the event loop can serve input and
+process output in between). Otherwise wait for the user to be idle for
+`night/org-latex-preview-lazy-idle-delay'."
+  (setq night/h-olpl-timer
+        (cond
+         (resting
+          (run-with-timer night/org-latex-preview-lazy-rest-delay
+                          nil #'night/h-olpl-tick buf))
+         (t
+          (run-with-idle-timer night/org-latex-preview-lazy-idle-delay
+                               nil #'night/h-olpl-tick buf)))))
 
 (defun night/h-olpl-tick (buf)
   "Compile one chunk of BUF's queue, then reschedule or finish.
 The queue is re-prioritized towards BUF's current viewport first, so
-previews always follow where the user is looking."
+previews always follow where the user is looking. When the user is
+actively working (not idle, or input is pending), no compiling happens
+and the drain parks on an idle timer instead."
   (when (buffer-live-p buf)
     (with-current-buffer buf
       (setq night/h-olpl-timer nil)
-      (let ((win (get-buffer-window buf)))
-        (when win
-          (with-selected-window win
-            (night/h-olpl-resort))))
-      (let ((n night/org-latex-preview-lazy-chunk-size))
-        (while (and night/h-olpl-queue (> n 0))
-          (night/h-olpl-preview-1 (pop night/h-olpl-queue))
-          (setq n (1- n))))
       (cond
-       (night/h-olpl-queue (night/h-olpl-schedule buf))
+       ;; User became active (or is in the minibuffer): yield immediately,
+       ;; resume on next idleness.
+       ((or (input-pending-p)
+            (not (current-idle-time))
+            (active-minibuffer-window))
+        (night/h-olpl-schedule buf))
        (t
-        (message "night/org-latex-preview-lazy: all previews done")
-        (night/org-latex-preview-lazy-stop))))))
+        (let ((win (get-buffer-window buf)))
+          (when win
+            (with-selected-window win
+              (night/h-olpl-resort))))
+        ;; Compile up to chunk-size fragments; skipping already-previewed
+        ;; or dead fragments does not consume chunk slots.
+        (let ((n night/org-latex-preview-lazy-chunk-size))
+          (while (and night/h-olpl-queue (> n 0))
+            (when (night/h-olpl-preview-1 (pop night/h-olpl-queue))
+              (setq n (1- n)))))
+        (cond
+         (night/h-olpl-queue (night/h-olpl-schedule buf 'resting))
+         (t
+          (message "night/org-latex-preview-lazy: all previews done")
+          (night/org-latex-preview-lazy-stop))))))))
 
 (defun night/org-latex-preview-lazy-stop ()
   "Cancel lazy previewing in the current buffer, freeing all state."
   (interactive)
+  (setq night/h-olpl-pending-buffers
+        (delq (current-buffer) night/h-olpl-pending-buffers))
   (when night/h-olpl-timer
     (cancel-timer night/h-olpl-timer)
     (setq night/h-olpl-timer nil))
@@ -162,16 +215,12 @@ queue towards the viewport. Stop with
      (t
       (message "night/org-latex-preview-lazy: previewing %d fragments ..."
                (length night/h-olpl-queue))
-      (cond
-       ;; Displayed buffer: compile the first (viewport) chunk right away
-       ;; for immediate feedback.
-       ((get-buffer-window (current-buffer))
-        (night/h-olpl-tick (current-buffer)))
-       ;; Not displayed yet (e.g. startup preview during `org-mode'
-       ;; initialization): keep the file open instant; the idle timer
-       ;; starts compiling once the buffer is shown and Emacs is idle.
-       (t
-        (night/h-olpl-schedule (current-buffer)))))))))
+      ;; Never compile synchronously here, and never schedule a timer
+      ;; directly: this function may be running inside `org-mode'
+      ;; initialization (STARTUP latexpreview) or another command whose
+      ;; `sit-for's would fire our timers and stretch that command. Arm at
+      ;; the next command-loop boundary instead.
+      (night/h-olpl-request-arm (current-buffer)))))))
 
 ;;;
 ;; Make lazy previewing the DEFAULT for whole-buffer previews: both
