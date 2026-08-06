@@ -152,24 +152,76 @@ and sets `night/org-latex-preview-pin-global-p`, which
 stomp semantics: per-buffer overrides survive only until the next
 global toggle; unpinning re-enables fragtog in graphical sessions.
 
-**Kill switch** (`night/org-latex-preview-lazy-toggle` per buffer,
-`night/org-latex-preview-lazy-global-toggle` everywhere): an emergency
-escape hatch for working around bugs in the lazy machinery. While
-disabled (`night/org-latex-preview-lazy-enabled-p` nil), both advices
-pass straight through, restoring stock *synchronous* previews; the
-explicit lazy commands refuse with an error; disabling also halts any
-in-flight drain immediately. Same stomp semantics as global pinning:
-the global toggle discards all per-buffer overrides.
+**Modes** (`night/org-latex-preview-lazy-mode`, set with
+`night/org-latex-preview-lazy-mode-set` — plain call is buffer-local,
+prefix arg sets the global default and stomps buffer-locals):
 
-### 2. Cache warming (not implemented)
+- `original`: both advices pass straight through, restoring stock
+  *synchronous* previews, and the lazy commands refuse — the emergency
+  kill switch for working around bugs. Switching to it halts any
+  in-flight drain and warming immediately.
+- `timer-ticks`: foreground drain only (the pre-warming behavior).
+- `timer+bg`: the drain compiles at most one cold fragment per tick
+  *while* background pipelines warm the rest in parallel (an in-flight
+  set prevents duplicate work).
+- `bg` (default): the foreground never blocks on LaTeX — the drain
+  only renders cache hits and cold fragments wait for the background
+  pipelines, except when the backlog is below
+  `night/org-latex-preview-lazy-warm-min`, where spawning pipelines is
+  not worth it and it behaves like `timer-ticks`.
 
-Point `org-preview-latex-image-directory` at one absolute shared dir and
-have the md2org pipeline (or a `night/org-latex-warm-cache` command) run a
-**background batch Emacs** that pre-populates the cache; opening the file
-then hits cache for every fragment. Requires exact hash fidelity between
-the batch process and the GUI (same options plist, same resolved colors —
-our pinned `:foreground "black"` helps; `clear-image-cache` must be stubbed
-in batch). Only helps files warmed in advance.
+`night/org-latex-preview-lazy-toggle` /
+`night/org-latex-preview-lazy-global-toggle` flip between `original`
+and the last active mode, with the same stomp semantics as global
+pinning.
+
+### 2. Parallel background cache warming — IMPLEMENTED (2026-08-07)
+
+Cold fragments are compiled OUTSIDE Emacs, in parallel, directly into
+the shared cache at the exact paths `night/h-olpl-cache-file` computes
+(the hash mirror is verified byte-identical against org's own), and
+the drain then renders them as ~1ms cache hits. Design points:
+
+- **No batch-Emacs workers.** The GUI assembles the `.tex` documents
+  itself — it must anyway, since the preamble comes from
+  `org-latex-make-preamble` over the *buffer's* export environment
+  (`#+LATEX_HEADER:` keywords), which a buffer-less batch process
+  cannot read — and runs `latex` + `dvisvgm` directly as
+  sentinel-chained subprocesses (each stage's process sentinel
+  launches the next; Emacs never blocks and failures are attributed
+  per stage). The `.tex`/color/scale assembly mirrors org 9.7's
+  `org-create-formula-image` (including its swapped-args
+  `string-suffix-p` quirk) — verified: warmed SVGs are identical to
+  stock-compiled ones modulo dvisvgm's internal glyph-id numbering.
+- **Batched to amortize the preamble.** The dominant per-fragment
+  cost is latex re-parsing the preamble (~250-400ms of each
+  ~300-500ms run). Chunks of
+  `night/org-latex-preview-lazy-warm-batch-size` (20) fragments go
+  into ONE multi-page document — one preamble parse per chunk — and
+  ONE `dvisvgm --page=1- --output=out-%p.svg` run converts all pages,
+  which are then renamed (atomically, via temp + rename) onto their
+  hash paths. A failed chunk (page-count mismatch) retries its
+  fragments as single-fragment chunks, isolating the broken one,
+  which is reported and dropped. A precompiled-preamble format
+  (mylatexformat) could shave the residual per-chunk parse but was
+  deliberately skipped: fragile format cache, redundant with
+  batching.
+- **Parallelism = `(num-processors)`** pipelines
+  (`night/org-latex-preview-lazy-warm-workers`, nil = auto; 8 on this
+  M2), no cap and no core reservation — every command runs under
+  `nice -n 10`, so the scheduler yields cores to interactive work on
+  demand.
+- Lifecycle: pipelines are killed by
+  `night/org-latex-preview-lazy-stop`, the mode toggles, buffer kill,
+  and mode changes away from the bg modes; temp dirs and the
+  in-flight set are always cleaned.
+
+Measured (2026-08-07, M2): 12 cold fragments, mode `bg`: **all
+rendered in 2s** with zero foreground blocking — vs ~11s for the
+serial foreground drain and ~7s for stock's frozen batch.
+
+Note the interplay with fragtog/pinning: warming only produces cache
+files; overlays still come from the drain sweeping the queue.
 
 ### 3. The real fix: async preview overhaul (tecosaur/karthink)
 
@@ -197,10 +249,10 @@ sets `org-startup-with-latex-preview nil`).
 
 ## Decision
 
-Option 1 implemented now; revisit option 3 when the overhaul merges into
-mainline org (or if first-preview latency becomes painful enough to accept
-fork risk). Option 2 remains available as an add-on for the md2org
-pipeline.
+Options 1 and 2 implemented (lazy drain 2026-08-02; parallel warming
+2026-08-07); revisit option 3 when the overhaul merges into mainline
+org — it obsoletes both (async native previews, precompiled preambles,
+theme-independent caching).
 
 ## Migration watch
 
