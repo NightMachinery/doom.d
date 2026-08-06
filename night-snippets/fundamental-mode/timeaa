@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: timeaa
+# key: timeaa
+# uuid: timeaa
+# --
+`(format-time-string "<%Y-%m-%d %a>")`
