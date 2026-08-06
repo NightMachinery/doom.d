@@ -62,6 +62,14 @@ hashes are computed.")
 `org--latex-preview-region' calls reach the real function instead of
 being rerouted back into the queue.")
 
+(defvar night/org-latex-preview-lazy-enabled-p t
+  "Whether the lazy preview machinery is active.
+When nil, the `org--latex-preview-region' and `insert-for-yank' advices
+pass straight through to stock synchronous behavior — an emergency kill
+switch for working around bugs. Toggle per buffer with
+`night/org-latex-preview-lazy-toggle' (via `setq-local') or everywhere
+with `night/org-latex-preview-lazy-global-toggle'.")
+
 (defvar-local night/h-olpl-queue nil
   "Pending fragments, a list of (BEGIN-MARKER . END-MARKER) conses.")
 
@@ -306,6 +314,9 @@ and the drain parks on an idle timer instead."
     (with-current-buffer buf
       (setq night/h-olpl-timer nil)
       (cond
+       ;; Kill switch flipped while a tick was already scheduled.
+       ((not night/org-latex-preview-lazy-enabled-p)
+        (night/org-latex-preview-lazy-stop))
        ;; User became active (or is in the minibuffer): yield immediately,
        ;; resume on next idleness.
        ((or (input-pending-p)
@@ -354,6 +365,9 @@ no per-buffer state to keep beyond this."
 (defun night/h-olpl-usable-p ()
   "Whether the lazy machinery can run, signaling `user-error' when not."
   (cond
+   ((not night/org-latex-preview-lazy-enabled-p)
+    (user-error
+     "night/org-latex-preview-lazy: disabled here; toggle with night/org-latex-preview-lazy-toggle (or -global-toggle)"))
    ((not (derived-mode-p 'org-mode))
     (user-error "night/org-latex-preview-lazy: not an org buffer"))
    ((night/org-latex-preview-new-system-p)
@@ -463,6 +477,44 @@ global toggle."
            (cond
             (night/org-latex-preview-pin-global-p "pinned globally")
             (t "unpinned globally (fragtog on)"))))
+
+;;;
+(defun night/org-latex-preview-lazy-toggle ()
+  "Toggle the lazy preview machinery in this buffer (emergency escape).
+While disabled, the `org--latex-preview-region' and `insert-for-yank'
+advices pass straight through, restoring stock synchronous previews.
+Buffer-local; a later `night/org-latex-preview-lazy-global-toggle'
+stomps it."
+  (interactive)
+  (setq-local night/org-latex-preview-lazy-enabled-p
+              (not night/org-latex-preview-lazy-enabled-p))
+  (unless night/org-latex-preview-lazy-enabled-p
+    ;; Emergency semantics: halt any in-flight drain now.
+    (night/org-latex-preview-lazy-stop))
+  (message "night/org-latex-preview-lazy-toggle: %s in this buffer (globally: %s)"
+           (if night/org-latex-preview-lazy-enabled-p "enabled" "disabled")
+           (if (default-value 'night/org-latex-preview-lazy-enabled-p)
+               "enabled" "disabled")))
+
+(defun night/org-latex-preview-lazy-global-toggle ()
+  "Toggle the lazy preview machinery everywhere (emergency escape).
+Simple stomp semantics: flips the global default and discards all
+buffer-local overrides made with `night/org-latex-preview-lazy-toggle'.
+Disabling also halts every in-flight drain."
+  (interactive)
+  (setq-default night/org-latex-preview-lazy-enabled-p
+                (not (default-value 'night/org-latex-preview-lazy-enabled-p)))
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (kill-local-variable 'night/org-latex-preview-lazy-enabled-p)
+      (unless (default-value 'night/org-latex-preview-lazy-enabled-p)
+        (when (derived-mode-p 'org-mode)
+          (night/org-latex-preview-lazy-stop)))))
+  (unless (default-value 'night/org-latex-preview-lazy-enabled-p)
+    (setq night/h-olpl-pending-buffers nil))
+  (message "night/org-latex-preview-lazy-global-toggle: %s globally"
+           (if (default-value 'night/org-latex-preview-lazy-enabled-p)
+               "enabled" "disabled")))
 
 ;;;
 (defun night/h-olpl-overlay-image-file (beg end)
@@ -584,7 +636,8 @@ scratch."
 ;; (`C-u', `C-u C-u C-u') never reach it.
 (defun night/h-olpl-around-org--latex-preview-region (orig-fn beg end)
   (cond
-   ((or night/h-olpl-inhibit-reroute ;; the drain's own compiles
+   ((or (not night/org-latex-preview-lazy-enabled-p) ;; kill switch
+        night/h-olpl-inhibit-reroute ;; the drain's own compiles
         (night/org-latex-preview-new-system-p)
         (not (display-graphic-p)))
     (funcall orig-fn beg end))
@@ -629,7 +682,8 @@ scratch."
 (defun night/h-olpl-around-insert-for-yank (orig-fn string &rest args)
   (let ((paste-beg (point)))
     (prog1 (apply orig-fn string args)
-      (when (and (derived-mode-p 'org-mode)
+      (when (and night/org-latex-preview-lazy-enabled-p ;; kill switch
+                 (derived-mode-p 'org-mode)
                  (display-graphic-p)
                  (not (night/org-latex-preview-new-system-p))
                  (fboundp 'org--latex-preview-region))

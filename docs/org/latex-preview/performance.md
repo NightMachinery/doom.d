@@ -148,6 +148,15 @@ and sets `night/org-latex-preview-pin-global-p`, which
 stomp semantics: per-buffer overrides survive only until the next
 global toggle; unpinning re-enables fragtog in graphical sessions.
 
+**Kill switch** (`night/org-latex-preview-lazy-toggle` per buffer,
+`night/org-latex-preview-lazy-global-toggle` everywhere): an emergency
+escape hatch for working around bugs in the lazy machinery. While
+disabled (`night/org-latex-preview-lazy-enabled-p` nil), both advices
+pass straight through, restoring stock *synchronous* previews; the
+explicit lazy commands refuse with an error; disabling also halts any
+in-flight drain immediately. Same stomp semantics as global pinning:
+the global toggle discards all per-buffer overrides.
+
 ### 2. Cache warming (not implemented)
 
 Point `org-preview-latex-image-directory` at one absolute shared dir and
