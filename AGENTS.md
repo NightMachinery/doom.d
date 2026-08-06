@@ -26,6 +26,12 @@ or simple lists.
 
 After finishing development, use `emc-eval` AND `withemcgui emc-eval` to re-load all changed Elisp files so that the running servers always run up-to-date code.
 
+# Yasnippet Guidelines
+
+Snippet files must not end with a trailing newline: yasnippet includes
+everything after the `# --` marker in the snippet body, so a final newline gets
+inserted on every expansion.
+
 # Commit Guidelines
 
 Never commit `./data/ispell-personal-dictionary`, as it might leak personal info. Tell the user to commit it themselves if need be.
