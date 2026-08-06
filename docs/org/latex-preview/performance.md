@@ -107,6 +107,19 @@ explicit toggles; the hide-under-cursor behavior comes from
 buffer and lazily restores the fragments it left raw; toggling again
 re-enables fragtog.
 
+**Per-buffer cache clearing**
+(`night/org-latex-preview-cache-clear-buffer`, same file): deletes the
+cached images of the current buffer's fragments only — for previewed
+fragments the exact path is read off the overlay's display plist; for
+the rest the content hash is recomputed exactly as `org-format-latex`
+does (verified byte-identical against a real compile). Caveats, since
+the cache dir is shared and content-addressed: identical fragment text
+in another file shares the same image file (clearing here cold-caches
+it there too), and the hash includes theme-resolved colors, so images
+rendered under a different theme are not found. Preview overlays are
+cleared too, so the next preview command recompiles from scratch —
+useful for testing cold-cache behavior.
+
 **Global pinning** (`night/org-latex-preview-pin-global-toggle`): same
 idea for all org buffers, current and future — sweeps `(buffer-list)`
 and sets `night/org-latex-preview-pin-global-p`, which

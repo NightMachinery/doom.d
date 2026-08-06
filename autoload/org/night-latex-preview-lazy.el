@@ -426,6 +426,93 @@ global toggle."
             (t "unpinned globally (fragtog on)"))))
 
 ;;;
+(defun night/h-olpl-overlay-image-file (beg end)
+  "Image file shown by the preview overlay covering BEG..END, if any."
+  (cl-some (lambda (ov)
+             (and (eq (overlay-get ov 'org-overlay-type) 'org-latex-overlay)
+                  (plist-get (cdr (overlay-get ov 'display)) :file)))
+           (overlays-in beg end)))
+
+(defun night/h-olpl-cache-file (value &optional pos)
+  "The cache image path `org-format-latex' would use for fragment text VALUE.
+Mirrors the hash computation in org 9.7's `org-format-latex' as called
+by `org--latex-preview-region' (FORBUFFER non-nil, prefix
+\"org-ltximg\" under `org-preview-latex-image-directory'). POS is where
+the fragment starts, used for `auto' color resolution. Note the
+`:foreground'/`:background' entries of `org-format-latex-options'
+resolve against the CURRENT theme/faces, so images rendered under a
+different theme hash differently and will not be found."
+  (let* ((processing-info
+          (cdr (assq org-preview-latex-default-process
+                     org-preview-latex-process-alist)))
+         (imagetype (or (plist-get processing-info :image-output-type) "png"))
+         (face (save-excursion
+                 (when pos (goto-char pos))
+                 (face-at-point)))
+         (fg (let ((color (plist-get org-format-latex-options :foreground)))
+               (cond
+                ((eq color 'auto) (face-attribute face :foreground nil 'default))
+                ((eq color 'default) (face-attribute 'default :foreground nil))
+                (t color))))
+         (bg (let ((color (plist-get org-format-latex-options :background)))
+               (cond
+                ((eq color 'auto) (face-attribute face :background nil 'default))
+                ((eq color 'default) (face-attribute 'default :background nil))
+                (t color))))
+         (hash (sha1 (prin1-to-string
+                      (list org-format-latex-header
+                            org-latex-default-packages-alist
+                            org-latex-packages-alist
+                            org-format-latex-options
+                            'forbuffer value fg bg))))
+         (absprefix (expand-file-name
+                     (concat org-preview-latex-image-directory "org-ltximg")
+                     default-directory)))
+    (format "%s_%s.%s" absprefix hash imagetype)))
+
+(defun night/org-latex-preview-cache-clear-buffer ()
+  "Delete the cached preview images of this buffer's LaTeX fragments.
+
+The cache dir (`org-preview-latex-image-directory') is SHARED across
+all org files and keyed by content hash, so:
+- a fragment with identical text in another file shares the same image
+  file; clearing here cold-caches that file too;
+- only images matching the current options and theme-resolved colors
+  can be located (see `night/h-olpl-cache-file').
+Previewed fragments' images are located exactly via their overlays;
+un-previewed ones by recomputing the hash. Preview overlays in the
+buffer are cleared as well, so the next preview command recompiles from
+scratch."
+  (interactive)
+  (cond
+   ((not (derived-mode-p 'org-mode))
+    (user-error
+     "night/org-latex-preview-cache-clear-buffer: not an org buffer"))
+   (t
+    ;; Stop any running drain first: with the cache gone it would start
+    ;; recompiling everything it had left.
+    (night/org-latex-preview-lazy-stop 'keep-watch)
+    (let ((deleted 0)
+          (absent 0))
+      (org-element-map (org-element-parse-buffer)
+          '(latex-fragment latex-environment)
+        (lambda (el)
+          (let* ((beg (org-element-property :begin el))
+                 (end (org-element-property :end el))
+                 (file (or (night/h-olpl-overlay-image-file beg end)
+                           (night/h-olpl-cache-file
+                            (org-element-property :value el) beg))))
+            (cond
+             ((and file (file-exists-p file))
+              (delete-file file)
+              (cl-incf deleted))
+             (t (cl-incf absent))))))
+      (org-clear-latex-preview (point-min) (point-max))
+      (message
+       "night/org-latex-preview-cache-clear-buffer: deleted %d image(s) (%d had no cached image)"
+       deleted absent)))))
+
+;;;
 ;; Make lazy previewing the DEFAULT for every multi-fragment preview path:
 ;; - `#+STARTUP: latexpreview' / `C-u C-u' (whole buffer): org.el calls
 ;;   `(org-latex-preview '(16))' during `org-mode' initialization, which
