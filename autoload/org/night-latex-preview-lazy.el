@@ -40,6 +40,28 @@ This gap lets the event loop process pending input, process output, and
 server requests between chunks; without it, back-to-back chunks starve
 I/O and Emacs appears frozen despite the timers.")
 
+(defvar night/org-latex-preview-lazy-sync-threshold 1
+  "Regions with at most this many fragments compile synchronously.
+Used by `night/h-olpl-around-org--latex-preview-region'. The threshold
+counts fragments, but the cost driver is cold compiles (~0.3-1s each
+versus ~1ms for cache hits), which are unknowable at dispatch time —
+so the default of 1 bounds the worst-case synchronous freeze to a
+single LaTeX run while keeping the fragment-at-point toggle and
+org-fragtog's exit re-renders instant.")
+
+(defvar night/org-latex-preview-lazy-sync-cached-max 5000
+  "Render all-cached regions synchronously up to this many fragments.
+Warm renders cost ~0.25ms per fragment, so all-cached regions can skip
+the lazy queue and appear immediately; the cap bounds both that bulk
+render and the hash-checking itself (~10-30µs per fragment) on
+pathological files. Checked against the fragment count BEFORE any
+hashes are computed.")
+
+(defvar night/h-olpl-inhibit-reroute nil
+  "Bound non-nil by the lazy drain so its own
+`org--latex-preview-region' calls reach the real function instead of
+being rerouted back into the queue.")
+
 (defvar-local night/h-olpl-queue nil
   "Pending fragments, a list of (BEGIN-MARKER . END-MARKER) conses.")
 
@@ -96,18 +118,49 @@ block as top-level org)."
        ((and eb (<= pos eb)) pos)
        (t (max pos (or ee pos)))))))
 
+(defconst night/h-olpl-math-regexp "\\$\\|\\\\[([]\\|^[ \t]*\\\\begin{[A-Za-z0-9*]+}"
+  "Candidate starts of LaTeX fragments/environments.
+Copied from `org-format-latex' (org 9.7, org.el). It overmatches
+\(closing $, math-looking text in verbatim contexts), so each match
+must be confirmed with `org-element-context'.")
+
 (defun night/h-olpl-fragments (&optional beg end)
   "Collect LaTeX fragments/environments as marker-pair conses.
 With BEG and END, scan only that region; callers must pass
-element-aligned bounds (see `night/h-olpl-element-bound')."
-  (save-restriction
-    (when (and beg end)
-      (narrow-to-region beg end))
-    (org-element-map (org-element-parse-buffer)
-        '(latex-fragment latex-environment)
-      (lambda (el)
-        (cons (copy-marker (org-element-property :begin el))
-              (copy-marker (org-element-property :end el)))))))
+element-aligned bounds (see `night/h-olpl-element-bound').
+
+Scans `night/h-olpl-math-regexp' and confirms each candidate with the
+cache-backed `org-element-context' — the `org-format-latex' technique.
+Cost is proportional to the number of math candidates, unlike
+`org-element-parse-buffer', which ignores the element cache and
+reparses the entire buffer."
+  (let ((beg (or beg (point-min)))
+        (end (or end (point-max)))
+        (frags nil))
+    (save-excursion
+      (goto-char beg)
+      (while (re-search-forward night/h-olpl-math-regexp end t)
+        (let ((context (org-element-context)))
+          (when (memq (org-element-type context)
+                      '(latex-fragment latex-environment))
+            (let ((fb (org-element-property :begin context))
+                  (fe (org-element-property :end context)))
+              (push (cons (copy-marker fb) (copy-marker fe)) frags)
+              ;; Skip the fragment's remainder (e.g. its closing $).
+              (goto-char fe))))))
+    (nreverse frags)))
+
+(defun night/h-olpl-candidate-count (beg end limit)
+  "Count `night/h-olpl-math-regexp' matches in BEG..END, up to LIMIT.
+Raw regexp matches only, no element parsing — the cheap dispatch bound
+for `night/h-olpl-around-org--latex-preview-region'."
+  (let ((count 0))
+    (save-excursion
+      (goto-char beg)
+      (while (and (< count limit)
+                  (re-search-forward night/h-olpl-math-regexp end t))
+        (cl-incf count)))
+    count))
 
 (defun night/h-olpl-merge (frags)
   "Merge FRAGS into the queue, skipping duplicates. Returns the count added."
@@ -124,19 +177,18 @@ element-aligned bounds (see `night/h-olpl-element-bound')."
         (setq night/h-olpl-queue (nconc night/h-olpl-queue (list frag))))))
     added))
 
-;;; Buffer-modification watching: fragments pasted or typed AFTER the
-;;; initial scan would otherwise never render (the queue is a one-shot
-;;; snapshot, and a finished drain disarms itself). Each edit widens a
-;;; dirty region (O(1) marker updates); the next tick rescans just that
-;;; region and merges any new fragments into the queue.
+;;; Paste tracking: fragments PASTED after the initial scan would
+;;; otherwise never render (the queue is a one-shot snapshot, and a
+;;; finished drain disarms itself; org-fragtog only previews the
+;;; fragment point exits, so bulk pastes slip through — typed LaTeX, by
+;;; contrast, needs nothing beyond fragtog). The `insert-for-yank'
+;;; advice below widens a dirty region on paste; the next tick rescans
+;;; just that region and merges any new fragments into the queue.
 (defvar-local night/h-olpl-dirty-beg nil
-  "Marker at the start of the region edited since the last scan, or nil.")
+  "Marker at the start of the region pasted since the last scan, or nil.")
 
 (defvar-local night/h-olpl-dirty-end nil
-  "Marker at the end of the region edited since the last scan, or nil.")
-
-(defvar-local night/h-olpl-watching nil
-  "Whether this buffer's modification watcher is installed.")
+  "Marker at the end of the region pasted since the last scan, or nil.")
 
 (defun night/h-olpl-dirty-clear ()
   (when night/h-olpl-dirty-beg (set-marker night/h-olpl-dirty-beg nil))
@@ -144,20 +196,8 @@ element-aligned bounds (see `night/h-olpl-element-bound')."
   (setq night/h-olpl-dirty-beg nil
         night/h-olpl-dirty-end nil))
 
-(defun night/h-olpl-watch ()
-  "Install the buffer-modification watcher (idempotent)."
-  (unless night/h-olpl-watching
-    (setq night/h-olpl-watching t)
-    (add-hook 'after-change-functions #'night/h-olpl-after-change nil t)))
-
-(defun night/h-olpl-unwatch ()
-  "Remove the buffer-modification watcher and forget pending edits."
-  (setq night/h-olpl-watching nil)
-  (remove-hook 'after-change-functions #'night/h-olpl-after-change t)
-  (night/h-olpl-dirty-clear))
-
-(defun night/h-olpl-after-change (beg end _len)
-  "Widen the dirty region to cover BEG..END. Runs on every edit; O(1)."
+(defun night/h-olpl-dirty-note (beg end)
+  "Widen the dirty region to cover BEG..END and arm the drain."
   (cond
    ((null night/h-olpl-dirty-beg)
     (setq night/h-olpl-dirty-beg (copy-marker beg)
@@ -212,7 +252,10 @@ errors are reported but do not abort the queue."
          ((night/h-olpl-previewed-p beg) nil)
          (t
           (condition-case err
-              (org--latex-preview-region beg end)
+              ;; The reroute advice must not intercept the drain's own
+              ;; compiles.
+              (let ((night/h-olpl-inhibit-reroute t))
+                (org--latex-preview-region beg end))
             (error
              (message "night/org-latex-preview-lazy: error at %d: %s"
                       beg (error-message-string err))))
@@ -286,17 +329,16 @@ and the drain parks on an idle timer instead."
           (cond
            (night/h-olpl-queue (night/h-olpl-schedule buf 'resting))
            (t
-            ;; Stay quiet on ticks that only absorbed non-LaTeX edits.
+            ;; Stay quiet on ticks that only absorbed fragment-free
+            ;; pastes.
             (when worked
               (message "night/org-latex-preview-lazy: all previews done"))
-            ;; Keep the watcher: future pastes/edits must still arm us.
-            (night/org-latex-preview-lazy-stop 'keep-watch)))))))))
+            (night/org-latex-preview-lazy-stop)))))))))
 
-(defun night/org-latex-preview-lazy-stop (&optional keep-watch)
+(defun night/org-latex-preview-lazy-stop ()
   "Cancel lazy previewing in the current buffer, freeing all state.
-With KEEP-WATCH non-nil (used on normal drain completion), the
-buffer-modification watcher stays installed so later pastes/edits still
-get previewed; interactively the watcher is removed too."
+The global paste advice re-arms the drain on the next paste; there is
+no per-buffer state to keep beyond this."
   (interactive)
   (setq night/h-olpl-pending-buffers
         (delq (current-buffer) night/h-olpl-pending-buffers))
@@ -307,8 +349,7 @@ get previewed; interactively the watcher is removed too."
     (set-marker (car frag) nil)
     (set-marker (cdr frag) nil))
   (setq night/h-olpl-queue nil)
-  (unless keep-watch
-    (night/h-olpl-unwatch)))
+  (night/h-olpl-dirty-clear))
 
 (defun night/h-olpl-usable-p ()
   "Whether the lazy machinery can run, signaling `user-error' when not."
@@ -334,7 +375,6 @@ re-prioritizes the queue towards the viewport. Stop with
   (interactive)
   (when (night/h-olpl-usable-p)
     (night/org-latex-preview-lazy-stop)
-    (night/h-olpl-watch)
     (setq night/h-olpl-queue (night/h-olpl-fragments))
     (cond
      ((not night/h-olpl-queue)
@@ -356,7 +396,6 @@ into any in-progress queue instead of restarting it. BEG and END are
 extended to element boundaries."
   (interactive "r")
   (when (night/h-olpl-usable-p)
-    (night/h-olpl-watch)
     (let* ((beg (night/h-olpl-element-bound beg 'beg))
            (end (night/h-olpl-element-bound end 'end))
            (added (night/h-olpl-merge (night/h-olpl-fragments beg end))))
@@ -470,6 +509,26 @@ different theme hash differently and will not be found."
                      default-directory)))
     (format "%s_%s.%s" absprefix hash imagetype)))
 
+(defun night/h-olpl-all-cached-p (frags)
+  "Whether every fragment in FRAGS already has a cached preview image.
+Short-circuits on the first miss, so cold buffers pay for roughly one
+hash + one `file-exists-p' (~20µs). Callers must bound (length FRAGS)
+BEFORE calling (see `night/org-latex-preview-lazy-sync-cached-max') —
+that bounds the checking cost itself, not just the render."
+  (cl-every
+   (lambda (frag)
+     (let ((beg (marker-position (car frag))))
+       (and beg
+            (let ((context (save-excursion
+                             (goto-char beg)
+                             (org-element-context))))
+              (and (memq (org-element-type context)
+                         '(latex-fragment latex-environment))
+                   (file-exists-p
+                    (night/h-olpl-cache-file
+                     (org-element-property :value context) beg)))))))
+   frags))
+
 (defun night/org-latex-preview-cache-clear-buffer ()
   "Delete the cached preview images of this buffer's LaTeX fragments.
 
@@ -491,7 +550,7 @@ scratch."
    (t
     ;; Stop any running drain first: with the cache gone it would start
     ;; recompiling everything it had left.
-    (night/org-latex-preview-lazy-stop 'keep-watch)
+    (night/org-latex-preview-lazy-stop)
     (let ((deleted 0)
           (absent 0))
       (org-element-map (org-element-parse-buffer)
@@ -513,42 +572,71 @@ scratch."
        deleted absent)))))
 
 ;;;
-;; Make lazy previewing the DEFAULT for every multi-fragment preview path:
-;; - `#+STARTUP: latexpreview' / `C-u C-u' (whole buffer): org.el calls
-;;   `(org-latex-preview '(16))' during `org-mode' initialization, which
-;;   would freeze Emacs before the user can intervene;
-;; - an active region (unbounded size);
-;; - no prefix with point NOT on a fragment: org renders the whole
-;;   SECTION synchronously. org-fragtog's fragment-exit handler calls
-;;   no-arg `org-latex-preview' and can land in this branch when its
-;;   stale parse misses the fragment (e.g. affiliated keywords), turning
-;;   a cursor motion into a section-wide freeze.
-;; Toggling the single fragment at point stays synchronous, as do the
-;; clearing paths (`C-u', `C-u C-u C-u') — they are cheap.
-(defun night/h-olpl-around-org-latex-preview (orig-fn &optional arg)
+;; Make lazy previewing the DEFAULT for every multi-fragment preview
+;; path with a single choke-point advice: `org--latex-preview-region' is
+;; what every synchronous preview funnels through — all
+;; `org-latex-preview' branches (whole-buffer `C-u C-u' incl.
+;; `#+STARTUP: latexpreview' during `org-mode' init, active region,
+;; no-prefix section, the single-fragment toggle), Doom's
+;; `+org/dwim-at-point'/`night/org-dwim-at-point' headline branch, and
+;; `night/org-latex-preview-buffer'. Advising it covers every current
+;; and future caller with no per-site patching. The clearing paths
+;; (`C-u', `C-u C-u C-u') never reach it.
+(defun night/h-olpl-around-org--latex-preview-region (orig-fn beg end)
   (cond
-   ((or (night/org-latex-preview-new-system-p)
-        (not (fboundp 'org--latex-preview-region))
-        (not (display-graphic-p))
-        (and (bound-and-true-p untrusted-content)
-             (not (bound-and-true-p org--latex-preview-when-risky)))
-        (member arg '((4) (64))))
-    (funcall orig-fn arg))
-   ((equal arg '(16))
-    (night/org-latex-preview-lazy))
-   ((use-region-p)
-    (night/org-latex-preview-lazy-region (region-beginning) (region-end)))
-   ((memq (org-element-type (org-element-context))
-          '(latex-fragment latex-environment))
-    (funcall orig-fn arg))
+   ((or night/h-olpl-inhibit-reroute ;; the drain's own compiles
+        (night/org-latex-preview-new-system-p)
+        (not (display-graphic-p)))
+    (funcall orig-fn beg end))
+   ;; Cheap dispatch: a raw regexp count with early exit — no element
+   ;; parsing. The org-fragtog exit-re-render hot path lands here at the
+   ;; cost of one bounded C-level regexp search. (A single $...$ yields
+   ;; 2 candidates, both $s, so this fast path is conservative; the
+   ;; precise scan below still syncs real counts <= the threshold.)
+   ((<= (night/h-olpl-candidate-count
+         beg end (1+ night/org-latex-preview-lazy-sync-threshold))
+        night/org-latex-preview-lazy-sync-threshold)
+    (funcall orig-fn beg end))
    (t
-    (let ((beg (if (org-before-first-heading-p) (point-min)
-                 (save-excursion
-                   (org-with-limited-levels (org-back-to-heading t))
-                   (point))))
-          (end (org-with-limited-levels (org-entry-end-position))))
-      (night/org-latex-preview-lazy-region beg end)))))
+    (let* ((beg (night/h-olpl-element-bound beg 'beg))
+           (end (night/h-olpl-element-bound end 'end))
+           (frags (night/h-olpl-fragments beg end))
+           (count (length frags)))
+      (cond
+       ((or (<= count night/org-latex-preview-lazy-sync-threshold)
+            ;; All-cached regions render synchronously at ~0.25ms per
+            ;; fragment ("cached => instant"). The count cap is checked
+            ;; BEFORE any hashing so it bounds the check itself too.
+            (and (<= count night/org-latex-preview-lazy-sync-cached-max)
+                 (night/h-olpl-all-cached-p frags)))
+        (dolist (frag frags)
+          (set-marker (car frag) nil)
+          (set-marker (cdr frag) nil))
+        (funcall orig-fn beg end))
+       (t
+        (let ((added (night/h-olpl-merge frags)))
+          (when (> added 0)
+            (message "night/org-latex-preview-lazy: queued %d fragment(s) ..."
+                     added))
+          (night/h-olpl-request-arm (current-buffer)))))))))
+
+;; Pasted fragments: `insert-for-yank' is the paste choke point —
+;; `yank'/`yank-pop', evil's `p'/`P' (evil-commands.el inserts via it so
+;; yank-handlers work), `org-yank', mouse yanks, and this config's
+;; night/org-paste-* helpers (via `night/insert-for-yank') all funnel
+;; through it. Typed LaTeX needs no handling: org-fragtog previews a
+;; fragment when point exits it; bulk pastes are what slip through.
+(defun night/h-olpl-around-insert-for-yank (orig-fn string &rest args)
+  (let ((paste-beg (point)))
+    (prog1 (apply orig-fn string args)
+      (when (and (derived-mode-p 'org-mode)
+                 (display-graphic-p)
+                 (not (night/org-latex-preview-new-system-p))
+                 (fboundp 'org--latex-preview-region))
+        (night/h-olpl-dirty-note paste-beg (point))))))
 
 (after! org
-  (advice-add #'org-latex-preview
-              :around #'night/h-olpl-around-org-latex-preview))
+  (advice-add #'org--latex-preview-region
+              :around #'night/h-olpl-around-org--latex-preview-region)
+  (advice-add #'insert-for-yank
+              :around #'night/h-olpl-around-insert-for-yank))

@@ -68,16 +68,10 @@
 
   (defun night/org-latex-preview-buffer ()
     (interactive)
-    (cond
-     ;; The synchronous whole-buffer preview freezes Emacs for minutes on
-     ;; fragment-heavy files (see docs/org/latex-preview/performance.md);
-     ;; drain progressively instead when the lazy machinery is available.
-     ((and (fboundp 'night/org-latex-preview-lazy)
-           (not (night/org-latex-preview-new-system-p))
-           (fboundp 'org--latex-preview-region))
-      (night/org-latex-preview-lazy))
-     (t
-      (org--latex-preview-region (point-min) (point-max)))))
+    ;; Rerouted through the lazy queue by the choke-point advice in
+    ;; night-latex-preview-lazy.el (and left synchronous when that file
+    ;; is absent).
+    (org--latex-preview-region (point-min) (point-max)))
 
   (defun night/org-redisplay-images-etc ()
     (interactive)

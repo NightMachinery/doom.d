@@ -61,39 +61,60 @@ file with a cold cache: open 1.4 s (was minutes); eval latency during
 the drain 0.1-1 s typical; drain ~2 fragments/s, completing in ~5 min
 with all 539 preview overlays present.
 
-**Lazy is the default for every multi-fragment preview path** (extended
-2026-08-06 after "RET on a heading freezes Emacs" report):
+**Lazy is the default for every multi-fragment preview path via ONE
+choke-point advice** (2026-08-06, reworked same day after "RET on a
+heading freezes Emacs" report): `org--latex-preview-region` is the
+internal function every synchronous preview funnels through — all
+`org-latex-preview` branches (whole-buffer `C-u C-u` including
+`#+STARTUP: latexpreview` during `org-mode` initialization, org.el
+~line 5102, i.e. the case where Emacs would freeze *before the user
+can run any command*; active region; the no-prefix section path that
+org-fragtog's exit handler can land in; the single-fragment toggle),
+the `night/org-dwim-at-point` headline branch (the original "RET on a
+heading renders the whole subtree synchronously" freeze), and
+`night/org-latex-preview-buffer`. A single `:around` advice
+(`night/h-olpl-around-org--latex-preview-region`) therefore covers
+every current and future caller with no per-site patching (an earlier
+iteration advised `org-latex-preview` and patched call sites
+individually — all reverted). Dispatch, cheapest test first:
 
-- `night/org-latex-preview-lazy-region` is the region-bounded entry
-  point; it merges into an in-progress queue instead of restarting it,
-  and extends its bounds to element boundaries (a narrowed parse of a
-  partial element would misread it; the extension stops at boundaries so
-  it never swallows a following headline's whole subtree).
-- The `org-latex-preview` advice reroutes the `'(16)` whole-buffer path
-  — which includes org's `#+STARTUP: latexpreview` handling during
-  `org-mode` initialization (org.el ~line 5102), i.e. the case where
-  Emacs would freeze *before the user can run any command* — plus the
-  active-region path and the no-prefix "point not on a fragment" path.
-  That last one renders the whole *section* synchronously in stock org,
-  and org-fragtog's fragment-exit handler (no-arg `org-latex-preview`)
-  can land there when its stale parse misses the fragment. Toggling the
-  single fragment at point, and the clearing prefixes, stay synchronous.
-- `night/org-dwim-at-point` (RET on a headline) used to call the
-  internal `org--latex-preview-region` over the **whole subtree**
-  directly, bypassing the advice entirely — this was the "click a
-  heading and all its fragments render synchronously" freeze. It now
-  routes through `night/org-latex-preview-lazy-region`.
+- The drain's own compiles pass through untouched (a let-bound
+  reentrancy flag, `night/h-olpl-inhibit-reroute`).
+- A raw regexp candidate count with early exit (org's own math-start
+  regexp; C-speed, no element parsing) lets regions with at most
+  `night/org-latex-preview-lazy-sync-threshold` fragments (default 1)
+  run synchronously — the org-fragtog exit-re-render hot path costs
+  ~one bounded regexp search. The threshold is 1 because the cost
+  driver is cold compiles (~0.3-1s each vs ~1ms cache hits) and
+  coldness is unknowable at dispatch time: 1 bounds the worst
+  synchronous freeze to a single LaTeX run while keeping
+  single-fragment toggles instant.
+- Otherwise a precise scan runs: `night/h-olpl-fragments` now uses the
+  `org-format-latex` technique — regexp candidates confirmed by the
+  cache-backed `org-element-context` — so its cost is proportional to
+  the number of math candidates, not buffer size (the old
+  `org-element-parse-buffer` ignored org's element cache entirely).
+  Real count <= threshold still syncs.
+- Cache-hit dispatch: if the region has at most
+  `night/org-latex-preview-lazy-sync-cached-max` fragments (default
+  5000; the count is checked *before* any hashing so the cap bounds
+  the check itself) and every fragment's image is already cached
+  (sha1 + `file-exists-p`, ~10-30µs each, short-circuiting on the
+  first miss), the region renders synchronously — warm renders cost
+  ~0.25ms per fragment, so "cached ⇒ instant".
+- Everything else merges into the lazy queue (deduplicated, bounds
+  extended to element boundaries) and drains as described above.
 
-**Edits and pastes are watched** (same date): the queue used to be a
-one-shot snapshot — fragments pasted after the drain finished had no
-path into the system. Now the first lazy run installs a buffer-local
-`after-change-functions` watcher (O(1): it only widens a dirty-region
-marker pair and re-arms via the post-command hook). The next tick
-rescans just the dirty region (element-aligned) and merges new,
-un-previewed fragments into the queue. The fragment containing point is
-left to org-fragtog's exit handling, so half-typed LaTeX is never
-compiled. Interactive `night/org-latex-preview-lazy-stop` removes the
-watcher; normal drain completion keeps it.
+**Pasted fragments** (same date): the queue is a one-shot snapshot and
+org-fragtog only previews the fragment point *exits*, so bulk pastes
+used to slip through entirely (typed LaTeX needs no handling — fragtog
+covers it). A single `:around` advice on `insert-for-yank` — the paste
+choke point that `yank`/`yank-pop`, evil's `p`/`P`, `org-yank`, mouse
+yanks, and this config's `night/org-paste-*` helpers all funnel
+through — records the pasted span in a dirty-region marker pair and
+arms the drain; the next tick rescans just that span (element-aligned)
+and queues any new fragments. The fragment containing point is left to
+fragtog so half-typed LaTeX is never compiled.
 
 Total CPU work is unchanged — this converts "frozen for minutes" into
 "progressive and responsive". Pauses of up to ~1-2 s per chunk can still be
