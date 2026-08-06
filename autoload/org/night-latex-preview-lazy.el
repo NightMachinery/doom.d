@@ -73,11 +73,12 @@ being rerouted back into the queue.")
   the GUI, at most ~1 per tick.
 - `timer+bg': the drain compiles <=1 cold fragment per tick WHILE
   background pipelines warm the rest of the cache in parallel.
-- `bg' (default): the drain only renders cache hits; cold fragments
-  wait for the background pipelines — the foreground never blocks on
-  LaTeX. Exception: when the uncached backlog is below
-  `night/org-latex-preview-lazy-warm-min', it behaves like
-  `timer-ticks' (spawning pipelines is not worth it).
+- `bg' (default): fully event-driven, no queue and no timers —
+  dispatch renders already-cached fragments synchronously on the spot
+  (warm files render during the open itself) and pipelines the cold
+  ones; each pipeline's sentinel renders its chunk the moment it
+  lands. The foreground never runs LaTeX (see
+  `night/org-latex-preview-lazy-bg-sync-threshold').
 
 Set buffer-locally or globally with
 `night/org-latex-preview-lazy-mode-set'; flip to/from `original' with
@@ -106,10 +107,23 @@ dvisvgm run. Moderate size bounds the blast radius of a broken
 fragment (failed chunks retry per-fragment) and yields early partial
 results.")
 
-(defvar night/org-latex-preview-lazy-warm-min 4
-  "Minimum uncached backlog before background pipelines spawn.
-Below this, foreground compiling is cheaper than the pipeline setup;
-mode `bg' then behaves like `timer-ticks'.")
+(defvar night/org-latex-preview-lazy-warm-min 2
+  "TIMER+BG ONLY: minimum uncached backlog before pipelines spawn.
+Below this the drain foreground-compiles as in `timer-ticks'. Default
+2 aligns with the sync-threshold philosophy: at most ONE cold compile
+may block the foreground. Mode `bg' ignores this — it dispatches every
+cold count (a solo pipeline costs only ~30-50ms of fork overhead over
+the identical foreground compile, with zero blocking).")
+
+(defvar night/org-latex-preview-lazy-bg-sync-threshold 0
+  "BG ONLY: regions with at most this many uncached fragments compile
+synchronously (the old blocking behavior). The default 0 makes bg
+fully async — the foreground never runs LaTeX, only places images; a
+cold fragment's preview appears ~0.7s later instead of Emacs freezing
+~0.7s. Set to 1 to restore the blocking-but-atomic feel for
+single-fragment toggles (same wall latency either way).
+`night/org-latex-preview-lazy-sync-threshold' governs the timer modes
+only.")
 
 (defvar-local night/h-olpl-queue nil
   "Pending fragments, a list of (BEGIN-MARKER . END-MARKER) conses.")
@@ -144,9 +158,24 @@ next command.")
     (dolist (buf bufs)
       (when (buffer-live-p buf)
         (with-current-buffer buf
-          (when (and (or night/h-olpl-queue night/h-olpl-dirty-beg)
-                     (not night/h-olpl-timer))
-            (night/h-olpl-schedule buf)))))))
+          (cond
+           ;; bg: event-driven — dispatch the pasted region directly
+           ;; (we are at a command boundary; bg dispatch never blocks
+           ;; on LaTeX). The queue is only in play via the rare
+           ;; cached-overflow path, which still uses timers.
+           ((eq night/org-latex-preview-lazy-mode 'bg)
+            (when night/h-olpl-dirty-beg
+              (let ((db (marker-position night/h-olpl-dirty-beg))
+                    (de (marker-position night/h-olpl-dirty-end)))
+                (night/h-olpl-dirty-clear)
+                (when (and db de)
+                  (night/h-olpl-bg-dispatch db de))))
+            (when (and night/h-olpl-queue (not night/h-olpl-timer))
+              (night/h-olpl-schedule buf)))
+           (t
+            (when (and (or night/h-olpl-queue night/h-olpl-dirty-beg)
+                       (not night/h-olpl-timer))
+              (night/h-olpl-schedule buf)))))))))
 
 (defun night/h-olpl-element-bound (pos side)
   "Extend POS to the boundary of the element containing it.
@@ -473,19 +502,23 @@ re-prioritizes the queue towards the viewport. Stop with
   (interactive)
   (when (night/h-olpl-usable-p)
     (night/org-latex-preview-lazy-stop)
-    (setq night/h-olpl-queue (night/h-olpl-fragments))
     (cond
-     ((not night/h-olpl-queue)
-      (message "night/org-latex-preview-lazy: no LaTeX fragments found"))
+     ((eq night/org-latex-preview-lazy-mode 'bg)
+      (night/h-olpl-bg-dispatch (point-min) (point-max)))
      (t
-      (message "night/org-latex-preview-lazy: previewing %d fragments ..."
-               (length night/h-olpl-queue))
-      ;; Never compile synchronously here, and never schedule a timer
-      ;; directly: this function may be running inside `org-mode'
-      ;; initialization (STARTUP latexpreview) or another command whose
-      ;; `sit-for's would fire our timers and stretch that command. Arm at
-      ;; the next command-loop boundary instead.
-      (night/h-olpl-request-arm (current-buffer))))))
+      (setq night/h-olpl-queue (night/h-olpl-fragments))
+      (cond
+       ((not night/h-olpl-queue)
+        (message "night/org-latex-preview-lazy: no LaTeX fragments found"))
+       (t
+        (message "night/org-latex-preview-lazy: previewing %d fragments ..."
+                 (length night/h-olpl-queue))
+        ;; Never compile synchronously here, and never schedule a timer
+        ;; directly: this function may be running inside `org-mode'
+        ;; initialization (STARTUP latexpreview) or another command whose
+        ;; `sit-for's would fire our timers and stretch that command. Arm at
+        ;; the next command-loop boundary instead.
+        (night/h-olpl-request-arm (current-buffer))))))))
 
 (defun night/org-latex-preview-lazy-region (beg end)
   "Queue the LaTeX fragments between BEG and END for lazy previewing.
@@ -494,18 +527,22 @@ into any in-progress queue instead of restarting it. BEG and END are
 extended to element boundaries."
   (interactive "r")
   (when (night/h-olpl-usable-p)
-    (let* ((beg (night/h-olpl-element-bound beg 'beg))
-           (end (night/h-olpl-element-bound end 'end))
-           (added (night/h-olpl-merge (night/h-olpl-fragments beg end))))
-      (cond
-       ((and (zerop added) (not night/h-olpl-queue))
-        (message
-         "night/org-latex-preview-lazy-region: no LaTeX fragments found"))
-       (t
-        (when (> added 0)
-          (message "night/org-latex-preview-lazy-region: queued %d fragment(s) ..."
-                   added))
-        (night/h-olpl-request-arm (current-buffer)))))))
+    (cond
+     ((eq night/org-latex-preview-lazy-mode 'bg)
+      (night/h-olpl-bg-dispatch beg end))
+     (t
+      (let* ((beg (night/h-olpl-element-bound beg 'beg))
+             (end (night/h-olpl-element-bound end 'end))
+             (added (night/h-olpl-merge (night/h-olpl-fragments beg end))))
+        (cond
+         ((and (zerop added) (not night/h-olpl-queue))
+          (message
+           "night/org-latex-preview-lazy-region: no LaTeX fragments found"))
+         (t
+          (when (> added 0)
+            (message "night/org-latex-preview-lazy-region: queued %d fragment(s) ..."
+                     added))
+          (night/h-olpl-request-arm (current-buffer)))))))))
 
 ;;;
 (defun night/org-latex-preview-pin-toggle ()
@@ -743,7 +780,20 @@ that bounds the checking cost itself, not just the render."
 
 (defvar-local night/h-olpl-warm-pending nil
   "Chunks waiting for a pipeline slot: list of (SOLO-RETRY-P . TASKS).
-Each task is a plist (:value STRING :tofile PATH).")
+Each task is a plist (:value STRING :tofile PATH), plus, in `bg' mode,
+:markers — the (BEGIN-MARKER . END-MARKER) conses of every fragment
+sharing that content hash, rendered directly by the dvisvgm sentinel.")
+
+(defvar-local night/h-olpl-warm-task-index nil
+  "Hash: cache path -> its pending/in-flight task in THIS buffer.
+Lets later `bg' dispatches attach additional fragments (duplicate
+content, overlapping regions) to a compile that is already underway.")
+
+(defvar-local night/h-olpl-warm-total-frags 0)
+(defvar-local night/h-olpl-warm-done-frags 0)
+(defvar-local night/h-olpl-warm-total-chunks 0)
+(defvar-local night/h-olpl-warm-done-chunks 0)
+(defvar-local night/h-olpl-warm-failed 0)
 
 (defvar-local night/h-olpl-warm-render-info nil
   "Per-warm-run render inputs: plist (:header :fg :bg :scale).
@@ -759,23 +809,38 @@ mode `bg' then foreground-compiles like `timer-ticks'.")
 queue then failed to compile and are dropped instead of deferred.
 Reset when new fragments are merged.")
 
+(defun night/h-olpl-warm-free-task (task)
+  "Unregister TASK and free its fragment markers."
+  (remhash (plist-get task :tofile) night/h-olpl-warm-inflight)
+  (when night/h-olpl-warm-task-index
+    (remhash (plist-get task :tofile) night/h-olpl-warm-task-index))
+  (dolist (frag (plist-get task :markers))
+    (set-marker (car frag) nil)
+    (set-marker (cdr frag) nil)))
+
 (defun night/h-olpl-warm-cancel ()
   "Kill this buffer's warm pipelines and clear all warming state."
   (dolist (proc night/h-olpl-warm-procs)
     (set-process-sentinel proc #'ignore)
     (ignore-errors (delete-process proc))
     (dolist (task (process-get proc 'olpl-chunk))
-      (remhash (plist-get task :tofile) night/h-olpl-warm-inflight))
+      (night/h-olpl-warm-free-task task))
     (let ((tmpdir (process-get proc 'olpl-tmpdir)))
       (when tmpdir (ignore-errors (delete-directory tmpdir t)))))
   (dolist (entry night/h-olpl-warm-pending)
     (dolist (task (cdr entry))
-      (remhash (plist-get task :tofile) night/h-olpl-warm-inflight)))
+      (night/h-olpl-warm-free-task task)))
   (setq night/h-olpl-warm-procs nil
         night/h-olpl-warm-pending nil
         night/h-olpl-warm-render-info nil
+        night/h-olpl-warm-task-index nil
         night/h-olpl-warm-smallp nil
-        night/h-olpl-warm-done nil))
+        night/h-olpl-warm-done nil
+        night/h-olpl-warm-total-frags 0
+        night/h-olpl-warm-done-frags 0
+        night/h-olpl-warm-total-chunks 0
+        night/h-olpl-warm-done-chunks 0
+        night/h-olpl-warm-failed 0))
 
 (defun night/h-olpl-frag-warm-status (frag)
   "How the drain should treat FRAG: `ready', `inflight', or `cold'.
@@ -877,23 +942,164 @@ fragments arrive)."
         (setq night/h-olpl-warm-smallp t))
        (t
         (setq night/h-olpl-warm-smallp nil)
-        (setq night/h-olpl-warm-render-info (night/h-olpl-warm-render-info))
-        (add-hook 'kill-buffer-hook #'night/h-olpl-warm-cancel nil t)
-        (dolist (task tasks)
-          (puthash (plist-get task :tofile) t night/h-olpl-warm-inflight))
-        (let ((bs night/org-latex-preview-lazy-warm-batch-size)
-              (chunks nil))
-          (while tasks
-            (push (cons nil (seq-take tasks bs)) chunks)
-            (setq tasks (nthcdr bs tasks)))
-          (setq night/h-olpl-warm-pending (nreverse chunks)))
-        (message "night/org-latex-preview-lazy: warming %d fragment(s) in the background ..."
-                 (apply #'+ (mapcar (lambda (c) (length (cdr c)))
-                                    night/h-olpl-warm-pending)))
-        (let ((workers (or night/org-latex-preview-lazy-warm-workers
-                           (num-processors))))
-          (dotimes (_ (min workers (length night/h-olpl-warm-pending)))
-            (night/h-olpl-warm-dispatch-next))))))))
+        (night/h-olpl-warm-launch tasks))))))
+
+(defun night/h-olpl-bg-dispatch (beg end)
+  "Event-driven `bg'-mode preview of BEG..END.
+Renders already-cached fragments synchronously right now (warm files
+render during the open itself) and pipelines the cold ones — their
+sentinels render each chunk the moment it lands. No queue, no timers,
+no idle waits, and (with `night/org-latex-preview-lazy-bg-sync-threshold'
+at 0) no LaTeX ever runs in the foreground."
+  (let* ((beg (night/h-olpl-element-bound beg 'beg))
+         (end (night/h-olpl-element-bound end 'end))
+         (frags (night/h-olpl-fragments beg end))
+         (cached nil)
+         (new-tasks nil))
+    (unless night/h-olpl-warm-task-index
+      (setq night/h-olpl-warm-task-index (make-hash-table :test 'equal)))
+    ;; Partition.
+    (dolist (frag frags)
+      (let ((fb (marker-position (car frag))))
+        (cond
+         ((or (not fb) (night/h-olpl-previewed-p fb))
+          (set-marker (car frag) nil)
+          (set-marker (cdr frag) nil))
+         (t
+          (let ((context (save-excursion (goto-char fb)
+                                         (org-element-context))))
+            (cond
+             ((not (memq (org-element-type context)
+                         '(latex-fragment latex-environment)))
+              (set-marker (car frag) nil)
+              (set-marker (cdr frag) nil))
+             (t
+              (let* ((tofile (night/h-olpl-cache-file
+                              (org-element-property :value context) fb))
+                     (task (gethash tofile night/h-olpl-warm-task-index)))
+                (cond
+                 ((file-exists-p tofile)
+                  (push frag cached))
+                 (task
+                  ;; This hash is already pending/in flight in this
+                  ;; buffer: share the compile.
+                  (plist-put task :markers
+                             (cons frag (plist-get task :markers))))
+                 ((gethash tofile night/h-olpl-warm-inflight)
+                  ;; Another buffer's compile (rare): drop; the next
+                  ;; explicit preview here will be a cache hit.
+                  (set-marker (car frag) nil)
+                  (set-marker (cdr frag) nil))
+                 (t
+                  (let ((new (list :value (org-element-property :value context)
+                                   :tofile tofile
+                                   :markers (list frag))))
+                    (puthash tofile new night/h-olpl-warm-task-index)
+                    (push new new-tasks))))))))))))
+    ;; Render the cached subset right now, bounded by the cap; the
+    ;; pathological overflow (>cap warm fragments) goes through the
+    ;; timer-queue machinery instead.
+    (let ((n 0)
+          (overflow nil))
+      (dolist (frag (nreverse cached))
+        (let ((fb (marker-position (car frag)))
+              (fe (marker-position (cdr frag))))
+          (cond
+           ((not (and fb fe))
+            (set-marker (car frag) nil)
+            (set-marker (cdr frag) nil))
+           ((>= n night/org-latex-preview-lazy-sync-cached-max)
+            (push frag overflow))
+           (t
+            (cl-incf n)
+            ;; Leave the fragment under point to org-fragtog.
+            (unless (and (>= (point) fb) (< (point) fe))
+              (let ((night/h-olpl-inhibit-reroute t))
+                (org--latex-preview-region fb fe)))
+            (set-marker (car frag) nil)
+            (set-marker (cdr frag) nil)))))
+      (when overflow
+        (night/h-olpl-merge (nreverse overflow))
+        (night/h-olpl-request-arm (current-buffer))))
+    ;; Dispatch the cold subset.
+    (setq new-tasks (nreverse new-tasks))
+    (cond
+     ((null new-tasks) nil)
+     ;; Opt-in blocking path for tiny cold counts.
+     ((<= (length new-tasks)
+          night/org-latex-preview-lazy-bg-sync-threshold)
+      (dolist (task new-tasks)
+        (night/h-olpl-warm-free-task task))
+      (let ((night/h-olpl-inhibit-reroute t))
+        (org--latex-preview-region beg end)))
+     (t
+      ;; Viewport-first COMPILE order: visible fragments' chunks land
+      ;; (and render) first.
+      (let ((win (get-buffer-window (current-buffer))))
+        (when win
+          (let ((ws (window-start win))
+                (we (window-end win t)))
+            (setq new-tasks
+                  (sort new-tasks
+                        (lambda (a b)
+                          (< (night/h-olpl-priority
+                              (car (plist-get a :markers)) ws we)
+                             (night/h-olpl-priority
+                              (car (plist-get b :markers)) ws we))))))))
+      (night/h-olpl-warm-add new-tasks)))))
+
+(defun night/h-olpl-warm-add (tasks)
+  "Add TASKS to the warming run, launching one if none is active."
+  (cond
+   ((not (or night/h-olpl-warm-procs night/h-olpl-warm-pending))
+    (night/h-olpl-warm-launch tasks))
+   (t
+    (dolist (task tasks)
+      (puthash (plist-get task :tofile) t night/h-olpl-warm-inflight))
+    (let* ((bs night/org-latex-preview-lazy-warm-batch-size)
+           (n (length tasks))
+           (chunks nil))
+      (while tasks
+        (push (cons nil (seq-take tasks bs)) chunks)
+        (setq tasks (nthcdr bs tasks)))
+      (setq chunks (nreverse chunks))
+      (setq night/h-olpl-warm-pending
+            (nconc night/h-olpl-warm-pending chunks))
+      (cl-incf night/h-olpl-warm-total-frags n)
+      (cl-incf night/h-olpl-warm-total-chunks (length chunks))
+      (message "night/org-latex-preview-lazy: added %d fragment(s) to background warming"
+               n))
+    (let ((workers (or night/org-latex-preview-lazy-warm-workers
+                       (num-processors))))
+      (while (and night/h-olpl-warm-pending
+                  (< (length night/h-olpl-warm-procs) workers))
+        (night/h-olpl-warm-dispatch-next))))))
+
+(defun night/h-olpl-warm-launch (tasks)
+  "Chunk TASKS, initialize progress counters, and spawn the pipelines."
+  (setq night/h-olpl-warm-done nil)
+  (setq night/h-olpl-warm-render-info (night/h-olpl-warm-render-info))
+  (add-hook 'kill-buffer-hook #'night/h-olpl-warm-cancel nil t)
+  (dolist (task tasks)
+    (puthash (plist-get task :tofile) t night/h-olpl-warm-inflight))
+  (let ((bs night/org-latex-preview-lazy-warm-batch-size)
+        (n (length tasks))
+        (chunks nil))
+    (while tasks
+      (push (cons nil (seq-take tasks bs)) chunks)
+      (setq tasks (nthcdr bs tasks)))
+    (setq night/h-olpl-warm-pending (nreverse chunks)
+          night/h-olpl-warm-total-frags n
+          night/h-olpl-warm-done-frags 0
+          night/h-olpl-warm-total-chunks (length night/h-olpl-warm-pending)
+          night/h-olpl-warm-done-chunks 0
+          night/h-olpl-warm-failed 0)
+    (message "night/org-latex-preview-lazy: warming %d fragment(s) in %d chunk(s) in the background ..."
+             n night/h-olpl-warm-total-chunks))
+  (let ((workers (or night/org-latex-preview-lazy-warm-workers
+                     (num-processors))))
+    (dotimes (_ (min workers (length night/h-olpl-warm-pending)))
+      (night/h-olpl-warm-dispatch-next))))
 
 (defun night/h-olpl-warm-dispatch-next ()
   "Start the next pending chunk, or finish the run when none remain."
@@ -903,7 +1109,13 @@ fragments arrive)."
       (night/h-olpl-warm-compile-chunk (cdr entry) (car entry)))
      ((null night/h-olpl-warm-procs)
       (setq night/h-olpl-warm-done t
-            night/h-olpl-warm-render-info nil)
+            night/h-olpl-warm-render-info nil
+            night/h-olpl-warm-task-index nil)
+      (message "night/org-latex-preview-lazy: background warming done (%d warmed%s)"
+               night/h-olpl-warm-done-frags
+               (if (> night/h-olpl-warm-failed 0)
+                   (format ", %d FAILED" night/h-olpl-warm-failed)
+                 ""))
       (night/h-olpl-request-arm (current-buffer))))))
 
 (defun night/h-olpl-warm-compile-chunk (chunk solo-retry-p)
@@ -1009,15 +1221,62 @@ fragments arrive)."
                                    (tmp-target (format "%s.tmp%d" tofile (emacs-pid))))
                               (make-directory (file-name-directory tofile) t)
                               ;; copy + rename: the rename is atomic, so
-                              ;; the drain never sees a partial file.
+                              ;; a reader never sees a partial file.
                               (copy-file out tmp-target t)
-                              (rename-file tmp-target tofile t)
-                              (remhash tofile night/h-olpl-warm-inflight)))
+                              (rename-file tmp-target tofile t)))
                 (setq night/h-olpl-warm-procs (delq proc night/h-olpl-warm-procs))
                 (ignore-errors (delete-directory tmpdir t))
-                ;; Wake the drain to sweep the new cache hits.
-                (night/h-olpl-request-arm buf)
+                (cl-incf night/h-olpl-warm-done-chunks)
+                (cl-incf night/h-olpl-warm-done-frags (length chunk))
+                (cond
+                 ;; bg: render this chunk's fragments RIGHT NOW —
+                 ;; event-driven, no tick involved. Bounded work:
+                 ;; ~1ms per cache-hit render.
+                 ((eq night/org-latex-preview-lazy-mode 'bg)
+                  (dolist (task chunk)
+                    (night/h-olpl-warm-render-task task))
+                  (message "night/org-latex-preview-lazy: %d/%d fragments warmed (chunk %d/%d)"
+                           night/h-olpl-warm-done-frags
+                           night/h-olpl-warm-total-frags
+                           night/h-olpl-warm-done-chunks
+                           night/h-olpl-warm-total-chunks))
+                 (t
+                  ;; timer+bg: the drain renders; just unregister and
+                  ;; wake it to sweep the new cache hits.
+                  (dolist (task chunk)
+                    (night/h-olpl-warm-free-task task))
+                  (message "night/org-latex-preview-lazy: %d/%d fragments warmed (chunk %d/%d)"
+                           night/h-olpl-warm-done-frags
+                           night/h-olpl-warm-total-frags
+                           night/h-olpl-warm-done-chunks
+                           night/h-olpl-warm-total-chunks)
+                  (night/h-olpl-request-arm buf)))
                 (night/h-olpl-warm-dispatch-next)))))))))))
+
+(defun night/h-olpl-warm-render-task (task)
+  "Render TASK's fragments from its fresh cache file, then free it.
+Re-validates every fragment against the CURRENT buffer state: dead
+markers, fragments edited mid-compile (their hash no longer matches
+the produced file), already-previewed ones, and the fragment under
+point (org-fragtog previews it as a cache hit on exit) all render
+nothing."
+  (let ((tofile (plist-get task :tofile)))
+    (dolist (frag (plist-get task :markers))
+      (let ((beg (marker-position (car frag)))
+            (end (marker-position (cdr frag))))
+        (when (and beg end
+                   (not (night/h-olpl-previewed-p beg))
+                   (not (and (>= (point) beg) (< (point) end))))
+          (let ((context (save-excursion (goto-char beg)
+                                         (org-element-context))))
+            (when (and (memq (org-element-type context)
+                             '(latex-fragment latex-environment))
+                       (equal (night/h-olpl-cache-file
+                               (org-element-property :value context) beg)
+                              tofile))
+              (let ((night/h-olpl-inhibit-reroute t))
+                (org--latex-preview-region beg end)))))))
+    (night/h-olpl-warm-free-task task)))
 
 (defun night/h-olpl-warm-chunk-failed (proc)
   "Handle a failed chunk: retry per-fragment, or report+drop when solo."
@@ -1028,13 +1287,16 @@ fragments arrive)."
     (ignore-errors (delete-directory tmpdir t))
     (cond
      (solo
-      ;; Permanent failure; the drain drops it once warming finishes.
-      (dolist (task chunk)
-        (remhash (plist-get task :tofile) night/h-olpl-warm-inflight))
+      ;; Permanent failure: unregister; nothing renders it.
+      (cl-incf night/h-olpl-warm-failed)
+      (cl-incf night/h-olpl-warm-done-chunks)
       (message "night/org-latex-preview-lazy: background compile failed for: %.70s"
-               (plist-get (car chunk) :value)))
+               (plist-get (car chunk) :value))
+      (dolist (task chunk)
+        (night/h-olpl-warm-free-task task)))
      (t
       ;; Isolate the broken fragment: requeue each one as its own chunk.
+      (cl-incf night/h-olpl-warm-total-chunks (1- (length chunk)))
       (dolist (task chunk)
         (push (cons t (list task)) night/h-olpl-warm-pending))))
     (night/h-olpl-warm-dispatch-next)))
@@ -1042,7 +1304,10 @@ fragments arrive)."
 (defun night/h-olpl-warm-orphan-cleanup (proc)
   "Cleanup for a pipeline whose buffer died."
   (dolist (task (process-get proc 'olpl-chunk))
-    (remhash (plist-get task :tofile) night/h-olpl-warm-inflight))
+    (remhash (plist-get task :tofile) night/h-olpl-warm-inflight)
+    (dolist (frag (plist-get task :markers))
+      (set-marker (car frag) nil)
+      (set-marker (cdr frag) nil)))
   (let ((tmpdir (process-get proc 'olpl-tmpdir)))
     (when tmpdir (ignore-errors (delete-directory tmpdir t)))))
 
@@ -1102,10 +1367,14 @@ scratch."
 (defun night/h-olpl-around-org--latex-preview-region (orig-fn beg end)
   (cond
    ((or (eq night/org-latex-preview-lazy-mode 'original) ;; kill switch
-        night/h-olpl-inhibit-reroute ;; the drain's own compiles
+        night/h-olpl-inhibit-reroute ;; our own re-entrant renders/compiles
         (night/org-latex-preview-new-system-p)
         (not (display-graphic-p)))
     (funcall orig-fn beg end))
+   ;; bg: fully event-driven — no queue, no timers (see
+   ;; `night/h-olpl-bg-dispatch').
+   ((eq night/org-latex-preview-lazy-mode 'bg)
+    (night/h-olpl-bg-dispatch beg end))
    ;; Cheap dispatch: a raw regexp count with early exit — no element
    ;; parsing. The org-fragtog exit-re-render hot path lands here at the
    ;; cost of one bounded C-level regexp search. (A single $...$ yields

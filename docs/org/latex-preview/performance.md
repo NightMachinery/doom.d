@@ -164,11 +164,24 @@ prefix arg sets the global default and stomps buffer-locals):
 - `timer+bg`: the drain compiles at most one cold fragment per tick
   *while* background pipelines warm the rest in parallel (an in-flight
   set prevents duplicate work).
-- `bg` (default): the foreground never blocks on LaTeX — the drain
-  only renders cache hits and cold fragments wait for the background
-  pipelines, except when the backlog is below
-  `night/org-latex-preview-lazy-warm-min`, where spawning pipelines is
-  not worth it and it behaves like `timer-ticks`.
+- `bg` (default): fully event-driven — no queue, no timers, no idle
+  waits. Dispatch renders already-cached fragments synchronously on
+  the spot (a warm file renders *during the open itself*, measured
+  59ms for a 14-fragment buffer) and pipelines the cold ones; each
+  pipeline's sentinel renders its chunk the moment it lands, with
+  per-chunk progress messages and a final summary. The foreground
+  never runs LaTeX: even a single cold fragment goes through a solo
+  pipeline (same wall latency as blocking — identical processes plus
+  ~30-50ms of fork overhead — but zero freeze). Set
+  `night/org-latex-preview-lazy-bg-sync-threshold` (default 0) above
+  zero to let that many uncached fragments compile synchronously (the
+  old blocking-but-atomic feel for single-fragment toggles).
+  Sentinel-rendered fragments are re-validated against the current
+  buffer first, so fragments edited mid-compile render nothing (their
+  next preview recompiles), duplicate-content fragments share one
+  compile, and the fragment under point is left to org-fragtog.
+  `night/org-latex-preview-lazy-warm-min` is a `timer+bg`-only knob
+  (default 2).
 
 `night/org-latex-preview-lazy-toggle` /
 `night/org-latex-preview-lazy-global-toggle` flip between `original`
@@ -216,12 +229,15 @@ the drain then renders them as ~1ms cache hits. Design points:
   and mode changes away from the bg modes; temp dirs and the
   in-flight set are always cleaned.
 
-Measured (2026-08-07, M2): 12 cold fragments, mode `bg`: **all
-rendered in 2s** with zero foreground blocking — vs ~11s for the
-serial foreground drain and ~7s for stock's frozen batch.
+Measured (2026-08-07, M2): 13 cold fragments, mode `bg`: dispatch
+returned in 219ms, **all rendered in ~3s** with zero foreground
+blocking — vs ~11s for the serial foreground drain and ~7s for
+stock's frozen batch. A fully warm 14-fragment buffer rendered
+synchronously at dispatch in 59ms.
 
-Note the interplay with fragtog/pinning: warming only produces cache
-files; overlays still come from the drain sweeping the queue.
+In `bg` mode overlays are placed by the pipelines' sentinels directly
+(event-driven; the timer drain is not involved at all); in `timer+bg`
+warming only produces cache files and the drain sweeps them in.
 
 ### 3. The real fix: async preview overhaul (tecosaur/karthink)
 
