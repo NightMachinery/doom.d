@@ -28,9 +28,10 @@ After finishing development, use `emc-eval` AND `withemcgui emc-eval` to re-load
 
 # Yasnippet Guidelines
 
-Snippet files must not end with a trailing newline: yasnippet includes
-everything after the `# --` marker in the snippet body, so a final newline gets
-inserted on every expansion.
+Yasnippet includes everything after the `# --` marker in the snippet body, so a
+trailing newline in the file becomes part of every expansion. Be deliberate
+about it: end the file without a newline for inline snippets (e.g. timestamps),
+with one when the expansion should end with a newline.
 
 # Commit Guidelines
 
