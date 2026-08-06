@@ -41,21 +41,22 @@ server requests between chunks; without it, back-to-back chunks starve
 I/O and Emacs appears frozen despite the timers.")
 
 (defvar night/org-latex-preview-lazy-sync-threshold 1
-  "Regions with at most this many fragments compile synchronously.
-Used by `night/h-olpl-around-org--latex-preview-region'. The threshold
-counts fragments, but the cost driver is cold compiles (~0.3-1s each
-versus ~1ms for cache hits), which are unknowable at dispatch time —
-so the default of 1 bounds the worst-case synchronous freeze to a
-single LaTeX run while keeping the fragment-at-point toggle and
-org-fragtog's exit re-renders instant.")
+  "Regions with at most this many UNCACHED fragments compile synchronously.
+Used by `night/h-olpl-around-org--latex-preview-region'. The cost
+driver is cold compiles (~0.3-1s each versus ~1ms for cache hits), so
+this bounds the worst-case synchronous freeze to that many LaTeX runs
+— which keeps the fragment-at-point toggle and org-fragtog's exit
+re-renders instant, and lets a mostly-cached region (e.g. one edited
+formula among hundreds of cached ones) still render immediately.")
 
 (defvar night/org-latex-preview-lazy-sync-cached-max 5000
-  "Render all-cached regions synchronously up to this many fragments.
-Warm renders cost ~0.25ms per fragment, so all-cached regions can skip
-the lazy queue and appear immediately; the cap bounds both that bulk
-render and the hash-checking itself (~10-30µs per fragment) on
-pathological files. Checked against the fragment count BEFORE any
-hashes are computed.")
+  "Cap on total fragments for the cache-checked synchronous path.
+Regions up to this size whose uncached fragments do not exceed
+`night/org-latex-preview-lazy-sync-threshold' render synchronously
+\(warm renders cost ~0.25ms per fragment). The cap bounds both that
+bulk render and the hash-checking itself (~10-30µs per fragment) on
+pathological files; it is checked against the fragment count BEFORE
+any hashes are computed. Keep it well above the sync threshold.")
 
 (defvar night/h-olpl-inhibit-reroute nil
   "Bound non-nil by the lazy drain so its own
@@ -561,25 +562,30 @@ different theme hash differently and will not be found."
                      default-directory)))
     (format "%s_%s.%s" absprefix hash imagetype)))
 
-(defun night/h-olpl-all-cached-p (frags)
-  "Whether every fragment in FRAGS already has a cached preview image.
-Short-circuits on the first miss, so cold buffers pay for roughly one
-hash + one `file-exists-p' (~20µs). Callers must bound (length FRAGS)
+(defun night/h-olpl-uncached-count (frags limit)
+  "Count fragments in FRAGS lacking a cached preview image, up to LIMIT.
+Early-exits once the count reaches LIMIT, so a fully cold buffer pays
+for roughly LIMIT hashes + `file-exists-p's (~20µs each). Dead markers
+and non-fragment contexts count as uncached (conservative: they push
+the caller toward the lazy path). Callers must bound (length FRAGS)
 BEFORE calling (see `night/org-latex-preview-lazy-sync-cached-max') —
 that bounds the checking cost itself, not just the render."
-  (cl-every
-   (lambda (frag)
-     (let ((beg (marker-position (car frag))))
-       (and beg
-            (let ((context (save-excursion
-                             (goto-char beg)
-                             (org-element-context))))
-              (and (memq (org-element-type context)
-                         '(latex-fragment latex-environment))
-                   (file-exists-p
-                    (night/h-olpl-cache-file
-                     (org-element-property :value context) beg)))))))
-   frags))
+  (let ((count 0))
+    (while (and frags (< count limit))
+      (let* ((beg (marker-position (car (pop frags))))
+             (cached
+              (and beg
+                   (let ((context (save-excursion
+                                    (goto-char beg)
+                                    (org-element-context))))
+                     (and (memq (org-element-type context)
+                                '(latex-fragment latex-environment))
+                          (file-exists-p
+                           (night/h-olpl-cache-file
+                            (org-element-property :value context) beg)))))))
+        (unless cached
+          (cl-incf count))))
+    count))
 
 (defun night/org-latex-preview-cache-clear-buffer ()
   "Delete the cached preview images of this buffer's LaTeX fragments.
@@ -656,12 +662,18 @@ scratch."
            (frags (night/h-olpl-fragments beg end))
            (count (length frags)))
       (cond
-       ((or (<= count night/org-latex-preview-lazy-sync-threshold)
-            ;; All-cached regions render synchronously at ~0.25ms per
-            ;; fragment ("cached => instant"). The count cap is checked
-            ;; BEFORE any hashing so it bounds the check itself too.
-            (and (<= count night/org-latex-preview-lazy-sync-cached-max)
-                 (night/h-olpl-all-cached-p frags)))
+       ;; Unified sync rule: cached fragments render at ~0.25ms each,
+       ;; so a mostly-cached region with at most sync-threshold COLD
+       ;; fragments costs no more than a threshold-sized region would —
+       ;; render it synchronously ("cached => instant", tolerating the
+       ;; usual cold budget). Subsumes both "count <= threshold" (then
+       ;; uncached <= threshold trivially) and "all cached" (uncached =
+       ;; 0). The count cap is checked BEFORE any hashing so it bounds
+       ;; the check itself too.
+       ((and (<= count night/org-latex-preview-lazy-sync-cached-max)
+             (<= (night/h-olpl-uncached-count
+                  frags (1+ night/org-latex-preview-lazy-sync-threshold))
+                 night/org-latex-preview-lazy-sync-threshold))
         (dolist (frag frags)
           (set-marker (car frag) nil)
           (set-marker (cdr frag) nil))

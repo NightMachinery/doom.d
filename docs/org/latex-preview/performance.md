@@ -95,13 +95,17 @@ individually — all reverted). Dispatch, cheapest test first:
   the number of math candidates, not buffer size (the old
   `org-element-parse-buffer` ignored org's element cache entirely).
   Real count <= threshold still syncs.
-- Cache-hit dispatch: if the region has at most
+- Cache-hit dispatch (unified rule): if the region has at most
   `night/org-latex-preview-lazy-sync-cached-max` fragments (default
   5000; the count is checked *before* any hashing so the cap bounds
-  the check itself) and every fragment's image is already cached
-  (sha1 + `file-exists-p`, ~10-30µs each, short-circuiting on the
-  first miss), the region renders synchronously — warm renders cost
-  ~0.25ms per fragment, so "cached ⇒ instant".
+  the check itself) and at most `...-sync-threshold` of them are
+  UNCACHED (sha1 + `file-exists-p`, ~10-30µs each, early-exiting once
+  the miss count exceeds the threshold), the region renders
+  synchronously — warm renders cost ~0.25ms per fragment, so "cached ⇒
+  instant", tolerating the usual cold-compile budget. A mostly-cached
+  region with one edited formula therefore still appears immediately;
+  this subsumes both the plain count-≤-threshold case and the
+  all-cached case.
 - Everything else merges into the lazy queue (deduplicated, bounds
   extended to element boundaries) and drains as described above.
 
