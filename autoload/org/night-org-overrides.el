@@ -185,9 +185,18 @@ If on a:
                  (cl-find-if (lambda (o) (overlay-get o 'org-image-overlay))
                              overlays)))
            (+org--toggle-inline-images-in-subtree beg end)
-           (if (or image-overlays latex-overlays)
-               (org-clear-latex-preview beg end)
-             (org--latex-preview-region beg end))))
+           (cond
+            ((or image-overlays latex-overlays)
+             (org-clear-latex-preview beg end))
+            ;; Synchronous whole-subtree previews freeze Emacs on
+            ;; fragment-heavy files; drain lazily instead (see
+            ;; docs/org/latex-preview/performance.md).
+            ((and (fboundp 'night/org-latex-preview-lazy-region)
+                  (not (night/org-latex-preview-new-system-p))
+                  (fboundp 'org--latex-preview-region))
+             (night/org-latex-preview-lazy-region beg end))
+            (t
+             (org--latex-preview-region beg end)))))
 
         (`clock (org-clock-update-time-maybe))
 
