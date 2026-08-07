@@ -229,11 +229,35 @@ the drain then renders them as ~1ms cache hits. Design points:
   and mode changes away from the bg modes; temp dirs and the
   in-flight set are always cleaned.
 
-Measured (2026-08-07, M2): 13 cold fragments, mode `bg`: dispatch
-returned in 219ms, **all rendered in ~3s** with zero foreground
-blocking — vs ~11s for the serial foreground drain and ~7s for
-stock's frozen batch. A fully warm 14-fragment buffer rendered
-synchronously at dispatch in 59ms.
+Measured (2026-08-07, M2): the 539-fragment J-Space file, cache fully
+cleared, mode `bg`: dispatch ~0.5s (539 fragments dedupe to 433
+unique compiles in 22 chunks), **all 539 overlays present after 10s**
+with zero foreground blocking — vs ~5min for the serial foreground
+drain and a comparable frozen stretch for stock. A fully warm
+14-fragment buffer rendered synchronously at dispatch in 59ms.
+
+Hard-won implementation notes (each cost a debugging round):
+
+- Never render cache hits through `org-format-latex`: it calls
+  `clear-image-cache` on EVERY invocation, forcing all visible images
+  to re-rasterize per render (hundreds of calls starved the main
+  loop). `night/h-olpl-render-cached` places the overlay directly via
+  `org--make-preview-overlay`. And never stub the primitive with
+  cl-letf — redefining a C subr makes native-comp build a trampoline,
+  which can ICE.
+- Pipeline processes use `:connection-type 'pipe` and `:buffer nil`:
+  latex's chatty nonstopmode output on default PTYs (~16KB buffers)
+  BLOCKS the children when Emacs doesn't drain fast enough.
+  Diagnostics live in the tmpdir's .log.
+- dvisvgm ZERO-PADS `%p` output names once a document has >= 10 pages
+  (out-01.svg) — predict nothing, glob and sort numerically. (Before
+  this fix every full chunk "failed" the page-count check and
+  silently fell back to per-fragment compiles.)
+- No global in-flight registry: a stale entry (from an aborted
+  sentinel) silently blocked fragments from ever warming. The
+  buffer-local task index is the only bookkeeping; the worst case is
+  two buffers compiling the same hash concurrently — harmless
+  (identical bytes, atomic rename).
 
 In `bg` mode overlays are placed by the pipelines' sentinels directly
 (event-driven; the timer drain is not involved at all); in `timer+bg`

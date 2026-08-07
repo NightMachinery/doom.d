@@ -315,6 +315,30 @@ it mid-edit would render half-typed LaTeX."
               t)))
         (night/h-olpl-fragments beg end))))))
 
+(defun night/h-olpl-render-cached (beg end tofile)
+  "Place the preview overlay for the fragment at BEG..END from TOFILE.
+The direct equivalent of `org-format-latex''s cache-hit path
+\(trimmed overlay end + `org--make-preview-overlay'), WITHOUT its
+whole-buffer `clear-image-cache' flush and regexp scan. The flush
+matters enormously: org clears Emacs's entire rasterized-image cache
+on EVERY call, forcing every visible preview to re-decode at the next
+redisplay — with hundreds of per-fragment renders this starved the
+main loop (observed: 248s for a warming run whose subprocesses took
+~5s). Our files are content-addressed (fresh hash filenames), so
+there is never a stale cache entry to flush. (Do NOT stub the
+primitive via cl-letf instead: redefining a C subr makes native-comp
+build a trampoline, which ICEs when the gcc driver is unavailable.)"
+  (let ((imagetype (or (plist-get
+                        (cdr (assq org-preview-latex-default-process
+                                   org-preview-latex-process-alist))
+                        :image-output-type)
+                       "png"))
+        (ov-end (save-excursion
+                  (goto-char end)
+                  (skip-chars-backward " \r\t\n")
+                  (point))))
+    (org--make-preview-overlay beg ov-end tofile imagetype)))
+
 (defun night/h-olpl-previewed-p (pos)
   "Whether POS already carries an org LaTeX preview overlay."
   (cl-some (lambda (ov)
@@ -334,10 +358,25 @@ errors are reported but do not abort the queue."
          ((night/h-olpl-previewed-p beg) nil)
          (t
           (condition-case err
-              ;; The reroute advice must not intercept the drain's own
-              ;; compiles.
-              (let ((night/h-olpl-inhibit-reroute t))
-                (org--latex-preview-region beg end))
+              (let* ((context (save-excursion (goto-char beg)
+                                              (org-element-context)))
+                     (tofile (and (memq (org-element-type context)
+                                        '(latex-fragment latex-environment))
+                                  (night/h-olpl-cache-file
+                                   (org-element-property :value context)
+                                   beg))))
+                (cond
+                 ;; Cache hit: place the overlay directly — avoids
+                 ;; org-format-latex's per-call whole-cache image flush
+                 ;; (see `night/h-olpl-render-cached').
+                 ((and tofile (file-exists-p tofile))
+                  (night/h-olpl-render-cached beg end tofile))
+                 (t
+                  ;; Cold (or content changed): stock synchronous
+                  ;; compile; org's one flush per compile is stock
+                  ;; cadence.
+                  (let ((night/h-olpl-inhibit-reroute t))
+                    (org--latex-preview-region beg end)))))
             (error
              (message "night/org-latex-preview-lazy: error at %d: %s"
                       beg (error-message-string err))))
@@ -772,9 +811,6 @@ that bounds the checking cost itself, not just the render."
 ;;; runs `latex' + `dvisvgm' as sentinel-chained subprocesses under
 ;;; `nice'. Retired along with the rest of this file at the org 9.8
 ;;; async preview overhaul, which does all this and more natively.
-(defvar night/h-olpl-warm-inflight (make-hash-table :test 'equal)
-  "Cache paths currently being produced by background pipelines.")
-
 (defvar-local night/h-olpl-warm-procs nil
   "Live pipeline processes of this buffer.")
 
@@ -787,7 +823,23 @@ sharing that content hash, rendered directly by the dvisvgm sentinel.")
 (defvar-local night/h-olpl-warm-task-index nil
   "Hash: cache path -> its pending/in-flight task in THIS buffer.
 Lets later `bg' dispatches attach additional fragments (duplicate
-content, overlapping regions) to a compile that is already underway.")
+content, overlapping regions) to a compile that is already underway,
+and lets the drain (timer+bg) skip in-flight hashes. Deliberately
+buffer-local with no global registry: a stale global entry once
+silently blocked 8 fragments from ever warming; the worst case now is
+two buffers compiling the same hash concurrently, which is harmless
+\(identical bytes, atomic rename).")
+
+(defun night/h-olpl-warm-task-for (tofile)
+  "This buffer's pending/in-flight task producing TOFILE, if any."
+  (and night/h-olpl-warm-task-index
+       (gethash tofile night/h-olpl-warm-task-index)))
+
+(defun night/h-olpl-warm-register-task (task)
+  "Register TASK in this buffer's task index."
+  (unless night/h-olpl-warm-task-index
+    (setq night/h-olpl-warm-task-index (make-hash-table :test 'equal)))
+  (puthash (plist-get task :tofile) task night/h-olpl-warm-task-index))
 
 (defvar-local night/h-olpl-warm-total-frags 0)
 (defvar-local night/h-olpl-warm-done-frags 0)
@@ -811,7 +863,6 @@ Reset when new fragments are merged.")
 
 (defun night/h-olpl-warm-free-task (task)
   "Unregister TASK and free its fragment markers."
-  (remhash (plist-get task :tofile) night/h-olpl-warm-inflight)
   (when night/h-olpl-warm-task-index
     (remhash (plist-get task :tofile) night/h-olpl-warm-task-index))
   (dolist (frag (plist-get task :markers))
@@ -859,7 +910,7 @@ a LaTeX run."
                          (org-element-property :value context) beg)))
             (cond
              ((file-exists-p tofile) 'ready)
-             ((gethash tofile night/h-olpl-warm-inflight) 'inflight)
+             ((night/h-olpl-warm-task-for tofile) 'inflight)
              (t 'cold))))))))
 
 (defun night/h-olpl-warm-collect-tasks ()
@@ -877,7 +928,7 @@ a LaTeX run."
                      (tofile (night/h-olpl-cache-file value beg)))
                 (unless (or (file-exists-p tofile)
                             (gethash tofile seen)
-                            (gethash tofile night/h-olpl-warm-inflight))
+                            (night/h-olpl-warm-task-for tofile))
                   (puthash tofile t seen)
                   (push (list :value value :tofile tofile) tasks))))))))
     (nreverse tasks)))
@@ -976,34 +1027,31 @@ at 0) no LaTeX ever runs in the foreground."
              (t
               (let* ((tofile (night/h-olpl-cache-file
                               (org-element-property :value context) fb))
-                     (task (gethash tofile night/h-olpl-warm-task-index)))
+                     (task (night/h-olpl-warm-task-for tofile)))
                 (cond
                  ((file-exists-p tofile)
-                  (push frag cached))
+                  (push (cons frag tofile) cached))
                  (task
                   ;; This hash is already pending/in flight in this
                   ;; buffer: share the compile.
                   (plist-put task :markers
                              (cons frag (plist-get task :markers))))
-                 ((gethash tofile night/h-olpl-warm-inflight)
-                  ;; Another buffer's compile (rare): drop; the next
-                  ;; explicit preview here will be a cache hit.
-                  (set-marker (car frag) nil)
-                  (set-marker (cdr frag) nil))
                  (t
                   (let ((new (list :value (org-element-property :value context)
                                    :tofile tofile
                                    :markers (list frag))))
-                    (puthash tofile new night/h-olpl-warm-task-index)
+                    (night/h-olpl-warm-register-task new)
                     (push new new-tasks))))))))))))
     ;; Render the cached subset right now, bounded by the cap; the
     ;; pathological overflow (>cap warm fragments) goes through the
     ;; timer-queue machinery instead.
     (let ((n 0)
           (overflow nil))
-      (dolist (frag (nreverse cached))
-        (let ((fb (marker-position (car frag)))
-              (fe (marker-position (cdr frag))))
+      (dolist (entry (nreverse cached))
+        (let* ((frag (car entry))
+               (tofile (cdr entry))
+               (fb (marker-position (car frag)))
+               (fe (marker-position (cdr frag))))
           (cond
            ((not (and fb fe))
             (set-marker (car frag) nil)
@@ -1014,8 +1062,7 @@ at 0) no LaTeX ever runs in the foreground."
             (cl-incf n)
             ;; Leave the fragment under point to org-fragtog.
             (unless (and (>= (point) fb) (< (point) fe))
-              (let ((night/h-olpl-inhibit-reroute t))
-                (org--latex-preview-region fb fe)))
+              (night/h-olpl-render-cached fb fe tofile))
             (set-marker (car frag) nil)
             (set-marker (cdr frag) nil)))))
       (when overflow
@@ -1055,7 +1102,7 @@ at 0) no LaTeX ever runs in the foreground."
     (night/h-olpl-warm-launch tasks))
    (t
     (dolist (task tasks)
-      (puthash (plist-get task :tofile) t night/h-olpl-warm-inflight))
+      (night/h-olpl-warm-register-task task))
     (let* ((bs night/org-latex-preview-lazy-warm-batch-size)
            (n (length tasks))
            (chunks nil))
@@ -1081,7 +1128,7 @@ at 0) no LaTeX ever runs in the foreground."
   (setq night/h-olpl-warm-render-info (night/h-olpl-warm-render-info))
   (add-hook 'kill-buffer-hook #'night/h-olpl-warm-cancel nil t)
   (dolist (task tasks)
-    (puthash (plist-get task :tofile) t night/h-olpl-warm-inflight))
+    (night/h-olpl-warm-register-task task))
   (let ((bs night/org-latex-preview-lazy-warm-batch-size)
         (n (length tasks))
         (chunks nil))
@@ -1142,9 +1189,16 @@ at 0) no LaTeX ever runs in the foreground."
       (insert "\n\\end{document}\n"))
     ;; Mirrors the :latex-compiler template of the dvisvgm entry in
     ;; `org-preview-latex-process-alist' (org 9.7), niced.
+    ;; :buffer nil + pipe: latex's chatty nonstopmode console output
+    ;; must be discarded, not collected — with 8 concurrent pipelines
+    ;; on default PTYs (~16KB buffers), the children BLOCK on writes
+    ;; whenever Emacs doesn't drain fast enough (observed: 25-45% CPU
+    ;; and a ~25x wall-time blowup). Diagnostics live on in the
+    ;; tmpdir's .log file.
     (let ((proc (make-process
                  :name "night-olpl-warm-latex"
-                 :buffer (get-buffer-create " *night-olpl-warm-log*")
+                 :buffer nil
+                 :connection-type 'pipe
                  :command (list "nice" "-n" "10" "latex"
                                 "-interaction" "nonstopmode"
                                 "-output-directory" tmpdir texfile)
@@ -1179,7 +1233,8 @@ at 0) no LaTeX ever runs in the foreground."
               ;; entry, extended for multi-page output.
               (let ((dproc (make-process
                             :name "night-olpl-warm-dvisvgm"
-                            :buffer (get-buffer-create " *night-olpl-warm-log*")
+                            :buffer nil
+                            :connection-type 'pipe
                             :command (list "nice" "-n" "10" "dvisvgm" dvifile
                                            "--no-fonts" "--exact-bbox"
                                            (format "--scale=%s"
@@ -1206,13 +1261,18 @@ at 0) no LaTeX ever runs in the foreground."
        (t
         (with-current-buffer buf
           (when (memq proc night/h-olpl-warm-procs) ;; not cancelled
-            (let* ((outs (cl-loop for i from 1 to (length chunk)
-                                  collect (expand-file-name
-                                           (format "out-%d.svg" i) tmpdir))))
+            ;; dvisvgm ZERO-PADS %p when the document has >= 10 pages
+            ;; (out-01.svg...), so never predict the names — glob and
+            ;; sort numerically by page number.
+            (let* ((outs (sort (directory-files
+                                tmpdir t "\\`out-[0-9]+\\.svg\\'")
+                               (lambda (a b)
+                                 (< (night/h-olpl-warm-out-page a)
+                                    (night/h-olpl-warm-out-page b))))))
               (cond
                ;; Page count must match the chunk — a broken fragment
                ;; can shift or swallow pages.
-               ((not (cl-every #'file-exists-p outs))
+               ((/= (length outs) (length chunk))
                 (night/h-olpl-warm-chunk-failed proc))
                (t
                 (cl-loop for task in chunk
@@ -1274,9 +1334,14 @@ nothing."
                        (equal (night/h-olpl-cache-file
                                (org-element-property :value context) beg)
                               tofile))
-              (let ((night/h-olpl-inhibit-reroute t))
-                (org--latex-preview-region beg end)))))))
+              (night/h-olpl-render-cached beg end tofile))))))
     (night/h-olpl-warm-free-task task)))
+
+(defun night/h-olpl-warm-out-page (file)
+  "Page number encoded in a dvisvgm out-N.svg FILE name."
+  (if (string-match "out-0*\\([0-9]+\\)\\.svg\\'" file)
+      (string-to-number (match-string 1 file))
+    0))
 
 (defun night/h-olpl-warm-chunk-failed (proc)
   "Handle a failed chunk: retry per-fragment, or report+drop when solo."
@@ -1302,9 +1367,10 @@ nothing."
     (night/h-olpl-warm-dispatch-next)))
 
 (defun night/h-olpl-warm-orphan-cleanup (proc)
-  "Cleanup for a pipeline whose buffer died."
+  "Cleanup for a pipeline whose buffer died.
+The buffer-local task index died with the buffer; only markers and the
+temp dir need freeing."
   (dolist (task (process-get proc 'olpl-chunk))
-    (remhash (plist-get task :tofile) night/h-olpl-warm-inflight)
     (dolist (frag (plist-get task :markers))
       (set-marker (car frag) nil)
       (set-marker (cdr frag) nil)))
