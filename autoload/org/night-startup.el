@@ -94,3 +94,14 @@
  'org-mode-hook
  ;; 'evil-org-mode-hook
  #'night/org-startup)
+
+(defun night/h-org-interactive-startup-after-revert ()
+  "Re-run the graphical org setup after `revert-buffer'.
+Reverting reinitializes major/minor modes (killing org-fragtog) and
+removes all preview overlays, but `find-file-hook' does not re-run, so
+without this previews stayed gone until a manual preview command."
+  (when (and (derived-mode-p 'org-mode)
+             (display-graphic-p))
+    (night/org-interactive-startup)))
+
+(add-hook 'after-revert-hook #'night/h-org-interactive-startup-after-revert)

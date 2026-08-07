@@ -179,7 +179,14 @@ prefix arg sets the global default and stomps buffer-locals):
   Sentinel-rendered fragments are re-validated against the current
   buffer first, so fragments edited mid-compile render nothing (their
   next preview recompiles), duplicate-content fragments share one
-  compile, and the fragment under point is left to org-fragtog.
+  compile, and the ASYNC path leaves the fragment under point to
+  org-fragtog. The synchronous cached-render path deliberately does
+  NOT skip the fragment under point: org-fragtog's exit handler
+  re-previews with point save-excursion'd back inside the fragment,
+  so skipping there broke every fragtog exit re-render.
+  `revert-buffer' re-runs the graphical startup (fragtog + previews)
+  via `after-revert-hook' — reverting reinitializes modes and drops
+  overlays but never re-runs `find-file-hook'.
   `night/org-latex-preview-lazy-warm-min` is a `timer+bg`-only knob
   (default 2).
 

@@ -1060,9 +1060,15 @@ at 0) no LaTeX ever runs in the foreground."
             (push frag overflow))
            (t
             (cl-incf n)
-            ;; Leave the fragment under point to org-fragtog.
-            (unless (and (>= (point) fb) (< (point) fe))
-              (night/h-olpl-render-cached fb fe tofile))
+            ;; NO point-inside skip here (unlike the sentinel path):
+            ;; org-fragtog's exit handler re-previews with point
+            ;; save-excursion'd back INSIDE the fragment, so skipping
+            ;; would break every fragtog exit re-render (observed:
+            ;; \"Creating LaTeX preview\" message, no preview, ever).
+            ;; If the user's point really is inside, fragtog hides the
+            ;; overlay on their next command anyway — its intended
+            ;; behavior.
+            (night/h-olpl-render-cached fb fe tofile)
             (set-marker (car frag) nil)
             (set-marker (cdr frag) nil)))))
       (when overflow
