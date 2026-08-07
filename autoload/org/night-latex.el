@@ -11,6 +11,26 @@
         )
   (setq org-preview-latex-default-process 'dvisvgm)
 
+;;;
+  (defun night/org-format-latex-header-add (line)
+    "Append LINE to `org-format-latex-header' unless already present.
+
+Idempotent, so reloading this file never duplicates a package. Note
+that `org-format-latex-header' is part of the preview cache hash (see
+[agfi:night/h-olpl-cache-file] and
+=DOOMDIR/docs/org/latex-preview/performance.md=): editing it
+invalidates every cached preview image, so all fragments recompile on
+their next preview and the old images become orphans in the shared
+cache directory."
+    (unless (string-match-p (regexp-quote line) org-format-latex-header)
+      (setq org-format-latex-header
+            (concat org-format-latex-header "\n" line "\n"))))
+
+  ;; Add preamble lines for the previews here, one call each:
+  (night/org-format-latex-header-add
+   "\\usepackage[bb=boondox]{mathalpha}") ;; fixes `\mathbb{1}'
+;;;
+
   ;; https://emacs.stackexchange.com/questions/19880/font-size-control-of-latex-previews-in-org-files
   (setq org-format-latex-options (plist-put org-format-latex-options :scale 3.0))
   (setq org-format-latex-options (plist-put org-format-latex-options :foreground "black"))
