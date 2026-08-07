@@ -1323,16 +1323,23 @@ at 0) no LaTeX ever runs in the foreground."
   "Render TASK's fragments from its fresh cache file, then free it.
 Re-validates every fragment against the CURRENT buffer state: dead
 markers, fragments edited mid-compile (their hash no longer matches
-the produced file), already-previewed ones, and the fragment under
-point (org-fragtog previews it as a cache hit on exit) all render
-nothing."
+the produced file) and already-previewed ones render nothing.
+
+The fragment under point is skipped only when `org-fragtog-mode' is
+on: there it would hide the overlay on the next command anyway (so
+rendering just flickers) and re-render it on exit. With fragtog off
+\(pinned buffers) nothing fires on exit, so skipping would leave that
+fragment raw indefinitely — render it. Note `(point)' is trustworthy
+here, unlike on the synchronous dispatch path, whose caller may be
+fragtog with point `save-excursion'ed back into the fragment."
   (let ((tofile (plist-get task :tofile)))
     (dolist (frag (plist-get task :markers))
       (let ((beg (marker-position (car frag)))
             (end (marker-position (cdr frag))))
         (when (and beg end
                    (not (night/h-olpl-previewed-p beg))
-                   (not (and (>= (point) beg) (< (point) end))))
+                   (not (and (bound-and-true-p org-fragtog-mode)
+                             (>= (point) beg) (< (point) end))))
           (let ((context (save-excursion (goto-char beg)
                                          (org-element-context))))
             (when (and (memq (org-element-type context)

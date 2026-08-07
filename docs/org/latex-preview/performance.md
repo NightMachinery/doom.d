@@ -180,13 +180,12 @@ prefix arg sets the global default and stomps buffer-locals):
   buffer first, so fragments edited mid-compile render nothing (their
   next preview recompiles), duplicate-content fragments share one
   compile, and the ASYNC path leaves the fragment under point to
-  org-fragtog. The synchronous cached-render path deliberately does
-  NOT skip the fragment under point: org-fragtog's exit handler
-  re-previews with point save-excursion'd back inside the fragment,
-  so skipping there broke every fragtog exit re-render.
-  `revert-buffer' re-runs the graphical startup (fragtog + previews)
-  via `after-revert-hook' — reverting reinitializes modes and drops
-  overlays but never re-runs `find-file-hook'.
+  org-fragtog — but only when fragtog is actually on, since otherwise
+  (pinned buffers) nothing would ever render it. The synchronous
+  cached-render path deliberately does NOT skip the fragment under
+  point: org-fragtog's exit handler re-previews with point
+  save-excursion'd back inside the fragment, so skipping there broke
+  every fragtog exit re-render.
   `night/org-latex-preview-lazy-warm-min` is a `timer+bg`-only knob
   (default 2).
 

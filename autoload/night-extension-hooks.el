@@ -56,6 +56,11 @@ Use this to stop the audio files being played by org-mode links."
             ))))))
 
 (defun night/file-extension-actions ()
+  ;; Error-guarded like [agfi:night/file-extension-actions2]: this runs
+  ;; from `find-file-hook', where a signal aborts the remaining hooks —
+  ;; so one failing branch here would silently take down org startup
+  ;; (fragtog, previews, highlighting) for every file opened afterwards.
+  (with-demoted-errors "night/file-extension-actions: %S"
   (let*
       ((bfn (or buffer-file-name ""))
        (ext (or (file-name-extension bfn) ""))
@@ -120,6 +125,6 @@ Use this to stop the audio files being played by org-mode links."
         (goto-char (point-max))
         (require 'hungry-delete)
         (hungry-delete-backward-impl)
-        (set-buffer-modified-p nil))))))
+        (set-buffer-modified-p nil)))))))
 
 ;;;
