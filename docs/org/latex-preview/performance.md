@@ -145,6 +145,22 @@ rendered under a different theme are not found. Preview overlays are
 cleared too, so the next preview command recompiles from scratch —
 useful for testing cold-cache behavior.
 
+**Cache GC** (`night/org-latex-preview-cache-gc`): the cache is shared
+and content-addressed, so it only grows — every edited fragment, and
+every change to `org-format-latex-header` (see
+`night/org-format-latex-header-add`) or the options plist, orphans its
+images permanently. The GC deletes images unused for
+`night/org-latex-preview-cache-gc-days` (30), where "last use" is the
+newer of the file's access and write times: our images are written
+once and never modified, so the write time is effectively the creation
+date and serves as the fallback on filesystems that do not update
+atime. Images displayed by preview overlays in live org buffers are
+always kept, and a prefix argument makes it a dry run. It also runs
+itself once per session on an idle timer
+(`night/org-latex-preview-cache-gc-idle-delay`), quietly unless it
+deletes something. Over-deleting is harmless: a needed image is simply
+recompiled.
+
 **Global pinning** (`night/org-latex-preview-pin-global-toggle`): same
 idea for all org buffers, current and future — sweeps `(buffer-list)`
 and sets `night/org-latex-preview-pin-global-p`, which

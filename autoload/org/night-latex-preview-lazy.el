@@ -1390,6 +1390,110 @@ temp dir need freeing."
   (let ((tmpdir (process-get proc 'olpl-tmpdir)))
     (when tmpdir (ignore-errors (delete-directory tmpdir t)))))
 
+;;; Cache GC: the preview cache is shared and content-addressed, so it
+;;; only ever grows — every edited fragment, and every change to
+;;; `org-format-latex-header' or the options plist, orphans images
+;;; permanently. Recompiles are cheap now (batched parallel warming),
+;;; so ageing unused images out costs almost nothing.
+(defvar night/org-latex-preview-cache-gc-days 30
+  "Delete cached preview images unused for this many days.")
+
+(defvar night/org-latex-preview-cache-gc-idle-delay 120
+  "Idle seconds before the once-per-session automatic cache GC.")
+
+(defvar night/h-olpl-cache-gc-done nil
+  "Whether the automatic cache GC already ran in this session.")
+
+(defvar night/h-olpl-cache-gc-timer nil
+  "Timer for the automatic cache GC; replaced when this file reloads.")
+
+(defun night/h-olpl-cache-protected-files ()
+  "Cache paths currently displayed by preview overlays in live buffers.
+Read straight off the overlays (no hashing), so a visible preview can
+never have its image deleted from under it."
+  (let ((protected (make-hash-table :test 'equal)))
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (when (derived-mode-p 'org-mode)
+          (dolist (ov (overlays-in (point-min) (point-max)))
+            (when (eq (overlay-get ov 'org-overlay-type) 'org-latex-overlay)
+              (let ((file (plist-get (cdr (overlay-get ov 'display)) :file)))
+                (when file
+                  (puthash (expand-file-name file) t protected))))))))
+    protected))
+
+(defun night/h-olpl-cache-last-use (attrs)
+  "Last-use time of a `directory-files-and-attributes' entry ATTRS.
+The newer of the access and write times: our images are written once
+and never modified, so the write time is effectively the creation date
+— the fallback for filesystems that do not update atime (a noatime
+mount), where it keeps freshly created images alive for the full
+window."
+  (max (float-time (file-attribute-access-time attrs))
+       (float-time (file-attribute-modification-time attrs))))
+
+(defun night/org-latex-preview-cache-gc (&optional dry-run)
+  "Delete preview cache images unused for `night/org-latex-preview-cache-gc-days'.
+
+Last use is the newer of a file's access and write times (see
+`night/h-olpl-cache-last-use'). Images displayed by preview overlays
+in live org buffers are always kept. With DRY-RUN (interactively, a
+prefix argument) nothing is deleted, only reported.
+
+Deleting is safe: the cache is content-addressed, so a needed image is
+simply recompiled on its next preview. Note it is also SHARED — an
+image deleted here is one that any file containing the same fragment
+text would have reused."
+  (interactive "P")
+  (let* ((dir (expand-file-name org-preview-latex-image-directory))
+         (cutoff (- (float-time)
+                    (* night/org-latex-preview-cache-gc-days 86400)))
+         (protected (night/h-olpl-cache-protected-files))
+         (deleted 0)
+         (freed 0)
+         (kept 0))
+    (cond
+     ((not (file-directory-p dir))
+      (message "night/org-latex-preview-cache-gc: no cache directory (%s)" dir))
+     (t
+      (dolist (entry (directory-files-and-attributes
+                      dir t "\\`org-ltximg_.*\\.\\(svg\\|png\\)\\'" t))
+        (let ((file (car entry))
+              (attrs (cdr entry)))
+          (cond
+           ((or (file-attribute-type attrs) ;; nil = regular file
+                (gethash file protected)
+                (> (night/h-olpl-cache-last-use attrs) cutoff))
+            (cl-incf kept))
+           (t
+            (cl-incf deleted)
+            (cl-incf freed (or (file-attribute-size attrs) 0))
+            ;; Another Emacs may GC the same shared cache concurrently.
+            (unless dry-run
+              (ignore-errors (delete-file file)))))))
+      (message "night/org-latex-preview-cache-gc: %s %d file(s), %.1f MB (kept %d, unused > %d days)"
+               (if dry-run "would delete" "deleted")
+               deleted (/ freed 1048576.0) kept
+               night/org-latex-preview-cache-gc-days)))
+    deleted))
+
+(defun night/h-olpl-cache-gc-maybe ()
+  "Run the cache GC once per session, quietly when it finds nothing."
+  (unless night/h-olpl-cache-gc-done
+    (setq night/h-olpl-cache-gc-done t)
+    (let ((inhibit-message t))
+      (let ((deleted (ignore-errors (night/org-latex-preview-cache-gc))))
+        (setq inhibit-message nil)
+        (when (and deleted (> deleted 0))
+          (message "night/org-latex-preview-cache-gc: deleted %d unused preview image(s)"
+                   deleted))))))
+
+(when (timerp night/h-olpl-cache-gc-timer)
+  (cancel-timer night/h-olpl-cache-gc-timer))
+(setq night/h-olpl-cache-gc-timer
+      (run-with-idle-timer night/org-latex-preview-cache-gc-idle-delay
+                           nil #'night/h-olpl-cache-gc-maybe))
+
 (defun night/org-latex-preview-cache-clear-buffer ()
   "Delete the cached preview images of this buffer's LaTeX fragments.
 
