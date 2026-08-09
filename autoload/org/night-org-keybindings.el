@@ -75,7 +75,7 @@
        (and (not (eq org-support-shift-select 'always))
             (org-at-heading-p)))
 
-      (org-next-visible-heading 1)
+      (night/org-next-visible-heading 1)
       t)
 
      (t nil)))
@@ -88,57 +88,66 @@
        (and (not (eq org-support-shift-select 'always))
             (org-at-heading-p)))
 
-      (org-next-visible-heading -1)
+      (night/org-previous-visible-heading 1)
       t)
 
      (t nil)))
 
   (defun night/org-shiftright-final ()
     (interactive)
-    (org-next-visible-heading 1))
+    (night/org-next-visible-heading 1))
 
   (defun night/org-shiftleft-final ()
     (interactive)
-    (org-next-visible-heading -1))
+    (night/org-previous-visible-heading 1))
 
   (add-hook 'org-shiftleft-hook #'night/org-shiftleft)
   (add-hook 'org-shiftright-hook #'night/org-shiftright)
   (add-hook 'org-shiftleft-final-hook #'night/org-shiftleft-final)
   (add-hook 'org-shiftright-final-hook #'night/org-shiftright-final)
 ;;;
+  ;; `night/org-next-visible-heading' used to be an :override advice on
+  ;; `org-next-visible-heading' with the fold-skipping disabled, which made it
+  ;; land on headings hidden inside folds. The advice is gone; this keeps
+  ;; reloading this file safe when a stale copy is still installed in a running
+  ;; Emacs (otherwise the command below would recurse into itself).
+  ;; See [[file:~/doom.d/docs/org-heading-navigation.md]].
+  (advice-remove 'org-next-visible-heading 'night/org-next-visible-heading)
+
+  (defun night/org--goto-visible-heading (n)
+    "Move to the Nth visible heading, or not at all.
+N is negative to move backward.  Unlike `org-next-visible-heading',
+point does not move when there is no visible heading left in that
+direction, instead of jumping to the end (or the beginning) of the
+buffer.  Return non-nil when point moved."
+    (let ((origin (point)))
+      (org-next-visible-heading n)
+      (cond
+       ((and (org-at-heading-p) (not (org-invisible-p (point) t))) t)
+       (t
+        (goto-char origin)
+        ;; `night/screen-center-ni' has already fired via its :after advice on
+        ;; `org-next-visible-heading', so re-center on the restored point.
+        (night/screen-center-ni)
+        nil))))
+
   (defun night/org-next-visible-heading (arg)
     "Move to the next visible heading line.
-With ARG, repeats or can move backward if negative."
+With ARG, repeats or can move backward if negative.
+
+Unlike `org-next-visible-heading', point stays put when there is no
+further visible heading."
     (interactive "p")
-    (let ((regexp (concat "^" (org-get-limited-outline-regexp))))
-      (if (< arg 0)
-          (beginning-of-line)
-        (end-of-line))
-      (while (and (< arg 0) (re-search-backward regexp nil
-                                                :move
-                                                ;; t ;; @monkeyPatched
-                                                ))
-        (unless (bobp)
-          (when (org-fold-folded-p)
-            (goto-char (org-fold-previous-visibility-change))
-            (unless (looking-at-p regexp)
-              (re-search-backward regexp nil :mode))))
-        (cl-incf arg))
-      (while (and (> arg 0) (re-search-forward regexp nil
-                                               :move
-                                               ;; t ;; @monkeyPatched
-                                               ))
-;;; @monkeyPatched disabled this part which fixed the issue
-        ;; ** [help:org-next-visible-heading] jumps to the end on some files
-        ;; *** e.g., on [[id:c799e112-f124-42c2-8cf0-d6931a3d109e][MBZUAI/faculty]]
-        ;; (when (org-fold-folded-p)
-        ;;   (goto-char (org-fold-next-visibility-change))
-        ;;   (skip-chars-forward " \t\n")
-        ;;   (end-of-line))
-;;;
-        (cl-decf arg))
-      (if (> arg 0) (goto-char (point-max)) (beginning-of-line))))
-  (advice-add 'org-next-visible-heading :override 'night/org-next-visible-heading)
+    (night/org--goto-visible-heading arg))
+
+  (defun night/org-previous-visible-heading (arg)
+    "Move to the previous visible heading line.
+With ARG, repeats or can move forward if negative.
+
+Unlike `org-previous-visible-heading', point stays put when there is no
+further visible heading."
+    (interactive "p")
+    (night/org--goto-visible-heading (- arg)))
 
 ;;;
   (defun night/org-move-less-nested-heading (direction)
@@ -217,8 +226,8 @@ DIRECTION should be 'next or 'previous."
 
    :n "zO" #'org-fold-show-all
 
-   :nvo "{" #'org-previous-visible-heading
-   :nvo "}" #'org-next-visible-heading
+   :nvo "{" #'night/org-previous-visible-heading
+   :nvo "}" #'night/org-next-visible-heading
 
    ;; :nivo "C-<up>" #'org-backward-heading-same-level
    ;; :nivo "C-<down>" #'org-forward-heading-same-level
