@@ -7,8 +7,20 @@ behavior: when there is no further visible heading, **point does not move**,
 instead of running to the end (or the beginning) of the buffer.
 
 `night/org-next-less-nested-heading` and `night/org-previous-less-nested-heading`
-share the same wrapper, so they skip folded headings and stay put too. They
-previously used `outline-next-heading`, which ignores folding entirely.
+share the same wrapper, so they stay put at the ends too. They previously used
+`outline-next-heading`, which is fold-blind and runs to `point-max`.
+
+Dropping the fold-blind scan does not change where they land. A heading less
+nested than a *visible* heading is always itself visible: if `*** X` is
+visible, all of X's ancestors are unfolded, so the next heading of level lower
+than X's is either top-level or a child of one of those unfolded ancestors.
+Measured across five fold states, from every visible heading, in both
+directions, the old and new implementations pick the same destination every
+time; the only differences are at the ends of the buffer.
+
+The exception is starting from a heading that is itself invisible — reachable
+by jumping into a fold. The old scan could then land on another invisible
+heading; the wrapper exits the fold instead.
 
 ## The old monkeypatch, and why it was wrong
 
