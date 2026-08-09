@@ -169,9 +169,16 @@
     (message "%s" (concat "night/org-description-formatter" " (beg): link=" link ", desc=" desc))
     (with-demoted-errors "Error in night/org-description-formatter: %S"
       (let* (
+             (id
+              ;; Strip any `::SEARCH' suffix; `org-id-find' only understands the
+              ;; bare ID. `org-id-store-link' appends such a suffix whenever
+              ;; `org-id-link-use-context' is on.
+              ;; @seeAlso `night/h-org-id-open-extras'
+              (when (s-starts-with? "id:" link t)
+                (car (split-string (s-chop-prefix "id:" link) "::"))))
              (file
-              (if (s-starts-with? "id:" link t)
-                  (car (org-id-find (s-chop-prefix "id:" link)))
+              (if id
+                  (car (org-id-find id))
                 link))
              (parent
               (if file
