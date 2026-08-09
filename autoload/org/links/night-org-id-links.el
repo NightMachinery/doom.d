@@ -75,6 +75,57 @@ Stored as a plist with keys :link and :file.")
       (setq night/org-last-stored-id-link-info
             (list :link link :file file)))))
 
+(defun night/h-org-id-store-link-fallback-desc ()
+  "Return the ID-location-based description for a link stored at point.
+
+Mirrors the `desc' computation in `org-id-store-link': the `#+TITLE:'
+keyword (or the file name) before the first heading, otherwise the heading
+text.  Must be called with point where `org-id-store-link' was called."
+  (let* ((id-location (or (and org-entry-property-inherited-from
+                               (marker-position org-entry-property-inherited-from))
+                          (save-excursion
+                            (org-back-to-heading-or-point-min t)
+                            (point))))
+         (case-fold-search nil)
+         (desc
+          (save-excursion
+            (goto-char id-location)
+            (cond
+             ((org-before-first-heading-p)
+              (let ((keywords (org-collect-keywords '("TITLE"))))
+                (if keywords
+                    (cadr (assoc "TITLE" keywords))
+                  (file-name-nondirectory
+                   (buffer-file-name (buffer-base-buffer))))))
+             ((looking-at org-complex-heading-regexp)
+              (if (match-end 4)
+                  (match-string 4)
+                (match-string 0)))
+             (t nil)))))
+    (when (stringp desc)
+      (substring-no-properties desc))))
+
+(defun night/h-org-id-store-link-keep-desc (orig-fn &rest args)
+  "Keep the title/heading description when the precise target supplies none.
+
+@upstreamBug `org-id-store-link' first derives a good description from the
+`#+TITLE:' keyword or the heading at the ID location, then (when
+`org-link-context-for-files' and `org-id-link-use-context' are on)
+unconditionally overwrites it with the description of
+`org-link-precise-link-target'.  That description is nil by design for
+region- and current-line-based targets, e.g. for any line before the first
+heading.  The result is a link like
+=id:UUID::+TITLE: Foo= with no description at all."
+  (let ((res (apply orig-fn args)))
+    (when (and res
+               (null (plist-get org-store-link-plist :description)))
+      (let ((desc (night/h-org-id-store-link-fallback-desc)))
+        (when (org-string-nw-p desc)
+          ;; `org-link-add-props', not `org-link-store-props': the latter
+          ;; replaces `org-store-link-plist' wholesale.
+          (org-link-add-props :description desc))))
+    res))
+
 (defun night/org-stored-link-latest-get ()
   "Return the most recent entry from `org-stored-links'."
   (or (car org-stored-links)
@@ -130,6 +181,7 @@ Stored as a plist with keys :link and :file.")
 ;;;
 (after! (org ol org-id)
   (advice-add 'org-id-store-link :after #'night/h-org-record-last-stored-id-link)
+  (advice-add 'org-id-store-link :around #'night/h-org-id-store-link-keep-desc)
   (org-link-set-parameters "id-to" :follow #'night/org-link-id-to-follow))
 ;;;
 (cl-defun night/org-ensure-heading-ids (&key scope skip)
