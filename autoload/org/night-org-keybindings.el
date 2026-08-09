@@ -152,20 +152,29 @@ further visible heading."
 ;;;
   (defun night/org-move-less-nested-heading (direction)
   "Move to the next or previous heading that is less nested than the current one.
-DIRECTION should be 'next or 'previous."
-  (let ((move-func (if (eq direction 'next) #'outline-next-heading #'outline-previous-heading))
+DIRECTION should be 'next or 'previous.
+
+Only visible headings are considered, and point stays put when there is
+no such heading, instead of running to the end (or the beginning) of the
+buffer."
+  (let ((step (if (eq direction 'next) 1 -1))
         (current-level (or
                         (org-current-level)
-                        0)))
+                        0))
+        (found nil))
     ;; (unless current-level
     ;;   (error "Not on an org heading"))
-    (funcall move-func)
-    (while (and (not (if (eq direction 'next) (eobp) (bobp)))
-                (and
-                 (org-current-level)
-                 (not (<= (org-current-level) 1))
-                 (>= (org-current-level) current-level)))
-      (funcall move-func))))
+    (save-excursion
+      (while (and (not found)
+                  (night/org--goto-visible-heading step))
+        (let ((level (org-current-level)))
+          (when (and level
+                     (or (<= level 1)
+                         (< level current-level)))
+            (setq found (point))))))
+    (when found
+      (goto-char found))
+    found))
 
 (defun night/org-next-less-nested-heading ()
   "Move to the next heading that is less nested than the current one."

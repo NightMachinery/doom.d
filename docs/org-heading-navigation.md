@@ -6,6 +6,10 @@ They are thin wrappers over stock `org-next-visible-heading` that add one
 behavior: when there is no further visible heading, **point does not move**,
 instead of running to the end (or the beginning) of the buffer.
 
+`night/org-next-less-nested-heading` and `night/org-previous-less-nested-heading`
+share the same wrapper, so they skip folded headings and stay put too. They
+previously used `outline-next-heading`, which ignores folding entirely.
+
 ## The old monkeypatch, and why it was wrong
 
 `night/org-next-visible-heading` used to be an `:override` advice holding a copy
