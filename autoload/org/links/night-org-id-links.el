@@ -126,6 +126,37 @@ heading.  The result is a link like
           (org-link-add-props :description desc))))
     res))
 
+(defun night/h-org-link-noise-context-line-p ()
+  "Non-nil when the line at point should never become a link search string.
+
+These are metadata lines: `#+KEYWORD:' lines, comments, property drawers and
+their entries, and `#+begin_'/`#+end_' block delimiters."
+  (save-excursion
+    (save-match-data
+      (or (org-at-block-p)
+          (memq (org-element-type (org-element-at-point))
+                '(keyword comment property-drawer node-property))))))
+
+(defun night/h-org-link-precise-target-skip-noise (orig-fn &rest args)
+  "Don't build a context search string from metadata lines.
+
+@upstreamBug Before the first heading, `org-link-precise-link-target' falls
+back to `org-current-line-string' without checking what kind of line it is
+\(only blank lines are filtered out).  But the preamble is normally all
+metadata: `#+title:', comments, and the file-level property drawer holding
+the very ID being linked to.  So storing a link on the `#+title:' line yields
+=id:UUID::+title: Foo=, whose search string re-targets exactly where the bare
+=id:UUID= already lands.
+
+Regions and `#+name'd elements take precedence upstream and are left alone."
+  (if (and (not (org-link--context-from-region))
+           (derived-mode-p 'org-mode)
+           (org-before-first-heading-p)
+           (not (org-element-property :name (org-element-at-point)))
+           (night/h-org-link-noise-context-line-p))
+      nil
+    (apply orig-fn args)))
+
 (defun night/org-stored-link-latest-get ()
   "Return the most recent entry from `org-stored-links'."
   (or (car org-stored-links)
@@ -182,6 +213,8 @@ heading.  The result is a link like
 (after! (org ol org-id)
   (advice-add 'org-id-store-link :after #'night/h-org-record-last-stored-id-link)
   (advice-add 'org-id-store-link :around #'night/h-org-id-store-link-keep-desc)
+  (advice-add 'org-link-precise-link-target :around
+              #'night/h-org-link-precise-target-skip-noise)
   (org-link-set-parameters "id-to" :follow #'night/org-link-id-to-follow))
 ;;;
 (cl-defun night/org-ensure-heading-ids (&key scope skip)

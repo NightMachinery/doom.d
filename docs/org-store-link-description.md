@@ -1,9 +1,9 @@
-# `org-store-link` descriptions for `id:` links
+# `org-store-link` on lines before the first heading
 
-Two bugs made `org-store-link` produce a link with no description (and, on
-insertion, a description equal to the raw link string) whenever point was on a
-line **before the first heading** — most visibly on the `#+title:` line, where
-the generated search string reads like `+title: Some Title`.
+Three bugs conspired to make `org-store-link` produce
+`[[id:UUID::+title: Some Title]]` — a useless search string and no description
+at all — whenever point was on a line **before the first heading**, most visibly
+the `#+title:` line.
 
 ## Bug 1 (upstream Org): the precise target's nil description clobbers the good one
 
@@ -60,6 +60,39 @@ target file.
 Known edge case left alone: IDs that themselves contain `::`. Upstream only
 handles those as a fallback inside `org-id-open`.
 
+## Bug 3 (upstream Org): the context-line fallback does not check the line's kind
+
+Before the first heading there is no heading to anchor to, so
+`org-link-precise-link-target` falls back to `org-current-line-string`. It
+applies no filter beyond dropping blank lines. But the preamble is normally all
+metadata — `#+title:` and other keywords, `# comments`, and the file-level
+property drawer that holds the very ID being linked to — so the resulting search
+string re-targets exactly where the bare `id:UUID` already lands.
+
+`org-link--normalize-string` also strips the leading `#`, so the stored search
+string (`+title: Some Title`) is not even the literal line text; it resolves only
+through `org-link-search`'s fuzzy text fallback.
+
+Fix: `night/h-org-link-precise-target-skip-noise`, an `:around` advice on
+`org-link-precise-link-target` in `autoload/org/links/night-org-id-links.el`. It
+returns nil — no search string — when point is in an Org buffer, before the first
+heading, with no active region, on an element with no `#+name:`, and
+`night/h-org-link-noise-context-line-p` says the line is metadata: element type
+`keyword`, `comment`, `property-drawer` or `node-property`, or a
+`#+begin_`/`#+end_` block delimiter (`org-at-block-p`), which would otherwise
+yield strings like `+begin_src sh`.
+
+Deliberately narrow: a prose line in a long preamble still gets its `::context`
+search string, since that is genuinely useful. Only non-content lines are
+suppressed.
+
+This also improves `file:` links, since `org-link--file-link-to-here` goes
+through the same function.
+
+With no precise target, `org-id-store-link` keeps its own `#+TITLE:`-derived
+description natively, so the Bug 1 advice becomes a no-op on the title line. It
+is still needed for prose preamble lines and for body lines under a heading.
+
 ## Related
 
 - `docs/org-id-to-links.md`
@@ -73,6 +106,5 @@ touching `org-stored-links` or the buffer:
 (substring-no-properties (org-store-link nil nil))
 ```
 
-With point on the `#+title:` line of a file whose top-level ID exists, expect
-`[[id:UUID::+title: Some Title][Some Title]]` rather than a bare
-`[[id:UUID::+title: Some Title]]`.
+With point on the `#+title:` line of a file whose top-level ID exists, expect a
+bare `[[id:UUID][Some Title]]` — no search string, description intact.
