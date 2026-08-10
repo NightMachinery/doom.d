@@ -172,30 +172,30 @@ override and hand `server-socket-dir' an empty path."
 (defun night/cis-p ()
   "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
 
-The test is whether $HOME lies under the cluster's shared NFS home.  That is a
-plain string comparison on a value Emacs already holds, so it costs no
-filesystem access at all -- which matters, as this runs at startup.
+The test is the existence of ~/.cis_mark, a marker placed by hand (or by
+setup/bootstrap-sudoless).  Since the home is the cluster's shared NFS mount,
+one file covers every host in it.
 
-Three signals were rejected:
+This is deliberately an *explicit* declaration rather than an inference.
+Everything inferrable was tried and each was wrong in a different way:
 
-- `file-directory-p' on the mount point (the first version) only asks whether
-  the share happens to be *mounted*, so any machine mounting it would match.
-- The DNS search domain in /etc/resolv.conf looks precise but is *wrong*: it
-  reflects network connectivity, not identity.  The laptop carries
-  \"search cis.uni-muenchen.de\" whenever it is on the LMU network, so it
-  matched too.
+- `file-directory-p' on the share only asks whether it happens to be
+  *mounted*; any machine that mounts it would match.
+- $HOME lying under a given path is a naming convention, not an identity.
+  Nothing stops another site using the same one.
+- The DNS search domain in /etc/resolv.conf is worse than it looks: it
+  reflects network *connectivity*, not identity, so the laptop matched
+  whenever it was on the LMU network.
 - Hostnames would need a `hostname -f' subprocess, since `system-name' is the
-  short label rather than the FQDN.
+  short label rather than the FQDN -- and would need updating per machine.
 
-Asking whether *our home is the shared home* is the question we actually mean:
-every CIS-specific behaviour keyed off this (socket directory, shared env,
-per-host caches) exists precisely because the home is shared.  A CIS machine
-without it should not take those branches anyway."
+The result is memoised, so the cost is a single stat per Emacs session; that
+makes any argument about avoiding the filesystem here irrelevant."
   (interactive)
   (if (not (eq night/cis-p--cache 'unset))
       night/cis-p--cache
     (setq night/cis-p--cache
-          (string-prefix-p "/mounts/Users/" (expand-file-name "~")))))
+          (file-exists-p (expand-file-name "~/.cis_mark")))))
 
 (defun night/system-name ()
   (cond
@@ -413,9 +413,35 @@ and simply rebinds. If another process still occupies the path,
   ;; (setq night/current-theme-light 'solarized-selenized-light) ;; @good
   ;; (setq night/current-theme-light 'doom-solarized-light) ; subtly different
   ))
-(defvar night/theme-dark-p
-  (equal (night/getenv-nonempty "NIGHT_EMACS_THEME") "dark")
-  "Whether to use the dark variant.  Set NIGHT_EMACS_THEME=dark to enable.")
+(defun night/terminal-dark-p ()
+  "Best available answer to: is the terminal background dark?
+
+Emacs cannot ask a terminal for its background colour.  The one convention is
+the COLORFGBG environment variable (fg;bg colour indices, from rxvt); kitty and
+iTerm2 do not set it, and with it absent Emacs guesses -- badly, it assumes
+dark.  Sources are consulted in order of how much they actually know:
+
+1. NIGHT_EMACS_THEME, an explicit override (values: dark, light).
+2. COLORFGBG, if the terminal or the shell provides it.  Over ssh it has to be
+   smuggled: sshd here accepts only LANG and LC_*, so kitty sets
+   LC_COLORFGBG and the env contract copies it into COLORFGBG server-side.
+   See setup/bootstrap-sudoless/README.org.
+3. Otherwise assume light, which is what this terminal actually is; the old
+   implicit answer was dark, and that is what made faces look washed out."
+  (let ((explicit (night/getenv-nonempty "NIGHT_EMACS_THEME"))
+        (cfb (night/getenv-nonempty "COLORFGBG")))
+    (cond
+     (explicit (equal explicit "dark"))
+     (cfb
+      ;; The background index is the last field.  Emacs treats 0-6 and 8 as
+      ;; dark in `frame-set-background-mode'; mirror that.
+      (and (member (car (last (split-string cfb ";")))
+                   (list "0" "1" "2" "3" "4" "5" "6" "8"))
+           t))
+     (t nil))))
+
+(defvar night/theme-dark-p (night/terminal-dark-p)
+  "Whether to use the dark variant.  See `night/terminal-dark-p'.")
 
 (setq doom-theme
       (if night/theme-dark-p night/current-theme-dark night/current-theme-light))
