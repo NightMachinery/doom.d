@@ -85,9 +85,9 @@ $NIGHT_EMACS_SOCKET_DIR overrides everything.
 variable returns \"\", which is non-nil, so a plain `or' would accept it as an
 override and hand `server-socket-dir' an empty path."
   (or (night/getenv-nonempty "NIGHT_EMACS_SOCKET_DIR")
-      ;; /mounts/Users is the CIS LMU shared-home marker; the same test is used
-      ;; by setup/bootstrap-sudoless/profile.sh to pick the cis-lmu profile.
-      (when (file-directory-p "/mounts/Users")
+      ;; Ask the declared site, not the filesystem: see `night/cis-p'.  A
+      ;; mounted share proves nothing about which cluster this is.
+      (when (night/cis-p)
         (let* ((user (user-login-name))
                (lingering (file-exists-p (concat "/var/lib/systemd/linger/" user)))
                (runtime (night/getenv-nonempty "XDG_RUNTIME_DIR"))
@@ -172,9 +172,13 @@ override and hand `server-socket-dir' an empty path."
 (defun night/cis-p ()
   "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
 
-The test is the existence of ~/.cis_mark, a marker placed by hand (or by
-setup/bootstrap-sudoless).  Since the home is the cluster's shared NFS mount,
-one file covers every host in it.
+The test reads ~/.night-site, whose first non-comment line names the site
+profile this home belongs to; we are on CIS when that name is cis-lmu.  The
+file is written by setup/bootstrap-sudoless, and since the home is the
+cluster shared mount, one file covers every host in it.
+
+The file is named for the general case rather than for CIS specifically: the
+bootstrap treats a site as a variable, of which CIS is one value.
 
 This is deliberately an *explicit* declaration rather than an inference.
 Everything inferrable was tried and each was wrong in a different way:
@@ -195,7 +199,21 @@ makes any argument about avoiding the filesystem here irrelevant."
   (if (not (eq night/cis-p--cache 'unset))
       night/cis-p--cache
     (setq night/cis-p--cache
-          (file-exists-p (expand-file-name "~/.cis_mark")))))
+          (let ((f (expand-file-name "~/.night-site")))
+            (and (file-readable-p f)
+                 (with-temp-buffer
+                   (insert-file-contents f)
+                   (goto-char (point-min))
+                   ;; first line that is neither blank nor a comment
+                   (let (name)
+                     (while (and (not name) (not (eobp)))
+                       (let ((l (string-trim (buffer-substring
+                                              (line-beginning-position)
+                                              (line-end-position)))))
+                         (unless (or (string-empty-p l) (string-prefix-p "#" l))
+                           (setq name l)))
+                       (forward-line 1))
+                     (equal name "cis-lmu"))))))))
 
 (defun night/system-name ()
   (cond
