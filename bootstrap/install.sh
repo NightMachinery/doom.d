@@ -251,11 +251,16 @@ verify_rc=$?
 #: name finds nothing, the daemon looks dead, and a perfectly clean start is
 #: reported as a failure -- which is exactly what happened here. Locate the
 #: socket by path instead, and only then talk to it.
+#: Search for the socket rather than reconstructing the directory name.
+#: Guessing it is how this went wrong twice: the config derives a per-host
+#: directory (emacs-servers-$host), which matched none of the obvious
+#: candidates like $XDG_RUNTIME_DIR/emacs.
 verify_sock=''
-for d in "${XDG_RUNTIME_DIR:-}/emacs" "/var/tmp/$(id -un)/emacs" \
-         "${NIGHT_LOCAL_CACHE:-}/emacs" "${TMPDIR:-/tmp}/emacs$(id -u)" \
-         "/tmp/emacs$(id -u)" ; do
-    [ -n "${d}" ] && [ -S "${d}/night-verify" ] && { verify_sock="${d}/night-verify" ; break ; }
+for root in "${XDG_RUNTIME_DIR:-}" "${NIGHT_LOCAL_CACHE:-}" "/var/tmp/$(id -un)" \
+            "${TMPDIR:-/tmp}" /tmp ; do
+    [ -n "${root}" ] && [ -d "${root}" ] || continue
+    verify_sock="$(find "${root}" -maxdepth 3 -type s -name night-verify 2>/dev/null | head -1)"
+    [ -n "${verify_sock}" ] && break
 done
 
 if [ -n "${verify_sock}" ] && emacsclient -s "${verify_sock}" --eval '(+ 1 1)' >/dev/null 2>&1 ; then
