@@ -41,6 +41,57 @@ therefore silently wins an `or' chain."
   (let ((v (getenv name)))
     (and v (not (string-empty-p v)) v)))
 
+;; Defined before `night/emacs-socket-dir', which calls it while this file
+;; loads; defining it later gave `void-function night/cis-p' at startup.
+(defvar night/cis-p--cache 'unset
+  "Memo for `night/cis-p'; it is consulted at startup, so do not re-probe.")
+
+(defun night/cis-p ()
+  "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
+
+The test reads ~/.night-site, whose first non-comment line names the site
+profile this home belongs to; we are on CIS when that name is cis-lmu.  The
+file is written by setup/bootstrap-sudoless, and since the home is the
+cluster shared mount, one file covers every host in it.
+
+The file is named for the general case rather than for CIS specifically: the
+bootstrap treats a site as a variable, of which CIS is one value.
+
+This is deliberately an *explicit* declaration rather than an inference.
+Everything inferrable was tried and each was wrong in a different way:
+
+- `file-directory-p' on the share only asks whether it happens to be
+  *mounted*; any machine that mounts it would match.
+- $HOME lying under a given path is a naming convention, not an identity.
+  Nothing stops another site using the same one.
+- The DNS search domain in /etc/resolv.conf is worse than it looks: it
+  reflects network *connectivity*, not identity, so the laptop matched
+  whenever it was on the LMU network.
+- Hostnames would need a `hostname -f' subprocess, since `system-name' is the
+  short label rather than the FQDN -- and would need updating per machine.
+
+The result is memoised, so the cost is a single stat per Emacs session; that
+makes any argument about avoiding the filesystem here irrelevant."
+  (interactive)
+  (if (not (eq night/cis-p--cache 'unset))
+      night/cis-p--cache
+    (setq night/cis-p--cache
+          (let ((f (expand-file-name "~/.night-site")))
+            (and (file-readable-p f)
+                 (with-temp-buffer
+                   (insert-file-contents f)
+                   (goto-char (point-min))
+                   ;; first line that is neither blank nor a comment
+                   (let (name)
+                     (while (and (not name) (not (eobp)))
+                       (let ((l (string-trim (buffer-substring
+                                              (line-beginning-position)
+                                              (line-end-position)))))
+                         (unless (or (string-empty-p l) (string-prefix-p "#" l))
+                           (setq name l)))
+                       (forward-line 1))
+                     (equal name "cis-lmu"))))))))
+
 (defun night/emacs-socket-dir ()
   "Directory for the Emacs server socket.
 
@@ -165,55 +216,6 @@ override and hand `server-socket-dir' an empty path."
 (defun night/c0-p ()
   (interactive)
   (cl-equalp (system-name) "Taher"))
-
-(defvar night/cis-p--cache 'unset
-  "Memo for `night/cis-p'; it is consulted at startup, so do not re-probe.")
-
-(defun night/cis-p ()
-  "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
-
-The test reads ~/.night-site, whose first non-comment line names the site
-profile this home belongs to; we are on CIS when that name is cis-lmu.  The
-file is written by setup/bootstrap-sudoless, and since the home is the
-cluster shared mount, one file covers every host in it.
-
-The file is named for the general case rather than for CIS specifically: the
-bootstrap treats a site as a variable, of which CIS is one value.
-
-This is deliberately an *explicit* declaration rather than an inference.
-Everything inferrable was tried and each was wrong in a different way:
-
-- `file-directory-p' on the share only asks whether it happens to be
-  *mounted*; any machine that mounts it would match.
-- $HOME lying under a given path is a naming convention, not an identity.
-  Nothing stops another site using the same one.
-- The DNS search domain in /etc/resolv.conf is worse than it looks: it
-  reflects network *connectivity*, not identity, so the laptop matched
-  whenever it was on the LMU network.
-- Hostnames would need a `hostname -f' subprocess, since `system-name' is the
-  short label rather than the FQDN -- and would need updating per machine.
-
-The result is memoised, so the cost is a single stat per Emacs session; that
-makes any argument about avoiding the filesystem here irrelevant."
-  (interactive)
-  (if (not (eq night/cis-p--cache 'unset))
-      night/cis-p--cache
-    (setq night/cis-p--cache
-          (let ((f (expand-file-name "~/.night-site")))
-            (and (file-readable-p f)
-                 (with-temp-buffer
-                   (insert-file-contents f)
-                   (goto-char (point-min))
-                   ;; first line that is neither blank nor a comment
-                   (let (name)
-                     (while (and (not name) (not (eobp)))
-                       (let ((l (string-trim (buffer-substring
-                                              (line-beginning-position)
-                                              (line-end-position)))))
-                         (unless (or (string-empty-p l) (string-prefix-p "#" l))
-                           (setq name l)))
-                       (forward-line 1))
-                     (equal name "cis-lmu"))))))))
 
 (defun night/system-name ()
   (cond
