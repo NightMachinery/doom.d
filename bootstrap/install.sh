@@ -30,6 +30,49 @@ die()  { printf ' err %s\n' "$*" >&2 ; exit 1 ; }
 command -v emacs >/dev/null || die "no emacs on PATH; install one first"
 command -v git   >/dev/null || die "git is required"
 
+#: Make a `doom sync --rebuild' safe to run.
+#:
+#: A rebuild deletes every build directory. Two things make that fail on an
+#: NFS home, and both leave the tree half-built rather than erroring cleanly:
+#:
+#:   1. A running Emacs keeps a loaded dynamic module (emacs-zmq.so) mmap'd.
+#:      Deleting an open file over NFS silly-renames it to .nfsXXXX instead of
+#:      unlinking, so the parent directory will not rmdir.
+#:   2. That .so is a *real file* in a directory straight otherwise fills with
+#:      symlinks, and we are the ones who put it there. It is re-fetched after
+#:      the rebuild anyway, so it must not be present during one.
+#:
+#: @warn Match daemons by exact process name. `pkill -f emacs' also matches
+#: the shell running this script, which has "emacs" in its own command line --
+#: that mistake killed the invoking shell twice while writing this.
+night_prepare_rebuild() {
+    local_dir="${DOOMLOCALDIR:-${DOOM_EMACS_DIR}/.local}"
+
+    for p in $(pgrep -x emacs 2>/dev/null || true) ; do
+        [ "${p}" = "$$" ] && continue
+        if grep -qa "straight/build" "/proc/${p}/maps" 2>/dev/null ; then
+            log "stopping emacs pid ${p}: it has a build directory mapped"
+            kill -TERM "${p}" 2>/dev/null || true
+        fi
+    done
+
+    #: Give them a moment to exit and release the mappings.
+    n=0
+    while [ "${n}" -lt 10 ] ; do
+        pgrep -x emacs >/dev/null 2>&1 || break
+        still=0
+        for p in $(pgrep -x emacs 2>/dev/null || true) ; do
+            grep -qa "straight/build" "/proc/${p}/maps" 2>/dev/null && still=1
+        done
+        [ "${still}" = 0 ] && break
+        sleep 1
+        n=$((n + 1))
+    done
+
+    find "${local_dir}/straight" -maxdepth 3 \
+         \( -name 'emacs-zmq*.so' -o -name '.nfs*' \) -delete 2>/dev/null || true
+}
+
 #: Nothing here may block on stdin: this runs unattended.
 export GIT_TERMINAL_PROMPT=0
 
@@ -112,9 +155,22 @@ log "doom sync"
 #: --- pin package versions (reproducibility layer) ---
 #: See README.org: packages.el `:pin' is for *constraints*; this lockfile is
 #: for *reproducibility*, and is generated, never hand-edited.
+#: @warn Opt-*in*, not opt-out. Thawing implies `doom sync --rebuild', and a
+#: rebuild deletes and recreates every build directory. On an NFS home that
+#: is genuinely destructive: deleting a file another process still holds open
+#: leaves a silly-rename .nfsXXXX entry, `delete-directory' then fails with
+#: "Directory not empty", and the package is left with neither its old build
+#: nor a new one. That is exactly how this tree lost straight/repos/zmq --
+#: after which `doom sync' reported "jupyter is up-to-date" from its build
+#: cache while Doom failed to boot on (file-missing ... zmq).
+#:
+#: The benefit here is also smaller than it looks: measured on beta, 236 of
+#: 236 comparable packages already matched the lockfile exactly, because Doom
+#: pins its own package set. So the default is off, and you turn it on
+#: deliberately, on a host you can afford to have offline.
 lockfile="${DOOMDIR}/bootstrap/straight-versions.el"
-if [ "${NIGHT_DOOM_NO_LOCKFILE:-}" = y ] ; then
-    log "skipping the version lockfile (NIGHT_DOOM_NO_LOCKFILE=y)"
+if [ "${NIGHT_DOOM_LOCKFILE:-n}" != y ] ; then
+    log "not thawing the version lockfile (set NIGHT_DOOM_LOCKFILE=y to opt in)"
 elif [ -f "${lockfile}" ] && [ -n "${DOOMLOCALDIR:-}" ] ; then
     versions_dir="${DOOMLOCALDIR}/straight/versions"
     mkdir -p "${versions_dir}"
@@ -127,6 +183,7 @@ elif [ -f "${lockfile}" ] && [ -n "${DOOMLOCALDIR:-}" ] ; then
         >/dev/null 2>&1 || warn "straight-thaw-versions unavailable in batch; run it from inside Emacs"
     #: Byte-code must match the sources we just checked out, or you get stale
     #: .elc referencing files that no longer exist (file-missing ...el.gz).
+    night_prepare_rebuild
     log "rebuilding against the pinned sources"
     "${DOOM_EMACS_DIR}/bin/doom" sync --rebuild < /dev/null || warn "rebuild reported an error"
 fi
@@ -194,6 +251,19 @@ else
     verify_rc=1
 fi
 emacsclient -s night-verify --eval '(kill-emacs)' >/dev/null 2>&1 || true
+
+#: A verify daemon that outlives this script is not harmless: it keeps the
+#: build tree mapped and will block the next rebuild (see
+#: night_prepare_rebuild). kill-emacs does not always take -- a daemon that
+#: failed to boot cleanly may not be serving the socket at all -- so make
+#: sure. The pattern cannot match this script: our own command line is
+#: install.sh, not "daemon=night-verify".
+sleep 1
+for p in $(pgrep -f 'daemon=night-verify' 2>/dev/null || true) ; do
+    [ "${p}" = "$$" ] && continue
+    warn "verify daemon ${p} outlived kill-emacs; terminating it"
+    kill -TERM "${p}" 2>/dev/null || true
+done
 
 #: Ignore the unavoidable Gtk/X11 noise; anything else is a real problem.
 if grep -qaE "error occurred while booting|\(y or n\)|went wrong|abnormally|Symbol.s (value|function)" "${verify_log}" ; then
