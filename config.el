@@ -34,6 +34,13 @@
 (require 'f)
 (require 'server)
 
+(defun night/getenv-nonempty (name)
+  "Value of environment variable NAME, or nil when unset *or empty*.
+`getenv' returns \"\" for an exported-but-empty variable, which is non-nil and
+therefore silently wins an `or' chain."
+  (let ((v (getenv name)))
+    (and v (not (string-empty-p v)) v)))
+
 (defun night/emacs-socket-dir ()
   "Directory for the Emacs server socket.
 
@@ -72,14 +79,18 @@ costs nothing at startup.
 The hostname is folded into the directory name as belt-and-braces, so even if
 this is somehow pointed back at a share, two hosts still cannot collide.
 
-$NIGHT_EMACS_SOCKET_DIR overrides everything."
-  (or (getenv "NIGHT_EMACS_SOCKET_DIR")
+$NIGHT_EMACS_SOCKET_DIR overrides everything.
+
+@warn Use `night/getenv-nonempty', not `getenv': an exported-but-empty
+variable returns \"\", which is non-nil, so a plain `or' would accept it as an
+override and hand `server-socket-dir' an empty path."
+  (or (night/getenv-nonempty "NIGHT_EMACS_SOCKET_DIR")
       ;; /mounts/Users is the CIS LMU shared-home marker; the same test is used
       ;; by setup/bootstrap-sudoless/profile.sh to pick the cis-lmu profile.
       (when (file-directory-p "/mounts/Users")
         (let* ((user (user-login-name))
                (lingering (file-exists-p (concat "/var/lib/systemd/linger/" user)))
-               (runtime (getenv "XDG_RUNTIME_DIR"))
+               (runtime (night/getenv-nonempty "XDG_RUNTIME_DIR"))
                (base (if (and lingering runtime (file-directory-p runtime))
                          runtime
                        (format "/var/tmp/%s" user))))
