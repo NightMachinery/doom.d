@@ -245,12 +245,29 @@ verify_log="$(mktemp)"
 emacs --daemon=night-verify > "${verify_log}" 2>&1
 verify_rc=$?
 
-if emacsclient -s night-verify --eval '(+ 1 1)' >/dev/null 2>&1 ; then
+#: @warn `emacsclient -s NAME' resolves NAME inside emacsclient's *default*
+#: socket directory, but this config moves `server-socket-dir' (config.el
+#: puts per-host sockets on local disk, because $HOME is shared). So the bare
+#: name finds nothing, the daemon looks dead, and a perfectly clean start is
+#: reported as a failure -- which is exactly what happened here. Locate the
+#: socket by path instead, and only then talk to it.
+verify_sock=''
+for d in "${XDG_RUNTIME_DIR:-}/emacs" "/var/tmp/$(id -un)/emacs" \
+         "${NIGHT_LOCAL_CACHE:-}/emacs" "${TMPDIR:-/tmp}/emacs$(id -u)" \
+         "/tmp/emacs$(id -u)" ; do
+    [ -n "${d}" ] && [ -S "${d}/night-verify" ] && { verify_sock="${d}/night-verify" ; break ; }
+done
+
+if [ -n "${verify_sock}" ] && emacsclient -s "${verify_sock}" --eval '(+ 1 1)' >/dev/null 2>&1 ; then
+    log "daemon answers on ${verify_sock}"
+elif emacsclient -s night-verify --eval '(+ 1 1)' >/dev/null 2>&1 ; then
+    verify_sock=night-verify
     log "daemon answers"
 else
+    warn "could not reach the verify daemon on any known socket path"
     verify_rc=1
 fi
-emacsclient -s night-verify --eval '(kill-emacs)' >/dev/null 2>&1 || true
+emacsclient -s "${verify_sock:-night-verify}" --eval '(kill-emacs)' >/dev/null 2>&1 || true
 
 #: A verify daemon that outlives this script is not harmless: it keeps the
 #: build tree mapped and will block the next rebuild (see
