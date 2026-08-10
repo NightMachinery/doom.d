@@ -172,35 +172,30 @@ override and hand `server-socket-dir' an empty path."
 (defun night/cis-p ()
   "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
 
-Two independent signals, cheapest first:
+The test is whether $HOME lies under the cluster's shared NFS home.  That is a
+plain string comparison on a value Emacs already holds, so it costs no
+filesystem access at all -- which matters, as this runs at startup.
 
-1. $HOME lies under /mounts/Users/ -- the cluster's shared NFS home.  This is
-   a plain string comparison on a value Emacs already holds, so it costs no
-   filesystem access at all, which matters at startup.
-2. failing that, the DNS search domain cis.uni-muenchen.de in
-   /etc/resolv.conf.  This covers a CIS machine on which our home happens not
-   to be the shared one.
+Three signals were rejected:
 
-Deliberately *not* (file-directory-p "/mounts/Users"), which was the first
-version: that only asks whether the share happens to be mounted, so any
-machine mounting it -- without being one of ours -- would match.  Asking
-whether *our home* is on it is the question we actually mean.
+- `file-directory-p' on the mount point (the first version) only asks whether
+  the share happens to be *mounted*, so any machine mounting it would match.
+- The DNS search domain in /etc/resolv.conf looks precise but is *wrong*: it
+  reflects network connectivity, not identity.  The laptop carries
+  \"search cis.uni-muenchen.de\" whenever it is on the LMU network, so it
+  matched too.
+- Hostnames would need a `hostname -f' subprocess, since `system-name' is the
+  short label rather than the FQDN.
 
-Hostnames are avoided on purpose: `system-name' here is the short "beta",
-not the FQDN, so matching the domain would need a `hostname -f' subprocess."
+Asking whether *our home is the shared home* is the question we actually mean:
+every CIS-specific behaviour keyed off this (socket directory, shared env,
+per-host caches) exists precisely because the home is shared.  A CIS machine
+without it should not take those branches anyway."
   (interactive)
   (if (not (eq night/cis-p--cache 'unset))
       night/cis-p--cache
     (setq night/cis-p--cache
-          (or (string-prefix-p "/mounts/Users/" (expand-file-name "~"))
-              (and (file-readable-p "/etc/resolv.conf")
-                   (with-temp-buffer
-                     (insert-file-contents "/etc/resolv.conf")
-                     (goto-char (point-min))
-                     (and (re-search-forward
-                           "^[ \t]*\\(search\\|domain\\)[ \t].*\\bcis\\.\\(lmu\\|uni-muenchen\\)\\.de\\b"
-                           nil t)
-                          t)))))))
+          (string-prefix-p "/mounts/Users/" (expand-file-name "~")))))
 
 (defun night/system-name ()
   (cond
