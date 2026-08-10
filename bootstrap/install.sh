@@ -135,16 +135,74 @@ fi
     printf '%s' "$(git -C "${DOOM_EMACS_DIR}" rev-parse HEAD)" > "${DOOMLOCALDIR}/.night-doom-ref"
 
 ##
+#: --- emacs-zmq native module ---
+#: jupyter.el pulls in emacs-zmq, which needs a dynamic module. Without it,
+#: *every interactive startup* stops on
+#:   ZMQ module not found. Build it? (y or n)
+#: and a daemon, having no stdin, then fails the build outright.
+#:
+#: Upstream publishes prebuilt modules, but its auto-download cannot find them
+#: for a conda-built Emacs: it matches release assets with `string-prefix-p'
+#: against `system-configuration', which is x86_64-conda-linux-gnu, while the
+#: published asset is emacs-zmq-x86_64-linux-gnu.tar.gz. Nothing matches, so it
+#: silently falls through to compiling -- which then needs autotools and
+#: libzmq that a sudo-less host does not have.
+#:
+#: The binary is a plain x86_64 glibc module and loads fine; only the triplet
+#: in the filename differs. So fetch it directly.
+zmq_build="$(find "${DOOMLOCALDIR:-${DOOM_EMACS_DIR}/.local}/straight" \
+                  -maxdepth 2 -type d -name zmq 2>/dev/null | head -1)"
+if [ -n "${zmq_build}" ] && [ ! -f "${zmq_build}/emacs-zmq.so" ] ; then
+    log "fetching the prebuilt emacs-zmq module"
+    zmq_ver="$(emacs --batch --eval \
+        "(progn (add-to-list 'load-path \"${zmq_build}\") (require 'zmq nil t) (princ (or (bound-and-true-p zmq-emacs-version) \"v1.0.2\")))" \
+        2>/dev/null || echo v1.0.2)"
+    : "${zmq_ver:=v1.0.2}"
+    zmq_tmp="$(mktemp -d)"
+    zmq_url="https://github.com/nnicandro/emacs-zmq/releases/download/${zmq_ver}/emacs-zmq-x86_64-linux-gnu.tar.gz"
+    if curl -fsSL -o "${zmq_tmp}/m.tar.gz" "${zmq_url}" &&
+       tar -xzf "${zmq_tmp}/m.tar.gz" -C "${zmq_tmp}" ; then
+        zmq_so="$(find "${zmq_tmp}" -name 'emacs-zmq*.so' | head -1)"
+        if [ -n "${zmq_so}" ] ; then
+            cp "${zmq_so}" "${zmq_build}/emacs-zmq.so"
+            log "installed ${zmq_build}/emacs-zmq.so (${zmq_ver})"
+        else
+            warn "no .so inside the emacs-zmq tarball"
+        fi
+    else
+        warn "could not fetch emacs-zmq ${zmq_ver}; startup will prompt to build it"
+    fi
+    rm -rf "${zmq_tmp}"
+fi
+
+##
 #: --- verify ---
 #: @warn A batch load of early-init.el is NOT sufficient: it succeeds even when
 #: the generated profile init is missing, because only the interactive path
 #: loads it. Start a real daemon -- that is the failure users actually hit.
+#: @warn "the daemon answers" is NOT proof of a clean start: Doom catches
+#: config errors, reports them as a warning, and carries on serving. So scan
+#: the startup output for errors and for any interactive prompt too.
 log "verifying with a real daemon start"
-if emacs --daemon=night-verify >/dev/null 2>&1 &&
-   emacsclient -s night-verify --eval '(+ 1 1)' >/dev/null 2>&1 ; then
-    log "OK: doom daemon starts and answers"
-    emacsclient -s night-verify --eval '(kill-emacs)' >/dev/null 2>&1 || true
+verify_log="$(mktemp)"
+emacs --daemon=night-verify > "${verify_log}" 2>&1
+verify_rc=$?
+
+if emacsclient -s night-verify --eval '(+ 1 1)' >/dev/null 2>&1 ; then
+    log "daemon answers"
 else
-    emacsclient -s night-verify --eval '(kill-emacs)' >/dev/null 2>&1 || true
-    die "daemon did not start; debug with: emacs --daemon --debug-init"
+    verify_rc=1
 fi
+emacsclient -s night-verify --eval '(kill-emacs)' >/dev/null 2>&1 || true
+
+#: Ignore the unavoidable Gtk/X11 noise; anything else is a real problem.
+if grep -qaE "error occurred while booting|\(y or n\)|went wrong|abnormally|Symbol.s (value|function)" "${verify_log}" ; then
+    warn "startup produced errors or an interactive prompt:"
+    grep -aE "error occurred while booting|\(y or n\)|went wrong|abnormally|Symbol.s (value|function)" \
+        "${verify_log}" | head -5 >&2
+    verify_rc=1
+fi
+
+rm -f "${verify_log}"
+[ "${verify_rc}" -eq 0 ] || die "doom did not start cleanly; debug with: emacs --daemon --debug-init"
+log "OK: doom starts cleanly"

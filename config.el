@@ -166,6 +166,15 @@ override and hand `server-socket-dir' an empty path."
   (interactive)
   (cl-equalp (system-name) "Taher"))
 
+(defun night/cis-p ()
+  "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
+
+Detected by the shared NFS home mount rather than by listing hostnames, so it
+covers every machine in the cluster without maintenance. The same marker is
+used by setup/bootstrap-sudoless/profile.sh and by `night/emacs-socket-dir'."
+  (interactive)
+  (file-directory-p "/mounts/Users"))
+
 (defun night/system-name ()
   (cond
    ;; ((night/local-p) "Local")
@@ -322,6 +331,9 @@ and simply rebinds. If another process still occupies the path,
  ((night/pino-p)
   (setq night/current-theme-light 'modus-operandi-deuteranopia
         night/current-theme-dark 'modus-vivendi-deuteranopia))
+ ((night/cis-p)
+  (setq night/current-theme-light 'modus-operandi-deuteranopia
+        night/current-theme-dark 'modus-vivendi-deuteranopia))
  ((night/t31-p)
   (setq night/current-theme-light 'modus-operandi-tinted
         night/current-theme-dark 'modus-vivendi-tinted))
@@ -360,18 +372,32 @@ and simply rebinds. If another process still occupies the path,
         ;; 'doom-one-light
         ))
  (t
-  (setq night/current-theme-light 'modus-operandi-tritanopia
-        night/current-theme-dark
-        'modus-vivendi-deuteranopia
-        ;; 'modus-vivendi-tritanopia
-        ;; 'kaolin-light
-        )
+  ;; Terminal fallback (`display-graphic-p' is nil -- note this is also the
+  ;; case inside a *daemon*, which has no frame yet at startup).
+  ;;
+  ;; This used to select `modus-operandi-tritanopia'. Two problems: tritanopia
+  ;; is the odd one out among the palettes chosen elsewhere here (deuteranopia
+  ;; is used on pino and now CIS), and -- more importantly -- `doom-theme' is
+  ;; set from `night/current-theme-light' unconditionally below, so a terminal
+  ;; with a dark background got a *light* theme and looked broken.
+  ;;
+  ;; Set NIGHT_EMACS_THEME=dark in the environment to get the dark variant
+  ;; instead; that is the knob to reach for over an ssh session whose terminal
+  ;; is dark.
+  (setq night/current-theme-light 'modus-operandi-deuteranopia
+        night/current-theme-dark 'modus-vivendi-deuteranopia)
 
   ;; (setq night/current-theme-light 'solarized-light)
   ;; (setq night/current-theme-light 'solarized-selenized-light) ;; @good
   ;; (setq night/current-theme-light 'doom-solarized-light) ; subtly different
   ))
-(setq doom-theme night/current-theme-light)
+(setq doom-theme
+      ;; Default to the light variant, as before; NIGHT_EMACS_THEME=dark picks
+      ;; the dark one. Useful because `display-graphic-p' cannot tell us the
+      ;; *background* of a terminal, only whether we are in a GUI.
+      (if (equal (night/getenv-nonempty "NIGHT_EMACS_THEME") "dark")
+          night/current-theme-dark
+        night/current-theme-light))
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
