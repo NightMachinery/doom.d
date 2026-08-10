@@ -1,0 +1,144 @@
+#+TITLE: doom.d/bootstrap
+#+PROPERTY: header-args :eval never
+
+Installing this Doom config from nothing, and the reasoning behind each step.
+
+This lives in the config repo rather than in any one bootstrap repo because
+several of them install this config; they only have to provide a working
+=emacs= on =PATH= and then call [[file:install.sh][install.sh]].
+
+* Run it
+#+begin_src sh :eval never
+sh ~/doom.d/bootstrap/install.sh
+#+end_src
+
+Honours =DOOMDIR=, =DOOMLOCALDIR=, =NIGHT_DOOM_REF=, and
+=NIGHT_DOOM_NO_LOCKFILE=y=.
+
+* Version policy: two layers, so intent survives
+
+A pin can mean two unrelated things, and conflating them is what makes a
+pinned config unmaintainable six months later:
+
+- *Reproducibility* -- "every machine should get the same version." True of
+  *all* packages, uninteresting, and should be machine-generated.
+- *Constraint* -- "this version specifically, because newer breaks X." True of
+  *few* packages, interesting, and needs a written reason.
+
+So:
+
+** Layer 1: the lockfile (reproducibility)
+
+[[file:straight-versions.el][straight-versions.el]] --- generated, never hand-edited, covers every package.
+
+- *One writer.* Regenerate on the designated version-bumping host (the
+  laptop) with =M-x straight-freeze-versions=, then commit. Every other
+  machine consumes it read-only. Because it is a file in git rather than
+  shared mutable state, two machines regenerating produces an ordinary git
+  conflict --- visible and resolvable --- not silent drift.
+- Upgrading is therefore: freeze on the laptop, commit, read the diff, and let
+  the others pull.
+
+** Layer 2: =:pin= in =packages.el= (constraints)
+
+Few, hand-written, and *each one must carry a comment saying what breaks and
+what the real fix would be*:
+
+#+begin_src elisp :eval never
+;; CONSTRAINT: >=2.0 drops the marginalia-annotator-registry alias.
+;; Real fix: use marginalia-annotators, then drop this pin.
+(package! marginalia :pin "3c7fc35...")
+#+end_src
+
+Then "which pins can I upgrade safely?" answers itself structurally: anything
+with a =:pin= here is load-bearing and says why; everything else is incidental
+and lives in the lockfile.
+
+** Most constraint pins are deferred config bugs
+
+Worth internalising, because it is the common case. =marginalia= looked like it
+needed a pin --- current versions fail with =void-variable
+marginalia-annotator-registry=. But that variable has been an *obsolete alias*
+for =marginalia-annotators= since marginalia 2.0; upstream renamed it years ago
+and finally dropped the alias. Pinning would have frozen the config on an old
+marginalia forever to preserve a name upstream deliberately retired.
+
+The fix was one identifier in =autoload/night-marginalia.el=, and it works on
+both old and new versions. *Try fixing the config before adding a pin.*
+
+** Why there is no automatic pin expiry
+
+Tempting, and wrong: "does the daemon still boot" is far too coarse a signal.
+A package can load perfectly and still have changed defaults, keybindings or
+annotation behaviour. An automated unpinner would silently reintroduce exactly
+what the pin recorded, and you would find out days later. Remove pins
+deliberately, when you can notice regressions.
+
+* Ordering: why thaw comes after sync
+
+A natural question is whether =straight-thaw-versions= can run *first*, to
+avoid syncing twice. It cannot, on a fresh install: thaw checks out revisions
+in =straight/repos/=, and those directories do not exist until =doom sync= has
+cloned them. So the order is necessarily
+
+1. =doom sync= --- clone and build,
+2. thaw --- check out the recorded revisions,
+3. =doom sync --rebuild= --- rebuild so byte-code matches the new sources.
+
+Step 3 is not optional. Skipping it leaves =.elc= files referencing sources
+that no longer exist, which surfaces as e.g.
+=file-missing .../compat/compat-31.el.gz= at startup, with the telltale
+warning =Source file ... newer than byte-compiled file; using older file=.
+
+*This is a one-time cost, not a per-host one*, whenever =DOOMLOCALDIR= is on
+shared storage: all machines share one package tree, so the double build
+happens once for the whole fleet.
+
+For *updates* on an existing tree the repos already exist, so thaw then a plain
+=doom sync= is enough; =--rebuild= is only needed when the build directory has
+become inconsistent with the sources.
+
+* Things that cost real debugging time
+
+- *The package tree is only valid for the doom revision that built it.*
+  Changing the pin after a sync makes =doom sync= try to move already-built
+  repos, and it stops on straight's interactive "How to proceed? (1,2,3,4,5)"
+  prompt. With stdin closed that aborts *before* writing the generated profile
+  init, and the next daemon start dies with =Symbol's value as variable is
+  void: doom--profile-default=. =install.sh= stamps the built revision and
+  rebuilds the tree when it moves.
+
+- *Verify with a daemon start, never a batch load.* =emacs --batch -l
+  early-init.el= succeeds even when the generated profile init is missing,
+  because only the interactive path loads it. The batch check passed while
+  =emacsclient= was completely broken.
+
+- *=DOOMDIR= must be in the environment.* =night-loader.el= does
+  =(file-exists-p (getenv "DOOMDIR"))=, so an unset value fails with
+  =wrong-type-argument stringp nil=. =doom env= would normally provide it, but
+  we pass =--no-env= on shared homes (see below), so export it from your shell.
+
+- *=doom env= is the wrong tool on a shared home.* It scrapes one machine's
+  environment into a file that all machines then load. Its actual purpose is
+  GUI Emacs launched outside a shell --- essentially a macOS problem. When
+  Emacs is started from a shell it already inherits the environment. Prefer a
+  shared *script* that derives per-host values to a per-host generated file.
+
+- *Nothing in the install path may read stdin.* =doom install= prompts about
+  git hooks; =emacs-zmq= asks to build its module. Both die with =end-of-file=
+  under a daemon.
+
+- *Beware =pkill -f <pattern>=* when the pattern also matches your own command
+  line: =pkill -f "emacs --daemon"= kills the very shell about to start it.
+
+* The server socket on shared homes
+
+=config.el= computes =server-socket-dir= via =night/emacs-socket-dir=. On a
+machine whose =$HOME= is shared, =~/tmp/.emacs-servers= is wrong twice over:
+a unix socket is a kernel-local endpoint (so it cannot reach another host --
+=AF_UNIX= has no network transport), and =server-name= defaults to "server", so
+all hosts would use one path and =server-start= would delete each other's
+sockets. It therefore uses host-local storage, preferring =$XDG_RUNTIME_DIR=
+only when lingering is enabled --- logind deletes that directory when your last
+session ends, which would orphan a still-running daemon --- and =/var/tmp=
+otherwise.
