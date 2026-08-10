@@ -49,21 +49,43 @@ network filesystem it is actively wrong, for two reasons:
    would use the identical path, and `server-start' deletes what it judges to
    be a stale socket -- meaning starting Emacs on one host clobbers another's.
 
-So on such hosts, put the socket on host-local storage.  $XDG_RUNTIME_DIR
-\(/run/user/UID) is the correct place when it exists; /var/tmp is the fallback
-\(on the CIS machines /tmp is wiped at boot, /var/tmp is not).  The hostname is
-folded into the directory name as belt-and-braces, so even if this is somehow
-pointed back at a share, two hosts still cannot collide.
+So on such hosts, put the socket on host-local storage.  Which host-local
+directory is not obvious, and getting it wrong is worse than it looks:
+
+- $XDG_RUNTIME_DIR (/run/user/UID) is the semantically correct place, but it
+  is a tmpfs that systemd-logind *deletes when your last session ends*, not
+  merely at reboot.  Ubuntu leaves KillUserProcesses=no, so a daemon started
+  with nohup keeps running after logout while its socket directory is removed
+  underneath it -- an orphaned, unreachable Emacs still holding its memory.
+  That only stops being true if lingering is enabled for the user
+  \(`loginctl enable-linger'), which keeps /run/user/UID alive.
+- /var/tmp survives both logout and reboot on these hosts (their tmpfiles
+  config reaps only systemd-private dirs; /tmp, by contrast, is wiped at
+  boot).  A socket file left over from a previous boot is harmless:
+  `server-start' detects a stale socket and replaces it.
+
+So: use $XDG_RUNTIME_DIR only when lingering is actually enabled, and
+/var/tmp otherwise.  Lingering is detected by testing for the marker file
+systemd creates, which is a plain `file-exists-p' -- no subprocess, so this
+costs nothing at startup.
+
+The hostname is folded into the directory name as belt-and-braces, so even if
+this is somehow pointed back at a share, two hosts still cannot collide.
 
 $NIGHT_EMACS_SOCKET_DIR overrides everything."
   (or (getenv "NIGHT_EMACS_SOCKET_DIR")
       ;; /mounts/Users is the CIS LMU shared-home marker; the same test is used
       ;; by setup/bootstrap-sudoless/profile.sh to pick the cis-lmu profile.
       (when (file-directory-p "/mounts/Users")
-        (expand-file-name
-         (format "emacs-servers-%s" (or (system-name) "unknown"))
-         (or (getenv "XDG_RUNTIME_DIR")
-             (format "/var/tmp/%s" (user-login-name)))))
+        (let* ((user (user-login-name))
+               (lingering (file-exists-p (concat "/var/lib/systemd/linger/" user)))
+               (runtime (getenv "XDG_RUNTIME_DIR"))
+               (base (if (and lingering runtime (file-directory-p runtime))
+                         runtime
+                       (format "/var/tmp/%s" user))))
+          (expand-file-name
+           (format "emacs-servers-%s" (or (system-name) "unknown"))
+           base)))
       (concat (getenv "HOME") "/tmp/.emacs-servers")))
 
 (setq server-socket-dir (night/emacs-socket-dir))
