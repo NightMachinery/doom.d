@@ -166,14 +166,41 @@ override and hand `server-socket-dir' an empty path."
   (interactive)
   (cl-equalp (system-name) "Taher"))
 
+(defvar night/cis-p--cache 'unset
+  "Memo for `night/cis-p'; it is consulted at startup, so do not re-probe.")
+
 (defun night/cis-p ()
   "Non-nil on the LMU CIS cluster (beta, rho*, zeta*, epsilon*, ...).
 
-Detected by the shared NFS home mount rather than by listing hostnames, so it
-covers every machine in the cluster without maintenance. The same marker is
-used by setup/bootstrap-sudoless/profile.sh and by `night/emacs-socket-dir'."
+Two independent signals, cheapest first:
+
+1. $HOME lies under /mounts/Users/ -- the cluster's shared NFS home.  This is
+   a plain string comparison on a value Emacs already holds, so it costs no
+   filesystem access at all, which matters at startup.
+2. failing that, the DNS search domain cis.uni-muenchen.de in
+   /etc/resolv.conf.  This covers a CIS machine on which our home happens not
+   to be the shared one.
+
+Deliberately *not* (file-directory-p "/mounts/Users"), which was the first
+version: that only asks whether the share happens to be mounted, so any
+machine mounting it -- without being one of ours -- would match.  Asking
+whether *our home* is on it is the question we actually mean.
+
+Hostnames are avoided on purpose: `system-name' here is the short "beta",
+not the FQDN, so matching the domain would need a `hostname -f' subprocess."
   (interactive)
-  (file-directory-p "/mounts/Users"))
+  (if (not (eq night/cis-p--cache 'unset))
+      night/cis-p--cache
+    (setq night/cis-p--cache
+          (or (string-prefix-p "/mounts/Users/" (expand-file-name "~"))
+              (and (file-readable-p "/etc/resolv.conf")
+                   (with-temp-buffer
+                     (insert-file-contents "/etc/resolv.conf")
+                     (goto-char (point-min))
+                     (and (re-search-forward
+                           "^[ \t]*\\(search\\|domain\\)[ \t].*\\bcis\\.\\(lmu\\|uni-muenchen\\)\\.de\\b"
+                           nil t)
+                          t)))))))
 
 (defun night/system-name ()
   (cond
@@ -391,13 +418,26 @@ and simply rebinds. If another process still occupies the path,
   ;; (setq night/current-theme-light 'solarized-selenized-light) ;; @good
   ;; (setq night/current-theme-light 'doom-solarized-light) ; subtly different
   ))
+(defvar night/theme-dark-p
+  (equal (night/getenv-nonempty "NIGHT_EMACS_THEME") "dark")
+  "Whether to use the dark variant.  Set NIGHT_EMACS_THEME=dark to enable.")
+
 (setq doom-theme
-      ;; Default to the light variant, as before; NIGHT_EMACS_THEME=dark picks
-      ;; the dark one. Useful because `display-graphic-p' cannot tell us the
-      ;; *background* of a terminal, only whether we are in a GUI.
-      (if (equal (night/getenv-nonempty "NIGHT_EMACS_THEME") "dark")
-          night/current-theme-dark
-        night/current-theme-light))
+      (if night/theme-dark-p night/current-theme-dark night/current-theme-light))
+
+;; @warn Emacs cannot ask a terminal for its background colour.  The only
+;; signal is $COLORFGBG, which kitty and iTerm2 do not set; with it unset Emacs
+;; *guesses*, and it guesses dark.  So on a light terminal every face is
+;; computed for the wrong polarity and the result looks washed out and
+;; low-contrast -- regardless of which theme was selected.  That, not the theme
+;; choice, is what made the CIS servers look broken.
+;;
+;; So state the polarity explicitly, keeping it consistent with the variant we
+;; just chose.  `frame-background-mode' is the documented override and applies
+;; to terminal and GUI frames alike; existing frames need
+;; `frame-set-background-mode' to recompute.
+(setq frame-background-mode (if night/theme-dark-p 'dark 'light))
+(mapc #'frame-set-background-mode (frame-list))
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
