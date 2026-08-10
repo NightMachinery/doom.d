@@ -34,7 +34,39 @@
 (require 'f)
 (require 'server)
 
-(setq server-socket-dir (concat (getenv "HOME") "/tmp/.emacs-servers"))
+(defun night/emacs-socket-dir ()
+  "Directory for the Emacs server socket.
+
+`~/tmp' is fine when $HOME is local, but on hosts whose home is a shared
+network filesystem it is actively wrong, for two reasons:
+
+1. A unix domain socket is a *kernel-local* IPC endpoint.  The file on the
+   share is only a rendezvous name; the socket itself lives in the kernel of
+   the host that bound it.  A client on another host connecting to it gets
+   ECONNREFUSED -- AF_UNIX has no network transport.  So a shared socket dir
+   cannot give you one Emacs across hosts, by design.
+2. Worse, it collides.  `server-name' defaults to \"server\", so every host
+   would use the identical path, and `server-start' deletes what it judges to
+   be a stale socket -- meaning starting Emacs on one host clobbers another's.
+
+So on such hosts, put the socket on host-local storage.  $XDG_RUNTIME_DIR
+\(/run/user/UID) is the correct place when it exists; /var/tmp is the fallback
+\(on the CIS machines /tmp is wiped at boot, /var/tmp is not).  The hostname is
+folded into the directory name as belt-and-braces, so even if this is somehow
+pointed back at a share, two hosts still cannot collide.
+
+$NIGHT_EMACS_SOCKET_DIR overrides everything."
+  (or (getenv "NIGHT_EMACS_SOCKET_DIR")
+      ;; /mounts/Users is the CIS LMU shared-home marker; the same test is used
+      ;; by setup/bootstrap-sudoless/profile.sh to pick the cis-lmu profile.
+      (when (file-directory-p "/mounts/Users")
+        (expand-file-name
+         (format "emacs-servers-%s" (or (system-name) "unknown"))
+         (or (getenv "XDG_RUNTIME_DIR")
+             (format "/var/tmp/%s" (user-login-name)))))
+      (concat (getenv "HOME") "/tmp/.emacs-servers")))
+
+(setq server-socket-dir (night/emacs-socket-dir))
 ;; This directory is created by [help:server-ensure-safe-dir] automatically.
 ;; see also `server-name`
 
