@@ -15,6 +15,20 @@
   :type '(alist :key-type string :value-type string)
   :group 'night)
 
+(defcustom night/sentence-case-abbreviations
+  '("e.g." "i.e." "etc." "cf." "vs." "al." "approx." "fig." "no." "vol."
+    "eq." "ref." "resp." "viz." "ca." "mr." "mrs." "ms." "dr." "prof."
+    "jr." "sr." "inc." "est." "st." "ed." "eds." "pp." "ch." "sec."
+    "dept." "univ." "co." "ltd." "min." "max." "avg." "incl." "excl.")
+  "Lowercase abbreviations whose trailing dot does not end a sentence.
+
+The tradeoff is deliberate.  A sentence that genuinely ends in one of
+these leaves the next word uncapitalized, which is cosmetic; the
+alternative is capitalizing the word after every `e.g.', which is
+wrong far more often."
+  :type '(repeat string)
+  :group 'night)
+
 (defcustom night/sentence-case-replacements
   '(("sth" . "something")
     ("smth" . "something")
@@ -129,13 +143,21 @@ This is what keeps `iPhone', `eBay' and `ID' intact."
   "Return TOKEN without its trailing quotes and brackets."
   (replace-regexp-in-string night/h-sentence-case-closing-regexp "" token))
 
+(defun night/h-sentence-case-abbreviation-p (token)
+  "Return non-nil when TOKEN is in `night/sentence-case-abbreviations'.
+Trailing punctuation other than the abbreviation's own dot is ignored,
+so `i.e.,' still counts."
+  (member (downcase (replace-regexp-in-string "[^[:alnum:].]+\\'" "" token))
+          night/sentence-case-abbreviations))
+
 (defun night/h-sentence-case-ends-sentence-p (token)
   "Return non-nil when TOKEN ends a sentence.
 
 Only the end of a token is ever examined, so a dot inside a word -- in
 `i.e.', `~/.claude/bin', `a.com' or `1.2.3' -- can never end a sentence.
-A trailing dot is discounted for a single-letter initial such as `J.' and
-for dotted forms such as `U.S.A.'."
+A trailing dot is discounted for a known abbreviation, for a
+single-letter initial such as `J.', and for dotted forms such as
+`U.S.A.'."
   (let ((core (night/h-sentence-case-strip-closers token)))
     (cond
      ((string-match-p "[?!]\\'" core)
@@ -143,7 +165,8 @@ for dotted forms such as `U.S.A.'."
      ((string-match-p "\\.\\'" core)
       (let ((base (replace-regexp-in-string "\\.+\\'" "" core)))
         (not
-         (or (string-match-p "\\`[[:alpha:]]\\'" base)
+         (or (night/h-sentence-case-abbreviation-p core)
+             (string-match-p "\\`[[:alpha:]]\\'" base)
              (string-match-p "\\`[[:alpha:]]\\(?:\\.[[:alpha:]]\\)+\\'" base)))))
      (t nil))))
 
@@ -276,15 +299,22 @@ transparent, so the word after it still starts the sentence."
                  ((and shouted-p (not code-p))
                   (downcase raw))
                  (t raw)))
+               (abbreviation-p
+                (night/h-sentence-case-abbreviation-p token))
                (protected-p
-                (or code-p
-                    (night/h-sentence-case-mixed-case-p token))))
+                (and (not abbreviation-p)
+                     (or code-p
+                         (night/h-sentence-case-mixed-case-p token)))))
           (cond
            ((night/h-sentence-case-marker-p token)
             (push token result))
            (t
+            ;; An abbreviation is prose, so it may be capitalized at the
+            ;; start of a sentence, but it is never rewritten -- otherwise
+            ;; the standalone `i' rule would turn "i.e." into "I.e." in the
+            ;; middle of a sentence.
             (cond
-             ((not protected-p)
+             ((not (or protected-p abbreviation-p))
               (setq token
                     (night/h-sentence-case-replace-in-token
                      token
@@ -315,7 +345,9 @@ Tokens that look like code -- URLs, paths, snake_case, backticked code,
 dotted names such as `file.el' -- and tokens carrying an uppercase letter
 past their first character, such as `iPhone' or `ID', are left exactly as
 they are by both passes.  A dot only ends a sentence at the end of a
-token, so `i.e.' and `~/.claude/bin' survive intact.
+token, so `i.e.' and `~/.claude/bin' survive intact, and a trailing dot
+on an abbreviation from `night/sentence-case-abbreviations' does not end
+one either.
 
 When REPLACEMENTS-P is omitted, use
 `night/sentence-case-enable-replacements'.  When it is explicitly nil, skip
@@ -362,6 +394,18 @@ result at point."
                   "The U.S.A. is big"))
    (should (equal (night/h-test-sentence-case "J. R. R. Tolkien wrote it. good")
                   "J. R. R. Tolkien wrote it. Good")))
+
+ (ert-deftest night/sentence-case-knows-abbreviations ()
+   (should (equal (night/h-test-sentence-case "see e.g. the docs. also cf. this")
+                  "See e.g. the docs. Also cf. this"))
+   (should (equal (night/h-test-sentence-case "i.e., append ~/.claude/bin first")
+                  "I.e., append ~/.claude/bin first"))
+   (should (equal (night/h-test-sentence-case "cats, dogs, etc. are fine")
+                  "Cats, dogs, etc. are fine"))
+   ;; An abbreviation that really does end a sentence loses the next
+   ;; capital. Documented tradeoff, asserted so the change is deliberate.
+   (should (equal (night/h-test-sentence-case "cats, dogs, etc. then i left")
+                  "Cats, dogs, etc. then I left")))
 
  (ert-deftest night/sentence-case-leaves-code-tokens-alone ()
    (should (equal (night/h-test-sentence-case "visit https://a.com/x now. ok")

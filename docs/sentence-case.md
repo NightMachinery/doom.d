@@ -27,10 +27,17 @@ shorthand like `tho` to `though`, and common missing-apostrophe contractions.
 
 A sentence ends only at the *end* of a token.  A dot in the middle of a token
 never ends a sentence, which is what keeps `i.e.`, `~/.claude/bin`, `a.com`,
-`file.el` and `1.2.3` intact.  A trailing dot is also discounted for a
-single-letter initial such as `J.` and for a dotted form such as `U.S.A.`
-Trailing quotes and brackets are ignored when looking at the end of a token, so
-`hi."` and `(done.)` still end their sentences.
+`file.el` and `1.2.3` intact.  A trailing dot is also discounted for an
+abbreviation listed in `night/sentence-case-abbreviations`, for a single-letter
+initial such as `J.`, and for a dotted form such as `U.S.A.`  Trailing quotes
+and brackets are ignored when looking at the end of a token, so `hi."` and
+`(done.)` still end their sentences.
+
+Abbreviations count as prose, not code, so one at the start of a sentence is
+still capitalized on its first letter — `i.e., append ...` becomes
+`I.e., append ...` — but they are never rewritten by the replacements, which is
+what stops the standalone `i` rule from turning a mid-sentence `i.e.` into
+`I.e.`
 
 Some tokens are protected, meaning they are neither capitalized nor touched by
 the replacements:
@@ -100,6 +107,9 @@ Examples:
 (night/sentence-case "see i.e. now")
 ;; => "See i.e. now"
 
+(night/sentence-case "see e.g. the docs. also cf. this")
+;; => "See e.g. the docs. Also cf. this"
+
 (night/sentence-case "visit https://a.com/x now. ok")
 ;; => "Visit https://a.com/x now. Ok"
 
@@ -112,6 +122,12 @@ Examples:
 
 ## Known tradeoffs
 
+- A sentence that genuinely ends in a listed abbreviation leaves the next word
+  uncapitalized: `cats, dogs, etc. then i left` becomes
+  `Cats, dogs, etc. then I left`.  The alternative is capitalizing the word
+  after every `e.g.`, which is wrong far more often.
+- An abbreviation not in `night/sentence-case-abbreviations` still
+  over-capitalizes the word after it.  Add it to the list.
 - A code-like token at the start of a sentence is never capitalized, so
   `file.el is ok` stays lowercase.  Leaving such text alone is the safer
   failure: over-capitalizing a path corrupts it, under-capitalizing prose is
