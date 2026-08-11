@@ -51,7 +51,7 @@
     ("mustnt" . "mustn't")
     ("im" . "I'm")
     ("ive" . "I've")
-    ("id" . "I'd")
+    ;; ("id" . "I'd")  ;; "ID" will be corrupted if enabled.
     ("idk" . "I don't know")
     ("ill" . "I'll")
     ("iirc" . "if I recall correctly")
