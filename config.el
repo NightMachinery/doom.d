@@ -414,21 +414,16 @@ and simply rebinds. If another process still occupies the path,
         ;; 'doom-one-light
         ))
  (t
-  ;; Terminal fallback (`display-graphic-p' is nil -- note this is also the
-  ;; case inside a *daemon*, which has no frame yet at startup).
-  ;;
-  ;; This used to select `modus-operandi-tritanopia'. Two problems: tritanopia
-  ;; is the odd one out among the palettes chosen elsewhere here (deuteranopia
-  ;; is used on pino and now CIS), and -- more importantly -- `doom-theme' is
-  ;; set from `night/current-theme-light' unconditionally below, so a terminal
-  ;; with a dark background got a *light* theme and looked broken.
-  ;;
-  ;; Set NIGHT_EMACS_THEME=dark in the environment to get the dark variant
-  ;; instead; that is the knob to reach for over an ssh session whose terminal
-  ;; is dark.
-  (setq night/current-theme-light 'modus-operandi-deuteranopia
-        night/current-theme-dark 'modus-vivendi-deuteranopia)
-
+  (setq night/current-theme-light 'modus-operandi-tritanopia
+        night/current-theme-dark 'modus-vivendi-tritanopia
+        ;; 'kaolin-light
+        ;; 'solarized-selenized-white
+        ;; 'doom-one-light
+        ;; 'humanoid-light
+        ;; 'doom-nord-light (has some bad color choices for orgmode)
+        ;; 'doom-ayu-light
+        ;; 'doom-one-light
+        )
   ;; (setq night/current-theme-light 'solarized-light)
   ;; (setq night/current-theme-light 'solarized-selenized-light) ;; @good
   ;; (setq night/current-theme-light 'doom-solarized-light) ; subtly different
