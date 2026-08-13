@@ -47,3 +47,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 ** Yasnippet
 *** Stale active field state
 **** See [[file:docs/yasnippet.md][docs/yasnippet.md]].
+
+** Org LaTeX preview
+*** [help:night/org-latex-fix-begin-env-bug]
+**** Rewrites =\[...\]= display math that Org mis-parses into =\begin{equation*}...\end{equation*}=.
+**** A line starting with =\begin{...}= opens a =latex-environment= element, which ends the paragraph and strands the closing =\]=, so only the inner environment previews or exports. Hits math written straight into org files by coding agents, which never passes through [agfi:md2org].
+**** See [[file:docs/org/latex-preview/begin-env-bug.md][docs/org/latex-preview/begin-env-bug.md]].
+*** Lazy previewing on large files
+**** See [[file:docs/org/latex-preview/performance.md][docs/org/latex-preview/performance.md]].
