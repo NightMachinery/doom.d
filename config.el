@@ -51,7 +51,7 @@ therefore silently wins an `or' chain."
 
 The test reads ~/.night-site, whose first non-comment line names the site
 profile this home belongs to; we are on CIS when that name is cis-lmu.  The
-file is written by setup/bootstrap-sudoless, and since the home is the
+file is written by setup/bootstrap, and since the home is the
 cluster shared mount, one file covers every host in it.
 
 The file is named for the general case rather than for CIS specifically: the
@@ -440,7 +440,7 @@ dark.  Sources are consulted in order of how much they actually know:
 2. COLORFGBG, if the terminal or the shell provides it.  Over ssh it has to be
    smuggled: sshd here accepts only LANG and LC_*, so kitty sets
    LC_COLORFGBG and the env contract copies it into COLORFGBG server-side.
-   See setup/bootstrap-sudoless/README.org.
+   See setup/bootstrap/README.org.
 3. Otherwise assume light, which is what this terminal actually is; the old
    implicit answer was dark, and that is what made faces look washed out."
   (let ((explicit (night/getenv-nonempty "NIGHT_EMACS_THEME"))
