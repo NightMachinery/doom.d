@@ -26,6 +26,8 @@
   (let ((link (cond ((equal browser "edge") (z org-link-edge-current))
                     ((equal browser "chrome") (z org-link-chrome-current))
                     ((equal browser "arc") (z org-link-arc-current))
+                    ((equal browser "brave") (z org-link-brave-current))
+                    ((equal browser "vivaldi") (z org-link-vivaldi-current))
                     (t (z org-link-browser-current)))))
     (when auto-searchify-p
       (setq link (night/h-org-google-search-url-to-link link)))
@@ -43,6 +45,14 @@
 (defun night/org-link-arc-current ()
   (interactive)
   (night/org-link-browser-current "arc"))
+
+(defun night/org-link-brave-current ()
+  (interactive)
+  (night/org-link-browser-current "brave"))
+
+(defun night/org-link-vivaldi-current ()
+  (interactive)
+  (night/org-link-browser-current "vivaldi"))
 
 (defun night/org-link-safari-current ()
   (interactive)
