@@ -120,15 +120,26 @@ Quote blocks seem to cause problems when they are followed by a code block."
  ;; yes, doesn't quite work as expected
  )
 ;;;
+(defun night/h-org-goto-after-file-property-drawer ()
+  "Go to `point-min', skipping a file-level :PROPERTIES: drawer, if any.
+A file-level property drawer is only valid at the very beginning of the
+file, so inserting export directives at `point-min' would push it out of
+that position and make it leak into the export as plain text (e.g., a
+junk beamer slide showing the raw :ID: line)."
+  (goto-char (point-min))
+  (when (looking-at-p "^[ \t]*:PROPERTIES:[ \t]*$")
+    (when (re-search-forward "^[ \t]*:END:[ \t]*$" nil t)
+      (forward-line 1))))
+
 (defun night/h-org-export-preprocess-add-default-setupfiles (backend)
   (message "night/h-org-export-preprocess-add-default-setupfiles: backend=%s" backend)
   (cond
    ((eq backend 'html)
-    (goto-char 0)
+    (night/h-org-goto-after-file-property-drawer)
     (insert "#+SETUPFILE: https://nightmachinery.github.io/orgmode-styles/notes_1.org\n"))
    ((eq backend 'beamer)
     (when (night/org-night-directive-present-p "night_beamer_common1")
-      (goto-char 0)
+      (night/h-org-goto-after-file-property-drawer)
       (let ((directives
              (concat
               "\n"
@@ -157,7 +168,7 @@ Quote blocks seem to cause problems when they are followed by a code block."
         (message "night/h-org-export-preprocess-add-default-setupfiles: added directives: %s" directives)
         (insert directives)))
     (when (night/org-night-directive-present-p "night_beamer_biblio1")
-      (goto-char 0)
+      (night/h-org-goto-after-file-property-drawer)
       (let ((directives
              (concat
               "\n"
