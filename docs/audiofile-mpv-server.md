@@ -31,18 +31,37 @@ server that is expected to already be running.
 seed track with `--loop-playlist=inf`, and inherits `--keep-open=no` from
 `hear-noipc`. It had no `--idle`.
 
-`loadfile ... replace` *discards* the current playlist before loading the
-replacement. When the replacement failed to load, mpv's playlist was empty, and
-without `--idle` mpv exits on an empty playlist — taking the IPC socket with it.
+Measured against throwaway servers launched exactly like the real one, only the
+last of these actually kills mpv:
+
+- `loadfile <missing> replace`, including the whole `hear-loadfile-begin`
+  sequence with its 100 `hear-seek-begin` retries — **survives** either way.
+  `--loop-playlist=inf` keeps looping the failed entry, so the playlist never
+  empties.
+- `loadlist <missing playlist>` and `loadlist <empty playlist>` — **survive**
+  either way. The `loadlist` fails outright and the previous playlist is left
+  in place.
+- `loadlist <playlist whose entries all fail>` — **dies** without `--idle`,
+  survives with it. Here the playlist really is replaced, every entry fails,
+  and the playlist is exhausted.
+
+So the fatal shape is specifically an exhausted playlist, which in practice
+means the `hear-load-playlist` path — `night/org-subtree-play-as-playlist`, or
+`hear-playlist` — pointed at tracks that have all gone missing.
+
+Note this does **not** reproduce the original single-link report. A dead
+`audiofile:` link on its own could not be made to kill the server here; the
+guards below stop it reaching mpv regardless, but the exact mechanism behind
+that first sighting is unconfirmed.
 
 ## The invariant
 
 **`hear-start-server` must pass `--idle=yes`.** It is what makes the server
-survive any load failure, not just a missing file: an unmounted volume, a
-permission error, or an unsupported codec all empty the playlist the same way.
-This matters because `~mu/` points at external drives (`shortcuts.zsh` maps
-several `/Volumes/...` music directories onto it), so "the file is not there"
-is a routine condition, not an edge case.
+survive an exhausted playlist, whatever emptied it — not just missing files but
+an unmounted volume, a permission error, or an unsupported codec across a whole
+playlist. This matters because `~mu/` points at external drives
+(`shortcuts.zsh` maps several `/Volumes/...` music directories onto it), so
+"the files are not there" is a routine condition, not an edge case.
 
 `--idle` is orthogonal to `--keep-open`: `--keep-open` governs what happens at
 the end of a file, `--idle` governs what happens when the playlist runs out.
