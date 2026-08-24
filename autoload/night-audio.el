@@ -1,10 +1,31 @@
 ;;; autoload/night-audio.el -*- lexical-binding: t; -*-
 ;;;
+(defun night/audio-path-checkable-p (url)
+  "Whether URL is a local path we can check for existence from Emacs.
+
+Excludes URLs, and paths starting with a zsh named directory (=~mu/...=,
+registered via =hash -d=). `expand-file-name' silently mis-resolves the latter
+as relative instead of erroring, so only zsh can resolve them; see the comment
+in `night/org-link-zopen-follow'."
+  (not (or (string-match-p "\\`[a-zA-Z][a-zA-Z0-9+.-]*://" url)
+           (string-match-p "\\`~[^/]" url))))
+
 (cl-defun night/hear (url &key (command
                                 "auto"
                                 ;; "hear-loadfile-begin"
                                 ;; "mpv"
                                 ))
+  ;; Bail out before handing a missing file to the audio mpv server. `hear-loadfile'
+  ;; guards this too (and covers cases Emacs cannot see, e.g. an unmounted volume),
+  ;; but we dispatch through `awaysh-oneinstance', so its failure never comes back
+  ;; to us. Checking here is what puts something in the echo area.
+  (when (and (night/audio-path-checkable-p url)
+             (not (file-exists-p url)))
+    (night/hs-alert (format "Audio file not found:\n%s" url)
+                    :color "warn")
+    (message "night/hear: file does not exist: %s" url)
+    (cl-return-from night/hear nil))
+
   (let* ((command
           (cond
             ((equalp command "auto")

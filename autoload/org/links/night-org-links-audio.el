@@ -74,6 +74,15 @@ When called interactively, display the found links in a message."
     (let* ((links (night/org-link-subtree-gather))
            (audio-links (cl-remove-if-not (lambda (link) (string= (car link) "audiofile")) links))
            (audio-paths (mapcar (lambda (link) (night/path-unabbrev (cdr link))) audio-links))
+           ;; A subtree accumulates stale links over time; skip them here rather
+           ;; than letting mpv choke on the playlist. `hear-loadfile' prunes them
+           ;; again zsh-side, which also catches paths Emacs cannot check.
+           (dead-paths (cl-remove-if #'file-exists-p
+                                     (cl-remove-if-not #'night/audio-path-checkable-p audio-paths)))
+           ;; not `cl-set-difference': it does not preserve order, and the
+           ;; playlist is played in subtree order (no shuffle on this path).
+           (audio-paths (cl-remove-if (lambda (path) (member path dead-paths))
+                                      audio-paths))
            (temp-file
             (make-temp-file
              "org-subtree-playlist"
@@ -81,11 +90,26 @@ When called interactively, display the found links in a message."
              ".raw_playlist"
              ;; ".m3u"
              )))
-      (if audio-paths
-          (progn
-            (with-temp-file temp-file
-              (insert (mapconcat #'identity audio-paths "\n")))
-            (night/hear temp-file))
-        (message "No audio file links found in the current subtree."))))
+      (cond
+       (audio-paths
+        (when dead-paths
+          (night/hs-alert
+           (format "Playlist: skipping %d missing file(s)\n%d still playable"
+                   (length dead-paths) (length audio-paths))
+           :color "warn")
+          (message "night/org-subtree-play-as-playlist: skipped %d missing file(s): %s"
+                   (length dead-paths) (s-join ", " dead-paths)))
+        (with-temp-file temp-file
+          (insert (mapconcat #'identity audio-paths "\n")))
+        (night/hear temp-file))
+       (dead-paths
+        (night/hs-alert
+         (format "Playlist has no playable files\nall %d entries are missing"
+                 (length dead-paths))
+         :color "warn")
+        (message "night/org-subtree-play-as-playlist: all %d audio link(s) are missing."
+                 (length dead-paths)))
+       (t
+        (message "No audio file links found in the current subtree.")))))
 ;;;
   )

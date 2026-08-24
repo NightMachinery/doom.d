@@ -43,6 +43,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** [help:night/org-link-safari-current]
 **** Uses Applescript directly
 
+*** [help:night/hs-alert]
+**** Asynchronous wrapper over [agfi:hs-alert]; a wedged Hammerspoon must never block Emacs.
+**** Keywords cover the whole =hs-alert-v2= surface: =:dur=, =:flash=, =:pos=, =:id=, =:markup=, =:color=. Anything omitted keeps the zsh-side default.
+**** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
+
 * Notes
 ** Yasnippet
 *** Stale active field state
@@ -55,3 +60,10 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** See [[file:docs/org/latex-preview/begin-env-bug.md][docs/org/latex-preview/begin-env-bug.md]].
 *** Lazy previewing on large files
 **** See [[file:docs/org/latex-preview/performance.md][docs/org/latex-preview/performance.md]].
+
+** =audiofile:= links and the audio mpv server
+*** Following a link to a missing file used to kill the mpv server, breaking every later =hear-*= call for the rest of the session.
+*** [agfi:hear-start-server] must pass =--idle=yes=: =loadfile ... replace= discards the playlist first, so any failed load left mpv with nothing to play and it exited, taking =$mpv_audio_ipc= with it.
+*** [agfi:hear-loadfile] is the chokepoint; it now rejects missing files and prunes dead entries out of playlists.
+*** [help:night/hear] checks too, so something lands in the echo area; [help:night/audio-path-checkable-p] decides what Emacs may check, excluding URLs and zsh named dirs such as =~mu/=.
+*** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
