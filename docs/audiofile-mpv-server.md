@@ -101,8 +101,16 @@ prefix explicitly:
 
 ## Picking up changes
 
-brish evaluates each command in a subshell of a long-lived session, so editing
-these zsh files does not affect an already-running session — the old function
-body stays loaded. Run `brishz-restart` to pick the changes up. A running mpv
-server keeps its original command line too, so `--idle=yes` only takes effect
-after the server is restarted (`hear-start-server`).
+BrishGarden keeps persistent zsh shells, so it does not see zshlang edits on its
+own — the old function body stays loaded, and testing in a fresh `zsh -ic`
+proves nothing about what the garden is running. Run `brishz-restart` after
+changing any of this.
+
+A running mpv server keeps the command line it was started with, so `--idle=yes`
+only takes effect once the server itself is restarted. It is launched from the
+`ivy` tmux session (`tmux.zsh`, `ivy-self`), so restarting it means killing the
+mpv process and re-running `hear-start-server` in that pane — which interrupts
+whatever is playing.
+
+The zsh side lives in `$NIGHTDIR`, which is version-controlled with
+`vcsh night.sh` rather than plain `git`; see `$NIGHTDIR/AGENTS.md`.
