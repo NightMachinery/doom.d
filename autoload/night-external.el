@@ -2,29 +2,60 @@
 ;;;
 (require 'memoize)
 ;;;
+(defvar night/path-convert--counter 0
+  "Serial number making `night/path-convert' keys unique within this session.")
+
+(defun night/path-convert (fn path)
+  "Run the zsh function FN over PATH and return its output.
+
+;; @workaround for the lack of support of non-utf-8 in brish
+PATH travels through redis rather than the brish command line, so filenames
+that are not valid utf-8 survive the round trip.
+
+The key is per-call. It used to be a single shared \"emacs_input\", which both
+Emacs daemons and both conversion directions wrote to, so the last writer won:
+when the write silently failed under NOAUTH, this returned some other
+process's path entirely, and an audiofile: link played the wrong file. Do not
+collapse this back into one key -- the checked write below catches a dead
+connection, but nothing can recover a value another process has overwritten."
+  (let ((key (format "emacs_input::%d::%d"
+                     (emacs-pid)
+                     (cl-incf night/path-convert--counter))))
+    (unwind-protect
+        (progn
+          (night/redis-set key path)
+          ;; In case we die before the cleanup below runs.
+          (night/redis-expire key 60)
+          (let ((result (z eval (concat fn " \"$(redism get " key ")\""))))
+            (if (and (stringp result) (not (string-empty-p result)))
+                result
+              (error "night/path-convert: %s returned nothing for: %s" fn path))))
+      (ignore-errors (eredis-del key)))))
+
 (defun night/path-unabbrev (path)
-;;;
-  ;; @workaround for the lack of support of non-utf-8 in brish
-  (eredis-set "emacs_input" path)
-  (z eval (concat "path-unabbrev \"$(redism get emacs_input)\""))
-;;;
-  ;; (z path-unabbrev (identity path))
-;;;
-  )
+  (night/path-convert "path-unabbrev" path))
 (comment
  (night/path-unabbrev "~mu/hi.mp3"))
 
 (defun night/path-abbrev (path)
-;;;
-  ;; @workaround for the lack of support of non-utf-8 in brish
-  (eredis-set "emacs_input" path)
-  (z eval (concat "path-abbrev \"$(redism get emacs_input)\"")))
+  (night/path-convert "path-abbrev" path))
 (comment
  (night/path-abbrev "/Users/evar/my-music/hi.mp3"))
 
 (defun night/path-abbrev-memoized (&rest args)
   (apply #'night/path-abbrev args))
 
+;; `memoize' refuses to wrap an already-wrapped function, which made a plain
+;; re-load of this file die here, half applied. The `defun' above has already
+;; put the unmemoized definition back in the function cell, so clearing the
+;; bookkeeping is enough -- and re-wrapping drops the cache, which is what you
+;; want after changing how the value is computed.
+(when (get 'night/path-abbrev-memoized :memoize-original-function)
+  (put 'night/path-abbrev-memoized :memoize-original-function nil)
+  (put 'night/path-abbrev-memoized 'function-documentation nil))
+;; Safe to cache this long only because `night/path-convert' now signals on
+;; failure instead of returning someone else's path, and `memoize' does not
+;; cache a call that signalled.
 (memoize #'night/path-abbrev-memoized "9999 hours")
 ;;;
 (defun night/ensure-dir (path)
