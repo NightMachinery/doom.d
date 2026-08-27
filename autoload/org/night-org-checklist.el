@@ -65,9 +65,21 @@ ACTION can be 'cancel, 'uncancel, or 'toggle'."
     ;; We should implement the toggling ourselves.
     (org-toggle-checkbox '(16)))
 ;;;
+  (defun night/org-toggle-checkbox-dwim (&optional arg)
+    "Toggle checkbox state, adding a checkbox first if the item has none.
+With ARG, or on a headline or an active region, behave exactly like
+`org-toggle-checkbox', which already handles presence-toggling in bulk."
+    (interactive "P")
+    (if (or arg
+            (org-at-heading-p)
+            (use-region-p)
+            (org-at-item-checkbox-p))
+        (org-toggle-checkbox arg)
+      (org-toggle-checkbox '(4))))
+;;;
   (map! :map 'evil-org-mode-map
         :localleader
-        "xx" #'org-toggle-checkbox
+        "xx" #'night/org-toggle-checkbox-dwim
         "xc" #'night/org-checklist-toggle-current-item
         "xz" #'night/org-checklist-toggle-partial
         ))
