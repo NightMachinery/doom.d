@@ -8,14 +8,10 @@ for the rest of the session.
 
 ## The path a link takes
 
-`[[audiofile:...]]` is registered in `autoload/org/links/night-org-links-audio.el`
-and follows through the generic zsh-file handler:
+`[[audiofile:...]]` is registered in `autoload/org/links/night-org-links-audio.el`:
 
-- `night/org-link-zshfile-follow` (`autoload/org/links/night-org-links-zshfile.el`)
-  resolves the path with `night/path-unabbrev` and calls `org-link-open-as-file`.
-- Emacs opens the file, and the audio-extension arm of
-  `night/file-extension-actions2` (`autoload/night-extension-hooks.el`) kills
-  that buffer and calls `night/hear`.
+- `night/org-link-audiofile-follow` resolves the path with
+  `night/path-unabbrev` and calls `night/hear` on it. No buffer is involved.
 - `night/hear` (`autoload/night-audio.el`) dispatches
   `awaysh-oneinstance <marker> hear-loadfile-begin <path>` through brish.
 - `hear-loadfile` (`$NIGHTDIR/zshlang/auto-load/others/mpv.zsh`) sends
@@ -23,6 +19,26 @@ and follows through the generic zsh-file handler:
 
 So playback is never a direct mpv call from Emacs; it is a `loadfile` RPC to a
 server that is expected to already be running.
+
+It used to go the long way round, through the generic zsh-file handler
+`night/org-link-zshfile-follow`: `find-file` the track, wait for
+`window-configuration-change-hook` to notice the extension, and let
+`night/file-extension-actions2` kill the buffer again and call `night/hear`.
+Two things made that fragile. `org-open-file` skips its existence check
+whenever `org-file-apps` resolves to `emacs` — "Emacs has no problems with
+non-ex files" — and ours resolves everything that way via `(t . emacs)`, so a
+link to a missing file quietly became an empty buffer visiting it. And
+`night/file-extension-actions2` killed that buffer with `kill-current-buffer`,
+an interactive command Doom advises `:before-until`, which declines to kill
+when the buffer is on show in another window. A media buffer that survived then
+replayed itself on every window configuration change.
+
+`night/file-extension-actions2` is now only the fallback for media opened some
+other way — dired, `find-file` — and it uses plain `kill-buffer` and a
+buffer-local flag so it acts at most once per buffer.
+`night/org-link-zshfile-follow` consults `org-open-non-existing-files` before
+handing a path to org, so `zf:` links no longer create files by being followed;
+set that variable non-nil if you want the old behaviour back.
 
 ## Why a missing file killed the server
 
@@ -91,10 +107,16 @@ Hammerspoon cannot hold up playback for the 30s timeout baked into the
 Emacs checks too, in `night/hear` and in `night/org-subtree-play-as-playlist`.
 That is purely for latency: `night/hear` dispatches through
 `awaysh-oneinstance`, so a zsh-side failure never comes back, and without a
-local check nothing appears in the echo area. `night/audio-path-checkable-p`
-decides what Emacs may check — it excludes URLs, and paths starting with a zsh
-named directory such as `~mu/`, which `expand-file-name` silently mis-resolves
-as relative instead of erroring.
+local check nothing appears in the echo area. `night/path-checkable-p`
+(`autoload/night-external.el`) decides what Emacs may check — it excludes URLs,
+and paths starting with a zsh named directory such as `~mu/`, which
+`expand-file-name` silently mis-resolves as relative instead of erroring.
+
+One caveat on trusting that message. It reports the path Emacs actually
+resolved, which is not necessarily the one in the link: a broken redis
+connection once made `night/path-unabbrev` return another process's path
+entirely, and the resulting "file does not exist" named a file nothing had
+asked for. See `docs/redis-eredis-auth.md`.
 
 ## `night/hs-alert`
 

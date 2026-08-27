@@ -65,5 +65,13 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** Following a link to a missing file used to kill the mpv server, breaking every later =hear-*= call for the rest of the session.
 *** [agfi:hear-start-server] must pass =--idle=yes=: =loadfile ... replace= discards the playlist first, so any failed load left mpv with nothing to play and it exited, taking =$mpv_audio_ipc= with it.
 *** [agfi:hear-loadfile] is the chokepoint; it now rejects missing files and prunes dead entries out of playlists.
-*** [help:night/hear] checks too, so something lands in the echo area; [help:night/audio-path-checkable-p] decides what Emacs may check, excluding URLs and zsh named dirs such as =~mu/=.
+*** [help:night/hear] checks too, so something lands in the echo area; [help:night/path-checkable-p] decides what Emacs may check, excluding URLs and zsh named dirs such as =~mu/=.
+*** [help:night/org-link-audiofile-follow] calls [help:night/hear] directly, so following a link never visits a buffer. [help:night/file-extension-actions2] is now just the fallback for media opened some other way.
 *** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
+
+** Redis from Emacs
+*** eredis cannot AUTH on connect, returns error replies as ordinary strings, and never reconnects. So an unauthenticated Emacs did not fail, it lied: [help:night/path-unabbrev] returned another process's path, the password cache handed back =NOAUTH Authentication required.= as a passphrase, and [help:night/redis-lock] never acquired while =with-redis-lock= ran its body anyway.
+*** [help:night/redis-connect] connects, AUTHs from =~/.redis-auth= and confirms with PING; [help:night/redis-reconnect] is the recovery command.
+*** Prefer the checked wrappers [help:night/redis-set], [help:night/redis-setnx], [help:night/redis-expire], [help:night/redis-get] over raw eredis calls.
+*** A daemon that connected before =requirepass= was set stays authenticated, so it proves nothing. Test in a freshly connected Emacs.
+*** See [[file:docs/redis-eredis-auth.md][docs/redis-eredis-auth.md]].
