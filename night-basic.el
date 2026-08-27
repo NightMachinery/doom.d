@@ -43,7 +43,11 @@ If VAL is a sequence with zero length, return nil."
  (night/bool-smart ""))
 ;;;
 (require 'eredis)
-(setq redis-connection-0 (eredis-connect "localhost" 6379))
+;; The connection itself is made by `night/redis-connect' in
+;; autoload/night-redis.el, which needs to AUTH now that redis has a
+;; requirepass. That file loads after this one (see night-loader.el), and
+;; nothing in between touches redis at load time. The `require' stays here so
+;; `(featurep 'eredis)' is already true for night-password.el's `after!'.
 ;;;
 (defmacro night/defface (face spec &optional doc &rest args)
   "Define a face FACE with spec SPEC, optional documentation DOC, and custom ARGS.
