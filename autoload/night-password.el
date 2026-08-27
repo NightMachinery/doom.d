@@ -13,19 +13,35 @@
     "Name of the Redis hash table used to store passwords.")
   ;; `redis-cli hgetall emacs-password-cache-215870`
 
+  (defun night/password--redis-get (key)
+    "Read KEY from the Redis password cache, or nil if there is nothing usable.
+
+Anything odd reads as a cache miss. eredis hands back RESP error replies as
+ordinary strings, so without this an unauthenticated connection returned
+\"NOAUTH Authentication required.\" and it was used as the password."
+    (when password-use-redis
+      (condition-case nil
+          (let ((value (eredis-hget password-redis-hash key)))
+            (when (and (stringp value)
+                       (not (string-empty-p value))
+                       (not (night/redis--error-reply-p value)))
+              value))
+        (error nil))))
+
   (defun password-read-from-cache-redis (key)
     "Obtain passphrase for KEY from Redis if available, otherwise from local cache."
     (if password-use-redis
-        (let ((password (eredis-hget password-redis-hash key)))
-          (if (and password (not (string= password "")))
-              password
-            (password-read-from-cache key)))
+        (or (night/password--redis-get key)
+            (password-read-from-cache key))
       (password-read-from-cache key)))
 
   (defun password-in-cache-p-redis (key)
     "Check if KEY is in the Redis cache or local cache."
     (if password-use-redis
-        (not (string= (eredis-hget password-redis-hash key) ""))
+        ;; `stringp' matters beyond the error case: a missing field gives nil,
+        ;; and `(string= nil "")' compares against the symbol name \"nil\", so
+        ;; the old test called every absent key a cache hit.
+        (and (night/password--redis-get key) t)
       (password-in-cache-p key)))
 
   (defun password-cache-add-redis (key password)
