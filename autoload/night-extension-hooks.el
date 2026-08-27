@@ -27,21 +27,37 @@ Use this to stop the audio files being played by org-mode links."
         (save-excursion (org-babel-goto-named-src-block startup-block)
                         (org-babel-execute-src-block)))))
 
+(defvar-local night/file-extension-actions2--done nil
+  "Whether `night/file-extension-actions2' has already fired for this buffer.
+
+It runs from `window-configuration-change-hook', so without this a media
+buffer that outlived its kill would replay itself on every window change.")
+
 (defun night/file-extension-actions2 ()
-  (with-demoted-errors
-      (when buffer-file-name
+  ;; Error-guarded like [agfi:night/file-extension-actions]: this runs from
+  ;; `window-configuration-change-hook', where a signal would take the rest of
+  ;; the hook down with it.
+  (with-demoted-errors "night/file-extension-actions2: %S"
+      (when (and buffer-file-name
+                 (not night/file-extension-actions2--done))
         (let*
             ((bfn buffer-file-name)
-             (ext (or (ignore-errors (file-name-extension bfn)) ""))
-             (remote (s-contains? "/scp:" bfn)))
+             (ext (or (ignore-errors (file-name-extension bfn)) "")))
           ;; (message "file opened: %s" bfn)
           (cond
            ((and
              (member-ignore-case ext '("png" "apng" "jpg" "jpeg" "gif")))
+            (setq night/file-extension-actions2--done t)
             ;; (night/yank-buffer-filename)
             (z pbadd (buffer-file-name))
             (when (not window-system)
-              (kill-current-buffer)
+              ;; `kill-current-buffer' is an interactive command, and Doom
+              ;; advises it :before-until with
+              ;; `doom--switch-to-fallback-buffer-maybe-a', which returns
+              ;; non-nil without killing anything when the buffer is on show
+              ;; in some other window. Programmatic code wants plain
+              ;; `kill-buffer'.
+              (kill-buffer (current-buffer))
               (message "buf: %s, cmd: %s" bfn this-command)
               (night/brishz "kitty-launch-icat" bfn)
             ;; @bug this can leave the original buffer somewhat impaired, e.g., colored parens are lost in elisp mode; no idea why ...
@@ -49,8 +65,11 @@ Use this to stop the audio files being played by org-mode links."
             )
            ((and
              (member-ignore-case ext '("m3u" "mp3" "ogg" "m4a" "flac" "wav" "mp4" "avi" "mkv" "flv" "wma" "aac")))
+            ;; Set before the kill, so a buffer that survives it still cannot
+            ;; come back round and play again.
+            (setq night/file-extension-actions2--done t)
             ;; (night/yank-buffer-filename)
-            (kill-current-buffer)
+            (kill-buffer (current-buffer))
             (night/hear bfn)
 ;;;;
             ))))))
