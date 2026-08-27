@@ -1,7 +1,18 @@
 ;;; autoload/org/links/night-org-links-audio.el -*- lexical-binding: nil; -*-
 
 (after! (org ol night-org-zshfile)
-  (org-link-set-parameters "audiofile" :follow #'night/org-link-zshfile-follow)
+  (defun night/org-link-audiofile-follow (path _arg)
+    "Play PATH with `night/hear'. Never visits a buffer.
+
+This used to go through `night/org-link-zshfile-follow', so playing a track
+meant `find-file'-ing it, waiting for `window-configuration-change-hook' to
+notice the extension, and having `night/file-extension-actions2' kill the
+buffer again and call `night/hear' -- a long way round that left a buffer
+behind whenever the kill did not take. `night/hear' already checks the file
+exists, alerts if it does not, and picks the player by extension."
+    (night/hear (night/path-unabbrev path)))
+
+  (org-link-set-parameters "audiofile" :follow #'night/org-link-audiofile-follow)
   ;;;
   (cl-defun night/audiofile-link-get-current-line (&key (open-link-p nil))
     "Check if the current line contains an 'audiofile' link and return the path.
@@ -78,7 +89,7 @@ When called interactively, display the found links in a message."
            ;; than letting mpv choke on the playlist. `hear-loadfile' prunes them
            ;; again zsh-side, which also catches paths Emacs cannot check.
            (dead-paths (cl-remove-if #'file-exists-p
-                                     (cl-remove-if-not #'night/audio-path-checkable-p audio-paths)))
+                                     (cl-remove-if-not #'night/path-checkable-p audio-paths)))
            ;; not `cl-set-difference': it does not preserve order, and the
            ;; playlist is played in subtree order (no shuffle on this path).
            (audio-paths (cl-remove-if (lambda (path) (member path dead-paths))

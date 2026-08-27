@@ -2,6 +2,16 @@
 ;;;
 (require 'memoize)
 ;;;
+(defun night/path-checkable-p (path)
+  "Whether PATH is a local path Emacs may check for existence itself.
+
+Excludes URLs, and paths starting with a zsh named directory (=~mu/...=,
+registered via =hash -d=). `expand-file-name' silently mis-resolves the latter
+as relative instead of erroring, so only zsh can resolve them; see the comment
+in `night/org-link-zopen-follow'."
+  (not (or (string-match-p "\\`[a-zA-Z][a-zA-Z0-9+.-]*://" path)
+           (string-match-p "\\`~[^/]" path))))
+;;;
 (defvar night/path-convert--counter 0
   "Serial number making `night/path-convert' keys unique within this session.")
 
