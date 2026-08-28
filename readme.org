@@ -75,3 +75,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** Prefer the checked wrappers [help:night/redis-set], [help:night/redis-setnx], [help:night/redis-expire], [help:night/redis-get] over raw eredis calls.
 *** A daemon that connected before =requirepass= was set stays authenticated, so it proves nothing. Test in a freshly connected Emacs.
 *** See [[file:docs/redis-eredis-auth.md][docs/redis-eredis-auth.md]].
+
+** Pasting into a search minibuffer
+*** [help:night/pns] quotes the clipboard so it matches itself, but the correct quoting depends on who reads the pattern, and the same keystroke feeds four consumers.
+*** Doom sets =evil-ex-search-vim-style-regexp= to =t=, so evil rewrote the =(){}|+= that =regexp-quote= deliberately leaves bare. Pasting =\hat{t}= into =/= turned the braces into an interval and the search died with "Invalid content of \{\}". [help:night-evil] now sets it =nil=.
+*** [help:night/h-regex-dialect] names the dialect: =emacs= for evil and =consult-line=, and for consult's ripgrep builder too, since [help:consult--compile-regexp] converts to PCRE itself. Only [help:night/consult-ugrep] binds it, to =ugrep-bool=, as its builder hands the input to ugrep unconverted.
+*** [help:night/regex-group-shy] spells the non-capturing group per dialect. [help:night/h-arxiv-regex-canonizer] used to hardcode =//= where =\\= was meant, so every non-ugrep search for an arxiv URL matched nothing.
+*** =ivy-rg= (remote dirs) stays broken: [help:counsel--elisp-to-pcre] drops one backslash of a literal =\\=, and no input quoting survives that.
+*** See [[file:docs/minibuffer-paste-regex-dialects.md][docs/minibuffer-paste-regex-dialects.md]].

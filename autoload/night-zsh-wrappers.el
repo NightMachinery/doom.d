@@ -102,24 +102,17 @@
 (defalias 'night/pns #'night/p-newline2space)
 
 (defun night/h-arxiv-regex-canonizer (url)
-  (let ((url-escaped (night/regex-escape-smart url))
-        (regex-backslash?
-         ;; Elisp regexes need backslashes before certain special chars.
-         (cond
-          (night/h-consult-ugrep-in-progress
-           "")
-          (t "//"))))
+  "Return a regex matching URL, or either form of it if it is an arxiv link.
+The grouping syntax differs per engine, so `night/regex-group-shy' builds it."
+  (let ((url-escaped (night/regex-escape-smart url)))
     (cond
      ((string-match-p "arxiv\\|huggingface\.co/papers/" url)
       (let ((arxiv-id (zf h-emc-arxiv-id-get (identity url))))
         (cond
          ((length> arxiv-id 0)
-          (concat
-           regex-backslash? "(?:"
+          (night/regex-group-shy
            url-escaped
-           regex-backslash? "|"
-           (night/regex-escape-smart (car arxiv-id))
-           regex-backslash? ")"))
+           (night/regex-escape-smart (car arxiv-id))))
          (t url-escaped))))
      (t url-escaped))))
 (comment

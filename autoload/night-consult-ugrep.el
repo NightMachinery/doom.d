@@ -1,7 +1,9 @@
 ;;; night-consult-ugrep.el ---                       -*- lexical-binding: t; -*-
 ;;;
 (after! (night-consult)
-  (defvar night/h-consult-ugrep-in-progress nil)
+  ;; Defined in [help:night-regex]; declared here so that the `let' below binds
+  ;; it dynamically regardless of load order.
+  (defvar night/h-regex-dialect)
 
   (defvar night/consult-ugrep-args
     (string-join '("ugrep"
@@ -72,7 +74,9 @@
     "Search with `ugrep' for files in DIR with INITIAL input."
     (interactive)
     (let ((prompt (or prompt "ug"))
-          (night/h-consult-ugrep-in-progress t))
+          ;; The builder hands the minibuffer input to ugrep verbatim, so
+          ;; anything pasted in has to be quoted for ugrep, not for Emacs.
+          (night/h-regex-dialect 'ugrep-bool))
       (consult--grep prompt
                      ;; #'night/consult-ugrep-make-builder-fast
                      #'night/consult-ugrep-make-builder

@@ -104,10 +104,18 @@ This variable can be bound dynamically.")
             args)))
     (cond
      ((equalp engine "ug")
+      ;; `night/consult-ugrep' binds `night/h-regex-dialect' itself, as it is
+      ;; the only engine here that sees the minibuffer input unconverted.
       (night/consult-ugrep paths query (or prompt engine)))
      ((equalp engine "ivy-rg")
+      ;; {BUG} `counsel--elisp-to-pcre' is lossy: a literal backslash (=\\= in
+      ;; an Emacs regex) comes out as a single =\=, which then escapes the next
+      ;; character. So pasting =\hat{t}= here yields an invalid rg pattern no
+      ;; matter how we quote it. Only reachable for remote dirs; unfixed.
       (counsel-rg query dir args (or prompt "> ")))
      (t
+      ;; consult's builder compiles the Emacs regex we give it down to PCRE
+      ;; itself, so the `emacs' default dialect is correct here.
       ;; (equalp engine "rg")
       (consult--grep
        (or prompt engine)
