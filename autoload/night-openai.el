@@ -20,6 +20,10 @@
 (defvar night/codestral-key (z var-get "codestral_api_key"))
 (defun night/codestral-key-get ()
   night/codestral-key)
+
+(defvar night/deepseek-key (z var-get "deepseek_api_key"))
+(defun night/deepseek-key-get ()
+  night/deepseek-key)
 ;;;
 (provide 'night-openai)
 ;;; night-openai.el ends here

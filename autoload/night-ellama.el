@@ -671,13 +671,17 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         :desc "Ellama keymap" "." ellama-command-map)
   (map! :leader
         ". ." #'night/ellama-code-fill-in-the-middle
-        ". ," #'night/mistral-fim-insert-at-point
+        ". ," #'night/fim-insert-at-point
         ;; ". ," #'night/ellama-code-complete
         ". /" #'ellama-provider-select
         ". ?" #'night/ellama-provider-show
+        ;; `f' and `F' are the two free keys here; `p'/`P' are taken by
+        ;; `ellama-command-map'.
+        ". f" #'night/fim-provider-select
+        ". F" #'night/fim-provider-show
         )
   (map!
    :ngi
-   "M-." #'night/mistral-fim-insert-at-point)
+   "M-." #'night/fim-insert-at-point)
 ;;;
   (provide 'night/ellama))
