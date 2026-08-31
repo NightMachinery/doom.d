@@ -97,3 +97,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** [help:night/fim-insert-at-point] claims that slot *before* sending, for the mirror reason: a missing key reports synchronously, and the guard has to see that report as current or it is swallowed as stale.
 *** So a second =M-.= supersedes the first request rather than racing it, and =C-g= aborts. [help:night/h-fim-escape] returns nil, because =doom-escape-hook= runs under =run-hook-with-args-until-success= and a non-nil return would swallow the quit.
 *** See [[file:docs/mistral-fim.md][docs/mistral-fim.md]].
+
+** The symbol at point in shell buffers
+*** =sh-mode-syntax-table= gives symbol syntax to =! % : . ^ ~ ,=, and =-= inherits it from the standard table, so the symbol at point inside =${alert_color:-red}= was =alert_color:-red=.
+*** That is not just a =yio= bug: =*= search ([help:evil-symbol-word-search] is =t= here), =M-.=, =company-dabbrev-code= and [help:night/brishz-doc-at-point] all read the same table, so =whichm= was being asked about =alert_color:-red= too.
+*** [help:night/sh-punctuation-chars] demotes =:= and =%= to punctuation in the table itself, which fixes all of those at once. =-= and =.= stay symbol constituents so =night-foo=, =--color= and =a.txt= remain whole; =! ^ ~ ,= are the next candidates if =${x^^}= or ={a,b}= annoy.
+*** =sh-mode= buffers share that table object, so mutating it reaches open buffers, and =sh-set-shell= only replaces it for shells listed in =sh-mode-syntax-table-input= (only =rpm= is).
+*** SMIE tokenizes shell by syntax class, so this could have moved indentation. It does not: 100 real files under =~/scripts= reindent identically under the old and new tables. Re-run that comparison if the char list grows.
+*** See [[file:docs/sh-symbol-syntax.md][docs/sh-symbol-syntax.md]].
