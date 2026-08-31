@@ -83,3 +83,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** [help:night/regex-group-shy] spells the non-capturing group per dialect. [help:night/h-arxiv-regex-canonizer] used to hardcode =//= where =\\= was meant, so every non-ugrep search for an arxiv URL matched nothing.
 *** =ivy-rg= (remote dirs) stays broken: [help:counsel--elisp-to-pcre] drops one backslash of a literal =\\=, and no input quoting survives that.
 *** See [[file:docs/minibuffer-paste-regex-dialects.md][docs/minibuffer-paste-regex-dialects.md]].
+
+** Codestral fill-in-the-middle
+*** [help:night/mistral-fim-insert-at-point] used to say nothing at all. It now reports =FIM: requesting …= with a =⋯= indicator at the insertion point, then the outcome with its elapsed time.
+*** Failures were doubly invisible. =plz= without =:else= hands the =plz-error= struct to =:then= instead of a body, so a 401 signalled =wrong-type-argument= inside the process sentinel; and the eight in-band error branches were =(funcall callback (error "…"))=, where =error= signals during argument evaluation and the callback is never reached.
+*** [help:night/mistral-fim-get] now takes =:on-error= and =:finally= alongside =:callback=, mirroring plz's own then/else split. [help:night/h-mistral-fim--api-message] reads Mistral's =detail= as well as =message=, so a bad key reads =FIM: HTTP 401 — Invalid API Key=.
+*** [help:night/h-mistral-fim--cancel] drops the buffer-local pending slot *before* killing curl. Killing it makes plz report a curl failure, and that handler must already look stale or every cancellation would announce itself as an error.
+*** So a second =M-.= supersedes the first request rather than racing it, and =C-g= aborts. [help:night/h-mistral-fim-escape] returns nil, because =doom-escape-hook= runs under =run-hook-with-args-until-success= and a non-nil return would swallow the quit.
+*** See [[file:docs/mistral-fim.md][docs/mistral-fim.md]].
