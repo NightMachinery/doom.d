@@ -10,6 +10,13 @@ multi-provider support). `night/fim-get` is the transport layer;
 `night/fim-insert-at-point` is the command; `night/h-fim-insert-result` does the
 insertion and the highlight.
 
+There is a zsh twin on `alt+.`, `fim-get` in
+`~/scripts/zshlang/auto-load/others/fim.zsh`, documented at
+`~/scripts/docs/fim.md`. It carries the same provider table and sends the same
+body, so a change to either wants the same change to the other. It is also
+callable from here as `z fim-get <prefix> <suffix>`, should this ever be worth
+collapsing into one implementation.
+
 ## Providers
 
 `night/fim-providers` is an alist from a name to a plist. All the FIM APIs
