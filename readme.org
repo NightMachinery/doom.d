@@ -96,6 +96,7 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** [help:night/h-fim--cancel] drops the buffer-local pending slot *before* killing curl. Killing it makes plz report a curl failure, and that handler must already look stale or every cancellation would announce itself as an error.
 *** [help:night/fim-insert-at-point] claims that slot *before* sending, for the mirror reason: a missing key reports synchronously, and the guard has to see that report as current or it is swallowed as stale.
 *** So a second =M-.= supersedes the first request rather than racing it, and =C-g= aborts. [help:night/h-fim-escape] returns nil, because =doom-escape-hook= runs under =run-hook-with-args-until-success= and a non-nil return would swallow the quit.
+*** [help:night/fim-strip-leading-space] is nil. Dropping a leading space was unconditional, on the belief that Codestral prepended a stray one; over 29 contexts per provider all three do it at the same rate, and it is almost always right -- ` 0' after =count =', or the whole indent when point is on an empty line. One sample in 87 was improved by stripping, three were broken by it. Binding it with =let= does nothing, as the request is async; =setq= it.
 *** A zsh twin lives on =alt+.=: [agfi:fim-get] in =~/scripts/zshlang/auto-load/others/fim.zsh=, with the same provider table and the same request body, so the two want changing together. Callable from here as =z fim-get <prefix> <suffix>=.
 *** See [[file:docs/mistral-fim.md][docs/mistral-fim.md]].
 

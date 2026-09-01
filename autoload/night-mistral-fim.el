@@ -72,6 +72,29 @@ Failures are always reported, regardless of this option."
     :type 'boolean
     :group 'night)
 
+  (defcustom night/fim-strip-leading-space nil
+    "When non-nil, drop one leading space from a FIM completion.
+
+This was once done unconditionally, on the belief that Codestral had a bug
+that prepended a stray space.  Measured across 29 contexts per provider,
+that is not what happens:
+
+- All three providers do it at the same rate, so it was never a Codestral
+  bug but the ordinary whitespace ambiguity of infilling.
+- Where the prefix ends in an operator (`x =', `=>', `|', `a +') the space
+  is simply correct, and dropping it yields `count =0'.
+- Where point sits on an empty line the model supplies the whole indent;
+  dropping one space turned eight into seven and broke the Python it was
+  completing.
+- Where the space really was spurious it was usually *two* of them, the
+  model repeating an indent the prefix already had, so dropping one leaves
+  the line misaligned regardless.
+
+One case in 87 came out better for it.  Kept as an option rather than
+deleted, because a later model may well go back to prepending one."
+    :type 'boolean
+    :group 'night)
+
   (defcustom night/fim-timeout 20
     "Seconds before an in-flight FIM request is aborted.
 `plz' imposes no total timeout by default, only `plz-connect-timeout'."
@@ -409,9 +432,9 @@ ELAPSED, when given, is the request's duration in seconds."
         (night/h-fim--report "buffer gone, discarded completion"))
        (t
         (with-current-buffer buffer
-          ;; Codestral is buggy and often returns an extra space.
-          ;; Removing the space might also introduce bad outputs sometimes, but it should at least be less common.
-          (when (string-prefix-p " " result)
+          ;; Off by default; see `night/fim-strip-leading-space'.
+          (when (and night/fim-strip-leading-space
+                     (string-prefix-p " " result))
             (setq result (substring result 1)))
 
           (if buffer-read-only

@@ -189,6 +189,34 @@ Consequences:
 - `night/fim-temperature`, default 0.
 - `night/fim-verbose`, default `t`.
 - `night/fim-timeout`, default 20 seconds.
+- `night/fim-strip-leading-space`, default `nil`. See below.
+
+## The leading space is not a bug
+
+This used to drop one leading space from every completion unconditionally, on
+the belief that Codestral had a bug that prepended one. Measured over 29
+contexts against each of the three providers, that is not what happens:
+
+- All three do it at the same rate — Codestral 7 of 29, both DeepSeeks 8 of 29
+  — so it was never a Codestral bug. It is the ordinary whitespace ambiguity of
+  infilling: nothing says whether the boundary space belongs to the prefix or
+  to the middle.
+- Where the prefix ends in an operator the space is simply *correct*. All three
+  return ` 0` for `count =`, ` b` for `return a +`, ` {` for
+  `const f = (x) =>`. Stripping gives you `count =0`.
+- Where point sits on an otherwise empty line, the model supplies the whole
+  indent — all three answered `        self.x = 1` inside a Python `__init__`.
+  Dropping one space makes it seven and breaks the file.
+- Where the space really was spurious it was usually *two* of them, so dropping
+  one leaves the line misaligned anyway.
+
+One sample in 87 came out better for it. The option stays, unset, because a
+later model may go back to prepending one. Note that binding it with `let`
+around `night/fim-insert-at-point` does nothing: the request is asynchronous
+and the binding unwinds long before the callback reads it. `setq` it.
+
+Completions where a stray space would actually corrupt code — prefix ending
+mid-token, like `os.pa` — never had one, on any provider.
 
 The old `night/mistral-fim-*` names remain as obsolete aliases.
 `night/mistral-fim-model` is gone, replaced by the `:model` of the selected
