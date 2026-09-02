@@ -2,5 +2,8 @@
 # name: time
 # key: time
 # uuid: time
+# type: command
 # --
-`(format-time-string "[%Y-%m-%d %a %H:%M]")`
+(night/yas-insert-shrinkable
+ (format-time-string "[%Y-%m-%d %a %H:%M]")
+ (night/yas-snippet-string "timee"))

@@ -2,5 +2,8 @@
 # name: timea
 # key: timea
 # uuid: timea
+# type: command
 # --
-`(format-time-string "<%Y-%m-%d %a %H:%M>")`
+(night/yas-insert-shrinkable
+ (format-time-string "<%Y-%m-%d %a %H:%M>")
+ (night/yas-snippet-string "timeaa"))

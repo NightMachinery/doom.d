@@ -2,5 +2,6 @@
 # name: timejj
 # key: timejj
 # uuid: timejj
+# type: command
 # --
-[jalali:`(concat (z datej))`]
+(insert (cdr (night/yas-jalali-strings)))

@@ -2,5 +2,7 @@
 # name: timej
 # key: timej
 # uuid: timej
+# type: command
 # --
-[jalali:`(concat (z datej) (format-time-string "/%H:%M"))`]
+(let ((stamps (night/yas-jalali-strings)))
+  (night/yas-insert-shrinkable (car stamps) (cdr stamps)))
