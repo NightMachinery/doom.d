@@ -2,5 +2,6 @@
 # name: Claude-sonnet
 # key: sonnet
 # uuid: sonnet
+# type: command
 # --
-@Sonnet5
+(night/yas-expand-model-tag "Sonnet5")

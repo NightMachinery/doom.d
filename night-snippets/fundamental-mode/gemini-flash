@@ -1,6 +1,7 @@
 # -*- mode: snippet -*-
-# name: gemini-pro
+# name: gemini-flash
 # key: fl
 # uuid: fl
+# type: command
 # --
-@Flash3
+(night/yas-expand-model-tag "Flash3")

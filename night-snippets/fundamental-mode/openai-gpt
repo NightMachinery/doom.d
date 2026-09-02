@@ -2,5 +2,6 @@
 # name: openai-gpt
 # key: gpt
 # uuid: gpt
+# type: command
 # --
-@GPT5.6T
+(night/yas-expand-model-tag "GPT5.6T")

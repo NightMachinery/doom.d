@@ -2,5 +2,6 @@
 # name: Claude-Fable
 # key: fb
 # uuid: fb
+# type: command
 # --
-@Fable5
+(night/yas-expand-model-tag "Fable5")
