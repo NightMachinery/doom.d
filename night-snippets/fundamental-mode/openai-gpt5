@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: openai-gpt5
+# key: gpt5
+# uuid: gpt5
+# type: command
+# --
+(night/yas-expand-model-tag "GPT5.6T")

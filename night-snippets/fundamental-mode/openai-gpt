@@ -4,4 +4,4 @@
 # uuid: gpt
 # type: command
 # --
-(night/yas-expand-model-tag "GPT5.6T")
+(night/yas-expand-model-tag "GPT6")

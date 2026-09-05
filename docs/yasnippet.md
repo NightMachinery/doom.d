@@ -73,9 +73,11 @@ Implementation notes, each of which was checked against the Emacs 29.2 sources:
 
 ## What is shrinkable today
 
-Model tags (`gpt`, `fb`, `op`, `sonnet`, `gem`, `fl`) insert the tag, a space
+Model tags (`gpt`, `gpt5`, `fb`, `op`, `sonnet`, `gem`, `fl`) insert the tag, a space
 and the `timee` date. One backspace drops the date and the space with it,
 leaving the bare tag.
+
+`gpt` inserts `@GPT6`; `gpt5` preserves the previous `@GPT5.6T` tag.
 
 Three time snippets shrink to their existing short twins, so a backspace after
 the long form gives exactly what the short key would have given:
