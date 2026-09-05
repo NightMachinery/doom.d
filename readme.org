@@ -50,7 +50,7 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 
 * Notes
 ** Mobile line numbers
-*** Window-specific overlays reclaim space for ordinary text, but Emacs 29.2 has an end-of-buffer isolation limitation. See =docs/mobile-line-numbers.md=.
+*** =emc-mobile= hides line numbers in marked terminal frames except at the final line; desktop buffer settings are preserved. See =docs/mobile-line-numbers.md=.
 ** Yasnippet
 *** Stale active field state
 **** See [[file:docs/yasnippet.md][docs/yasnippet.md]].

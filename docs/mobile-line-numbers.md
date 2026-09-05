@@ -1,4 +1,28 @@
-# Mobile line numbers: overlay investigation
+# Mobile line numbers
+
+## Usage
+
+From the remote shell in Termux, run `emc-mobile` instead of `emc-gateway`.
+It preserves the gateway's server selection and truecolor setup, and marks
+the new terminal frame with `night/mobile=t`. Desktop launches are unchanged.
+
+For an existing terminal frame, run `M-x night/mobile-frame-toggle`.
+`M-x night/mobile-line-numbers-mode` globally enables/disables the manager;
+disabling it removes all owned overlays without changing buffer settings.
+
+`autoload/night-mobile.el` keeps one window-specific overlay per eligible
+mobile window. A single pre-redisplay hook reconciles all overlays before
+any window renders, including after edits, narrowing, splits, buffer switches,
+or window deletion. Unchanged overlays are reused, not recreated.
+
+The final logical line remains numbered. Overlays also stop strictly before
+end-of-buffer, so trailing blank lines can retain numbers. Empty and single-line
+buffers retain numbers. This boundary rule avoids the Emacs 29 bug below.
+
+Regression checks: `emacs --batch -Q -l tests/night-mobile-test.el` from the
+Doom configuration directory. Tests use isolated buffers and windows.
+
+## Original investigation
 
 Investigated on 2026-09-05 using the installed Emacs 29.2, in an isolated
 `emacs -Q -nw` pseudo-terminal. No running desktop buffers were changed.
@@ -23,21 +47,16 @@ Emacs 29's `src/xdisp.c` checks ordinary positions using
 `get-char-property` with the window, which honors window-specific overlays.
 At end-of-buffer it instead calls `disable_line_numbers_overlay_at_eob` in
 `src/buffer.c`. That helper scans overlays without checking their `window`
-property. The isolated terminal output confirmed the desktop's final empty
-line number was also suppressed by the mobile overlay.
+property. This creates a cross-window suppression risk at end-of-buffer.
+The terminal's final empty line was also blank in a later no-overlay baseline,
+so that visual observation alone did not establish an overlay regression.
 
 After erasing the buffer, both windows reported width 2, including the
 target window: this does not fully reclaim space for an empty buffer.
 
-Therefore the simple overlay approach is not fully isolated on this Emacs
-version. It was not installed as a live feature. A compromise could exclude
-the final newline/end-of-buffer from suppression and skip empty buffers,
-leaving a numbered final line. Full isolation needs a redisplay fix or a
-different design, such as indirect buffers with separate local settings.
-
-Before any production implementation, test relative numbers, narrowing,
-window splits, buffer switches, and overlay cleanup. Explicitly mark mobile
-frames; `xterm-emacs` also identifies desktop Kitty sessions.
+The implemented compromise excludes the final logical line and never lets
+an overlay touch accessible end-of-buffer. Mobile frames are explicitly
+marked; `xterm-emacs` also identifies desktop Kitty sessions.
 
 ## Sources
 
