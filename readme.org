@@ -49,6 +49,8 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
 
 * Notes
+** Mobile line numbers
+*** Window-specific overlays reclaim space for ordinary text, but Emacs 29.2 has an end-of-buffer isolation limitation. See =docs/mobile-line-numbers.md=.
 ** Yasnippet
 *** Stale active field state
 **** See [[file:docs/yasnippet.md][docs/yasnippet.md]].
