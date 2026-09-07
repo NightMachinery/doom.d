@@ -96,6 +96,20 @@ Skip buffers considered as popups until a suitable buffer is found."
  :nv
  "[[" #'night/switch-to-last-buffer)
 ;;;
+(defun night/buffer-encrypted-p (&optional buffer)
+  "Return non-nil if BUFFER holds the plaintext of an encrypted file.
+
+Either its file name says so -- see `night/file-encrypted-p' -- or epa
+has left `epa-file-encrypt-to' set locally in it, which catches a buffer
+decrypted through a route the name does not reveal.  The locality test
+matters: `epa-file-encrypt-to' is also a global preference, and reading
+it globally would declare every buffer in the session encrypted."
+  (with-current-buffer (or buffer (current-buffer))
+    (or (and (local-variable-p 'epa-file-encrypt-to)
+             (bound-and-true-p epa-file-encrypt-to)
+             t)
+        (and (night/file-encrypted-p (buffer-file-name)) t))))
+;;;
 (defun night/close-fileless-buffers ()
   "Close buffers that are not visiting a file, do not have an associated process,
 whose names do not start with a *, and whose file paths no longer exist."
@@ -112,11 +126,9 @@ whose names do not start with a *, and whose file paths no longer exist."
       ;; (message "file-name: %s\nexists: %s" file-name (file-exists-p file-name))
       (when
           (or
-           (and
-            file-name
-            (s-ends-with-p ".gpg" file-name)
-            ;; GPG buffers can cause emacs to ask for a password, so let's close them, too.
-            )
+           ;; Encrypted buffers can cause emacs to ask for a password, so let's
+           ;; close them, too.
+           (night/buffer-encrypted-p buffer)
            (and (or
                  (not file-name)
                  (not (file-exists-p file-name)))

@@ -139,7 +139,9 @@ Similar to `bookmark-search-size'."
       nil)
      ((or
        (string-suffix-p night-evil-markers-persistence-extension buffer-file-name)
-       (string-suffix-p ".gpg" buffer-file-name))
+       ;; A marker file beside an encrypted one would sit there in plaintext,
+       ;; leaking the shape of what it points into.
+       (night/file-encrypted-p buffer-file-name))
       nil)
      (t
       (let* ((dir (file-name-directory buffer-file-name))
