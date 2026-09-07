@@ -2,22 +2,28 @@
 ;;;
 ;;; Keeping the minibuffer from becoming a trap.
 ;;;
-;;; Symptom this exists for: a terminal frame opens, focus sits in the
-;;; minibuffer, and almost every key is rejected.  It looks like a broken
-;;; terminal or a broken keymap; it is neither.  It is `save-some-buffers'
-;;; prompting through `map-y-or-n-p', whose keymap answers anything outside
-;;; (y n ! . q C-r C-f d C-h) with "Type C-h for help." -- ESC included.
+;;; Symptom: a terminal frame opens, focus sits in the minibuffer, and almost
+;;; every key is rejected.  It looks like a broken terminal or a broken keymap;
+;;; it is neither.
 ;;;
-;;; The instance that prompted this had a ` *temp*' buffer left modified while
-;;; visiting /Users/fixture/code/x.py, a path that does not and cannot exist,
-;;; from a session testing fill-in-middle (see ~/scripts/docs/fim.md).
-;;; `with-temp-buffer' ends in `kill-buffer', which does not kill a modified
-;;; file-visiting buffer -- it asks -- so the buffer outlived the test and
-;;; every later `save-some-buffers' asked about it again.
+;;; The mechanism, after independent review corrected an earlier guess of mine:
+;;; Emacs 29.2 leaks minibuffer depth.  `read_minibuf' increments minibuf_level,
+;;; then `temporarily_switch_to_single_kboard' can signal "Terminal N is locked,
+;;; cannot read from it" -- which means keyboard arbitration, not a dead
+;;; terminal -- *before* `read_minibuf_unwind' is registered.  The increment is
+;;; then left with no cleanup.  `recursion-depth' is command_loop_level plus
+;;; minibuf_level, so it climbs and never falls, later frames open inside the
+;;; count, and no Lisp call repairs it: on a wedged daemon, `top-level',
+;;; `abort-recursive-edit' and deleting the owning frames all left it untouched.
 ;;;
-;;; @see ~/scripts/docs/tmux-termux-truecolor.md for the unrelated terminal
-;;; work this was first mistaken for.
+;;; Two claims that were in this file and are NOT established: that a modified
+;;; ` *temp*' buffer survives `with-temp-buffer' (stock 29.2 kills it, since the
+;;; save confirmation is conditional on an interactive call), and that
+;;; `save-some-buffers' explains the depth (`map-y-or-n-p' uses `read-event' in
+;;; the echo area and never enters `read_minibuf').  The phantom buffer was
+;;; real and worth removing; it was not the cause of the depth.
 ;;;
+;;; @see ~/scripts/docs/emacs-minibuffer-wedge.md
 
 ;;; Show the nesting depth.  `enable-recursive-minibuffers' is t here, which
 ;;; ivy relies on, so prompts legitimately stack -- but with no indicator the
@@ -42,10 +48,12 @@ key.  Skip them; every ordinary buffer is still offered."
 (defun night/minibuffer-diagnose ()
   "Report why a frame might be stuck in the minibuffer, and offer to clean.
 
-Deliberately does not unwind recursive edits on its own.  In a daemon a
-waiting `emacsclient -t' client legitimately holds one each -- that is
-what \"When done with this frame, type SPC q f\" means -- so `top-level'
-would end other people's live sessions, not just the orphaned levels."
+Deliberately does not unwind anything.  A depth that will not fall is
+leaked C state, and no Lisp call recreates the missing cleanup record;
+`top-level' would only end live client sessions without repairing it.
+Note that `server-goto-toplevel' in server.el does call `top-level' when
+a minibuffer is active, so calling it is not itself unreasonable -- it
+just does not fix this."
   (interactive)
   (let* ((clients (bound-and-true-p server-clients))
          (phantoms (seq-filter
@@ -77,18 +85,18 @@ would end other people's live sessions, not just the orphaned levels."
 
 ;;; Early warning.
 ;;;
-;;; A daemon can reach a state no code can repair.  Once a terminal dies while
-;;; one of its minibuffer reads is live, Emacs reports "Terminal N is locked,
-;;; cannot read from it" and that level is stranded on a command loop nothing
-;;; can drive: measured on a wedged daemon, `top-level' ran twice and the depth
-;;; stayed at 8, ten `abort-recursive-edit' calls changed nothing, and deleting
-;;; the owning frames only migrated the stack to the daemon's own frame, which
-;;; has no tty to type into.  Restarting is then the only way out.
+;;; This cannot repair anything, and does not try.  The depth that will not fall
+;;; is leaked C state (see the header): no Lisp call recreates the cleanup record
+;;; that was never registered, so restarting the daemon is the only exit once it
+;;; has happened.  What is achievable is making the state legible at the one
+;;; moment it matters -- as a new frame opens inside the count -- so the answer
+;;; is "look at the depth" rather than a frame that ignores the keyboard.
 ;;;
-;;; So this cannot fix anything, and does not try.  It makes the state legible
-;;; at the one moment it matters -- when a new frame is about to open inside
-;;; the pile -- so the answer is "restart the daemon" rather than a frame that
-;;; mysteriously ignores the keyboard.
+;;; It reports rather than diagnoses, on purpose.  `active-minibuffer-window'
+;;; falls back to `minibuf_window' when it cannot find the buffer for the
+;;; current level displayed anywhere, so with leaked levels the frame it names
+;;; may be that fallback and not a real prompt owner.  Whether that frame has a
+;;; tty is therefore a hint about where to look, not proof of anything.
 
 (defun night/h-minibuffer-owner ()
   "Return the frame whose minibuffer is currently active, or nil."
@@ -100,19 +108,23 @@ would end other people's live sessions, not just the orphaned levels."
 (defun night/h-minibuffer-nesting-message (depth name tty)
   "Describe opening a frame inside DEPTH minibuffer levels, or return nil.
 
-NAME and TTY belong to the frame owning the active minibuffer.  Kept
-free of Emacs state so both branches are testable by calling it, rather
-than by stubbing primitives.
+NAME and TTY belong to the frame `active-minibuffer-window' points at.
+Kept free of Emacs state so both branches are testable by calling it,
+rather than by stubbing primitives.
 
-A non-nil TTY means somebody's live prompt, answerable where it sits.  A
-nil one means nothing can reach that command loop any more."
+A non-nil TTY means there is a frame you can type at, so the likely move
+is to answer or abort the prompt there.  A nil one is only a hint: it can
+mean a real prompt on the daemon's own frame, or the fallback that
+`active-minibuffer-window' returns when no live window shows the level,
+which is what leaked depth looks like.  Neither case is asserted to be
+recoverable or not."
   (cond
    ((<= depth 0) nil)
    ((null tty)
-    (format "Emacs: %d minibuffer level(s) active with no typeable owner -- this daemon is wedged; restart it.  M-x night/minibuffer-diagnose"
+    (format "Emacs: %d minibuffer level(s) active, owner has no tty -- may be a real prompt or leaked depth.  If keys do nothing, restart the daemon.  M-x night/minibuffer-diagnose"
             depth))
    (t
-    (format "Emacs: opened inside %d active minibuffer level(s), owned by %s on %s -- answer or abort it there"
+    (format "Emacs: opened inside %d active minibuffer level(s), owner %s on %s -- try answering or aborting it there"
             depth name tty))))
 
 (defun night/h-minibuffer-warn-if-nested ()
