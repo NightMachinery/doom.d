@@ -190,6 +190,87 @@ Consequences:
 - `night/fim-verbose`, default `t`.
 - `night/fim-timeout`, default 20 seconds.
 - `night/fim-strip-leading-space`, default `nil`. See below.
+- `night/fim-path-policy`. See **What it refuses to complete**.
+
+## What it refuses to complete
+
+FIM sends the text either side of point to a third-party API, which is fine
+for code and wrong for a decrypted GPG file. `night/fim-path-policy` decides,
+per buffer, whether a completion may run at all. Its default:
+
+    ((encrypted                  . refuse)
+     ("/\\.keys/"                . refuse)
+     ("/\\.privateShell\\Z"      . refuse)
+     ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
+     ("/\\.netrc\\Z"             . refuse)
+     ("/\\.ssh/"                 . refuse)
+     ("/private/"                . confirm))
+
+Each rule pairs a matcher with a level. A matcher is a PCRE, or a symbol
+naming a predicate in `night/h-fim-policy-predicates` — `encrypted` is the
+only one so far, and resolves to `night/buffer-encrypted-p`. A level is
+`refuse` (decline, naming the rule that said so), `confirm` (ask first) or
+`allow` (send).
+
+The first matching rule decides, which is what makes exceptions expressible:
+an `allow` rule for `/private/pub/` placed above the `confirm` rule for
+`/private/` exempts that subtree. It is equally the hazard — a broad `allow`
+near the top disarms everything under it — so the specific rules go on top. A
+buffer matching no rule is completed exactly as before, and a buffer visiting
+no file matches no PCRE rule.
+
+A `confirm` answered yes is remembered in `night/fim--path-confirmed` for as
+long as that buffer lives, so working inside a private tree asks once per file
+rather than once per keystroke. It is buffer-local and never persisted, so
+killing and revisiting the file asks again.
+
+There is nothing that overrides a `refuse`. That matches the Hammerspoon twin,
+whose Secure Input check offers no way through either.
+
+### Both names, always
+
+Every PCRE is tested against the buffer's `buffer-file-name` *and* against its
+`file-truename`. A symlink whose own name looks harmless can point into a tree
+that is not, and the reverse turns up just as often, so matching only one of
+the two would leave the policy easy to step around by accident.
+
+### Failing closed
+
+Three things can be wrong with a policy, and all three refuse rather than
+proceed: a matcher naming a predicate that does not exist, a level nobody
+defined, and a PCRE that will not convert. A typo must not quietly widen the
+policy — the whole trouble with a guard that stops matching is that nothing
+tells you.
+
+### `\z` is a trap
+
+`night/pcre-to-regexp` converts PCRE with `pcre2el`, which implements `\A` and
+`\Z` but *not* `\z`: it renders that as a literal `z`, without complaining.
+`"\\.age\\z"` therefore comes back matching `.agez`, which no file is. Write
+`\Z`. The conversion now rejects `\z` outright, so this cannot recur silently.
+
+Lookaround is unavailable for real, Emacs regexps having none, so a rule using
+it refuses under the previous heading rather than being skipped.
+
+`pcre2el` is declared in `packages.el`. Until the next `doom sync` it sits on
+disk unactivated, so `night/h-pcre-available-p` points `load-path` at
+straight's build directory itself; afterwards the plain `require` succeeds and
+that second arm never runs.
+
+### The shared predicate
+
+`night/buffer-encrypted-p` is not FIM's own. It lives in `night-buffer.el`,
+over `night/file-encrypted-p` in `night-file.el`, and it is also what
+`night/close-fileless-buffers` and the evil marker persistence use to
+recognise an encrypted file. All three used to spell it as a separate
+`(s-ends-with-p ".gpg" ...)`; they now agree with each other, and agree about
+`.age`, `.asc` and `.pgp` as well.
+
+The buffer-level predicate adds the one thing a filename cannot show: a
+buffer-local `epa-file-encrypt-to`, which epa leaves set in a buffer it
+decrypted. The locality test is load-bearing, because `epa-file-encrypt-to` is
+also a global preference — read globally it would declare every buffer in the
+session encrypted.
 
 ## The leading space is not a bug
 

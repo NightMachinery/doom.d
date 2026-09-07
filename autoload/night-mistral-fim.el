@@ -101,6 +101,107 @@ deleted, because a later model may well go back to prepending one."
     :type 'number
     :group 'night)
 
+;;;
+  (defcustom night/fim-path-policy
+    '((encrypted                  . refuse)
+      ("/\\.keys/"                . refuse)
+      ("/\\.privateShell\\Z"      . refuse)
+      ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
+      ("/\\.netrc\\Z"             . refuse)
+      ("/\\.ssh/"                 . refuse)
+      ("/private/"                . confirm))
+    "What FIM may do in a buffer, most specific rule first.
+
+FIM sends the text around point to a third-party API, so some buffers
+have no business being completed at all.  Each rule is a cons of a
+matcher and a level:
+
+  matcher  a PCRE, tested against both the buffer's file name and its
+           truename -- see `night/file-path-candidates' -- or a symbol
+           naming a predicate in `night/h-fim-policy-predicates'.
+  level    `refuse' declines and names the rule that said so;
+           `confirm' asks once per buffer; `allow' sends.
+
+The FIRST matching rule decides, which is what makes carve-outs
+expressible: an allow rule for \"/private/pub/\" placed above the
+confirm rule for \"/private/\" exempts that subtree.  That is equally
+the hazard -- a broad allow near the top silently disarms everything
+under it -- so keep the specific rules on top.  A buffer matching no
+rule is allowed, and a buffer visiting no file matches no PCRE rule.
+
+A matcher naming a predicate that does not exist refuses rather than
+being skipped: a typo here must not quietly widen the policy."
+    :type '(alist :key-type (choice (string :tag "PCRE")
+                                    (symbol :tag "Predicate"))
+                  :value-type (choice (const refuse)
+                                      (const confirm)
+                                      (const allow)))
+    :group 'night)
+
+  (defvar night/h-fim-policy-predicates
+    '((encrypted . night/buffer-encrypted-p))
+    "Symbols usable as matchers in `night/fim-path-policy'.
+Each maps to a function of one argument, the buffer to judge.")
+
+  (defvar-local night/fim--path-confirmed nil
+    "Non-nil once a `confirm' rule has been approved for this buffer.
+Buffer-local and never persisted, so revisiting the file asks again.")
+
+  (defun night/h-fim--policy-rule-match-p (rule paths buffer)
+    "Non-nil if RULE of `night/fim-path-policy' applies to BUFFER.
+
+PATHS is what `night/file-path-candidates' returned for it.  A symbol
+matcher with no entry in `night/h-fim-policy-predicates' counts as a
+match, so that `night/h-fim--gate' is the one that gets to refuse on it."
+    (let ((matcher (car rule)))
+      (if (stringp matcher)
+          (let ((regexp (night/pcre-to-regexp matcher)))
+            ;; A pattern that will not compile counts as a match, so that
+            ;; `night/h-fim--gate' refuses on it instead of walking past.
+            (or (null regexp)
+                (cl-some (lambda (path) (string-match-p regexp path)) paths)))
+        (let ((fn (alist-get matcher night/h-fim-policy-predicates)))
+          (if fn (funcall fn buffer) t)))))
+
+  (defun night/h-fim--gate (&optional buffer)
+    "Decide whether FIM may run in BUFFER, per `night/fim-path-policy'.
+
+Return nil to go ahead, or a cons of a severity -- `error' or `info' --
+and a reason to report.  This may prompt: a `confirm' rule asks once and
+then remembers the answer for as long as the buffer lives."
+    (let* ((buffer (or buffer (current-buffer)))
+           (case-fold-search nil)
+           (paths (night/file-path-candidates (buffer-file-name buffer)))
+           (rule (cl-find-if
+                  (lambda (rule)
+                    (night/h-fim--policy-rule-match-p rule paths buffer))
+                  night/fim-path-policy)))
+      (when rule
+        (let ((matcher (car rule))
+              (level (cdr rule)))
+          (cond
+           ((and (stringp matcher) (null (night/pcre-to-regexp matcher)))
+            (cons 'error (format "cannot read `%s' as a PCRE; refusing" matcher)))
+           ((and (not (stringp matcher))
+                 (not (alist-get matcher night/h-fim-policy-predicates)))
+            (cons 'error (format "`%s' names no predicate; refusing" matcher)))
+           ((eq level 'allow) nil)
+           ((eq level 'refuse)
+            (cons 'error (format "refused by `%s'" matcher)))
+           ((eq level 'confirm)
+            (with-current-buffer buffer
+              (cond
+               (night/fim--path-confirmed nil)
+               ((y-or-n-p
+                 (format "FIM: %s matches `%s'; send its text to a remote model? "
+                         (buffer-name buffer) matcher))
+                (setq night/fim--path-confirmed t)
+                nil)
+               (t (cons 'info "declined")))))
+           (t
+            ;; Fail closed on a level nobody defined.
+            (cons 'error (format "unknown level `%s' in `%s'" level matcher))))))))
+;;;
   (defvar night/fim--counter 0
     "Monotonic id source for FIM requests, used to detect stale replies.")
 
@@ -348,6 +449,13 @@ reported when it completes.  Starting a new request in the same buffer
 aborts the previous one, as does `C-g'."
     (interactive (when current-prefix-arg
                    (list :provider (night/h-fim--read-provider))))
+    ;; Ahead of `night/h-fim--cancel', so that a refused invocation cannot tear
+    ;; down a request that is legitimately in flight.
+    (when-let ((blocked (night/h-fim--gate)))
+      (if (eq (car blocked) 'info)
+          (night/h-fim--report "%s" (cdr blocked))
+        (night/h-fim--report-error "%s" (cdr blocked)))
+      (cl-return-from night/fim-insert-at-point nil))
     (night/h-fim--cancel :quiet t)
     (let* ((point (or point (point)))
            (buffer (current-buffer))
