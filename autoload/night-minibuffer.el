@@ -54,10 +54,13 @@ would end other people's live sessions, not just the orphaned levels."
                            (buffer-file-name b)
                            (string-prefix-p " " (buffer-name b))))
                     (buffer-list)))
+         ;; A client with no frame at all is usually the `emacsclient -e'
+         ;; asking this very question, not an orphan.  Only a client whose
+         ;; frame existed and has since died is one.
          (orphans (seq-filter
                    (lambda (c)
                      (let ((frame (process-get c 'frame)))
-                       (not (and frame (frame-live-p frame)))))
+                       (and frame (not (frame-live-p frame)))))
                    clients)))
     (message "recursion-depth=%d minibuffer-depth=%d clients=%d orphaned-clients=%d phantom-buffers=%d%s"
              (recursion-depth) (minibuffer-depth)
