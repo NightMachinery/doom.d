@@ -204,6 +204,7 @@ per buffer, whether a completion may run at all. Its default:
      ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
      ("/\\.netrc\\Z"             . refuse)
      ("/\\.ssh/"                 . refuse)
+     ("\\A/private/(tmp|var)/"    . allow)
      ("/private/"                . confirm))
 
 Each rule pairs a matcher with a level. A matcher is a PCRE, or a symbol
@@ -218,6 +219,13 @@ an `allow` rule for `/private/pub/` placed above the `confirm` rule for
 near the top disarms everything under it — so the specific rules go on top. A
 buffer matching no rule is completed exactly as before, and a buffer visiting
 no file matches no PCRE rule.
+
+The `allow` rule for `/private/tmp/` and `/private/var/` is that mechanism
+earning its keep rather than a special case: macOS resolves `/tmp` and `/var`
+into `/private/`, so a buffer visiting `/tmp/scratch.py` has that in its
+truename and would otherwise ask on every scratch file. A negative lookahead
+would have been the obvious fix elsewhere; Emacs regexps have none, and
+ordering does the job instead.
 
 A `confirm` answered yes is remembered in `night/fim--path-confirmed` for as
 long as that buffer lives, so working inside a private tree asks once per file

@@ -109,6 +109,9 @@ deleted, because a later model may well go back to prepending one."
       ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
       ("/\\.netrc\\Z"             . refuse)
       ("/\\.ssh/"                 . refuse)
+      ;; macOS resolves /tmp and /var into /private/, so without this the
+      ;; rule below would ask about every scratch file.
+      ("\\A/private/(tmp|var)/"    . allow)
       ("/private/"                . confirm))
     "What FIM may do in a buffer, most specific rule first.
 
