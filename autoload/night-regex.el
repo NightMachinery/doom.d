@@ -103,5 +103,79 @@ Emacs spells the group and the alternation with backslashes; PCRE does not."
  (let ((night/h-regex-dialect 'ugrep-bool))
    (night/regex-group-shy "a" "b")))
 
+;;;
+(defvar night/h-pcre-cache (make-hash-table :test #'equal)
+  "Memo table for `night/pcre-to-regexp', keyed by the PCRE source.")
+
+(defun night/h-pcre-available-p ()
+  "Make `pcre2el' loadable, and say whether it is.
+
+`packages.el' declares it, but straight only puts an activated package
+on `load-path'.  Until the next `doom sync' the build directory is
+already on disk and merely unreferenced, so point at it rather than
+leaving every PCRE unusable in the meantime.  After the sync the plain
+`require' succeeds and this second arm never runs."
+  (or (require 'pcre2el nil t)
+      (when-let ((dir (car (file-expand-wildcards
+                            (expand-file-name
+                             "straight/build-*/pcre2el"
+                             (or (bound-and-true-p straight-base-dir)
+                                 "~/.emacs.d/.local/"))))))
+        (add-to-list 'load-path dir)
+        (require 'pcre2el nil t))))
+
+(defun night/pcre-to-regexp (pattern)
+  "Return PATTERN, written as a PCRE, as an Emacs regexp, or nil.
+
+nil means the conversion could not be made -- `pcre2el' is unavailable,
+or PATTERN uses something Emacs regexps cannot express, lookaround being
+the usual one.  Callers must decide what an unusable pattern means for
+them; what they must not do is fall back to reading PATTERN as an Emacs
+regexp, because that quietly changes what it matches -- an alternation
+group turns into six literal characters, and a pattern written to catch
+something ends up catching nothing at all.
+
+Memoised, failures included, because callers sit behind reflex
+keybindings and must not pay `rxt-pcre-to-elisp' on every keystroke."
+  (let ((cached (gethash pattern night/h-pcre-cache 'night/h-absent)))
+    (if (not (eq cached 'night/h-absent))
+        cached
+      (puthash pattern
+               (condition-case err
+                   (cond
+                    ;; pcre2el implements \\A and \\Z but not \\z, which it
+                    ;; renders as a literal `z' without complaining -- so
+                    ;; "\\.age\\z" comes back matching ".agez" and nothing
+                    ;; ever hits it.  Refuse the pattern instead; \\Z is what
+                    ;; anchors a path to its end here anyway.
+                    ((let ((case-fold-search nil))
+                       ;; Or this would fire on \\Z, the spelling we want.
+                       (string-match-p "\\(?:^\\|[^\\\\]\\)\\(?:\\\\\\\\\\)*\\\\z" pattern))
+                     (display-warning
+                      'night/regex
+                      (format "`%s' uses \\z, which pcre2el mistranslates; write \\Z instead."
+                              pattern)
+                      :error)
+                     nil)
+                    ((night/h-pcre-available-p)
+                     (rxt-pcre-to-elisp pattern))
+                    (t
+                     (display-warning
+                      'night/regex
+                      "pcre2el is unavailable, so PCRE patterns cannot be used. Run `doom sync'."
+                      :error)
+                     nil))
+                 (error
+                  (display-warning
+                   'night/regex
+                   (format "cannot read `%s' as a PCRE: %s"
+                           pattern (error-message-string err))
+                   :error)
+                  nil))
+               night/h-pcre-cache))))
+(comment
+ (night/pcre-to-regexp "\\.(gpg|age)\\Z")
+ (night/pcre-to-regexp "/private/(?!pub/)"))
+
 ;;; night-regex.el ends here
 (provide 'night-regex)
