@@ -95,8 +95,17 @@ makes any argument about avoiding the filesystem here irrelevant."
 (defun night/emacs-socket-dir ()
   "Directory for the Emacs server socket.
 
-`~/tmp' is fine when $HOME is local, but on hosts whose home is a shared
-network filesystem it is actively wrong, for two reasons:
+On a local host this is `~/.local/state/emacs-servers'.  It was `~/tmp'
+until a stray deletion there took kitty's remote-control socket with it:
+`~/tmp' is a scratch directory, swept by hand and by `rm-caches', and an
+unlinked socket path cannot be re-linked, so the server keeps the bound inode
+while every client gets ENOENT.  `~/.local/state' is mode 0700 and nothing
+sweeps it.  The shell half of this contract is $NIGHT_SOCKETS_DIR in
+~/.shared.sh, which also sets $EMACS_SOCKET_NAME for `emacsclient'; the
+literal is repeated here because Emacs.app is launched by Finder and so has
+no shell environment to read it from.
+
+A shared home is wrong for socket storage for two further reasons:
 
 1. A unix domain socket is a *kernel-local* IPC endpoint.  The file on the
    share is only a rendezvous name; the socket itself lives in the kernel of
@@ -148,7 +157,9 @@ override and hand `server-socket-dir' an empty path."
           (expand-file-name
            (format "emacs-servers-%s" (or (system-name) "unknown"))
            base)))
-      (concat (getenv "HOME") "/tmp/.emacs-servers")))
+      (expand-file-name "emacs-servers"
+                        (or (night/getenv-nonempty "NIGHT_SOCKETS_DIR")
+                            (concat (getenv "HOME") "/.local/state")))))
 
 (setq server-socket-dir (night/emacs-socket-dir))
 ;; This directory is created by [help:server-ensure-safe-dir] automatically.
