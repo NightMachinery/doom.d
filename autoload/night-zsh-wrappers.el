@@ -80,6 +80,13 @@
     (z eval mpv-get | path-abbrev | org-escape-link)
     "]]")))
 ;;;
+(defun night/newline2space (text)
+  "Return TEXT with its lines joined into one, via the zsh `newline2space'.
+That filter is a PDF-copy unwrapper, so it is aggressive: it flattens lists
+and paragraph breaks too, and it de-hyphenates a word split across lines.
+See `night/p-newline2space' for the clipboard-reading command."
+  (z reval-withstdin (identity text) newline2space))
+
 (defun night/p-newline2space ()
   (interactive)
   (let ((text (z p-newline2space)))
@@ -166,11 +173,22 @@ The grouping syntax differs per engine, so `night/regex-group-shy' builds it."
   (night/org-insert-and-fix-levels
    (night/sentence-case text)))
 
-(night/defun-named night/paste-md2org-sentencecased ()
-  (interactive)
+(night/defun-named night/paste-md2org-sentencecased (&optional unwrap-p)
+  "Paste the clipboard as sentence-cased Org, converting it from Markdown.
+With UNWRAP-P, join the clipboard's lines with `newline2space' first, for
+text copied out of a hard-wrapped terminal or a PDF.  Pandoc already joins
+soft line breaks, so this is only worth it when you also want the
+paragraph breaks and list structure flattened."
+  (interactive "P")
   (night/brishz-async-insert
    :name $0
-   :command (list "reval-paste" "md2org")
+   :command (cond
+             (unwrap-p
+              ;; `reval-to' takes its destination first, so this reads
+              ;; backwards: it runs `pbpaste | newline2space | md2org'.
+              (list "reval-paste" "reval-to" "md2org" "newline2space"))
+             (t
+              (list "reval-paste" "md2org")))
    :callback-after #'night/nop
    :insert-fn #'night/h-org-insert-sentence-cased-and-fix-levels
    :save-p nil))
@@ -186,16 +204,24 @@ The grouping syntax differs per engine, so `night/regex-group-shy' builds it."
            (member (downcase (or language ""))
                    '("md" "markdown")))))))
 
-(defun night/smart-text-paste ()
-  "Sentence-case paste, converting Markdown to Org in Org prose."
-  (interactive)
+(defun night/smart-text-paste (&optional unwrap-p)
+  "Sentence-case paste, converting Markdown to Org in Org prose.
+With a prefix argument UNWRAP-P, join the clipboard's lines with
+`newline2space' first.  Use it for text copied out of a hard-wrapped
+terminal or a PDF; outside that it flattens lists and paragraph breaks
+too.  See `night/newline2space'."
+  (interactive "P")
   (cond
    ((and (derived-mode-p 'org-mode)
          (not (night/h-org-md-src-block-p)))
-    (night/paste-md2org-sentencecased))
+    (night/paste-md2org-sentencecased unwrap-p))
    (t
     (night/insert-for-yank
-     (night/sentence-case (night/pbpaste))))))
+     (night/sentence-case
+      (let ((text (night/pbpaste)))
+        (cond
+         (unwrap-p (night/newline2space text))
+         (t text))))))))
 
 (night/defun-named night/paste-org2md ()
   (interactive)
