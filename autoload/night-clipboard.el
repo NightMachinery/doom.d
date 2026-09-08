@@ -297,13 +297,51 @@ on the smart escaping behavior."
   (interactive)
   (night/org-paste-escaped :smart t))
 
+(defun night/h-md-code-fence (text)
+  "Return TEXT wrapped in a Markdown fenced code block.
+
+TEXT's trailing whitespace is dropped, so the closing fence always
+starts a line of its own; without that, a clipboard not ending in a
+newline left the last content line and the fence jammed together.  The
+fence itself is grown past the longest backtick run inside TEXT, as
+Markdown requires, so that fenced content pastes intact."
+  (let* ((text (replace-regexp-in-string "[ \t\n\r]+\\\'" "" text))
+         (longest-run
+          (let ((longest 0)
+                (start 0))
+            (while (string-match "`+" text start)
+              (setq longest (max longest (- (match-end 0) (match-beginning 0)))
+                    start (match-end 0)))
+            longest))
+         (fence (make-string (max 3 (1+ longest-run)) ?`)))
+    (concat fence "\n" text "\n" fence "\n")))
+
 (defun night/org-paste-escaped-in-md-code-block ()
+  "Paste the clipboard as a Markdown fenced code block.
+
+In an Org buffer the text is comma-escaped first, so a line starting with
+`*' or `#+' is not parsed as a heading or a keyword; anywhere else it
+goes in byte for byte, since a comma there would corrupt it.
+
+A fence has to start its own line, so one is opened when point is
+mid-line.  @seeAlso the Hammerspoon `pasteBlockified', on hyper+`,',
+which does the same for other apps."
   (interactive)
-  (night/insert-for-yank
-   (concat
-    "```\n"
-    (org-escape-code-in-string (current-kill 0))
-    "```")))
+  (let ((text (current-kill 0)))
+    (cond
+     ((string-empty-p text)
+      (message "Kill ring is empty."))
+     (t
+      (night/insert-for-yank
+       (concat
+        (cond
+         ((bolp) "")
+         (t "\n"))
+        (night/h-md-code-fence
+         (cond
+          ((derived-mode-p 'org-mode)
+           (org-escape-code-in-string text))
+          (t text)))))))))
 ;;;
 (defun ns-yank-image-at-point-as-image ()
   "Yank the image at point to the X11 clipboard as image/png."

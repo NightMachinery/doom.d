@@ -38,6 +38,11 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** [help:night/newline2space]
 ***** Text-in/text-out wrapper around the zsh =newline2space= filter, for callers that already hold the text. [help:night/p-newline2space] is the clipboard-reading command.
 
+**** [help:night/org-paste-escaped-in-md-code-block]
+***** Bound to =leader , <=. Pastes the clipboard as a Markdown fenced code block, the Emacs counterpart of the Hammerspoon =pasteBlockified= on hyper+=,=.
+***** Comma-escapes lines starting with =*= or =#+= only in Org buffers, where they would otherwise be parsed as a heading or a keyword. Elsewhere the content goes in byte for byte, since a comma would corrupt it.
+***** [help:night/h-md-code-fence] drops trailing whitespace so the closing fence always starts its own line, and grows the fence past the longest backtick run in the content so that fenced text nests correctly. A newline is opened first when point is mid-line.
+
 **** [help:night/smart-text-paste]
 ***** Bound to =leader , s=.
 ***** In Org buffers outside =md=/=markdown= source blocks, converts Markdown clipboard text to Org before sentence-cased insertion.
