@@ -55,10 +55,7 @@ turning it on for every paste would cost more than it fixes:
 
 - It flattens everything to one line.  Lists, paragraph breaks and code fences
   all go.  `- item one\n- item two\n\nsecond para` becomes
-  `- item one - item two  second para`.
-- It leaves a doubled space at every join, because its Perl runs one line at a
-  time and each join contributes both the substituted space and the previous
-  line's trailing space.
+  `- item one - item two second para`.
 - It de-hyphenates a word split across lines, which is right for a PDF and
   wrong for a terminal wrap: `one claude-\nwork subagent` becomes
   `one claudework subagent`.
@@ -73,10 +70,6 @@ actually on the clipboard, rather than a surprise.
   mean distinguishing a soft wrap from a paragraph break, which would change
   behaviour the sentence-caser currently treats as intentional — a list such as
   `- hello\n> quoted start` capitalizes both lines by design.
-- The doubled space at each join comes from `newline2space` itself
-  (`~/scripts/zshlang/auto-load/others/text, string/text.zsh`), so `, n`
-  (`night/pns`) has it too.  Slurping the whole input with `perl -0777` would
-  fix it in one pass, but that changes every caller of the filter.
 
 ## Related commands
 
