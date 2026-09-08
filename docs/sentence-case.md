@@ -10,9 +10,10 @@
   Org with `md2org`, sentence-cases the converted text, and inserts it with the
   same Org level adjustment used by `night/paste-md2org`.
 - `night/smart-text-paste`, bound under the paste-transform leader group as
-  `, s`, sentence-cases every paste.  In Org buffers outside `md`/`markdown`
-  source blocks it first converts Markdown clipboard text to Org; elsewhere it
-  inserts the sentence-cased clipboard text directly.
+  `, s`, sentence-cases every paste, converting Markdown clipboard text to Org
+  first when point is in Org prose.  It has its own page,
+  `smart-text-paste.md`, which also covers the `C-u` unwrapping prefix and why
+  a soft wrap currently starts a new sentence.
 
 ## How it decides
 
