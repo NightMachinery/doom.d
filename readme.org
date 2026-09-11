@@ -122,3 +122,13 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** Anchoring on =:= rather than on the surrounding construct is why =${(f)v:-w}= works, which no bash parser could read. That, an uninstalled grammar, and the fact that =*=/=M-.=/=whichm= read syntax rather than a parse tree, are why this is not tree-sitter.
 *** [help:night/sh-syntax-propertize-setup-h] must flush (`syntax-ppss-flush-cache'): if anything propertizes during mode setup, =syntax-propertize--done= is already at =point-max= and the rules silently never fire. It also runs over existing =sh-mode= buffers at load, since a mode hook alone leaves long-lived buffers on the old behaviour.
 *** See [[file:docs/sh-symbol-syntax.md][docs/sh-symbol-syntax.md]].
+
+** Proxies and the daemon's frozen environment
+*** A process's environment is fixed when it is created, so a daemon started from a shell with a proxy exported keeps sending through that proxy for its whole life. Deactivating the proxy in a terminal cannot reach an Emacs that already exists.
+*** Emacs has two unrelated notions of the proxy. =plz= shells out to curl, which reads =http_proxy= and friends from the environment, so FIM, =ement= and the =llm= package follow the frozen copy. =url.el= ignores the environment for =url-proxy-services= (nil here), so gptel and [help:night/myip-amazon] go direct and keep working. Hence a subset of network features failing while others are fine, which reads like a bug in the failing feature.
+*** A dead *local* proxy is recognisable: =curl error 7= returning in =0.0s=. Connecting to a closed loopback port is refused immediately, where an unreachable remote host would hang until a timeout. An instant network error is almost always local.
+*** The message names no host or port because =plz= discards curl's stderr and substitutes a fixed string from its =plz-curl-errors= table. curl does say which address it could not reach; that text never survives.
+*** [help:night/proxy-status] reports the variables this Emacs actually has, grouped by value; =C-u= writes all of them, set or not, to a buffer; from Lisp it returns an alist. Both letter cases are reported, since curl reads the lowercase forms and some tools only the uppercase, and nothing keeps them in step.
+*** It does not probe liveness -- a diagnostic that can hang is worse than one that reports less. Check with =lsof -nP -iTCP:<port> -sTCP:LISTEN=; nothing listening means every request through it fails in 0.0s.
+*** Same shape as the redis connection: state captured once at startup, never refreshed, invisible afterwards. When something works everywhere except in a long-lived Emacs, suspect startup-frozen state first.
+*** See [[file:docs/proxy-env.md][docs/proxy-env.md]].
