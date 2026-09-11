@@ -112,6 +112,7 @@ deleted, because a later model may well go back to prepending one."
       ;; macOS resolves /tmp and /var into /private/, so without this the
       ;; rule below would ask about every scratch file.
       ("\\A/private/(tmp|var)/"    . allow)
+      ("/notes/private/research/"    . allow)
       ("/private/"                . confirm))
     "What FIM may do in a buffer, most specific rule first.
 
