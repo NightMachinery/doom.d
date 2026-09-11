@@ -5,8 +5,31 @@
 The zsh side reads the same file: =h-redis-auth-ensure= exports it as
 REDISCLI_AUTH for =redism=.")
 
-(defvar night/redis-connected-p nil
-  "Non-nil when `night/redis-connect' last got a PONG on an authed connection.")
+;; `night/redis-connected-p' used to be a variable, set here and again at the
+;; end of `night/redis-connect'.  Nothing in the config ever read it, and it
+;; went stale the instant `eredis-sentinel' dropped the process: a daemon would
+;; report `t' while its connection was dead, which is worse than reporting
+;; nothing at all.  It asks the process now.  The old binding is removed
+;; explicitly because `defvar' does not reset an already-bound variable, so a
+;; long-lived daemon would otherwise keep handing back the value it cached
+;; before this change.
+(when (boundp 'night/redis-connected-p)
+  (makunbound 'night/redis-connected-p))
+
+(defun night/redis-connected-p ()
+  "Non-nil if there is a live connection to redis right now.
+
+Asks the process rather than remembering an answer.  `eredis-sentinel'
+nils `eredis--current-process' out whenever the connection closes and
+announces it to nobody, so any cached answer is only ever a guess about
+the past."
+  ;; `and t' because `process-live-p' is a `memq', so it hands back the tail
+  ;; of its status list rather than a boolean.  True enough for `if', but this
+  ;; is a predicate people read the value of.
+  (and (boundp 'eredis--current-process)
+       (processp eredis--current-process)
+       (process-live-p eredis--current-process)
+       t))
 
 (defun night/redis-password ()
   "The redis password from `night/redis-auth-file', or nil if unreadable."
@@ -28,7 +51,6 @@ to be a separate command; without it every call returns the string \"NOAUTH
 Authentication required.\" as if it were data, because eredis parses error
 replies exactly like status replies. See docs/redis-eredis-auth.md."
   (interactive)
-  (setq night/redis-connected-p nil)
   (condition-case err
       (let ((proc (eredis-connect "localhost" 6379)))
         (setq redis-connection-0 proc)
@@ -42,11 +64,11 @@ replies exactly like status replies. See docs/redis-eredis-auth.md."
                 (warn "night/redis-connect: AUTH failed: %s" reply)))
           (warn "night/redis-connect: no password in %s, skipping AUTH"
                 night/redis-auth-file))
-        (let ((pong (eredis-ping)))
-          (setq night/redis-connected-p (equal pong "PONG"))
-          (unless night/redis-connected-p
-            (warn "night/redis-connect: PING returned %S" pong)))
-        (and night/redis-connected-p proc))
+        (let* ((pong (eredis-ping))
+               (connected (equal pong "PONG")))
+          (unless connected
+            (warn "night/redis-connect: PING returned %S" pong))
+          (and connected proc)))
     (error
      (warn "night/redis-connect: %s" (error-message-string err))
      nil)))
@@ -54,8 +76,12 @@ replies exactly like status replies. See docs/redis-eredis-auth.md."
 (defun night/redis-reconnect ()
   "Drop the current eredis connection and connect again, with AUTH.
 
-eredis never reconnects on its own; `eredis-sentinel' just nils the process
-out. Run this after restarting redis or rotating the password."
+The checked wrappers now recover from a dropped connection by themselves,
+reconnecting once and retrying, so this is no longer needed merely because
+redis was restarted.  It stays the remedy for the cases a retry cannot
+reach: a rotated password, which must be re-read from
+`night/redis-auth-file', and forcing a fresh connection when you want to
+prove one works rather than inheriting a grandfathered one."
   (interactive)
   (ignore-errors (eredis-disconnect))
   (night/redis-connect))
@@ -98,25 +124,82 @@ where the value domain makes that implausible (paths, cached passwords).")
   (and (stringp reply)
        (string-match-p night/redis-error-reply-regexp reply)))
 
+(defconst night/redis--not-connected-message "redis not connected"
+  "What eredis signals when it has no live connection.
+
+`eredis-get-process' raises a plain `error' carrying this text and
+nothing more structured, so matching the message is the only handle on
+offer.  Fragile by nature: if eredis ever defines a real error symbol,
+switch to that and delete this.")
+
+(defun night/redis--not-connected-error-p (err)
+  "Non-nil if ERR is eredis complaining that there is no connection."
+  (and (eq (car-safe err) 'error)
+       (let ((message (car-safe (cdr-safe err))))
+         (and (stringp message)
+              (string-match-p
+               (regexp-quote night/redis--not-connected-message)
+               message)))))
+
+(defun night/redis--call-with-reconnect (fn)
+  "Call FN; if the connection is dead, reconnect once and call it again.
+
+Nothing re-dials on its own -- `eredis-sentinel' nils the process out
+and deletes it -- so before this, a redis restart or a dropped socket
+left every later call failing until someone ran `night/redis-reconnect'
+by hand.  Following an `audiofile:' link was usually how that got
+noticed.
+
+Only a connection error retries.  Redis's own refusals -- NOAUTH,
+WRONGPASS, WRONGTYPE -- arrive from eredis as ordinary strings rather
+than signals, so they never reach here at all; they travel on to the
+checked wrappers below and signal `night/redis-error' there.  That
+separation is what makes the retry safe: a wrong password cannot put
+this into a loop, because it does not look like a failure to this code.
+
+The retry is exactly one.  `night/redis-connect' does not signal when
+redis is down, so a second attempt fails the same way and propagates,
+rather than reconnecting forever."
+  (condition-case err
+      (funcall fn)
+    (error
+     (unless (night/redis--not-connected-error-p err)
+       (signal (car err) (cdr err)))
+     (night/redis-connect)
+     (funcall fn))))
+
+(defmacro night/redis-with-reconnect (&rest body)
+  "Run BODY, reconnecting once and retrying if the connection is dead.
+
+Wrap only the raw eredis call, never the check around it: the checkers
+turn an error *reply* into a signal, and a signal raised by them must
+not be mistaken for a dead connection.  See
+`night/redis--call-with-reconnect'."
+  (declare (indent 0) (debug t))
+  `(night/redis--call-with-reconnect (lambda () ,@body)))
+
 (defun night/redis-set (key value)
   "SET KEY to VALUE, signalling `night/redis-error' unless redis replies OK."
-  (night/redis--check-status (eredis-set key value) "OK"
-                             (format "SET %s" key)))
+  (night/redis--check-status
+   (night/redis-with-reconnect (eredis-set key value))
+   "OK" (format "SET %s" key)))
 
 (defun night/redis-setnx (key value)
   "SETNX KEY to VALUE, returning 1 or 0 and signalling on an error reply."
-  (night/redis--check-integer (eredis-setnx key value)
-                              (format "SETNX %s" key)))
+  (night/redis--check-integer
+   (night/redis-with-reconnect (eredis-setnx key value))
+   (format "SETNX %s" key)))
 
 (defun night/redis-expire (key seconds)
   "EXPIRE KEY after SECONDS, signalling on an error reply."
-  (night/redis--check-integer (eredis-expire key seconds)
-                              (format "EXPIRE %s" key)))
+  (night/redis--check-integer
+   (night/redis-with-reconnect (eredis-expire key seconds))
+   (format "EXPIRE %s" key)))
 
 (defun night/redis-get (key)
   "GET KEY, signalling `night/redis-error' if the reply looks like an error.
 See `night/redis-error-reply-regexp' for why this one can be fooled."
-  (let ((reply (eredis-get key)))
+  (let ((reply (night/redis-with-reconnect (eredis-get key))))
     (when (night/redis--error-reply-p reply)
       (signal 'night/redis-error (list (format "GET %s" key) reply)))
     reply))

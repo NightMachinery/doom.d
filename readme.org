@@ -83,7 +83,10 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 
 ** Redis from Emacs
 *** eredis cannot AUTH on connect, returns error replies as ordinary strings, and never reconnects. So an unauthenticated Emacs did not fail, it lied: [help:night/path-unabbrev] returned another process's path, the password cache handed back =NOAUTH Authentication required.= as a passphrase, and [help:night/redis-lock] never acquired while =with-redis-lock= ran its body anyway.
-*** [help:night/redis-connect] connects, AUTHs from =~/.redis-auth= and confirms with PING; [help:night/redis-reconnect] is the recovery command.
+*** [help:night/redis-connect] connects, AUTHs from =~/.redis-auth= and confirms with PING. [help:night/redis-connected-p] asks the process; it was a variable once, which nothing read and which reported =t= while the connection was dead.
+*** The checked wrappers recover by themselves through [help:night/redis--call-with-reconnect]: a dead connection reconnects once and the call is retried once. Before that, a redis restart left every later call failing until someone ran [help:night/redis-reconnect] by hand, and an =audiofile:= link was usually how it got noticed, since [help:night/path-unabbrev] goes through redis.
+*** The retry wraps only the raw eredis call, never the check around it. NOAUTH, WRONGPASS and WRONGTYPE arrive as ordinary strings rather than signals, so they never look retryable and signal [help:night/redis-error] outside its reach; wrapping the check too would loop on a wrong password. Exactly one retry, so a redis that is really down fails promptly.
+*** [help:night/redis-reconnect] remains the remedy for what a retry cannot reach: a rotated password, and proving a connection works rather than inheriting a grandfathered one.
 *** Prefer the checked wrappers [help:night/redis-set], [help:night/redis-setnx], [help:night/redis-expire], [help:night/redis-get] over raw eredis calls.
 *** A daemon that connected before =requirepass= was set stays authenticated, so it proves nothing. Test in a freshly connected Emacs.
 *** See [[file:docs/redis-eredis-auth.md][docs/redis-eredis-auth.md]].

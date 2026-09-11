@@ -19,7 +19,9 @@ plausible string and carries on.
 
 **It never reconnects.** `eredis-sentinel` nils out `eredis--current-process`
 and deletes it. After that, calls signal "redis not connected" until something
-dials again, and nothing did except startup.
+dials again, and for a long time nothing did except startup. The checked
+wrappers now re-dial for themselves; see "Recovering a dropped connection"
+below.
 
 ## What that cost us
 
@@ -48,14 +50,49 @@ nothing.
 ## How it connects now
 
 `night/redis-connect` (`autoload/night-redis.el`) connects, sends AUTH with the
-password from `night/redis-auth-file`, and confirms with PING before setting
-`night/redis-connected-p`. It never signals: a downed redis warns and returns
-nil, because it runs at load time and must not be able to break startup. A
-server with no `requirepass` answers AUTH with an error, which is treated as
-benign — the PING is what decides.
+password from `night/redis-auth-file`, and confirms with PING. It never signals:
+a downed redis warns and returns nil, because it runs at load time and must not
+be able to break startup. A server with no `requirepass` answers AUTH with an
+error, which is treated as benign — the PING is what decides.
 
-`night/redis-reconnect` is the recovery command, for after a redis restart or a
-password rotation, since nothing re-dials on its own.
+`night/redis-connected-p` asks the process. It used to be a variable set at
+connect time, which nothing ever read and which went stale the moment the
+sentinel dropped the process — a daemon would cheerfully report `t` while its
+connection was dead. A cached answer to this question is only ever a guess about
+the past.
+
+`night/redis-reconnect` forces a fresh connection. It is no longer needed merely
+because redis restarted, since the wrappers now recover on their own, but it
+remains the remedy for what a retry cannot reach: a rotated password, which has
+to be re-read from `night/redis-auth-file`, and proving a connection works
+rather than inheriting a grandfathered one.
+
+## Recovering a dropped connection
+
+`night/redis--call-with-reconnect` runs a call, and if the connection is dead,
+reconnects once and runs it again. The checked wrappers all go through it. A
+redis restart or a dropped socket used to leave every later call failing until
+somebody ran `night/redis-reconnect` by hand, and following an `audiofile:` link
+was usually how that got noticed — `night/path-unabbrev` goes through redis, so
+it is among the first things to break.
+
+Two properties make the retry safe, and both are easy to lose in a refactor.
+
+**It wraps only the raw eredis call, never the check around it.** Redis's own
+refusals — `NOAUTH`, `WRONGPASS`, `WRONGTYPE` — come back from eredis as
+ordinary strings rather than signals, so they never look like failures to the
+retry at all. They travel on to the checkers and signal `night/redis-error`
+there, outside the retry's reach. Wrapping the check too would make a wrong
+password look retryable, and it would loop.
+
+**The retry is exactly one.** `night/redis-connect` does not signal when redis
+is genuinely down, so a second attempt fails the same way and propagates instead
+of reconnecting forever.
+
+Recognising the condition is the fragile part: eredis raises a plain `error`
+whose message is "redis not connected" and offers nothing more structured, so
+`night/redis--not-connected-error-p` matches that string. If eredis ever defines
+a real error symbol, switch to it.
 
 The connect lives in `autoload/night-redis.el` rather than `night-basic.el`,
 because `night-loader.el` loads `night-basic.el` first and the auth helpers
