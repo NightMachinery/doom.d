@@ -19,6 +19,18 @@
 (defvar night/h-mobile-clipboard-ssh-jobs (make-hash-table :test #'equal)
   "Host alias to a plist containing :busy and the latest :pending copy.")
 
+(defconst night/h-mobile-clipboard-ssh-options
+  '("-T" "-o" "BatchMode=yes" "-o" "StrictHostKeyChecking=yes"
+    "-o" "ConnectTimeout=3" "-o" "ConnectionAttempts=1"
+    "-o" "ServerAliveInterval=3" "-o" "ServerAliveCountMax=1"
+    "-o" "ClearAllForwardings=yes")
+  "SSH options shared by mobile clipboard reads and writes.")
+
+(defun night/h-mobile-clipboard-ssh-valid-host-p (host)
+  "Return non-nil when HOST is a safe SSH host alias."
+  (and (stringp host)
+       (string-match-p "\\`[[:alnum:]_][[:alnum:]_.-]*\\'" host)))
+
 (defun night/mobile-clipboard-cache-clear (&optional host)
   "Forget SSH readiness for HOST, or every host when omitted.
 This does not cancel an in-flight copy.  Its result may populate the cache.
@@ -72,13 +84,10 @@ discarded so errors cannot accidentally log clipboard text."
                    :name "mobile-clipboard-ssh" :buffer nil :noquery t
                    :connection-type 'pipe :coding '(utf-8-unix . utf-8-unix)
                    :command
-                   (list "ssh" "-T" "-o" "BatchMode=yes"
-                         "-o" "StrictHostKeyChecking=yes"
-                         "-o" "ConnectTimeout=3" "-o" "ConnectionAttempts=1"
-                         "-o" "ServerAliveInterval=3" "-o" "ServerAliveCountMax=1"
-                         "-o" "ClearAllForwardings=yes" "--" host
-                         (cond (text "termux-clipboard-set")
-                               (t "command -v termux-clipboard-set >/dev/null")))
+                   (append (list "ssh") night/h-mobile-clipboard-ssh-options
+                           (list "--" host
+                                 (cond (text "termux-clipboard-set")
+                                       (t "command -v termux-clipboard-set >/dev/null"))))
                    :filter (lambda (&rest _ignore))
                    :sentinel
                    (lambda (proc _event)
@@ -103,6 +112,63 @@ discarded so errors cannot accidentally log clipboard text."
            (when timer (cancel-timer timer))
            (when (and process (process-live-p process)) (delete-process process))
            (funcall callback nil)))))))
+
+(defun night/h-mobile-clipboard-ssh-get (host &optional remote-command)
+  "Return HOST's clipboard as UTF-8 using REMOTE-COMMAND.
+REMOTE-COMMAND defaults to `termux-clipboard-get'.  It is trusted user
+configuration passed directly as SSH's remote command, never shell-combined
+with clipboard content.
+An active queued copy for HOST is allowed to finish before the read."
+  (unless (night/h-mobile-clipboard-ssh-valid-host-p host)
+    (user-error "Invalid mobile clipboard SSH host"))
+  (when (and remote-command
+             (not (and (stringp remote-command) (> (length remote-command) 0))))
+    (user-error "Invalid mobile clipboard SSH paste command"))
+  (let ((default-directory temporary-file-directory)
+        (deadline (+ (float-time) night/mobile-clipboard-ssh-timeout))
+        (output (generate-new-buffer " *mobile-clipboard-ssh-output*"))
+        (errors (generate-new-buffer " *mobile-clipboard-ssh-errors*"))
+        process error-process)
+    (unwind-protect
+        (progn
+          (while (and (plist-get (gethash host night/h-mobile-clipboard-ssh-jobs)
+                                 :busy)
+                      (< (float-time) deadline))
+            (accept-process-output nil (max 0 (min 0.05 (- deadline (float-time))))))
+          (when (plist-get (gethash host night/h-mobile-clipboard-ssh-jobs) :busy)
+            (user-error "Timed out waiting for mobile clipboard copy"))
+          (when (>= (float-time) deadline)
+            (user-error "Mobile clipboard read timed out"))
+          (condition-case err
+              (progn
+                (setq process
+                      (make-process
+                       :name "mobile-clipboard-ssh-get" :buffer output
+                       :stderr errors :noquery t :connection-type 'pipe
+                       :coding '(utf-8-unix . utf-8-unix)
+                       :sentinel #'ignore
+                       :command (append (list "ssh") night/h-mobile-clipboard-ssh-options
+                                        (list "-n" "--" host
+                                              (or remote-command
+                                                  "termux-clipboard-get")))))
+                (setq error-process (get-buffer-process errors)))
+            (error (user-error "Mobile clipboard read failed: %s"
+                               (error-message-string err))))
+          (while (and (process-live-p process) (< (float-time) deadline))
+            (accept-process-output process
+                                   (max 0 (min 0.05 (- deadline (float-time))))))
+          (when (process-live-p process)
+            (delete-process process)
+            (user-error "Mobile clipboard read timed out"))
+          (unless (and (eq (process-status process) 'exit)
+                       (= (process-exit-status process) 0))
+            (user-error "Mobile clipboard read failed"))
+          (with-current-buffer output (buffer-string)))
+      (when (and process (process-live-p process)) (delete-process process))
+      (when (and error-process (process-live-p error-process))
+        (delete-process error-process))
+      (when (buffer-live-p output) (kill-buffer output))
+      (when (buffer-live-p errors) (kill-buffer errors)))))
 
 (cl-defun night/h-mobile-clipboard-ssh-enqueue (&key host text)
   "Schedule TEXT from the selected frame for HOST, keeping the latest copy."

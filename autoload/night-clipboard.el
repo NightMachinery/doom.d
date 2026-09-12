@@ -164,6 +164,14 @@ the region exactly as it appears in the buffer."
 
 (defun night/h-kill-skip-whitespace (orig-fn string &rest args)
   "an advice around `kill-new' to skip whitespace-only kills. @warn This can break some assumptions."
+  (cond
+   (night/h-mobile-clipboard-import-p
+    ;; A native `current-kill' import must remain verbatim and must not be
+    ;; reflected back to the same remote clipboard.
+    (let ((interprogram-cut-function nil)
+          (kill-transform-function nil))
+      (apply orig-fn string args)))
+   (t
   (let* (
          (string-raw (substring-no-properties string))
          (string
@@ -218,7 +226,7 @@ the region exactly as it appears in the buffer."
       ;; This message allows us to be sure that we have been deleting whitespace lines and not hidden (folded) text.
 
       ;; imitating the return value of `kill-new'
-      0))))
+      0))))))
 (advice-add 'kill-new :around #'night/h-kill-skip-whitespace)
 ;; @seeAlso [help:filter-buffer-substring]
 ;;;

@@ -14,8 +14,9 @@ Existing Org copy transformations and whitespace filtering still apply.
 The implementation temporarily enables the `term/xterm.el` clipboard-write
 backend for one operation and calls `gui-set-selection` for `CLIPBOARD`.
 It restores the terminal capability even after errors. It never enables OSC 52
-clipboard reads. Paste behavior is unchanged; use the terminal's Paste action
-to insert the client clipboard.
+clipboard reads. Plain `emc-mobile` keeps its existing paste behavior; use the
+terminal's Paste action to insert the client clipboard. The SSH variants below
+also support programmatic clipboard reads.
 
 ## SSH fallback variants
 
@@ -25,6 +26,36 @@ to insert the client clipboard.
 through the Emacs host's existing SSH configuration; no address or credentials
 are stored in this repository. The tmux variant uses a separate `emacs-tealy`
 session so it cannot accidentally attach to a plain mobile frame.
+
+These SSH-marked frames also fetch fresh clipboard text with
+`termux-clipboard-get` for normal yanks and paste commands using `current-kill`.
+Routing follows the selected frame, including when the same buffer is visible
+on desktop and mobile. Clipboard contents are not cached, and kill-ring
+rotation remains local. Each read adds an SSH round trip; Termux's Paste action
+is still useful when latency matters.
+
+Automatic reads require both the SSH-marked mobile frame and
+`night/ssh-paste-enabled-p`, which defaults to `t`. Use
+`M-x night/ssh-paste-toggle` to toggle automatic reads across this daemon without
+changing frame markers or copy routing. Set the variable to `nil` in your
+configuration for a persistent opt-out. While disabled, ordinary paste uses
+its previous provider.
+
+Explicit commands bypass that toggle: `M-x night/ssh-paste` inserts text from
+the selected frame's configured `night/clipboard-ssh-host`, and
+`M-x night/tealy-paste` reads the `tealy` alias regardless of the frame.
+Frame-based reads use the optional `night/clipboard-ssh-paste-command` parameter
+or `termux-clipboard-get` by default. The override is a trusted remote shell
+command, not clipboard data. A missing host for `night/ssh-paste` is an error;
+it never silently chooses a different host.
+
+The read waits for any queued copy to finish and shares a single overall
+`night/mobile-clipboard-ssh-timeout` deadline (15 seconds by default). `C-g`
+cancels the wait. SSH/read failures raise an error rather than pasting stale
+text or the daemon host's clipboard. Reads do not use or update the copy
+readiness cache: Android can restrict clipboard reads independently of writes,
+especially while Termux is in the background. The Termux:API clipboard getter,
+SSH keys, and trusted host key must be configured on the relevant hosts.
 
 The first oversized copy checks authenticated SSH access and availability of
 the clipboard command. Successful checks and transfers cache readiness for
@@ -47,7 +78,7 @@ work, whose completion may populate the cache again.
 SSH is non-interactive: keys and host trust must already be configured. It uses
 a three-second connection timeout and a 15-second overall operation deadline
 (`night/mobile-clipboard-ssh-timeout`). Text and remote output are not logged.
-Operations run asynchronously, one per host. Only the newest waiting copy is
+Copies run asynchronously, one per host. Only the newest waiting copy is
 kept; a later small copy waits for an active SSH operation before using OSC 52,
 preserving copy order during normal completion. Failed copies stay in the kill
 ring and are never automatically replayed when the phone reconnects. As with
