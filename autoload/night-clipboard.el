@@ -2,6 +2,9 @@
 ;;;
 (require 'clipetty)
 (require 'subr-x) ; For string-empty-p, string-prefix-p
+(load (expand-file-name "night-mobile-clipboard.el"
+                        (file-name-directory (or load-file-name buffer-file-name)))
+      nil t)
 
 ;; (global-clipetty-mode 1)
 (comment
@@ -197,8 +200,12 @@ the region exactly as it appears in the buffer."
        ;; t ;; disable this modification entirely
        (not skip-p))
       (progn
-        (apply orig-fn string args)
-        (when (night/ssh-p)
+        (let ((interprogram-cut-function
+               (cond ((night/mobile-clipboard-frame-p)
+                      #'night/mobile-clipboard-cut)
+                     (t interprogram-cut-function))))
+          (apply orig-fn string args))
+        (when (and (night/ssh-p) (not (night/mobile-clipboard-frame-p)))
           ;; could have used [help:interprogram-cut-function]
           (night/call-process-async
            :command '("socat" "-" "TCP:127.0.0.1:6030")
