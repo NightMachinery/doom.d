@@ -17,6 +17,46 @@ It restores the terminal capability even after errors. It never enables OSC 52
 clipboard reads. Paste behavior is unchanged; use the terminal's Paste action
 to insert the client clipboard.
 
+## SSH fallback variants
+
+`emc-tealy` and `emc-tealy-tmux` additionally mark the frame with
+`night/clipboard-ssh-host="tealy"`. Text above the OSC 52 limit is passed to
+`termux-clipboard-set` over SSH, using UTF-8 stdin. The destination is resolved
+through the Emacs host's existing SSH configuration; no address or credentials
+are stored in this repository. The tmux variant uses a separate `emacs-tealy`
+session so it cannot accidentally attach to a plain mobile frame.
+
+The first oversized copy checks authenticated SSH access and availability of
+the clipboard command. Successful checks and transfers cache readiness for
+900 seconds (`night/mobile-clipboard-ssh-cache-ttl`). Failures immediately replace
+that state with a 30-second negative cache (`night/mobile-clipboard-ssh-failure-ttl`).
+The shorter failure TTL lets a phone recover promptly after a temporary outage.
+TTL expiration is lazy: there is no periodic polling or network work on launch.
+Small copies need no SSH check. A cached success never guarantees the phone is
+still reachable; every transfer's exit status is checked.
+
+`M-x night/mobile-clipboard-cache-clear` clears all readiness entries in the
+current Emacs daemon. `emc-tealy-cache-clear` clears the `tealy` entry, honoring
+the mobile launcher's dedicated-daemon setting. From Lisp, pass a host alias
+to `night/mobile-clipboard-cache-clear` to clear just that entry. The cache is
+memory-only and separate for each daemon. Clearing does not cancel in-flight
+work, whose completion may populate the cache again.
+
+SSH is non-interactive: keys and host trust must already be configured. It uses
+a three-second connection timeout and a 15-second overall operation deadline
+(`night/mobile-clipboard-ssh-timeout`). Text and remote output are not logged.
+Operations run asynchronously, one per host. Only the newest waiting copy is
+kept; a later small copy waits for an active SSH operation before using OSC 52,
+preserving copy order during normal completion. Failed copies stay in the kill
+ring and are never automatically replayed when the phone reconnects. As with
+other remote writes, a lost reply or timeout can leave the remote result unknown.
+
+SSH avoids the terminal parser's size limit, but Android and receiving apps
+still impose their own clipboard constraints. A successful command exit is not
+a guarantee that every destination app will accept a large paste. This fallback
+is triggered by size only; it cannot detect silent OSC 52 rejection by tmux or
+the terminal, so the tmux configuration below is still required for small copies.
+
 ## Existing support
 
 Emacs ships OSC 52 support in `term/xterm.el` (available since Emacs 25).
@@ -53,7 +93,9 @@ extra configuration.
 Regression checks: `emacs --batch -Q -l tests/night-mobile-clipboard-test.el`.
 Tests capture native OSC 52 output rather than touching a real clipboard and
 cover Unicode, newlines, frame isolation, append behavior, byte limits, errors,
-and existing whitespace policy.
+existing whitespace policy, positive/negative cache expiration and clearing,
+ordered copies, real UTF-8 pipe delivery, and process deadlines. SSH process
+tests use local stand-ins and do not overwrite a device clipboard.
 
 ## Sources
 

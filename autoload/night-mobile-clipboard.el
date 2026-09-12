@@ -2,6 +2,9 @@
 
 (require 'term/xterm)
 (require 'select)
+(load (expand-file-name "night-mobile-clipboard-ssh.el"
+                        (file-name-directory (or load-file-name buffer-file-name)))
+      nil t)
 
 (defcustom night/mobile-clipboard-max-bytes 6000
   "Maximum UTF-8 bytes copied from a mobile frame through OSC 52.
@@ -17,6 +20,17 @@ Increase this only when the terminal and every multiplexer support it."
        (frame-parameter nil 'night/mobile)))
 
 (defun night/mobile-clipboard-cut (text)
+  "Copy TEXT through OSC 52, with opt-in SSH fallback for oversized text.
+The frame parameter `night/clipboard-ssh-host' selects a host alias from the
+daemon host's SSH configuration.  Unmarked mobile frames remain OSC 52 only."
+  (when (night/mobile-clipboard-frame-p)
+    (let ((host (frame-parameter nil 'night/clipboard-ssh-host)))
+      (cond
+       ((and (stringp host) (string-match-p "\\`[[:alnum:]_][[:alnum:]_.-]*\\'" host))
+        (night/h-mobile-clipboard-ssh-enqueue :host host :text text))
+       (t (night/h-mobile-clipboard-osc52-cut text))))))
+
+(defun night/h-mobile-clipboard-osc52-cut (text)
   "Copy TEXT through the selected mobile terminal using native OSC 52.
 Do not forward to the daemon host's clipboard.  OSC 52 has no write
 acknowledgement: a successful send cannot prove the terminal accepted it."

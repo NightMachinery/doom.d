@@ -62,6 +62,7 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 ** Mobile line numbers
 *** =emc-mobile= hides line numbers in marked terminal frames except at the final line; desktop buffer settings are preserved. See =docs/mobile-line-numbers.md=.
 *** Copies from those frames use native OSC 52 to reach the terminal client's clipboard. See =docs/mobile-clipboard.md= for the 6000-byte default limit and tmux setup.
+*** =emc-tealy= and =emc-tealy-tmux= send oversized copies through SSH, with 15-minute successful readiness caching and 30-second failure caching. Clear it with =emc-tealy-cache-clear= or =M-x night/mobile-clipboard-cache-clear=.
 ** Yasnippet
 *** Stale active field state
 **** See [[file:docs/yasnippet.md][docs/yasnippet.md]].
