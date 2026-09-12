@@ -30,6 +30,15 @@ The next oversized copy checks readiness again."
     (message "Mobile clipboard SSH readiness cache cleared"))
   t)
 
+(defun night/mobile-clipboard-tealy-cache-clear ()
+  "Forget only the tealy SSH clipboard readiness entry.
+Like `night/mobile-clipboard-cache-clear', leave in-flight work running."
+  (interactive)
+  (night/mobile-clipboard-cache-clear "tealy")
+  (when (called-interactively-p 'interactive)
+    (message "Mobile clipboard SSH readiness cache cleared for tealy"))
+  t)
+
 (defun night/h-mobile-clipboard-ssh-ready (host)
   "Return ready, down, or nil for an expired/missing HOST cache entry."
   (let ((entry (gethash host night/h-mobile-clipboard-ssh-cache)))

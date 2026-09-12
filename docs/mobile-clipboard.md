@@ -36,7 +36,9 @@ Small copies need no SSH check. A cached success never guarantees the phone is
 still reachable; every transfer's exit status is checked.
 
 `M-x night/mobile-clipboard-cache-clear` clears all readiness entries in the
-current Emacs daemon. `emc-tealy-cache-clear` clears the `tealy` entry, honoring
+current Emacs daemon. `M-x night/mobile-clipboard-tealy-cache-clear` clears only
+the `tealy` entry, preserving other hosts' cached readiness.
+The shell command `emc-tealy-cache-clear` clears the same entry, honoring
 the mobile launcher's dedicated-daemon setting. From Lisp, pass a host alias
 to `night/mobile-clipboard-cache-clear` to clear just that entry. The cache is
 memory-only and separate for each daemon. Clearing does not cancel in-flight

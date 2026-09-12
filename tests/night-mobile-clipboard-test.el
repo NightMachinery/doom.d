@@ -157,6 +157,16 @@
    (night/mobile-clipboard-cache-clear)
    (should (= (hash-table-count night/h-mobile-clipboard-ssh-cache) 0))))
 
+(ert-deftest mobile-clipboard-tealy-cache-clear-is-scoped ()
+  (mobile-clipboard-test-with-ssh
+   (night/h-mobile-clipboard-ssh-cache-put :host "tealy" :ready t)
+   (night/h-mobile-clipboard-ssh-cache-put :host "other" :ready t)
+   (should (commandp #'night/mobile-clipboard-tealy-cache-clear))
+   (should (call-interactively #'night/mobile-clipboard-tealy-cache-clear))
+   (should-not (night/h-mobile-clipboard-ssh-ready "tealy"))
+   (should (eq (night/h-mobile-clipboard-ssh-ready "other") 'ready))
+   (should (night/mobile-clipboard-tealy-cache-clear))))
+
 (ert-deftest mobile-clipboard-ssh-failure-releases-new-small-copy ()
   (mobile-clipboard-test-with-ssh
    (night/h-mobile-clipboard-ssh-enqueue :host "phone" :text "large first")
