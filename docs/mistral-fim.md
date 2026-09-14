@@ -105,7 +105,9 @@ A request is asynchronous and usually takes a fraction of a second, but on a
 slow link it can take long enough that "nothing happened" is indistinguishable
 from "it failed". Two things say otherwise:
 
-- The echo area says `FIM: requesting codestral-latest…`.
+- The echo area says `FIM: requesting codestral-latest (nearby)…`, naming
+  the scope as well as the model, so a narrowed buffer says so on every
+  call rather than only when you set it.
 - A `⋯` in the `shadow` face sits at the insertion point. This is the part the
   echo area cannot do: it marks *where* the completion will land, and it
   survives any other package writing a message over yours.
@@ -122,6 +124,10 @@ Every terminal path reports, with the elapsed time:
 - `FIM: buffer is read-only, not inserting`
 - `FIM: buffer gone, discarded completion` — the buffer was killed mid-request
 - `FIM: aborted` — cancelled by `C-g`
+- `FIM: declined` — the scope chooser was cancelled
+- ``FIM: no `subtree' here; not widening`` — the scope in force does not
+  resolve at point. It refuses rather than falling back to something wider.
+- ``FIM: `block' leaves no context here`` — it resolved, but to nothing
 - `FIM: no API key for deepseek` — reported before any request is sent, rather
   than shipping `Bearer nil` and reading back a 401
 - `FIM: HTTP 401 — Authentication Fails, Your api key: ****-key is invalid` —
