@@ -53,6 +53,12 @@
   ;; (define-key input-decode-map "\e[27;33;107~" [?\s-k])
   (define-key input-decode-map "\e[27;33;44~" [?\s-,])
   ;; @GPT4 The issue is with the `[s-,]` part. The correct syntax for a key sequence in Emacs Lisp is a vector of symbols or characters, not a list. You should use a vector instead of a list, =[?\s-,]=.
+;;; Adding cmd + alt modified keys:
+  ;; 35 = 1 + 2 (alt) + 32 (cmd), following the cmd = 32 convention the loop
+  ;; above uses; 46 is `.'.  Kitty emits this for alt+cmd+. -- see
+  ;; ~/scripts/configFiles/kitty/kitty.conf.  Its own CSI-u form ("\e[46;11u")
+  ;; is a different encoding that nothing here decodes.
+  (define-key input-decode-map "\e[27;35;46~" (kbd "M-s-."))
 ;;; Adding Shift modified keys:
   (define-key input-decode-map "\e[27;2;32~" [?\S- ])
 ;;; Adding Control modified keys:
