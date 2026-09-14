@@ -5,10 +5,15 @@ and to `leader . ,`) sends the text around point to a fill-in-the-middle
 endpoint and inserts the completion at point. One keystroke, one line, no
 preview step.
 
+How much text "around point" means is the **Scope**, and `alt+cmd+.` is the
+same thing restricted to the current heading.
+
 Everything lives in `autoload/night-mistral-fim.el` (the filename predates
 multi-provider support). `night/fim-get` is the transport layer;
 `night/fim-insert-at-point` is the command; `night/h-fim-insert-result` does the
-insertion and the highlight.
+insertion and the highlight. The keys are in `autoload/night-ellama.el`, and
+the terminal decoding for `alt+cmd+.` in `night-doom-keybindings.el` with its
+kitty half in `~/scripts/configFiles/kitty/kitty.conf`.
 
 There is a zsh twin on `alt+.`, `fim-get` in
 `~/scripts/zshlang/auto-load/others/fim.zsh`, documented at
@@ -190,7 +195,73 @@ Consequences:
 - `night/fim-verbose`, default `t`.
 - `night/fim-timeout`, default 20 seconds.
 - `night/fim-strip-leading-space`, default `nil`. See below.
+- `night/fim-scope`, default `nearby`, and `night/fim-flash-context`, default
+  `t`. See **Scope**.
 - `night/fim-path-policy`. See **What it refuses to complete**.
+
+## Scope: how much it is allowed to read
+
+A completion sends the text around point. A *scope* narrows which text that
+may be, independently of the privacy policy below:
+
+- `nearby` — the ±1000 char window described under **Options**. The default,
+  and what FIM always did before.
+- `block` — the enclosing block. In `org-mode` the Org block around point
+  (`src`, `example`, `quote` and the rest); anywhere else, the enclosing
+  defun.
+- `subtree` — the current heading and its children. `org-mode` only.
+
+What is actually sent is the scope **intersected with** the `nearby` window. A
+scope only ever narrows; it cannot buy a bigger budget than
+`night/ellama--code-context-before-fast` allows.
+
+`night/fim-scope` sets it everywhere, `night/fim--scope-local` per buffer, and
+an explicit `:scope` for one call; each overrides the one before it. Only
+`night/fim-scope-select` (`leader . o`, this buffer) and
+`night/fim-scope-select-global` (`leader . O`) ever write those two. Nothing
+else does — not the chooser, not the per-scope commands, not the privacy
+prompt — so what a keystroke sends never changes behind your back.
+`night/fim-scope-show` (`leader . C-o`) reports all three.
+
+One-shot commands, which read that much regardless of the buffer's scope:
+`night/fim-insert-in-block` (`leader . b`), `night/fim-insert-in-subtree`
+(`leader . h`, and `alt+cmd+.`), `night/fim-insert-nearby` (`leader . n`), and
+`night/fim-insert-choose` (`leader . C-,`), which asks.
+
+A scope that does not resolve — `subtree` outside `org-mode`, `block` with
+point in neither a block nor a defun — **refuses**. It does not quietly fall
+back to something wider. Widening in silence is the single failure this whole
+mechanism exists to prevent, and it is the failure you would never notice.
+
+### Choosing one, and seeing it
+
+The chooser highlights every candidate *at once*, in three nested faces, and
+then takes a single keypress.
+
+That works because the candidates nest: `block ∩ window` sits inside
+`subtree ∩ window` sits inside `window`. One rendering therefore answers all
+three questions, where previewing one at a time would show strictly less for
+strictly more keystrokes. `night/fim-scope-block-face` is the strongest of the
+three and has the highest overlay priority, so the innermost region wins where
+they overlap.
+
+The sizes are in the prompt as well as on screen, because a subtree is
+routinely taller than the window: the highlight alone would quietly
+under-report what is about to leave the machine.
+
+Overlays are removed in an `unwind-protect`, so aborting the prompt cannot
+leave the buffer painted, and they are registered in `night/active-overlays`
+so `C-g` is a second net under that.
+
+The regions are deliberately *not* split into prefix and suffix halves. Six
+faces is unreadable, and the cursor already marks where the split falls.
+
+### Flashing what went
+
+`night/fim-flash-context` (default `t`) flashes the region that was actually
+sent, in the scope's own face, so the colour matches whatever the chooser
+showed when you picked it. Every command that sends does it, in every buffer,
+not only the ones the policy asks about.
 
 ## What it refuses to complete
 
@@ -204,7 +275,8 @@ per buffer, whether a completion may run at all. Its default:
      ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
      ("/\\.netrc\\Z"             . refuse)
      ("/\\.ssh/"                 . refuse)
-     ("\\A/private/(tmp|var)/"    . allow)
+     ("\\A/private/(tmp|var)/"   . allow)
+     ("/notes/private/research/" . allow)
      ("/private/"                . confirm))
 
 Each rule pairs a matcher with a level. A matcher is a PCRE, or a symbol
@@ -227,10 +299,26 @@ truename and would otherwise ask on every scratch file. A negative lookahead
 would have been the obvious fix elsewhere; Emacs regexps have none, and
 ordering does the job instead.
 
-A `confirm` answered yes is remembered in `night/fim--path-confirmed` for as
-long as that buffer lives, so working inside a private tree asks once per file
-rather than once per keystroke. It is buffer-local and never persisted, so
-killing and revisiting the file asks again.
+A `confirm` raises the scope chooser rather than a yes/no question, so the
+answer to "may I send this?" can be "only this block". Cancelling declines, as
+a `no` did.
+
+What it remembers is the scope you approved at, not a bare yes —
+`night/fim--path-confirmed`. A later completion in that buffer goes through
+unasked while its scope is no wider (`block` < `subtree` < `nearby`); a wider
+one asks again. Without that, approving `block` once and then pressing `M-.`
+would hit the remembered approval and fall through to the buffer's own scope,
+usually `nearby` — consent for a block silently spent on the whole window.
+Recording the scope is not the same as *setting* it: this never feeds
+`night/h-fim--scope-effective`, so the rule that only the selectors change a
+scope still holds.
+
+It stays buffer-local and is never persisted, so killing and revisiting the
+file asks again.
+
+An explicit scoped command — `alt+cmd+.` and friends — is its own consent and
+is not prompted at all: it already named what it sends. A `refuse` rule still
+refuses it.
 
 There is nothing that overrides a `refuse`. That matches the Hammerspoon twin,
 whose Secure Input check offers no way through either.
