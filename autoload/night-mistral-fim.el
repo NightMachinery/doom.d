@@ -364,7 +364,7 @@ aborts the previous one, as does `C-g'."
       (unless scope
         (cl-return-from night/fim-insert-at-point nil))
       (let ((context-bounds
-             (night/h-llm--narrow (night/h-llm-code-context-bounds point)
+             (night/h-llm--narrow (night/llm-context-bounds :pos point)
                                   :scope scope :pos point :label "FIM"
                                   :report-error #'night/h-fim--report-error)))
         (unless context-bounds

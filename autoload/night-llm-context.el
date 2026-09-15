@@ -244,7 +244,7 @@ Each maps to a function of one argument, the buffer to judge.")
 
 `nearby' resolves to the whole accessible buffer, so that a caller can
 intersect unconditionally; the real limit on it is the context window,
-which `night/h-llm-code-context-bounds' applies separately.
+which `night/llm-context-bounds' applies separately.
 
 Bounds that do not contain POS count as no resolution, so that a caller
 can never end up widening by accident."
@@ -324,7 +324,7 @@ with the context window -- or nil where the scope does not resolve here.
 Scopes that do not resolve are dropped unless ALL, which the selectors
 want: you may well be setting `subtree' from a spot that has none yet."
   (let* ((pos (or pos (point)))
-         (window (night/h-llm-code-context-bounds pos)))
+         (window (night/llm-context-bounds :pos pos)))
     (delq nil
           (mapcar
            (lambda (entry)
@@ -509,25 +509,52 @@ Buffers with their own `night/llm--scope-local' keep it."
     (setq night/llm-scope scope)
     (night/llm-scope-show)))
 
-(defun night/h-llm-code-context-bounds (point)
-  "Return (prefix-start . suffix-end) for the context around POINT."
-  (let* ((before-point (max (point-min) (- point night/llm-context-before-fast)))
-         (after-point (min (point-max) (+ point night/llm-context-after-fast)))
-         (start-of-line-before (save-excursion
-                                 (goto-char before-point)
-                                 (forward-line 0)
-                                 (point)))
-         (end-of-line-after (save-excursion
-                              (goto-char after-point)
-                              (end-of-line)
-                              (point)))
-         (prefix-start (if (> (- start-of-line-before before-point) night/llm-context-line-tol)
-                           before-point
-                         start-of-line-before))
-         (suffix-end (if (> (- after-point end-of-line-after) night/llm-context-line-tol)
-                         after-point
-                       end-of-line-after)))
-    (cons prefix-start suffix-end)))
+(defun night/h-llm--snap (pos boundary-fn tol)
+  "Round POS out to the line boundary BOUNDARY-FN gives, if that is cheap.
+
+BOUNDARY-FN is `line-beginning-position' or `line-end-position'.  The
+cost is how many characters rounding adds to the window; above TOL, POS
+is left where it is.
+
+The comparison used to be written the other way round, subtracting the
+boundary from POS for the start of the window, where the difference is
+never positive.  The test could not fire, so the window always rounded
+out no matter how long the line was -- the opposite of what TOL is for."
+  (let ((snapped (save-excursion (goto-char pos) (funcall boundary-fn))))
+    (cond
+     ((<= (abs (- snapped pos)) tol) snapped)
+     (t pos))))
+
+(cl-defun night/llm-context-bounds (&key (pos nil) (before nil) (after nil)
+                                         (line-tol nil))
+  "Return (BEG . END) for the context window around POS.
+
+BEFORE and AFTER are character budgets either side of POS, defaulting to
+`night/llm-context-before-fast' and `night/llm-context-after-fast'.  A
+budget of 0 pins that side to POS exactly, which is what the commands
+that send only a prefix want -- rounding out there would reach past point
+and hand the model the answer.
+
+The window is rounded out to whole lines when that costs at most LINE-TOL
+characters (`night/llm-context-line-tol'), so a model is not handed half
+a token, and one very long line cannot drag in far more than was asked
+for.
+
+Scope narrowing is not done here; see `night/h-llm--narrow', which also
+reports when a scope fails to resolve."
+  (let* ((pos (or pos (point)))
+         (before (or before night/llm-context-before-fast))
+         (after (or after night/llm-context-after-fast))
+         (line-tol (or line-tol night/llm-context-line-tol))
+         (raw-beg (max (point-min) (- pos before)))
+         (raw-end (min (point-max) (+ pos after))))
+    (cons
+     (cond
+      ((> before 0) (night/h-llm--snap raw-beg #'line-beginning-position line-tol))
+      (t raw-beg))
+     (cond
+      ((> after 0) (night/h-llm--snap raw-end #'line-end-position line-tol))
+      (t raw-end)))))
 ;;;
 ;; These were all spelled `night/fim-*' while this machinery served only the
 ;; FIM commands.  It governs every model-facing command now, so the name would

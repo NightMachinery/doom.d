@@ -473,9 +473,10 @@ the scope."
                (regionp (region-active-p))
                (window (cond
                         (regionp (cons (region-beginning) (region-end)))
-                        (t (cons (max (- point-pos night/llm-context-before)
-                                      (point-min))
-                                 point-pos))))
+                        (t (night/llm-context-bounds
+                            :pos point-pos
+                            :before night/llm-context-before
+                            :after 0))))
                (bounds (cond
                         (regionp window)
                         (t (night/h-llm--narrow window :scope scope
@@ -506,9 +507,10 @@ the scope."
                (regionp (region-active-p))
                (window (cond
                         (regionp (cons (region-beginning) (region-end)))
-                        (t (cons (max (- point-pos night/llm-context-before)
-                                      (point-min))
-                                 point-pos))))
+                        (t (night/llm-context-bounds
+                            :pos point-pos
+                            :before night/llm-context-before
+                            :after 0))))
                ;; A region you selected says what to send more precisely than
                ;; any default scope could, so it wins outright.
                (bounds (cond
@@ -562,8 +564,9 @@ scope, and only where `night/llm-path-policy' allows it."
                (point-pos (point))
                (bounds
                 (night/h-llm--narrow
-                 (cons (max (- point-pos night/llm-context-before) (point-min))
-                       (min (+ point-pos night/llm-context-after) (point-max)))
+                 (night/llm-context-bounds :pos point-pos
+                                           :before night/llm-context-before
+                                           :after night/llm-context-after)
                  :scope scope :pos point-pos :label "ellama")))
           (unless bounds
             (cl-return-from night/ellama-code-fill-in-the-middle nil))
