@@ -488,6 +488,7 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
     (let* (
            (verbose-p current-prefix-arg)
            (done-mode "rm-marker")
+           (model-name (night/ellama-provider-current-name))
            (point-pos (point))
            (beg (if (region-active-p)
                     (region-beginning)
@@ -510,6 +511,7 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         full-text)
        :filter (apply-partially
                 #'night/ellama--code-filter
+                model-name
                 verbose-p
                 content-before-marker
                 content-after-marker)
