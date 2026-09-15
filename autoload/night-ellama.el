@@ -12,7 +12,7 @@
 
 (setopt ellama-language "English")
 ;; language you want ellama to translate to
-(after! (night-openai)
+(after! (night-openai night-llm-context)
 ;;;
   ;; * Ellama Providers
   (defun night/ellama-provider-current-name ()
@@ -210,17 +210,6 @@
   (defvar night/ellama--code-suffix
     (rx (minimal-match
          (literal "```") (zero-or-more anything))))
-
-  (defvar night/ellama--code-context-before 10000
-    "Number of characters before the point to include as context.")
-  (defvar night/ellama--code-context-after 10000
-    "Number of characters before the point to include as context.")
-  (defvar night/ellama--code-context-before-fast 1000
-    "Number of characters before the point to include as context.")
-  (defvar night/ellama--code-context-after-fast 1000
-    "Number of characters after the point to include as context.")
-  (defvar night/ellama--code-context-line-tol 200
-    "The context will be at line boundaries, unless doing so adds more than the given budget of characters to the prompt.")
 
   (defvar night/ellama--code-dup-lines-before 20)
   (defvar night/ellama--code-dup-lines-after 20)
@@ -474,7 +463,7 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
     (let* ((beg (if (region-active-p)
 		    (region-beginning)
 		  (max
-                   (- (point) night/ellama--code-context-before)
+                   (- (point) night/llm-context-before)
                    (point-min))))
 	   (end (if (region-active-p)
 		    (region-end)
@@ -492,7 +481,7 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
            (point-pos (point))
            (beg (if (region-active-p)
                     (region-beginning)
-                  (max (- point-pos night/ellama--code-context-before) (point-min))))
+                  (max (- point-pos night/llm-context-before) (point-min))))
            (end (if (region-active-p)
                     (region-end)
                   point-pos))
@@ -529,8 +518,8 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
            (done-mode "rm-marker")
            (model-name (night/ellama-provider-current-name))
            (point-pos (point))
-           (beg (max (- point-pos night/ellama--code-context-before) (point-min)))
-           (end (min (+ point-pos night/ellama--code-context-after) (point-max)))
+           (beg (max (- point-pos night/llm-context-before) (point-min)))
+           (end (min (+ point-pos night/llm-context-after) (point-max)))
            (content-before-marker
             (cond
              ((and nil (s-contains-p "claude" model-name t))
@@ -692,9 +681,9 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
         ;; scOpe.  Lowercase here, uppercase everywhere, control to read it
         ;; back; `s' would have been the obvious letter but `ellama-command-map'
         ;; has it.
-        ". o" #'night/fim-scope-select
-        ". O" #'night/fim-scope-select-global
-        ". C-o" #'night/fim-scope-show
+        ". o" #'night/llm-scope-select
+        ". O" #'night/llm-scope-select-global
+        ". C-o" #'night/llm-scope-show
         )
   (map!
    :ngi

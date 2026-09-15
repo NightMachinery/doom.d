@@ -366,7 +366,7 @@
 (package! nerd-icons)
 ;;;
 ;; Reads PCRE, which `night/pcre-to-regexp' converts for the pattern lists that
-;; are meant to be edited by hand, such as `night/fim-path-policy'.
+;; are meant to be edited by hand, such as `night/llm-path-policy'.
 (package! pcre2el)
 ;;;
 (disable-packages!

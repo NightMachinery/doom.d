@@ -1,6 +1,6 @@
 ;;; autoload/night-mistral-fim.el -*- lexical-binding: t; -*-
 
-(after! (night-openai night/ellama)
+(after! (night-openai night/ellama night-llm-context)
   (require 'plz)
   (require 'json)
 
@@ -102,373 +102,6 @@ deleted, because a later model may well go back to prepending one."
     :group 'night)
 
 ;;;
-  (defcustom night/fim-scope 'nearby
-    "Region a FIM completion may read, everywhere.
-
-FIM sends the text around point to a third-party API.  A scope narrows
-what it is allowed to look at:
-
-  `nearby'   the text around point, bounded by
-             `night/ellama--code-context-before-fast' and its -after- twin.
-  `block'    the enclosing block: an Org block in `org-mode', the
-             enclosing defun anywhere else.
-  `subtree'  the current heading and its children.  `org-mode' only.
-
-What is sent is always the scope INTERSECTED with the `nearby' window: a
-scope narrows, it never buys a bigger budget.
-
-`night/fim--scope-local' overrides this per buffer, and an explicit
-`:scope' overrides both for one call.  Nothing writes either of these two
-except `night/fim-scope-select' and `night/fim-scope-select-global'."
-    :type '(choice (const nearby) (const block) (const subtree))
-    :group 'night)
-
-  (defvar-local night/fim--scope-local nil
-    "Buffer-local override of `night/fim-scope', or nil to inherit it.
-Set only by `night/fim-scope-select'.  Never persisted.")
-
-  (defcustom night/fim-flash-context t
-    "When non-nil, flash the region a FIM completion actually sent.
-
-Shown in the scope's own face, so the colour matches what the chooser
-highlighted when you picked it.  Applies in every buffer, not only the
-ones `night/fim-path-policy' asks about."
-    :type 'boolean
-    :group 'night)
-
-;;;
-  ;; Backgrounds rather than foregrounds, because these mark an extent
-  ;; rather than a token, and `:extend' so a multi-line region reads as a
-  ;; block instead of a ragged right edge.
-  (night/defface night/fim-scope-nearby-face
-    '((((background dark))  (:background "#2b2b3b" :extend t))
-      (((background light)) (:background "#ecedf7" :extend t)))
-    "Face for the `nearby' FIM scope, the widest of the three.")
-
-  (night/defface night/fim-scope-subtree-face
-    '((((background dark))  (:background "#343a52" :extend t))
-      (((background light)) (:background "#dee4f6" :extend t)))
-    "Face for the `subtree' FIM scope.")
-
-  (night/defface night/fim-scope-block-face
-    '((((background dark))  (:background "#414c73" :extend t))
-      (((background light)) (:background "#ccd7f3" :extend t)))
-    "Face for the `block' FIM scope, the narrowest of the three.")
-
-  (defvar night/h-fim-scopes
-    '((block   :rank 0 :char ?b :face night/fim-scope-block-face
-               :desc "the Org block, or defun, around point")
-      (subtree :rank 1 :char ?s :face night/fim-scope-subtree-face
-               :desc "the current heading and its children")
-      (nearby  :rank 2 :char ?n :face night/fim-scope-nearby-face
-               :desc "the text around point, as before"))
-    "The FIM scopes, narrowest first.
-
-:rank orders them by width, which is what lets a confirmation granted for
-one scope cover a narrower one without covering a wider one.  :char is
-the key in the chooser, :face the highlight, :desc the one-line gloss.")
-
-  (defun night/h-fim--scope-get (scope key)
-    "Return KEY of SCOPE in `night/h-fim-scopes'."
-    (plist-get (alist-get scope night/h-fim-scopes) key))
-
-  (defun night/h-fim--scope-rank (scope)
-    "Return how wide SCOPE is; bigger is wider.
-An unknown scope ranks widest, so that it never passes for consent that
-was granted to something narrower."
-    (or (night/h-fim--scope-get scope :rank) most-positive-fixnum))
-
-  (defun night/h-fim--scope-effective ()
-    "Return the FIM scope in force in the current buffer."
-    (or night/fim--scope-local night/fim-scope))
-
-;;;
-  (defcustom night/fim-path-policy
-    '((encrypted                  . refuse)
-      ("/\\.keys/"                . refuse)
-      ("/\\.privateShell\\Z"      . refuse)
-      ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
-      ("/\\.netrc\\Z"             . refuse)
-      ("/\\.ssh/"                 . refuse)
-      ;; macOS resolves /tmp and /var into /private/, so without this the
-      ;; rule below would ask about every scratch file.
-      ("\\A/private/(tmp|var)/"    . allow)
-      ("/notes/private/research/"    . allow)
-      ("/private/"                . confirm))
-    "What FIM may do in a buffer, most specific rule first.
-
-FIM sends the text around point to a third-party API, so some buffers
-have no business being completed at all.  Each rule is a cons of a
-matcher and a level:
-
-  matcher  a PCRE, tested against both the buffer's file name and its
-           truename -- see `night/file-path-candidates' -- or a symbol
-           naming a predicate in `night/h-fim-policy-predicates'.
-  level    `refuse' declines and names the rule that said so;
-           `confirm' asks once per buffer; `allow' sends.
-
-The FIRST matching rule decides, which is what makes carve-outs
-expressible: an allow rule for \"/private/pub/\" placed above the
-confirm rule for \"/private/\" exempts that subtree.  That is equally
-the hazard -- a broad allow near the top silently disarms everything
-under it -- so keep the specific rules on top.  A buffer matching no
-rule is allowed, and a buffer visiting no file matches no PCRE rule.
-
-A matcher naming a predicate that does not exist refuses rather than
-being skipped: a typo here must not quietly widen the policy."
-    :type '(alist :key-type (choice (string :tag "PCRE")
-                                    (symbol :tag "Predicate"))
-                  :value-type (choice (const refuse)
-                                      (const confirm)
-                                      (const allow)))
-    :group 'night)
-
-  (defvar night/h-fim-policy-predicates
-    '((encrypted . night/buffer-encrypted-p))
-    "Symbols usable as matchers in `night/fim-path-policy'.
-Each maps to a function of one argument, the buffer to judge.")
-
-  (defun night/h-fim--scope-bounds (scope &optional pos)
-    "Return (BEG . END) for SCOPE around POS, or nil if none resolves there.
-
-`nearby' resolves to the whole accessible buffer, so that a caller can
-intersect unconditionally; the real limit on it is the context window,
-which `night/h-llm-code-context-bounds' applies separately.
-
-Bounds that do not contain POS count as no resolution, so that a caller
-can never end up widening by accident."
-    (let* ((pos (or pos (point)))
-           (bounds
-            (save-excursion
-              (goto-char pos)
-              (cond
-               ((eq scope 'nearby) (cons (point-min) (point-max)))
-               ((eq scope 'block)
-                (cond
-                 ((derived-mode-p 'org-mode)
-                  ;; Outer, not inner: the `#+begin_src python' line names the
-                  ;; language and header args, which materially helps the
-                  ;; completion and is inside the block being approved anyway.
-                  ;; Nil rather than a defun fallback if the text object is not
-                  ;; loaded -- `beginning-of-defun' means something unrelated in
-                  ;; Org, and guessing wide is the one thing a scope must not do.
-                  (when (fboundp 'night/evil-org-block-textobj--bounds)
-                    (night/evil-org-block-textobj--bounds t)))
-                 (t (bounds-of-thing-at-point 'defun))))
-               ((eq scope 'subtree)
-                (cond
-                 ((not (derived-mode-p 'org-mode)) nil)
-                 ((org-before-first-heading-p) nil)
-                 (t (cons (save-excursion (org-back-to-heading t) (point))
-                          (save-excursion (org-back-to-heading t)
-                                          (org-end-of-subtree t t)
-                                          (point))))))
-               (t nil)))))
-      (cond
-       ((null bounds) nil)
-       ((and (<= (car bounds) pos) (<= pos (cdr bounds))) bounds)
-       (t nil))))
-
-  (defun night/h-fim--clamp (bounds limit)
-    "Intersect BOUNDS with LIMIT, each a cons of buffer positions.
-A nil LIMIT clamps nothing."
-    (cond
-     ((null limit) bounds)
-     (t (cons (max (car bounds) (car limit))
-              (min (cdr bounds) (cdr limit))))))
-
-  (defun night/h-fim--size-string (n)
-    "Render N characters compactly enough for a prompt."
-    (cond
-     ((< n 1000) (format "%dc" n))
-     (t (format "%.1fk" (/ n 1000.0)))))
-
-;;;
-  (defun night/h-fim--overlay-clear (overlay)
-    "Delete OVERLAY and drop it from `night/active-overlays'."
-    (when (overlayp overlay)
-      (delete-overlay overlay)
-      (setq night/active-overlays (remove overlay night/active-overlays))))
-
-  (defun night/h-fim--preview-make (scope bounds)
-    "Highlight BOUNDS in SCOPE's face and return the overlay.
-
-The narrower scope takes the higher priority, so the nested highlights
-read innermost-first rather than whichever happened to be drawn last."
-    (let ((overlay (make-overlay (car bounds) (cdr bounds))))
-      (overlay-put overlay 'face (night/h-fim--scope-get scope :face))
-      (overlay-put overlay 'priority (- 100 (night/h-fim--scope-rank scope)))
-      ;; Registering here means `night/clear-overlays' (on `doom-escape-hook')
-      ;; is a second net under the `unwind-protect' that normally removes it.
-      (push overlay night/active-overlays)
-      overlay))
-
-  (cl-defun night/h-fim--scope-choices (&key (pos nil) (all nil))
-    "Return the FIM scopes at POS as an alist of (SCOPE . BOUNDS), narrowest first.
-
-BOUNDS is what that scope would actually send -- the scope intersected
-with the context window -- or nil where the scope does not resolve here.
-
-Scopes that do not resolve are dropped unless ALL, which the selectors
-want: you may well be setting `subtree' from a spot that has none yet."
-    (let* ((pos (or pos (point)))
-           (window (night/h-llm-code-context-bounds pos)))
-      (delq nil
-            (mapcar
-             (lambda (entry)
-               (let* ((scope (car entry))
-                      (bounds (night/h-fim--scope-bounds scope pos)))
-                 (cond
-                  (bounds (cons scope (night/h-fim--clamp window bounds)))
-                  (all (cons scope nil))
-                  (t nil))))
-             night/h-fim-scopes))))
-
-  (cl-defun night/h-fim--scope-choose (&key (prompt "FIM: send") (pos nil)
-                                            (all nil) (cancel t))
-    "Ask which FIM scope to use, highlighting every candidate while asking.
-
-All the candidates are highlighted at once rather than previewed one at a
-time.  They nest -- block within subtree within window -- so a single
-rendering answers all three questions, and the choice then costs one
-keypress instead of a walk through a list.
-
-Sizes go in the choice names because a subtree is routinely taller than
-the window, and the highlight alone would quietly under-report what is
-about to be sent.
-
-Return the chosen scope, or nil if cancelled."
-    (let* ((pos (or pos (point)))
-           (choices (night/h-fim--scope-choices :pos pos :all all))
-           (overlays nil))
-      (cond
-       ((null choices) nil)
-       (t
-        (unwind-protect
-            (let ((table
-                   (append
-                    (mapcar
-                     (lambda (choice)
-                       (let ((scope (car choice))
-                             (bounds (cdr choice)))
-                         (list (night/h-fim--scope-get scope :char)
-                               (cond
-                                (bounds
-                                 (format "%s %s" scope
-                                         (night/h-fim--size-string
-                                          (- (cdr bounds) (car bounds)))))
-                                (t (format "%s (none here)" scope)))
-                               (night/h-fim--scope-get scope :desc))))
-                     choices)
-                    (when cancel
-                      (list (list ?c "cancel" "send nothing"))))))
-              (dolist (choice choices)
-                (when (cdr choice)
-                  (push (night/h-fim--preview-make (car choice) (cdr choice))
-                        overlays)))
-              (let ((answer (car (read-multiple-choice prompt table))))
-                (car (cl-find-if
-                      (lambda (choice)
-                        (eq (night/h-fim--scope-get (car choice) :char) answer))
-                      choices))))
-          (mapc #'night/h-fim--overlay-clear overlays))))))
-
-;;;
-  (defvar-local night/fim--path-confirmed nil
-    "Scope a `confirm' rule was approved at in this buffer, or nil.
-
-The scope rather than a bare t, so that approving `block' does not
-silently become approval for `nearby' on the next keystroke.  A later
-call is covered while its scope is no wider than the one approved; a
-wider one asks again.
-
-Buffer-local and never persisted, so revisiting the file asks again.")
-
-  (defun night/h-fim--confirmed-p (scope)
-    "Non-nil if SCOPE is covered by this buffer's stored confirmation."
-    (and night/fim--path-confirmed
-         (<= (night/h-fim--scope-rank scope)
-             (night/h-fim--scope-rank night/fim--path-confirmed))))
-  (defun night/h-fim--policy-rule-match-p (rule paths buffer)
-    "Non-nil if RULE of `night/fim-path-policy' applies to BUFFER.
-
-PATHS is what `night/file-path-candidates' returned for it.  A symbol
-matcher with no entry in `night/h-fim-policy-predicates' counts as a
-match, so that `night/h-fim--gate' is the one that gets to refuse on it."
-    (let ((matcher (car rule)))
-      (if (stringp matcher)
-          (let ((regexp (night/pcre-to-regexp matcher)))
-            ;; A pattern that will not compile counts as a match, so that
-            ;; `night/h-fim--gate' refuses on it instead of walking past.
-            (or (null regexp)
-                (cl-some (lambda (path) (string-match-p regexp path)) paths)))
-        (let ((fn (alist-get matcher night/h-fim-policy-predicates)))
-          (if fn (funcall fn buffer) t)))))
-
-  (cl-defun night/h-fim--gate (&key (buffer nil) (scope nil))
-    "Decide whether FIM may run in BUFFER, per `night/fim-path-policy'.
-
-SCOPE, when non-nil, is a scope the caller asked for explicitly.  Naming
-what you send is consent enough for a `confirm' rule, so such a call is
-never prompted -- a `refuse' rule still refuses, as it refuses everything.
-With SCOPE nil the buffer's effective scope is used, and a `confirm' rule
-raises the chooser.
-
-Return a cons of an outcome and a value:
-
-  (ok    . SCOPE)   go ahead, reading no more than SCOPE
-  (info  . REASON)  declined; report quietly
-  (error . REASON)  refused; report as a failure
-
-This may prompt.  A `confirm' answered once is remembered for as long as
-the buffer lives, but only for scopes no wider than the one approved --
-see `night/fim--path-confirmed'."
-    (let* ((buffer (or buffer (current-buffer)))
-           (case-fold-search nil)
-           (explicit scope)
-           (wanted (or scope
-                       (with-current-buffer buffer
-                         (night/h-fim--scope-effective))))
-           (paths (night/file-path-candidates (buffer-file-name buffer)))
-           (rule (cl-find-if
-                  (lambda (rule)
-                    (night/h-fim--policy-rule-match-p rule paths buffer))
-                  night/fim-path-policy)))
-      (cond
-       ((null rule) (cons 'ok wanted))
-       (t
-        (let ((matcher (car rule))
-              (level (cdr rule)))
-          (cond
-           ((and (stringp matcher) (null (night/pcre-to-regexp matcher)))
-            (cons 'error (format "cannot read `%s' as a PCRE; refusing" matcher)))
-           ((and (not (stringp matcher))
-                 (not (alist-get matcher night/h-fim-policy-predicates)))
-            (cons 'error (format "`%s' names no predicate; refusing" matcher)))
-           ((eq level 'allow) (cons 'ok wanted))
-           ((eq level 'refuse)
-            (cons 'error (format "refused by `%s'" matcher)))
-           ((eq level 'confirm)
-            (with-current-buffer buffer
-              (cond
-               (explicit (cons 'ok wanted))
-               ((night/h-fim--confirmed-p wanted) (cons 'ok wanted))
-               (t
-                (let ((chosen
-                       (night/h-fim--scope-choose
-                        :prompt (format "FIM: %s matches `%s'; send"
-                                        (buffer-name buffer) matcher))))
-                  (cond
-                   ((null chosen) (cons 'info "declined"))
-                   (t
-                    ;; Records consent, not preference: this never feeds
-                    ;; `night/h-fim--scope-effective'.
-                    (setq night/fim--path-confirmed chosen)
-                    (cons 'ok chosen))))))))
-           (t
-            ;; Fail closed on a level nobody defined.
-            (cons 'error (format "unknown level `%s' in `%s'" level matcher)))))))))
-;;;
   (defvar night/fim--counter 0
     "Monotonic id source for FIM requests, used to detect stale replies.")
 
@@ -549,7 +182,7 @@ see `night/fim--path-confirmed'."
 
   (defun night/h-fim--ghost-clear (overlay)
     "Remove the pending-request indicator OVERLAY."
-    (night/h-fim--overlay-clear overlay))
+    (night/h-llm--overlay-clear overlay))
 
   (defun night/h-fim--claim (buffer id)
     "Return non-nil if request ID is still the pending one in BUFFER.
@@ -710,8 +343,8 @@ With a prefix argument, read the PROVIDER to use for this one call, without
 changing `night/fim-provider'.
 
 SCOPE limits what may be read, for this call only, overriding the
-buffer's own -- see `night/fim-scope'.  Naming it explicitly also stands
-in for the `confirm' prompt of `night/fim-path-policy': the caller has
+buffer's own -- see `night/llm-scope'.  Naming it explicitly also stands
+in for the `confirm' prompt of `night/llm-path-policy': the caller has
 already said what it sends.  With SCOPE nil the buffer's effective scope
 applies and a `confirm' rule asks.
 
@@ -724,7 +357,7 @@ aborts the previous one, as does `C-g'."
     ;; Ahead of `night/h-fim--cancel', so that a refused invocation cannot tear
     ;; down a request that is legitimately in flight.
     (let* ((point (or point (point)))
-           (verdict (night/h-fim--gate :scope scope))
+           (verdict (night/h-llm--gate :scope scope))
            (outcome (car verdict)))
       (unless (eq outcome 'ok)
         (cond
@@ -732,7 +365,7 @@ aborts the previous one, as does `C-g'."
          (t (night/h-fim--report-error "%s" (cdr verdict))))
         (cl-return-from night/fim-insert-at-point nil))
       (setq scope (cdr verdict))
-      (let ((scope-bounds (night/h-fim--scope-bounds scope point)))
+      (let ((scope-bounds (night/h-llm--scope-bounds scope point)))
         ;; A scope that no longer resolves refuses rather than falling back to
         ;; something wider.  Silently widening is the one failure this whole
         ;; mechanism exists to prevent.
@@ -744,7 +377,7 @@ aborts the previous one, as does `C-g'."
                (marker (copy-marker point))
                (name (or provider night/fim-provider))
                (model (or model (plist-get (night/h-fim--provider name) :model)))
-               (context-bounds (night/h-fim--clamp
+               (context-bounds (night/h-llm--clamp
                                 (night/h-llm-code-context-bounds point)
                                 scope-bounds))
                (prefix-start (car context-bounds))
@@ -766,9 +399,9 @@ aborts the previous one, as does `C-g'."
           (when (and (= prefix-start point) (= suffix-end point))
             (night/h-fim--report-error "`%s' leaves no context here" scope)
             (cl-return-from night/fim-insert-at-point nil))
-          (when night/fim-flash-context
+          (when night/llm-flash-context
             (night/flash-region prefix-start suffix-end
-                                :face (night/h-fim--scope-get scope :face)))
+                                :face (night/h-llm--scope-get scope :face)))
           (setq overlay (night/h-fim--ghost-make marker))
           ;; Claim the slot before the request, because a missing API key reports
           ;; synchronously and the guard has to recognise it as current.
@@ -819,61 +452,14 @@ enclosing defun."
 
   (defun night/fim-insert-choose ()
     "Choose a scope, each candidate highlighted, then complete within it.
-Chooses for this call only; use `night/fim-scope-select' to change what
+Chooses for this call only; use `night/llm-scope-select' to change what
 the buffer does by default."
     (interactive)
-    (let ((scope (night/h-fim--scope-choose :prompt "FIM: complete reading")))
+    (let ((scope (night/h-llm--scope-choose :prompt "FIM: complete reading")))
       (cond
        (scope (night/fim-insert-at-point :scope scope))
        (t (night/h-fim--report "cancelled")))))
 
-;;;
-  (defun night/fim-scope-show ()
-    "Echo the FIM scope in force here, and where it comes from."
-    (interactive)
-    (message "FIM scope: %s (buffer: %s, global: %s)"
-             (night/h-fim--scope-effective)
-             (or night/fim--scope-local "inherit")
-             night/fim-scope))
-
-  (defun night/fim-scope-select (scope)
-    "Make SCOPE the FIM scope for this buffer, overriding `night/fim-scope'."
-    (interactive
-     (list (night/h-fim--scope-choose :prompt "FIM scope in this buffer:"
-                                      :all t :cancel nil)))
-    (when scope
-      (setq night/fim--scope-local scope)
-      (night/fim-scope-show)))
-
-  (defun night/fim-scope-select-global (scope)
-    "Make SCOPE the default FIM scope everywhere.
-Buffers with their own `night/fim--scope-local' keep it."
-    (interactive
-     (list (night/h-fim--scope-choose :prompt "FIM scope everywhere:"
-                                      :all t :cancel nil)))
-    (when scope
-      (setq night/fim-scope scope)
-      (night/fim-scope-show)))
-
-  (defun night/h-llm-code-context-bounds (point)
-    "Return a cons cell (prefix-start . suffix-end) for the code context around POINT."
-    (let* ((before-point (max (point-min) (- point night/ellama--code-context-before-fast)))
-           (after-point (min (point-max) (+ point night/ellama--code-context-after-fast)))
-           (start-of-line-before (save-excursion
-                                   (goto-char before-point)
-                                   (forward-line 0)
-                                   (point)))
-           (end-of-line-after (save-excursion
-                                (goto-char after-point)
-                                (end-of-line)
-                                (point)))
-           (prefix-start (if (> (- start-of-line-before before-point) night/ellama--code-context-line-tol)
-                             before-point
-                           start-of-line-before))
-           (suffix-end (if (> (- after-point end-of-line-after) night/ellama--code-context-line-tol)
-                           after-point
-                         end-of-line-after)))
-      (cons prefix-start suffix-end)))
 
   (defun night/h-fim-insert-result (marker result &optional elapsed)
     "Insert RESULT at MARKER, highlight it, and report the outcome.

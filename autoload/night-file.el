@@ -67,7 +67,7 @@ Both FILE and its truename are tested, against
                       ;; treated as a match: `epa-file-name-regexp' below still
                       ;; catches the ordinary case, whereas calling every file
                       ;; encrypted would have `night/close-fileless-buffers'
-                      ;; kill the session.  `night/fim-path-policy' makes the
+                      ;; kill the session.  `night/llm-path-policy' makes the
                       ;; opposite choice, because there the cost is reversed.
                       (when-let ((regexp (night/pcre-to-regexp pattern)))
                         (string-match-p regexp path)))
