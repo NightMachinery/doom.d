@@ -356,30 +356,24 @@ aborts the previous one, as does `C-g'."
                    (list :provider (night/h-fim--read-provider))))
     ;; Ahead of `night/h-fim--cancel', so that a refused invocation cannot tear
     ;; down a request that is legitimately in flight.
-    (let* ((point (or point (point)))
-           (verdict (night/h-llm--gate :scope scope))
-           (outcome (car verdict)))
-      (unless (eq outcome 'ok)
-        (cond
-         ((eq outcome 'info) (night/h-fim--report "%s" (cdr verdict)))
-         (t (night/h-fim--report-error "%s" (cdr verdict))))
+    (let ((point (or point (point))))
+      (setq scope (night/h-llm--gate-scope
+                   :scope scope :label "FIM"
+                   :report #'night/h-fim--report
+                   :report-error #'night/h-fim--report-error))
+      (unless scope
         (cl-return-from night/fim-insert-at-point nil))
-      (setq scope (cdr verdict))
-      (let ((scope-bounds (night/h-llm--scope-bounds scope point)))
-        ;; A scope that no longer resolves refuses rather than falling back to
-        ;; something wider.  Silently widening is the one failure this whole
-        ;; mechanism exists to prevent.
-        (unless scope-bounds
-          (night/h-fim--report-error "no `%s' here; not widening" scope)
+      (let ((context-bounds
+             (night/h-llm--narrow (night/h-llm-code-context-bounds point)
+                                  :scope scope :pos point :label "FIM"
+                                  :report-error #'night/h-fim--report-error)))
+        (unless context-bounds
           (cl-return-from night/fim-insert-at-point nil))
         (night/h-fim--cancel :quiet t)
         (let* ((buffer (current-buffer))
                (marker (copy-marker point))
                (name (or provider night/fim-provider))
                (model (or model (plist-get (night/h-fim--provider name) :model)))
-               (context-bounds (night/h-llm--clamp
-                                (night/h-llm-code-context-bounds point)
-                                scope-bounds))
                (prefix-start (car context-bounds))
                (suffix-end (cdr context-bounds))
                (prefix (buffer-substring-no-properties prefix-start point))
@@ -399,9 +393,7 @@ aborts the previous one, as does `C-g'."
           (when (and (= prefix-start point) (= suffix-end point))
             (night/h-fim--report-error "`%s' leaves no context here" scope)
             (cl-return-from night/fim-insert-at-point nil))
-          (when night/llm-flash-context
-            (night/flash-region prefix-start suffix-end
-                                :face (night/h-llm--scope-get scope :face)))
+          (night/h-llm--flash (cons prefix-start suffix-end) scope)
           (setq overlay (night/h-fim--ghost-make marker))
           ;; Claim the slot before the request, because a missing API key reports
           ;; synchronously and the guard has to recognise it as current.

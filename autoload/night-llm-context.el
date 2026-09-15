@@ -24,6 +24,7 @@
 (defvar night/active-overlays)
 (declare-function night/file-path-candidates "night-file")
 (declare-function night/pcre-to-regexp "night-regex")
+(declare-function night/flash-region "night-ui")
 
 ;;;
 (define-obsolete-variable-alias 'night/fim-path-policy
@@ -137,6 +138,60 @@ was granted to something narrower."
 (defun night/h-llm--scope-effective ()
   "Return the context scope in force in the current buffer."
   (or night/llm--scope-local night/llm-scope))
+
+;;;
+(defun night/h-llm--say (fn label face fmt &rest args)
+  "Report FMT and ARGS about a refusal.
+
+FN, when given, is called like `message' and owns the formatting -- that
+is how FIM keeps its own \"FIM: \" prefix and its verbosity flag.
+Otherwise the text is prefixed with LABEL and shown in FACE."
+  (cond
+   (fn (apply fn fmt args))
+   (t (let ((text (format "%s: %s" label (apply #'format fmt args))))
+        (message "%s" (cond
+                       (face (propertize text 'face face))
+                       (t text)))))))
+
+(cl-defun night/h-llm--gate-scope (&key (scope nil) (buffer nil) (label "LLM")
+                                        (report nil) (report-error nil))
+  "Return the scope a command may read in BUFFER, or nil if it may not.
+
+Wraps `night/h-llm--gate' and reports the refusal itself, so that every
+caller is a single nil check rather than its own copy of the three-way
+verdict.  SCOPE, when non-nil, is an explicitly requested scope.  REPORT
+and REPORT-ERROR are passed to `night/h-llm--say'."
+  (let* ((verdict (night/h-llm--gate :buffer buffer :scope scope))
+         (outcome (car verdict)))
+    (cond
+     ((eq outcome 'ok) (cdr verdict))
+     ((eq outcome 'info)
+      (night/h-llm--say report label nil "%s" (cdr verdict))
+      nil)
+     (t
+      (night/h-llm--say report-error label 'error "%s" (cdr verdict))
+      nil))))
+
+(cl-defun night/h-llm--narrow (bounds &key (scope nil) (pos nil) (label "LLM")
+                                           (report-error nil))
+  "Return BOUNDS narrowed to SCOPE at POS, or nil after saying why not.
+
+BOUNDS is the caller's own window as (BEG . END).  A scope that does not
+resolve here refuses, rather than leaving BOUNDS unclamped: widening in
+silence is the one failure this whole mechanism exists to prevent."
+  (let ((limit (night/h-llm--scope-bounds scope pos)))
+    (cond
+     ((null limit)
+      (night/h-llm--say report-error label 'error
+                        "no `%s' here; not widening" scope)
+      nil)
+     (t (night/h-llm--clamp bounds limit)))))
+
+(defun night/h-llm--flash (bounds scope)
+  "Flash BOUNDS in SCOPE's face, if `night/llm-flash-context' says to."
+  (when (and night/llm-flash-context bounds)
+    (night/flash-region (car bounds) (cdr bounds)
+                        :face (night/h-llm--scope-get scope :face))))
 
 ;;;
 (defcustom night/llm-path-policy

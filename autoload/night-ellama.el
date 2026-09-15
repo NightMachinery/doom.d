@@ -457,101 +457,150 @@ POINT-POS defaults to current point, NUM-LINES defaults to 2."
     (night/h-get-lines point-pos num-lines 'after))
 ;;;
   (defun night/ellama-complete ()
-    "Complete text in current buffer."
+    "Complete text in current buffer.
+
+Reads the region when one is active, else `night/llm-context-before'
+characters back from point narrowed to the buffer's context scope, and
+only where `night/llm-path-policy' allows it.  An active region wins over
+the scope."
     ;; @upstreamBug [[id:d816b4e5-ce8f-4d0c-abd8-924c6ff79877][{Q/FR} "Legacy" Completion · Issue #45 · ahyatt/llm]]
     (interactive)
-    (let* ((beg (if (region-active-p)
-		    (region-beginning)
-		  (max
-                   (- (point) night/llm-context-before)
-                   (point-min))))
-	   (end (if (region-active-p)
-		    (region-end)
-		  (point)))
-	   (text (buffer-substring-no-properties beg end)))
-      (ellama-stream text)))
+    (cl-block night/ellama-complete
+      (let ((scope (night/h-llm--gate-scope :label "ellama")))
+        (unless scope
+          (cl-return-from night/ellama-complete nil))
+        (let* ((point-pos (point))
+               (regionp (region-active-p))
+               (window (cond
+                        (regionp (cons (region-beginning) (region-end)))
+                        (t (cons (max (- point-pos night/llm-context-before)
+                                      (point-min))
+                                 point-pos))))
+               (bounds (cond
+                        (regionp window)
+                        (t (night/h-llm--narrow window :scope scope
+                                                :pos point-pos
+                                                :label "ellama")))))
+          (unless bounds
+            (cl-return-from night/ellama-complete nil))
+          (night/h-llm--flash bounds scope)
+          (ellama-stream (buffer-substring-no-properties
+                          (car bounds) (cdr bounds)))))))
 ;;;
   (defun night/ellama-code-complete ()
-    "Complete selected code or code in current buffer."
+    "Complete selected code or code in current buffer.
+
+Reads the region when one is active, else `night/llm-context-before'
+characters back from point narrowed to the buffer's context scope, and
+only where `night/llm-path-policy' allows it.  An active region wins over
+the scope."
     (interactive)
-    (let* (
-           (verbose-p current-prefix-arg)
-           (done-mode "rm-marker")
-           (model-name (night/ellama-provider-current-name))
-           (point-pos (point))
-           (beg (if (region-active-p)
-                    (region-beginning)
-                  (max (- point-pos night/llm-context-before) (point-min))))
-           (end (if (region-active-p)
-                    (region-end)
-                  point-pos))
-           (content-before-marker
-            (night/h-get-lines-before-point point-pos night/ellama--code-dup-lines-before))
-           (content-after-marker
-            nil
-            )
-           (full-text (buffer-substring-no-properties beg end)))
-      (when (night/bool-smart night/ellama--marker-text)
-        (save-excursion
-          (insert (night/h-ellama-marker-comment-get))))
-      (ellama-stream
-       (format
-        night/ellama-code-complete-prompt-template
-        full-text)
-       :filter (apply-partially
-                #'night/ellama--code-filter
-                model-name
-                verbose-p
-                content-before-marker
-                content-after-marker)
-       :point point-pos
-       :on-done (lambda (response)
-                  (when (string= done-mode "rm-marker")
-                    (save-excursion
-                      (goto-char point-pos)
-                      (night/ellama-marker-rm)))))))
+    (cl-block night/ellama-code-complete
+      (let ((scope (night/h-llm--gate-scope :label "ellama")))
+        (unless scope
+          (cl-return-from night/ellama-code-complete nil))
+        (let* ((verbose-p current-prefix-arg)
+               (done-mode "rm-marker")
+               (model-name (night/ellama-provider-current-name))
+               (point-pos (point))
+               (regionp (region-active-p))
+               (window (cond
+                        (regionp (cons (region-beginning) (region-end)))
+                        (t (cons (max (- point-pos night/llm-context-before)
+                                      (point-min))
+                                 point-pos))))
+               ;; A region you selected says what to send more precisely than
+               ;; any default scope could, so it wins outright.
+               (bounds (cond
+                        (regionp window)
+                        (t (night/h-llm--narrow window :scope scope
+                                                :pos point-pos
+                                                :label "ellama")))))
+          (unless bounds
+            (cl-return-from night/ellama-code-complete nil))
+          (let ((content-before-marker
+                 (night/h-get-lines-before-point
+                  point-pos night/ellama--code-dup-lines-before))
+                (content-after-marker nil)
+                (full-text (buffer-substring-no-properties
+                            (car bounds) (cdr bounds))))
+            (night/h-llm--flash bounds scope)
+            (when (night/bool-smart night/ellama--marker-text)
+              (save-excursion
+                (insert (night/h-ellama-marker-comment-get))))
+            (ellama-stream
+             (format
+              night/ellama-code-complete-prompt-template
+              full-text)
+             :filter (apply-partially
+                      #'night/ellama--code-filter
+                      model-name
+                      verbose-p
+                      content-before-marker
+                      content-after-marker)
+             :point point-pos
+             :on-done (lambda (response)
+                        (when (string= done-mode "rm-marker")
+                          (save-excursion
+                            (goto-char point-pos)
+                            (night/ellama-marker-rm))))))))))
 ;;;
   (defun night/ellama-code-fill-in-the-middle ()
-    "Complete code around the point in the current buffer."
+    "Complete code around the point in the current buffer.
+
+Reads `night/llm-context-before' characters back and
+`night/llm-context-after' forward, narrowed to the buffer's context
+scope, and only where `night/llm-path-policy' allows it."
     (interactive)
-    (let* ((verbose-p current-prefix-arg)
-           (done-mode "rm-marker")
-           (model-name (night/ellama-provider-current-name))
-           (point-pos (point))
-           (beg (max (- point-pos night/llm-context-before) (point-min)))
-           (end (min (+ point-pos night/llm-context-after) (point-max)))
-           (content-before-marker
-            (cond
-             ((and nil (s-contains-p "claude" model-name t))
-              nil)
-             (t (night/h-get-lines-before-point point-pos night/ellama--code-dup-lines-before))))
-           (content-after-marker
-            (cond
-             ((and nil (s-contains-p "claude" model-name t))
-              nil)
-             (t (night/h-get-lines-after-point point-pos night/ellama--code-dup-lines-after))))
-           (text-before (buffer-substring-no-properties beg point-pos))
-           (text-after (buffer-substring-no-properties point-pos end))
-           (full-text (concat text-before night/ellama--complete-here-marker text-after)))
-      (when (>= (length night/ellama--marker-text) 1)
-        (save-excursion
-          (insert (night/h-ellama-marker-comment-get))))
-      (ellama-stream
-       (funcall
-        night/ellama-code-fill-in-the-middle-prompt-template
-        full-text)
-       :filter (apply-partially
-                #'night/ellama--code-filter
-                model-name
-                verbose-p
-                content-before-marker
-                content-after-marker)
-       :point point-pos
-       :on-done (lambda (response)
-                  (when (string= done-mode "rm-marker")
-                    (save-excursion
-                      (goto-char point-pos)
-                      (night/ellama-marker-rm)))))))
+    (cl-block night/ellama-code-fill-in-the-middle
+      (let ((scope (night/h-llm--gate-scope :label "ellama")))
+        (unless scope
+          (cl-return-from night/ellama-code-fill-in-the-middle nil))
+        (let* ((verbose-p current-prefix-arg)
+               (done-mode "rm-marker")
+               (model-name (night/ellama-provider-current-name))
+               (point-pos (point))
+               (bounds
+                (night/h-llm--narrow
+                 (cons (max (- point-pos night/llm-context-before) (point-min))
+                       (min (+ point-pos night/llm-context-after) (point-max)))
+                 :scope scope :pos point-pos :label "ellama")))
+          (unless bounds
+            (cl-return-from night/ellama-code-fill-in-the-middle nil))
+          (let* ((beg (car bounds))
+                 (end (cdr bounds))
+                 (content-before-marker
+                  (night/h-get-lines-before-point
+                   point-pos night/ellama--code-dup-lines-before))
+                 (content-after-marker
+                  (night/h-get-lines-after-point
+                   point-pos night/ellama--code-dup-lines-after))
+                 (text-before (buffer-substring-no-properties beg point-pos))
+                 (text-after (buffer-substring-no-properties point-pos end))
+                 (full-text (concat text-before
+                                    night/ellama--complete-here-marker
+                                    text-after)))
+            (night/h-llm--flash bounds scope)
+            ;; After the substrings above, which must not see the marker.
+            (when (night/bool-smart night/ellama--marker-text)
+              (save-excursion
+                (insert (night/h-ellama-marker-comment-get))))
+            (ellama-stream
+             (funcall
+              night/ellama-code-fill-in-the-middle-prompt-template
+              full-text)
+             :filter (apply-partially
+                      #'night/ellama--code-filter
+                      model-name
+                      verbose-p
+                      content-before-marker
+                      content-after-marker)
+             :point point-pos
+             :on-done (lambda (response)
+                        (when (string= done-mode "rm-marker")
+                          (save-excursion
+                            (goto-char point-pos)
+                            (night/ellama-marker-rm))))))))))
 
   (defun night/ellama--code-filter (model-name verbose-p content-before-marker content-after-marker text)
     "Filter code prefix/suffix and optionally duplicate code from TEXT."
