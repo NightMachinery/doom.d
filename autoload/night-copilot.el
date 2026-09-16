@@ -31,9 +31,29 @@
       (copilot-clear-overlay) t))
   (add-hook 'doom-escape-hook #'night/h-copilot-clear-overlay)
 ;;;
+  (defun night/h-copilot-active-p ()
+    "Non-nil if `copilot-mode' is actually running in this buffer.
+
+Not the same thing as the variable being set.  A file-local
+`copilot-mode: t' -- and that sits in `safe-local-variable-values' --
+sets the variable without running the minor mode body, so no hooks are
+installed and nothing is synced to the agent, while `bound-and-true-p'
+happily says yes.  What settles it is whether `copilot--mode-setup'
+actually put its hook on this buffer."
+    (and (bound-and-true-p copilot-mode)
+         (memq #'copilot--post-command post-command-hook)
+         t))
+
+  ;; The one private copilot symbol read here.  Say so at load if an upgrade
+  ;; renames it, rather than letting the predicate quietly answer nil forever.
+  (unless (fboundp 'copilot--post-command)
+    (display-warning
+     'night/copilot
+     "copilot--post-command is gone; night/h-copilot-active-p needs updating"))
+
   (defun night/copilot-ensure (&rest _)
     (interactive)
-    (unless (bound-and-true-p copilot-mode)
+    (unless (night/h-copilot-active-p)
       (copilot-mode 1)
       (night/copilot-overlay-disable)))
 
