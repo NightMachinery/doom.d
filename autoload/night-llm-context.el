@@ -25,6 +25,8 @@
 (declare-function night/file-path-candidates "night-file")
 (declare-function night/pcre-to-regexp "night-regex")
 (declare-function night/flash-region "night-ui")
+(declare-function outline-back-to-heading "outline")
+(declare-function outline-next-heading "outline")
 
 ;;;
 (defvar night/llm-context-before 10000
@@ -277,15 +279,57 @@ can never end up widening by accident."
                 ;; Org, and guessing wide is the one thing a scope must not do.
                 (when (fboundp 'night/evil-org-block-textobj--bounds)
                   (night/evil-org-block-textobj--bounds t)))
+               ((derived-mode-p 'markdown-mode)
+                ;; A fenced code block, outer again -- the ```python line is
+                ;; the same kind of hint as Org's `#+begin_src' header.
+                ;;
+                ;; No defun fallback here either.  Prose is the common case in
+                ;; a markdown buffer, `bounds-of-thing-at-point' would hand
+                ;; back a paragraph-ish region with no relationship to what the
+                ;; user approved, and point outside every fence must simply
+                ;; refuse.
+                ;;
+                ;; `markdown-get-enclosing-fenced-block-construct' reads the
+                ;; syntax properties markdown-mode propertizes lazily.  It
+                ;; resolved without forcing in every case probed, including a
+                ;; fresh temp buffer; `syntax-propertize' is insurance for a
+                ;; large buffer whose propertization has not reached point yet,
+                ;; and costs nothing where it already has.  `font-lock-ensure'
+                ;; would also work and is far more expensive.
+                (when (fboundp 'markdown-get-enclosing-fenced-block-construct)
+                  (syntax-propertize (point))
+                  (let ((fence (markdown-get-enclosing-fenced-block-construct)))
+                    (when fence (cons (car fence) (cadr fence))))))
                (t (bounds-of-thing-at-point 'defun))))
              ((eq scope 'subtree)
               (cond
-               ((not (derived-mode-p 'org-mode)) nil)
-               ((org-before-first-heading-p) nil)
-               (t (cons (save-excursion (org-back-to-heading t) (point))
+               ((derived-mode-p 'org-mode)
+                (if (org-before-first-heading-p)
+                    nil
+                  (cons (save-excursion (org-back-to-heading t) (point))
                         (save-excursion (org-back-to-heading t)
                                         (org-end-of-subtree t t)
-                                        (point))))))
+                                        (point)))))
+               ((derived-mode-p 'markdown-mode)
+                ;; Walk forward to the next heading of level <= this one, so
+                ;; children are included.  `markdown-outline-next' stops at the
+                ;; next heading of *any* level and would cut them off -- the
+                ;; same mistake `night/org-heading-region-get' makes, which is
+                ;; why the Org arm above does not use it either.
+                ;;
+                ;; `outline-back-to-heading' signals before the first heading
+                ;; rather than returning nil, and that is the ordinary case in
+                ;; a markdown file that opens with prose, so it is caught
+                ;; rather than pre-tested.
+                (when (ignore-errors (outline-back-to-heading t) t)
+                  (let ((beg (point))
+                        (level (funcall outline-level)))
+                    (outline-next-heading)
+                    (while (and (not (eobp))
+                                (> (funcall outline-level) level))
+                      (outline-next-heading))
+                    (cons beg (point)))))
+               (t nil)))
              (t nil)))))
     (cond
      ((null bounds) nil)

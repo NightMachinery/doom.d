@@ -66,9 +66,10 @@ may be, independently of the privacy policy below:
 - `nearby` — the ±1000 char window described under **Options**. The default,
   and what FIM always did before.
 - `block` — the enclosing block. In `org-mode` the Org block around point
-  (`src`, `example`, `quote` and the rest); anywhere else, the enclosing
-  defun.
-- `subtree` — the current heading and its children. `org-mode` only.
+  (`src`, `example`, `quote` and the rest); in `markdown-mode` the fenced code
+  block, either fence syntax; anywhere else, the enclosing defun.
+- `subtree` — the current heading and its children. `org-mode` and
+  `markdown-mode`.
 - `buffer` — the whole file. Only Copilot, which cannot do anything narrower.
 
 For the first three, what is actually sent is the scope **intersected with**
@@ -111,10 +112,42 @@ One-shot commands, which read that much regardless of the buffer's scope:
 (`leader . h`, and `alt+cmd+.`), `night/llm-fim-insert-nearby` (`leader . n`), and
 `night/llm-fim-insert-choose` (`leader . C-,`), which asks.
 
-A scope that does not resolve — `subtree` outside `org-mode`, `block` with
-point in neither a block nor a defun — **refuses**. It does not quietly fall
-back to something wider. Widening in silence is the single failure this whole
-mechanism exists to prevent, and it is the failure you would never notice.
+A scope that does not resolve — `subtree` in a buffer with no headings above
+point, `block` with point in neither a block nor a defun — **refuses**. It does
+not quietly fall back to something wider. Widening in silence is the single
+failure this whole mechanism exists to prevent, and it is the failure you would
+never notice.
+
+### The markdown arms
+
+`block` uses `markdown-get-enclosing-fenced-block-construct`, and takes the
+**outer** bounds, so the ```` ```python ```` line goes with the code — the same
+choice as Org's, and for the same reason: the fence names the language. There
+is deliberately no defun fallback. Prose is the ordinary case in a markdown
+buffer, `bounds-of-thing-at-point` would hand back a paragraph-ish region with
+no relation to what was approved, and point outside every fence must simply
+refuse. An indented four-space code block is not a fenced construct and so does
+not resolve either.
+
+That function reads syntax properties, which markdown-mode propertizes lazily.
+It resolved without forcing in every case probed, a fresh temp buffer included,
+so the code calls `syntax-propertize` to point as insurance for a large buffer
+whose propertization has not got there yet — free where it already has.
+`font-lock-ensure` would also work and is far more expensive.
+
+`subtree` walks forward to the next heading of level **≤** the current one, so
+children are included: from `## H2`, a following `### H3` is swallowed and the
+next `## H2b` ends it. `markdown-outline-next` stops at the next heading of
+*any* level and would cut the children off — the same mistake
+`night/org-heading-region-get` makes, which is why the Org arm does not use it
+either. Setext headings (`===`, `---`) work, since `markdown-outline-level`
+reads them.
+
+Before the first heading, `outline-back-to-heading` signals rather than
+returning nil, and prose above the first heading is an ordinary way for a
+markdown file to start, so that is caught and answered with a refusal rather
+than pre-tested. `gfm-mode` derives from `markdown-mode` and behaves
+identically. All of this is asserted by line number.
 
 ### Choosing one, and seeing it
 
