@@ -136,6 +136,24 @@ did nothing looks like a file-local that did not work:
 
     LLM scope: nearby — global; this file asked for buffer, ignored (only narrowing is honoured)
 
+**It also answers a `confirm` rule**, the same way naming a scope at the
+keystroke does — `night/h-llm--gate` has always skipped the prompt for an
+explicit `:scope`, on the grounds that saying what you send is consent.
+
+The objection to extending that to a file-local is that content would be
+granting its own transmission. The answer is that it can only grant *itself*:
+the text it authorises is that one file's, and never more of it than
+`night/llm-scope` already allowed, because a widening request is discarded
+before it reaches this point. A hostile `-*-` line would be publishing its own
+author's content, which buys nothing. The residual case, accepted knowingly: a
+file you did not write that carries the line, to which you later add something
+sensitive.
+
+Two limits. It waives `confirm` only — `refuse` refuses everything, this
+included. And it applies only while the file is what actually governs: a
+`leader . o` override means the buffer is speaking rather than the file, and
+the prompt is owed again.
+
 An explicit `night/llm-scope-select` (`leader . o`) outranks the file: a
 keystroke you just pressed is the last word over a line in a file. So the order
 is global → file → buffer → an explicit `:scope` for one call.

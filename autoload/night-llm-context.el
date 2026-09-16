@@ -92,9 +92,15 @@ That guard is also what makes this safe as a local variable with no
 prompt, so it carries a `safe-local-variable' predicate: any known scope
 is a safe value, because a widening one is discarded rather than obeyed.
 
+Setting this also answers a `confirm' rule in `night/llm-path-policy',
+the same way naming a scope at the keystroke does: it authorises that
+one file's own text, and no more of it than `night/llm-scope' already
+allowed.  `refuse' still refuses.
+
 An explicit `night/llm-scope-select' (`leader . o') outranks this: a
 keystroke you just pressed is always the last word over a line in a
-file.  `night/llm-scope-show' says which of the two is in force, and
+file, and it also takes the consent back, so the `confirm' rule asks
+again.  `night/llm-scope-show' says which of the two is in force, and
 says so when a request was discarded for widening.")
 
 (defcustom night/llm-flash-context t
@@ -640,6 +646,24 @@ see `night/llm--path-confirmed'."
           (with-current-buffer buffer
             (cond
              (explicit (cons 'ok wanted))
+             ;; A scope the file asked for is consent, on the same footing as
+             ;; naming one at the keystroke: what it authorises is that one
+             ;; file's own text, and no more of it than `night/llm-scope'
+             ;; already allowed, because `night/h-llm--scope-file' honours a
+             ;; request only when it narrows.  A hostile `-*-' line would be
+             ;; publishing its author's own content, which buys nothing.
+             ;;
+             ;; The residual case, accepted knowingly: a file you did not write
+             ;; that carries the line, to which you later add something
+             ;; sensitive.
+             ;;
+             ;; Only while the file is what actually governs -- a
+             ;; `night/llm-scope-select' override means the buffer is speaking,
+             ;; not the file, and then the prompt is owed again.  And only for
+             ;; `confirm'; `refuse' refuses everything, this included.
+             ((and (null night/llm--scope-local)
+                   (night/h-llm--scope-file))
+              (cons 'ok wanted))
              ((night/h-llm--confirmed-p wanted) (cons 'ok wanted))
              (t
               (let ((chosen
