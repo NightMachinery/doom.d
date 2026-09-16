@@ -231,14 +231,26 @@ the closest pair sat at ΔE 5.6, barely above the ~2.3 just-noticeable
 threshold. The nesting is already legible from the shapes anyway, one region
 sitting inside another.
 
-They are now neutral / red / blue, widest to narrowest, with wide lightness
-steps as a second cue. The hue axis is red-versus-blue rather than
-blue-versus-green because `modus-operandi-tritanopia` is the theme in use here,
-and blue-versus-green is precisely what a tritanopia palette cannot lean on —
-as is yellow, which is what `buffer` used to be. Measured again, the closest
-pair is now ΔE 16.7, and every pair improved under a Viénot tritanope
-simulation as well. Dark text keeps a 12:1 contrast ratio or better on all
-four, so none of this costs readability.
+They are now **neutral / green / blue**, widest to narrowest. Two constraints
+shaped that, both from this setup rather than from taste:
+
+- **No red.** `night/llm-fim-insert-at-point` flashes what it inserted in
+  `highlight`, which this theme renders `#ffafbc`, and `isearch` is another
+  pink. A red scope would be confusable with the flash that follows the very
+  command the scope governed. All four now sit at ΔE 30 or more from `#ffafbc`.
+- **`modus-operandi-tritanopia` is the theme**, so yellow is out, and blue
+  against green is the pair such a palette is usually told to avoid. That one
+  was *measured* rather than assumed: at these lightnesses green and blue
+  separate at ΔE 23.7 under a Viénot tritanope simulation, and the closest of
+  the three pairs is 18.7 — against 5.6 for the old gradient. Lightness carries
+  a second cue regardless.
+
+`buffer` is purple, and is the one weak pair against `nearby` under that
+simulation. It costs nothing: `buffer` is offered only to Copilot and never
+shares a rendering with the other three.
+
+Dark text keeps a 11.5:1 contrast ratio or better on all four, so none of this
+costs readability.
 
 The sizes are in the prompt as well as on screen, because a subtree is
 routinely taller than the window: the highlight alone would quietly

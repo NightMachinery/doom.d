@@ -119,41 +119,52 @@ ones `night/llm-path-policy' asks about."
 ;;
 ;; These were three steps of one blue gradient, on the reasoning that the
 ;; scopes nest so their colours should too.  They were not tellable apart:
-;; the steps differed almost only in lightness, and the nesting is already
-;; obvious from the shapes, one region sitting inside another.
+;; the steps differed almost only in lightness -- the closest pair measured
+;; dE 5.6, against a just-noticeable threshold near 2.3 -- and the nesting
+;; is already obvious from the shapes, one region sitting inside another.
 ;;
-;; The replacement separates them by HUE as well, on the red-blue axis
-;; rather than the blue-green one -- `modus-operandi-tritanopia' is in use
-;; here, and blue-versus-green is exactly what a tritanopia palette cannot
-;; lean on, as is yellow.  So: neutral for the widest, red for the middle,
-;; blue for the narrowest, with wide lightness steps as a second cue for
-;; anyone the hues do not reach.  Red for `buffer' too, deeper, since it
-;; never shares a rendering with the other three.
+;; Now neutral / green / blue, widest to narrowest.  Two constraints shaped
+;; that, and both came from this setup rather than from taste:
+;;
+;; - No red.  [agfi:night/llm-fim-insert-at-point] flashes what it inserted
+;;   in `highlight', which this theme renders #ffafbc, and `isearch' is
+;;   another pink.  A red scope would be confusable with the flash that
+;;   follows the very command the scope governed.  All four sit at dE 30 or
+;;   more from #ffafbc.
+;;
+;; - `modus-operandi-tritanopia' is in use, so yellow is out and blue
+;;   against green is the pair such a palette is normally told to avoid.
+;;   Measured under a Vienot tritanope simulation rather than assumed: at
+;;   these lightnesses green and blue separate at dE 23.7, and the closest
+;;   of the three pairs is 18.7.  Lightness carries a second cue anyway.
+;;
+;; `buffer' is purple and is the one weak pair against `nearby' under that
+;; simulation, which costs nothing: it is offered only to Copilot and never
+;; shares a rendering with the other three.
 (night/defface night/llm-scope-nearby-face
-  '((((background dark))  (:background "#2f2f36" :extend t))
-    (((background light)) (:background "#eaeaee" :extend t)))
+  '((((background dark))  (:background "#303036" :extend t))
+    (((background light)) (:background "#ededf0" :extend t)))
   "Face for the `nearby' context scope, the widest of the three.
 Neutral: it is the backdrop the narrower ones sit on.")
 
 (night/defface night/llm-scope-subtree-face
-  '((((background dark))  (:background "#5a2a2a" :extend t))
-    (((background light)) (:background "#f8cfcf" :extend t)))
-  "Face for the `subtree' context scope.  Red, against `block''s blue.")
+  '((((background dark))  (:background "#294a2b" :extend t))
+    (((background light)) (:background "#c9e9c9" :extend t)))
+  "Face for the `subtree' context scope.  Green, against `block''s blue.")
 
 (night/defface night/llm-scope-block-face
-  '((((background dark))  (:background "#25406e" :extend t))
-    (((background light)) (:background "#c2d6f8" :extend t)))
+  '((((background dark))  (:background "#24406e" :extend t))
+    (((background light)) (:background "#a9c0f2" :extend t)))
   "Face for the `block' context scope, the narrowest of the three.
-Blue, and the most saturated of the three: it is the innermost region
-and usually the one being sent.")
+Blue, and the darkest of the three: it is the innermost region and
+usually the one actually being sent.")
 
 (night/defface night/llm-scope-buffer-face
-  '((((background dark))  (:background "#6e2f2f" :extend t))
-    (((background light)) (:background "#f0b9b9" :extend t)))
+  '((((background dark))  (:background "#43315e" :extend t))
+    (((background light)) (:background "#d8c8f4" :extend t)))
   "Face for the `buffer' context scope.
-A deeper red than `subtree''s, and never rendered beside it: `buffer' is
-offered only to Copilot, which can do nothing narrower.  It was warm
-yellow, which is the one hue a tritanopia palette cannot use.")
+Purple, and never rendered beside the other three: `buffer' is offered
+only to Copilot, which can do nothing narrower.")
 
 (defvar night/h-llm-scopes
   '((block   :rank 0 :char ?b :windowed t :face night/llm-scope-block-face
