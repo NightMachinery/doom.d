@@ -96,7 +96,15 @@ an explicit `:scope` for one call; each overrides the one before it. Only
 `night/llm-scope-select-global` (`leader . O`) ever write those two. Nothing
 else does — not the chooser, not the per-scope commands, not the privacy
 prompt — so what a keystroke sends never changes behind your back.
-`night/llm-scope-show` (`leader . C-o`) reports all three.
+`night/llm-scope-show` (`leader . C-o`) reports the effective scope and where
+it came from:
+
+    LLM scope: nearby — global, no buffer override
+    LLM scope: block — this buffer (global: nearby)
+
+It used to name the scope twice and spell "no buffer override" as `inherit`,
+which made the common case the noisy one and read like a fourth scope rather
+than the absence of a setting.
 
 One-shot commands, which read that much regardless of the buffer's scope:
 `night/llm-fim-insert-in-block` (`leader . b`), `night/llm-fim-insert-in-subtree`

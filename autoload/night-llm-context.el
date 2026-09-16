@@ -520,12 +520,18 @@ see `night/llm--path-confirmed'."
           (cons 'error (format "unknown level `%s' in `%s'" level matcher)))))))))
 ;;;
 (defun night/llm-scope-show ()
-  "Echo the context scope in force here, and where it comes from."
+  "Echo the context scope in force here, and where it comes from.
+
+The effective scope is said once, then where it came from.  Naming it twice --
+`nearby (buffer: inherit, global: nearby)\' -- made the common case the noisy
+one, and spelled \"no buffer override\" as `inherit\', which reads like a
+fourth scope rather than the absence of a setting."
   (interactive)
-  (message "LLM context scope: %s (buffer: %s, global: %s)"
-           (night/h-llm--scope-effective)
-           (or night/llm--scope-local "inherit")
-           night/llm-scope))
+  (let ((effective (night/h-llm--scope-effective)))
+    (if night/llm--scope-local
+        (message "LLM scope: %s — this buffer (global: %s)"
+                 effective night/llm-scope)
+      (message "LLM scope: %s — global, no buffer override" effective))))
 
 (defun night/llm-scope-select (scope)
   "Make SCOPE the context scope for this buffer, overriding `night/llm-scope'."
