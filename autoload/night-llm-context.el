@@ -654,20 +654,27 @@ fourth scope rather than the absence of a setting."
       (message "LLM scope: %s — global, no buffer override" effective)))))
 
 (defun night/llm-scope-select (scope)
-  "Make SCOPE the context scope for this buffer, overriding `night/llm-scope'."
+  "Make SCOPE the context scope for this buffer, overriding `night/llm-scope'.
+
+Cancelling -- `c', ESC or C-g -- leaves the buffer's scope exactly as it
+was.  That was always true of the body, which does nothing unless a scope
+comes back; what was missing was a way to say so from the prompt."
   (interactive
    (list (night/h-llm--scope-choose :prompt "Scope in this buffer:"
-                                    :all t :cancel nil)))
+                                    :all t)))
   (when scope
     (setq night/llm--scope-local scope)
     (night/llm-scope-show)))
 
 (defun night/llm-scope-select-global (scope)
   "Make SCOPE the default context scope everywhere.
-Buffers with their own `night/llm--scope-local' keep it."
+Buffers with their own `night/llm--scope-local' keep it.
+
+Cancelling leaves the global scope alone, as for
+`night/llm-scope-select'."
   (interactive
    (list (night/h-llm--scope-choose :prompt "Scope everywhere:"
-                                    :all t :cancel nil)))
+                                    :all t)))
   (when scope
     (setq night/llm-scope scope)
     (night/llm-scope-show)))

@@ -198,12 +198,11 @@ The sizes are in the prompt as well as on screen, because a subtree is
 routinely taller than the window: the highlight alone would quietly
 under-report what is about to leave the machine.
 
-**`ESC` cancels**, as well as `c`. `read-multiple-choice` answers `ESC` with
-"Invalid choice" and asks again, which is wrong for a prompt whose whole job is
-to be easy to back out of — and `ESC` is the reflex, not `c`. It renders the
-key as `ESC cancel` rather than inventing a letter, so listing it costs nothing
-and advertises the affordance. Neither char matches any scope, so both fall
-through to the same nil that already meant "cancelled".
+`c`, `ESC` and `C-g` all cancel; `read-multiple-choice` would otherwise answer
+`ESC` with "Invalid choice" and ask again. The two setters, `leader . o` and
+`leader . O`, offer cancel too — they used to pass `:cancel nil`, but their
+bodies already did nothing unless a scope came back, so backing out was always
+safe and merely unsayable.
 
 Overlays are removed in an `unwind-protect`, so aborting the prompt cannot
 leave the buffer painted, and they are registered in `night/active-overlays`
