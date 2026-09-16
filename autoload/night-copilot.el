@@ -59,6 +59,45 @@ actually put its hook on this buffer."
 
   (advice-add 'copilot-complete :before #'night/copilot-ensure)
 ;;;
+  (defun night/h-copilot--enabling-p (arg)
+    "Non-nil if calling `copilot-mode' with ARG would turn it on.
+
+Mirrors the `cond' `define-minor-mode' generates, measured rather than
+assumed: `toggle' flips, a number below 1 disables, anything else --
+including nil and an omitted argument -- enables."
+    (cond
+     ((eq arg 'toggle) (not (bound-and-true-p copilot-mode)))
+     ((and (numberp arg) (< arg 1)) nil)
+     (t t)))
+
+  (defun night/h-copilot-gate (orig-fn &rest args)
+    "Ask `night/llm-path-policy' before `copilot-mode' turns on.
+
+Copilot sends the buffer when the mode is *enabled*, not when a
+completion is asked for: the last form of `copilot--mode-setup' is a
+didOpen carrying `copilot--get-source', and every later edit streams a
+didChange delta.  A completion request itself carries only a position and
+a path.  So this is the only place worth asking -- by the time you press
+`C-.' the file has already gone.
+
+Note that `copilot-disable-predicates' is *not* that place, despite
+looking like the supported hook: it is consulted only in
+`copilot--post-command-debounce', which decides whether to request a
+completion, and never touches the sync.
+
+`buffer' is the only scope offered, because it is the only one Copilot
+can honour; the chooser therefore reduces to a confirmation that names
+the size of what would be sent."
+    (cond
+     ((or (night/h-copilot-active-p)
+          (not (night/h-copilot--enabling-p (car args))))
+      (apply orig-fn args))
+     ((night/h-llm--gate-scope :label "copilot" :scopes '(buffer))
+      (apply orig-fn args))
+     (t nil)))
+
+  (advice-add 'copilot-mode :around #'night/h-copilot-gate)
+;;;
   (map!
    :nig
    "C-." #'copilot-complete

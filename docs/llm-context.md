@@ -1,11 +1,12 @@
 # What a command may read, and whether it may send at all
 
-Four commands send buffer text to a third-party model:
+Five things send buffer text to a third-party model:
 
 - `night/fim-insert-at-point` (`M-.`), and its scoped siblings
 - `night/ellama-code-fill-in-the-middle` (`leader . .`)
 - `night/ellama-code-complete`
 - `night/ellama-complete`
+- `copilot-mode` (`leader c o`, and `C-.` via `night/copilot-ensure`)
 
 They agree on two things, and this file is where both live —
 `autoload/night-llm-context.el`. A **scope** says how much of the buffer a
@@ -65,10 +66,26 @@ may be, independently of the privacy policy below:
   (`src`, `example`, `quote` and the rest); anywhere else, the enclosing
   defun.
 - `subtree` — the current heading and its children. `org-mode` only.
+- `buffer` — the whole file. Only Copilot, which cannot do anything narrower.
 
-What is actually sent is the scope **intersected with** the `nearby` window. A
-scope only ever narrows; it cannot buy a bigger budget than
-`night/llm-context-before-fast` allows.
+For the first three, what is actually sent is the scope **intersected with**
+the `nearby` window: a scope only ever narrows, and cannot buy a bigger budget
+than `night/llm-context-before-fast` allows. `buffer` carries `:windowed nil`
+and is the exception — Copilot syncs the whole file, and intersecting that with
+a ±1000 window would show a reassuring lie. Its bounds are *widened* ones,
+because `copilot--get-source` widens.
+
+A caller says which scopes it can honour with `:scopes`, defaulting to the
+three window-based ones. That list also decides how the caller is judged: where
+the buffer's own scope is not one it can honour, the gate uses the widest scope
+it *can* do. Without that, Copilot with the default `nearby` in force would be
+waved through by a confirmation you had granted to FIM for a thousand
+characters.
+
+The ranking is the reason `buffer` is widest rather than just another entry.
+Consent is stored as a rank, so agreeing to send the whole file covers a later
+FIM window, and agreeing to a FIM window does **not** cover Copilot. Measured
+in both directions.
 
 `night/llm-scope` sets it everywhere, `night/llm--scope-local` per buffer, and
 an explicit `:scope` for one call; each overrides the one before it. Only
@@ -222,16 +239,54 @@ buffer-local `epa-file-encrypt-to`, which epa leaves set in a buffer it
 decrypted. The locality test is load-bearing, because `epa-file-encrypt-to` is
 also a global preference — read globally it would declare every buffer in the
 session encrypted.
+
+## Copilot
+
+Copilot is gated at **mode activation**, not at completion, and that is the
+whole design. `copilot--mode-setup` ends with `(copilot--on-doc-focus
+(selected-window))`, which sends a `textDocument/didOpen` carrying
+`copilot--get-source` — the buffer text — the instant the mode turns on. Every
+later edit streams a `didChange` delta, so the agent holds a live mirror. A
+completion request itself (`copilot--generate-doc`) carries only a position
+and a path. By the time you press `C-.`, the file has already gone.
+
+Two traps worth recording. `copilot--get-source` does `save-restriction` +
+`widen`, so **narrowing does not protect you**; `copilot-max-char` is 100000,
+so anything smaller goes whole. And `copilot-disable-predicates` looks exactly
+like the supported hook for this — it is a `defcustom`, stable across upgrades,
+two lines to use — but it is consulted only in
+`copilot--post-command-debounce`, which decides whether to *request a
+completion*, and never touches the sync. It would be a guard that reads
+correctly and stops nothing.
+
+`night/h-copilot-gate` is `:around` advice on `copilot-mode`. It passes through
+any call that disables, and any call in a buffer where the mode is already
+live — past that point there is nothing left to protect. Otherwise it asks,
+offering only the `buffer` scope, so the chooser reduces to a confirmation that
+highlights the whole file and names its size.
+
+`night/h-copilot--enabling-p` mirrors the `cond` that `define-minor-mode`
+generates: `toggle` flips, a number below 1 disables, anything else — nil and
+an omitted argument included — enables.
+
+### A minor mode set by a file-local never ran
+
+`(copilot-mode . t)` is in `safe-local-variable-values`. A file-local variable
+that happens to name a minor mode **sets the variable without running the mode
+body**, so no hooks are installed and nothing is synced. It is not a leak.
+
+It did break `night/copilot-ensure`, which tested `bound-and-true-p` and so
+skipped real activation, leaving `C-.` doing nothing useful in such a file.
+`night/h-copilot-active-p` asks instead whether `copilot--mode-setup` actually
+put its hook on the buffer. That is the one private Copilot symbol read here,
+so a load-time `fboundp` check warns if an upgrade renames it; the failure mode
+is the predicate going false, which costs a redundant activation, never a
+silent send.
+
 ## Everything else that talks to a model
 
-The policy covers those four commands. It does not cover, and these are worth
-knowing about:
+Not covered, and worth knowing about:
 
-- `copilot-mode` (`autoload/night-copilot.el`) sends the **whole buffer**,
-  continuously and automatically — `night/copilot-overlay-enable` sets
-  `copilot-idle-delay` to 0, and `night/copilot-ensure` advises
-  `copilot-complete` to switch the mode on in any buffer on demand. Much the
-  largest exposure here.
 - The upstream `ellama-command-map` on `leader .` — around seventeen
   `ellama-stream` call sites, mostly sending the region or the whole buffer.
 - gptel (`autoload/night-gptel.el`), where `gptel-org-branching-context` sends
