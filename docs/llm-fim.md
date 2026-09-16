@@ -1,6 +1,6 @@
 # Fill-in-the-middle completion
 
-`night/fim-insert-at-point` (bound to `M-.` in normal, insert and visual state,
+`night/llm-fim-insert-at-point` (bound to `M-.` in normal, insert and visual state,
 and to `leader . ,`) sends the text around point to a fill-in-the-middle
 endpoint and inserts the completion at point. One keystroke, one line, no
 preview step.
@@ -10,10 +10,9 @@ are decided by the scope and the path policy that FIM shares with the ellama
 commands — see `docs/llm-context.md`. `alt+cmd+.` is this same command
 restricted to the current heading.
 
-Everything lives in `autoload/night-mistral-fim.el` (the filename predates
-multi-provider support). `night/fim-get` is the transport layer;
-`night/fim-insert-at-point` is the command; `night/h-fim-insert-result` does the
-insertion and the highlight. The keys are in `autoload/night-ellama.el`, and
+Everything lives in `autoload/night-llm-fim.el`. `night/llm-fim-get` is the
+transport layer; `night/llm-fim-insert-at-point` is the command;
+`night/h-llm-fim-insert-result` does the insertion and the highlight. The keys are in `autoload/night-ellama.el`, and
 the terminal decoding for `alt+cmd+.` in `night-doom-keybindings.el` with its
 kitty half in `~/scripts/configFiles/kitty/kitty.conf`.
 
@@ -26,7 +25,7 @@ collapsing into one implementation.
 
 ## Providers
 
-`night/fim-providers` is an alist from a name to a plist. All the FIM APIs
+`night/llm-fim-providers` is an alist from a name to a plist. All the FIM APIs
 worth using take the *same* request body — `model`, `prompt`, `suffix`,
 `max_tokens`, `stop`, `temperature` — so an entry only says where to send it
 and how to read the reply:
@@ -38,7 +37,7 @@ and how to read the reply:
 - `:extract` — `chat` for `choices[0].message.content` (Mistral) or `text` for
   `choices[0].text` (OpenAI-style)
 - optional `:max-tokens`, `:stop`, `:temperature` override the corresponding
-  `night/fim-*` default for that provider
+  `night/llm-fim-*` default for that provider
 
 Configured:
 
@@ -50,8 +49,8 @@ Configured:
   Around 1s. FIM on DeepSeek lives on the `/beta` base URL, is still flagged
   beta, and works in non-thinking mode only.
 
-`night/fim-provider` picks the default; `night/fim-provider-select`
-(`leader . f`) changes it and `night/fim-provider-show` (`leader . F`) echoes
+`night/llm-fim-provider` picks the default; `night/llm-fim-provider-select`
+(`leader . f`) changes it and `night/llm-fim-provider-show` (`leader . F`) echoes
 it. `f`/`F` because `p`/`P` are taken by `ellama-command-map`.
 
 `C-u M-.` reads a provider for that one call without changing the default.
@@ -135,7 +134,7 @@ Every terminal path reports, with the elapsed time:
 - `FIM: HTTP 401 — Authentication Fails, Your api key: ****-key is invalid` —
   and any other failure
 
-Failures are shown in the `error` face and ignore `night/fim-verbose`;
+Failures are shown in the `error` face and ignore `night/llm-fim-verbose`;
 successes and progress honour it.
 
 ## Why the errors were invisible before
@@ -155,27 +154,27 @@ where nothing readable comes out of it:
 The transport follows plz's own split: `:callback` for the completion,
 `:on-error` called like `message` with a human-readable description, and an
 optional `:finally`. Response parsing is one `condition-case` around
-`night/h-fim--extract` rather than a ladder of `if`s.
+`night/h-llm-fim--extract` rather than a ladder of `if`s.
 
-`night/h-fim--error-string` renders a `plz-error`: curl failures as
+`night/h-llm-fim--error-string` renders a `plz-error`: curl failures as
 `curl error N: …`, HTTP failures as the status plus the API's own message.
 Providers disagree on where that message lives — Mistral uses `detail` for auth
 and validation failures and `message` elsewhere, DeepSeek uses the OpenAI-shaped
-`error.message` — so `night/h-fim--api-message` tries all three before falling
+`error.message` — so `night/h-llm-fim--api-message` tries all three before falling
 back to the raw body.
 
 ## Cancellation and concurrency
 
-Each request gets an id from `night/fim--counter`, and the buffer-local
-`night/fim--pending` holds the current one's id, process and indicator. A reply
-only acts if it can claim that slot (`night/h-fim--claim`), and claiming clears
+Each request gets an id from `night/llm-fim--counter`, and the buffer-local
+`night/llm-fim--pending` holds the current one's id, process and indicator. A reply
+only acts if it can claim that slot (`night/h-llm-fim--claim`), and claiming clears
 it, so a reply can act at most once.
 
 The slot is claimed *before* the request is sent, not after: a missing API key
 reports synchronously, and the guard has to recognise that report as current or
 it would be swallowed as stale.
 
-`night/h-fim--cancel` drops the slot first and only then kills the curl
+`night/h-llm-fim--cancel` drops the slot first and only then kills the curl
 process. That ordering matters too: killing the process makes `plz` report a
 curl failure, and the handler must already look stale by the time it runs, or
 every cancellation would announce itself as an error.
@@ -184,25 +183,25 @@ Consequences:
 
 - Pressing `M-.` again supersedes the previous request instead of racing it, so
   an impatient double press cannot produce two insertions.
-- `C-g` aborts, via `night/h-fim-escape` on `doom-escape-hook`. It returns nil
+- `C-g` aborts, via `night/h-llm-fim-escape` on `doom-escape-hook`. It returns nil
   so that `doom/escape` still performs its normal quit — `doom-escape-hook` runs
   under `run-hook-with-args-until-success`.
 - `:noquery t` keeps a pending request from blocking Emacs exit.
-- `night/fim-timeout` (20s) caps the request. `plz` sets no total timeout by
+- `night/llm-fim-timeout` (20s) caps the request. `plz` sets no total timeout by
   default; only `plz-connect-timeout` applies, and it covers the connect phase
   alone.
 
 ## Options
 
-- `night/fim-provider`, default `codestral`.
-- `night/fim-max-tokens` (64) and `night/fim-stop` (`"\n"`). Together these cap
+- `night/llm-fim-provider`, default `codestral`.
+- `night/llm-fim-max-tokens` (64) and `night/llm-fim-stop` (`"\n"`). Together these cap
   the completion at one line *during generation*, rather than truncating a
   longer one after paying for it. Note that `nil` in a provider entry means
   "inherit", not "no stop sequence".
-- `night/fim-temperature`, default 0.
-- `night/fim-verbose`, default `t`.
-- `night/fim-timeout`, default 20 seconds.
-- `night/fim-strip-leading-space`, default `nil`. See below.
+- `night/llm-fim-temperature`, default 0.
+- `night/llm-fim-verbose`, default `t`.
+- `night/llm-fim-timeout`, default 20 seconds.
+- `night/llm-fim-strip-leading-space`, default `nil`. See below.
 - `night/llm-scope`, `night/llm-flash-context` and `night/llm-path-policy` are
   shared with the ellama commands and documented in `docs/llm-context.md`.
 
@@ -227,12 +226,14 @@ contexts against each of the three providers, that is not what happens:
 
 One sample in 87 came out better for it. The option stays, unset, because a
 later model may go back to prepending one. Note that binding it with `let`
-around `night/fim-insert-at-point` does nothing: the request is asynchronous
+around `night/llm-fim-insert-at-point` does nothing: the request is asynchronous
 and the binding unwinds long before the callback reads it. `setq` it.
 
 Completions where a stray space would actually corrupt code — prefix ending
 mid-token, like `os.pa` — never had one, on any provider.
 
-The old `night/mistral-fim-*` names remain as obsolete aliases.
-`night/mistral-fim-model` is gone, replaced by the `:model` of the selected
-provider.
+The `night/mistral-fim-*` and `night/fim-*` names are both gone. They were
+obsolete aliases for a day or two each, had no consumers outside this
+directory, and the second rename would have left them pointing at shims.
+`night/mistral-fim-model` has no successor at all: the model is the `:model` of
+the selected provider.

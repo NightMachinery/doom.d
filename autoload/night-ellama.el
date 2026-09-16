@@ -714,22 +714,22 @@ scope, and only where `night/llm-path-policy' allows it."
         :desc "Ellama keymap" "." ellama-command-map)
   (map! :leader
         ". ." #'night/ellama-code-fill-in-the-middle
-        ". ," #'night/fim-insert-at-point
+        ". ," #'night/llm-fim-insert-at-point
         ;; ". ," #'night/ellama-code-complete
         ". /" #'ellama-provider-select
         ". ?" #'night/ellama-provider-show
         ;; These all hang off `ellama-command-map', so only the letters it
         ;; leaves free are available: `p'/`P' and `s'/`c' are its own.
-        ". f" #'night/fim-provider-select
-        ". F" #'night/fim-provider-show
+        ". f" #'night/llm-fim-provider-select
+        ". F" #'night/llm-fim-provider-show
 ;;;
         ;; One-shot: complete reading only this much, whatever the buffer's
         ;; scope is.  `h' for heading, which is what a subtree is here.
-        ". b" #'night/fim-insert-in-block
-        ". h" #'night/fim-insert-in-subtree
-        ". n" #'night/fim-insert-nearby
+        ". b" #'night/llm-fim-insert-in-block
+        ". h" #'night/llm-fim-insert-in-subtree
+        ". n" #'night/llm-fim-insert-nearby
         ;; Like `. ,' but asks first, showing what each answer would send.
-        ". C-," #'night/fim-insert-choose
+        ". C-," #'night/llm-fim-insert-choose
         ;; scOpe.  Lowercase here, uppercase everywhere, control to read it
         ;; back; `s' would have been the obvious letter but `ellama-command-map'
         ;; has it.
@@ -739,10 +739,10 @@ scope, and only where `night/llm-path-policy' allows it."
         )
   (map!
    :ngi
-   "M-." #'night/fim-insert-at-point
+   "M-." #'night/llm-fim-insert-at-point
    ;; alt+cmd+.  In a terminal this arrives as the xterm modifyOtherKeys
    ;; sequence that `night/setup-input-decode' turns back into `M-s-.'; see
    ;; the kitty side in ~/scripts/configFiles/kitty/kitty.conf.
-   "M-s-." #'night/fim-insert-in-subtree)
+   "M-s-." #'night/llm-fim-insert-in-subtree)
 ;;;
   (provide 'night/ellama))

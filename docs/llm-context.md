@@ -2,7 +2,7 @@
 
 Five things send buffer text to a third-party model:
 
-- `night/fim-insert-at-point` (`M-.`), and its scoped siblings
+- `night/llm-fim-insert-at-point` (`M-.`), and its scoped siblings
 - `night/ellama-code-fill-in-the-middle` (`leader . .`)
 - `night/ellama-code-complete`
 - `night/ellama-complete`
@@ -12,20 +12,23 @@ They agree on two things, and this file is where both live —
 `autoload/night-llm-context.el`. A **scope** says how much of the buffer a
 command may read. A **path policy** says whether it may read the buffer at
 all. FIM's own machinery — transport, providers, insertion — stays in
-`docs/mistral-fim.md`.
+`docs/llm-fim.md`.
 
 ## Why a third file
 
-`night-mistral-fim.el` is wrapped in `(after! (night-openai night/ellama) …)`
+`night-llm-fim.el` is wrapped in `(after! (night-openai night/ellama) …)`
 and `provide`s no feature, so its body evaluates strictly after
 `night-ellama.el`'s in the same `provide` cascade and nothing can depend on it.
 The shared code therefore cannot live in either file without inverting a
 dependency; both `after!` this one instead.
 
-The names were all `night/fim-*` when this served only FIM. Every public one
-keeps an obsolete alias, and the variable aliases are declared *before* their
-referents on purpose — the other way round the new `defvar` wins and a value
-customized under the old name is silently dropped.
+The names here were all `night/fim-*` when this served only FIM; it governs
+every model-facing command now, so they are `night/llm-*` and the FIM commands
+themselves are `night/llm-fim-*`. The obsolete aliases that carried the old
+spellings have been deleted, not re-pointed: a day or two old, no consumers
+outside this directory, and after the second rename they would have been shims
+pointing at shims. An old name now errors instead of resolving quietly, which
+is what is wanted — nothing should still be calling one.
 
 ## The window
 
@@ -96,9 +99,9 @@ prompt — so what a keystroke sends never changes behind your back.
 `night/llm-scope-show` (`leader . C-o`) reports all three.
 
 One-shot commands, which read that much regardless of the buffer's scope:
-`night/fim-insert-in-block` (`leader . b`), `night/fim-insert-in-subtree`
-(`leader . h`, and `alt+cmd+.`), `night/fim-insert-nearby` (`leader . n`), and
-`night/fim-insert-choose` (`leader . C-,`), which asks.
+`night/llm-fim-insert-in-block` (`leader . b`), `night/llm-fim-insert-in-subtree`
+(`leader . h`, and `alt+cmd+.`), `night/llm-fim-insert-nearby` (`leader . n`), and
+`night/llm-fim-insert-choose` (`leader . C-,`), which asks.
 
 A scope that does not resolve — `subtree` outside `org-mode`, `block` with
 point in neither a block nor a defun — **refuses**. It does not quietly fall

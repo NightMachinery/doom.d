@@ -3,9 +3,9 @@
 ;; What a command may read out of a buffer before sending it to a model, and
 ;; whether it may send at all.
 ;;
-;; Shared by `night/fim-insert-at-point' in night-mistral-fim.el and by the
+;; Shared by `night/llm-fim-insert-at-point' in night-llm-fim.el and by the
 ;; ellama commands in night-ellama.el.  It lives in its own file because those
-;; two cannot depend on each other: night-mistral-fim.el is wrapped in
+;; two cannot depend on each other: night-llm-fim.el is wrapped in
 ;; `(after! (night-openai night/ellama) ...)' and provides no feature at all,
 ;; so its body evaluates strictly after night-ellama.el's in the same `provide'
 ;; cascade.  Both depend on this instead.
@@ -25,24 +25,6 @@
 (declare-function night/file-path-candidates "night-file")
 (declare-function night/pcre-to-regexp "night-regex")
 (declare-function night/flash-region "night-ui")
-
-;;;
-(define-obsolete-variable-alias 'night/fim-path-policy
-  'night/llm-path-policy "2026-09-15")
-(define-obsolete-variable-alias 'night/fim-scope
-  'night/llm-scope "2026-09-15")
-(define-obsolete-variable-alias 'night/fim-flash-context
-  'night/llm-flash-context "2026-09-15")
-(define-obsolete-variable-alias 'night/ellama--code-context-before
-  'night/llm-context-before "2026-09-15")
-(define-obsolete-variable-alias 'night/ellama--code-context-after
-  'night/llm-context-after "2026-09-15")
-(define-obsolete-variable-alias 'night/ellama--code-context-before-fast
-  'night/llm-context-before-fast "2026-09-15")
-(define-obsolete-variable-alias 'night/ellama--code-context-after-fast
-  'night/llm-context-after-fast "2026-09-15")
-(define-obsolete-variable-alias 'night/ellama--code-context-line-tol
-  'night/llm-context-line-tol "2026-09-15")
 
 ;;;
 (defvar night/llm-context-before 10000
@@ -611,25 +593,14 @@ reports when a scope fails to resolve."
       ((> after 0) (night/h-llm--snap raw-end #'line-end-position line-tol))
       (t raw-end)))))
 ;;;
-;; These were all spelled `night/fim-*' while this machinery served only the
-;; FIM commands.  It governs every model-facing command now, so the name would
-;; have been a lie in any backtrace out of an ellama command.
+;; This machinery was spelled `night/llm-fim-*' while it served only the FIM
+;; commands; it governs every model-facing command now, so it is `night/llm-*'.
+;; The obsolete aliases that carried the old names are gone: they were a day
+;; old, had no consumers outside this directory, and once the FIM commands
+;; themselves became `night/llm-fim-*' they would have been shims pointing at
+;; shims.
 ;;
-;; The variable aliases are up top rather than here: declared after their
-;; referent, the new `defvar' wins and a value customized under the old name
-;; is silently dropped, which is the one thing these aliases exist to stop.
-(define-obsolete-function-alias 'night/fim-scope-show
-  #'night/llm-scope-show "2026-09-15")
-(define-obsolete-function-alias 'night/fim-scope-select
-  #'night/llm-scope-select "2026-09-15")
-(define-obsolete-function-alias 'night/fim-scope-select-global
-  #'night/llm-scope-select-global "2026-09-15")
-
-;; A face takes an alias rather than an obsolescence declaration; same shape as
-;; the `at-tag-face' alias in night-ui.el.
-(put 'night/fim-scope-nearby-face  'face-alias 'night/llm-scope-nearby-face)
-(put 'night/fim-scope-subtree-face 'face-alias 'night/llm-scope-subtree-face)
-(put 'night/fim-scope-block-face   'face-alias 'night/llm-scope-block-face)
-
-;;;
+;; If an old name ever turns up in a stale byte-compiled file or a saved
+;; customization, it will now error rather than resolve quietly, which is the
+;; behaviour wanted here.
 (provide 'night-llm-context)
