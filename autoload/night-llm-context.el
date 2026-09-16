@@ -97,9 +97,6 @@ keystroke you just pressed is always the last word over a line in a
 file.  `night/llm-scope-show' says which of the two is in force, and
 says so when a request was discarded for widening.")
 
-(put 'night/llm-scope-file 'safe-local-variable
-     (lambda (v) (and (symbolp v) (assq v night/h-llm-scopes))))
-
 (defcustom night/llm-flash-context t
   "When non-nil, flash the region a completion actually sent.
 
@@ -154,6 +151,14 @@ the key in the chooser, :face the highlight, :desc the one-line gloss.
 The first three are -- they narrow a window that was already capped.
 `buffer' is not: Copilot syncs the whole file, and intersecting that with
 the +-1000 window would show a reassuring lie.")
+
+;; Down here rather than beside the `defvar-local', because the predicate
+;; reads `night/h-llm-scopes' and that table is defined just above.  It only
+;; ever runs when a file is opened, so the original placement worked -- but it
+;; compiled to a free-variable warning, and a load-order accident away from
+;; being a real bug.
+(put 'night/llm-scope-file 'safe-local-variable
+     (lambda (v) (and (symbolp v) (assq v night/h-llm-scopes))))
 
 (defvar night/h-llm-scopes-default '(block subtree nearby)
   "Scopes offered when a caller does not say which it can honour.
