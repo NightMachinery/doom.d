@@ -26,6 +26,22 @@ or simple lists.
 
 After finishing development, use `emc-eval` AND `withemcgui emc-eval` to re-load all changed Elisp files so that the running servers always run up-to-date code.
 
+### A reload is not a clean load
+
+Two things it will not do, both of which present as "my new code does not
+work" when the code on disk is fine:
+
+- `defvar` and `defcustom` do **not** re-evaluate when the symbol is already
+  bound, so an edited default or table keeps its old value. `makunbound` it
+  before reloading.
+- `after!` bodies accumulate in `after-load-alist` — each load appends rather
+  than replaces — so a later `provide` replays *every* historical body, and a
+  definition you just deleted or renamed can come back.
+
+So reload freely to exercise behaviour, but it is never evidence that something
+is gone or updated. Confirm renames, deletions and `defvar` edits in
+`emacs -Q --batch`, stubbing the few load-time macros the file needs.
+
 # Yasnippet Guidelines
 
 Yasnippet includes everything after the `# --` marker in the snippet body, so a
