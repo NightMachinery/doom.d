@@ -198,11 +198,28 @@ The sizes are in the prompt as well as on screen, because a subtree is
 routinely taller than the window: the highlight alone would quietly
 under-report what is about to leave the machine.
 
-`c`, `ESC` and `C-g` all cancel; `read-multiple-choice` would otherwise answer
-`ESC` with "Invalid choice" and ask again. The two setters, `leader . o` and
-`leader . O`, offer cancel too — they used to pass `:cancel nil`, but their
-bodies already did nothing unless a scope came back, so backing out was always
-safe and merely unsayable.
+`c`, `ESC` and `C-g` all cancel, and only `[c]ancel` is listed. The key is read
+by `night/h-llm--read-key`, a thin wrapper over the built-in
+`read-char-from-minibuffer`: it reads in the **minibuffer**, where this
+configuration already binds `ESC` to `abort-recursive-edit` —
+
+    (lookup-key read-char-from-minibuffer-map [escape])
+
+— so `ESC` and `C-g` cancel for free, with nothing added to the table and
+nothing extra in the prompt. `read-multiple-choice`, used before, accepts only
+keys in its table and builds its prompt from that same table, so `ESC` there
+could only be broken or listed redundantly next to `cancel`.
+
+`read-answer` sits on the same reader and would also get `ESC`, but in short
+mode it prints just the keys — `Send (b, s, n, c, ?)` — dropping the sizes,
+and the sizes are the point.
+
+The two setters, `leader . o` and `leader . O`, offer cancel too — they used to
+pass `:cancel nil`, but their bodies already did nothing unless a scope came
+back, so backing out was always safe and merely unsayable.
+
+For tests, `night/h-llm--read-key` is also a cleaner seam than stubbing a stock
+Emacs function: `cl-letf` it to return a char.
 
 Overlays are removed in an `unwind-protect`, so aborting the prompt cannot
 leave the buffer painted, and they are registered in `night/active-overlays`

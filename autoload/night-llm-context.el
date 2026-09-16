@@ -459,6 +459,49 @@ scopes are intersected with the context window."
                 (t nil))))
            night/h-llm-scopes))))
 
+(defun night/h-llm--read-key (prompt table)
+  "Read one key from TABLE, which is `read-multiple-choice\' shaped.
+
+TABLE entries are (CHAR NAME DESCRIPTION).  Returns the chosen char, or
+nil when cancelled.  `?\' lists the descriptions and asks again.
+
+This is `read-char-from-minibuffer\' rather than `read-multiple-choice\',
+for one reason: it reads in the MINIBUFFER, and this configuration
+already binds ESC there to `abort-recursive-edit\' -- check it with
+
+    (lookup-key read-char-from-minibuffer-map [escape])
+
+so ESC and C-g both cancel for free, with nothing added to the table and
+nothing extra printed in the prompt.  `read-multiple-choice\' accepts
+only keys that are in its table and builds its prompt from that same
+table, so ESC there had to be either broken or listed redundantly beside
+`cancel\'.
+
+`read-answer\' sits on the same reader and would also get ESC, but in
+short mode it prints only the keys -- \"Send (b, s, n, c, ?)\" -- which
+drops the sizes, and those are the point: a subtree is routinely taller
+than the window and the highlight alone under-reports what is about to
+leave the machine."
+  (let ((chars (append (mapcar #'car table) (list ??)))
+        (line (mapconcat (lambda (e)
+                           (format "[%c]%s" (car e) (cadr e)))
+                         table ", ")))
+    (condition-case nil
+        (let (answer)
+          (while (null answer)
+            (let ((key (read-char-from-minibuffer
+                        (format "%s (%s, [?]help): " prompt line) chars)))
+              (cond
+               ((eq key ??)
+                (message "%s" (mapconcat (lambda (e)
+                                           (format "%c = %s" (car e) (or (nth 2 e) (cadr e))))
+                                         table "; ")))
+               (t (setq answer key)))))
+          answer)
+      ;; ESC and C-g arrive here; the caller's `unwind-protect' clears the
+      ;; overlays, and nil is already what cancelled means.
+      (quit nil))))
+
 (cl-defun night/h-llm--scope-choose (&key (prompt "Send") (pos nil)
                                           (all nil) (cancel t) (scopes nil))
   "Ask which context scope to use, highlighting every candidate while asking.
@@ -496,25 +539,12 @@ Return the chosen scope, or nil if cancelled."
                              (night/h-llm--scope-get scope :desc))))
                    choices)
                   (when cancel
-                    ;; ESC as well as `c'.  `read-multiple-choice' answers ESC
-                    ;; with "Invalid choice" and asks again, which is wrong for
-                    ;; a prompt whose whole job is to be easy to back out of --
-                    ;; and ESC is the reflex, not `c'.  It renders the key as
-                    ;; "ESC cancel" rather than inventing a letter, so listing
-                    ;; it costs nothing and advertises the affordance.
-                    ;;
-                    ;; No extra lookup is needed: neither char matches any
-                    ;; scope's :char, so both fall through to nil below, which
-                    ;; is already what cancelling means here.  C-g works too --
-                    ;; it signals quit, and the `unwind-protect' clears the
-                    ;; overlays on the way out.
-                    (list (list ?c "cancel" "send nothing")
-                          (list ?\e "cancel" "send nothing"))))))
+                    (list (list ?c "cancel" "send nothing"))))))
             (dolist (choice choices)
               (when (cdr choice)
                 (push (night/h-llm--preview-make (car choice) (cdr choice))
                       overlays)))
-            (let ((answer (car (read-multiple-choice prompt table))))
+            (let ((answer (night/h-llm--read-key prompt table)))
               (car (cl-find-if
                     (lambda (choice)
                       (eq (night/h-llm--scope-get (car choice) :char) answer))
