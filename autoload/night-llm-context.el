@@ -682,6 +682,53 @@ see `night/llm--path-confirmed'."
           ;; Fail closed on a level nobody defined.
           (cons 'error (format "unknown level `%s' in `%s'" level matcher)))))))))
 ;;;
+(defcustom night/llm-scope-show-seconds 1
+  "Seconds `night/llm-scope-show\' highlights the scopes at point, or nil.
+
+Every scope that resolves here is painted at once, in the same faces the
+chooser uses, so a glance answers \"what would each of these actually
+send from where I am standing?\" -- which the echoed name alone cannot.
+They nest, so one rendering shows all of them."
+  :type '(choice (const :tag "do not highlight" nil) number)
+  :group 'night)
+
+(defvar-local night/h-llm--show-overlays nil
+  "Overlays `night/llm-scope-show\' is currently showing.")
+
+(defvar-local night/h-llm--show-timer nil
+  "Timer that will remove `night/h-llm--show-overlays\'.")
+
+(defun night/h-llm--show-clear ()
+  "Remove the highlights `night/llm-scope-show\' put up, and its timer."
+  (when (timerp night/h-llm--show-timer)
+    (cancel-timer night/h-llm--show-timer))
+  (setq night/h-llm--show-timer nil)
+  (mapc #'night/h-llm--overlay-clear night/h-llm--show-overlays)
+  (setq night/h-llm--show-overlays nil))
+
+(defun night/h-llm--show-flash (pos seconds)
+  "Paint every scope that resolves at POS, and clear it after SECONDS.
+
+Clears any previous set first, so pressing the key twice cannot leave a
+buffer painted twice over or strand the older timer.  The overlays go
+through `night/h-llm--preview-make\', so they register in
+`night/active-overlays\' and `C-g\' takes them down early."
+  (night/h-llm--show-clear)
+  (let ((buffer (current-buffer)))
+    (dolist (choice (night/h-llm--scope-choices :pos pos))
+      (when (cdr choice)
+        (push (night/h-llm--preview-make (car choice) (cdr choice))
+              night/h-llm--show-overlays)))
+    (when night/h-llm--show-overlays
+      (setq night/h-llm--show-timer
+            (run-at-time seconds nil
+                         (lambda ()
+                           ;; The buffer may be gone, and the clear writes
+                           ;; buffer-local state, so it has to run there.
+                           (when (buffer-live-p buffer)
+                             (with-current-buffer buffer
+                               (night/h-llm--show-clear)))))))))
+
 (defun night/llm-scope-show ()
   "Echo the context scope in force here, and where it comes from.
 
@@ -690,6 +737,8 @@ The effective scope is said once, then where it came from.  Naming it twice --
 one, and spelled \"no buffer override\" as `inherit\', which reads like a
 fourth scope rather than the absence of a setting."
   (interactive)
+  (when night/llm-scope-show-seconds
+    (night/h-llm--show-flash (point) night/llm-scope-show-seconds))
   (let ((effective (night/h-llm--scope-effective))
         (from-file (night/h-llm--scope-file)))
     (cond

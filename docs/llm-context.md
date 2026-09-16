@@ -107,6 +107,17 @@ It used to name the scope twice and spell "no buffer override" as `inherit`,
 which made the common case the noisy one and read like a fourth scope rather
 than the absence of a setting.
 
+It also **highlights every scope that resolves at point** for
+`night/llm-scope-show-seconds` (default 1, nil to disable), in the same faces
+the chooser uses. The echoed name says which scope is in force; the highlight
+answers the other half of the question — what that scope actually covers from
+where you are standing. They nest, so one rendering shows all of them at once.
+
+A second call replaces the highlight rather than stacking another on top, and
+cancels the older timer with it. The overlays go through the chooser's own
+`night/h-llm--preview-make`, so they register in `night/active-overlays` and
+`C-g` takes them down early.
+
 ### A scope the file asks for
 
 `night/llm-scope-file` lets a file request its own scope:
