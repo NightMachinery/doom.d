@@ -53,20 +53,52 @@ narrows what it is allowed to look at:
            `night/llm-context-before-fast' and its -after- twin.
 `block'    the enclosing block: an Org block in `org-mode', the
            enclosing defun anywhere else.
-`subtree'  the current heading and its children.  `org-mode' only.
+`subtree'  the current heading and its children, in `org-mode' and
+           `markdown-mode'.
 
 What is sent is always the scope INTERSECTED with the `nearby' window: a
 scope narrows, it never buys a bigger budget.
 
-`night/llm--scope-local' overrides this per buffer, and an explicit
-`:scope' overrides both for one call.  Nothing writes either of these two
-except `night/llm-scope-select' and `night/llm-scope-select-global'."
+`night/llm-scope-file' narrows this from the file itself,
+`night/llm--scope-local' overrides it per buffer, and an explicit
+`:scope' overrides all of them for one call.  Nothing writes either of
+the latter two except `night/llm-scope-select' and
+`night/llm-scope-select-global'."
   :type '(choice (const nearby) (const block) (const subtree))
   :group 'night)
 
 (defvar-local night/llm--scope-local nil
   "Buffer-local override of `night/llm-scope', or nil to inherit it.
 Set only by `night/llm-scope-select'.  Never persisted.")
+
+(defvar-local night/llm-scope-file nil
+  "A scope the file asks for, set as a file-local variable.
+
+    ;; -*- night/llm-scope-file: block -*-
+
+or through a `Local Variables' block; `add-file-local-variable' writes
+either for you.  It applies to every mode, unlike anything keyed on Org
+or markdown structure.
+
+HONOURED ONLY WHEN IT NARROWS.  This is a mechanism for keeping text off
+the wire, and a file-local lets the very content being protected say how
+much of itself may be sent -- a repository you cloned, or a note someone
+sent you, could ask for `buffer'.  So a request is obeyed when its rank
+is at or below `night/llm-scope', and ignored otherwise.  Narrowing can
+only reduce what leaves the machine; at worst the scope fails to resolve
+and the command refuses, which is a nuisance and not a leak.
+
+That guard is also what makes this safe as a local variable with no
+prompt, so it carries a `safe-local-variable' predicate: any known scope
+is a safe value, because a widening one is discarded rather than obeyed.
+
+An explicit `night/llm-scope-select' (`leader . o') outranks this: a
+keystroke you just pressed is always the last word over a line in a
+file.  `night/llm-scope-show' says which of the two is in force, and
+says so when a request was discarded for widening.")
+
+(put 'night/llm-scope-file 'safe-local-variable
+     (lambda (v) (and (symbolp v) (assq v night/h-llm-scopes))))
 
 (defcustom night/llm-flash-context t
   "When non-nil, flash the region a completion actually sent.
@@ -143,9 +175,24 @@ was granted to something narrower."
                    (lambda (a b) (< (night/h-llm--scope-rank a)
                                     (night/h-llm--scope-rank b)))))))
 
+(defun night/h-llm--scope-file ()
+  "Return the scope the file asked for, when it narrows; nil otherwise.
+
+See `night/llm-scope-file' for why only narrowing is honoured.  An
+unknown scope ranks widest, so a typo is discarded here rather than
+taken for something narrower."
+  (let ((want night/llm-scope-file))
+    (when (and want
+               (assq want night/h-llm-scopes)
+               (<= (night/h-llm--scope-rank want)
+                   (night/h-llm--scope-rank night/llm-scope)))
+      want)))
+
 (defun night/h-llm--scope-effective ()
   "Return the context scope in force in the current buffer."
-  (or night/llm--scope-local night/llm-scope))
+  (or night/llm--scope-local
+      (night/h-llm--scope-file)
+      night/llm-scope))
 
 ;;;
 (defun night/h-llm--say (fn label face fmt &rest args)
@@ -571,11 +618,22 @@ The effective scope is said once, then where it came from.  Naming it twice --
 one, and spelled \"no buffer override\" as `inherit\', which reads like a
 fourth scope rather than the absence of a setting."
   (interactive)
-  (let ((effective (night/h-llm--scope-effective)))
-    (if night/llm--scope-local
-        (message "LLM scope: %s — this buffer (global: %s)"
-                 effective night/llm-scope)
-      (message "LLM scope: %s — global, no buffer override" effective))))
+  (let ((effective (night/h-llm--scope-effective))
+        (from-file (night/h-llm--scope-file)))
+    (cond
+     (night/llm--scope-local
+      (message "LLM scope: %s — this buffer (global: %s)"
+               effective night/llm-scope))
+     (from-file
+      (message "LLM scope: %s — this file (global: %s)"
+               effective night/llm-scope))
+     ;; A request that was thrown away for widening has to be said out loud,
+     ;; or the file-local looks like it simply did not work.
+     (night/llm-scope-file
+      (message "LLM scope: %s — global; this file asked for %s, ignored (only narrowing is honoured)"
+               effective night/llm-scope-file))
+     (t
+      (message "LLM scope: %s — global, no buffer override" effective)))))
 
 (defun night/llm-scope-select (scope)
   "Make SCOPE the context scope for this buffer, overriding `night/llm-scope'."

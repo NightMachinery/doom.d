@@ -107,6 +107,39 @@ It used to name the scope twice and spell "no buffer override" as `inherit`,
 which made the common case the noisy one and read like a fourth scope rather
 than the absence of a setting.
 
+### A scope the file asks for
+
+`night/llm-scope-file` lets a file request its own scope:
+
+    # -*- night/llm-scope-file: block -*-
+
+or a `Local Variables` block; `add-file-local-variable` writes either. It works
+in every mode, unlike anything keyed on Org or markdown structure.
+
+**It is honoured only when it narrows.** This is a mechanism for keeping text
+off the wire, and a file-local lets the very content being protected say how
+much of itself may be sent — a repository you cloned, or a note someone sent
+you, could ask for `buffer`. So a request is obeyed when its rank is at or
+below `night/llm-scope`, and discarded otherwise. Narrowing can only reduce
+what leaves the machine; at worst the scope fails to resolve and the command
+refuses, which is a nuisance and not a leak.
+
+That guard is what makes it safe as a local variable with **no prompt**, so it
+carries a `safe-local-variable` predicate accepting any known scope — a
+widening value is discarded rather than obeyed, and an unknown one ranks widest
+and is discarded too. Verified by opening real files: `block` under a global
+`nearby` applies silently, `buffer` is read and thrown away, and a typo is
+dropped by `enable-local-variables` `:safe` before it is ever seen.
+
+A discarded request is **said out loud**, because otherwise a file-local that
+did nothing looks like a file-local that did not work:
+
+    LLM scope: nearby — global; this file asked for buffer, ignored (only narrowing is honoured)
+
+An explicit `night/llm-scope-select` (`leader . o`) outranks the file: a
+keystroke you just pressed is the last word over a line in a file. So the order
+is global → file → buffer → an explicit `:scope` for one call.
+
 One-shot commands, which read that much regardless of the buffer's scope:
 `night/llm-fim-insert-in-block` (`leader . b`), `night/llm-fim-insert-in-subtree`
 (`leader . h`, and `alt+cmd+.`), `night/llm-fim-insert-nearby` (`leader . n`), and
