@@ -223,6 +223,23 @@ strictly more keystrokes. `night/llm-scope-block-face` is the strongest of the
 three and has the highest overlay priority, so the innermost region wins where
 they overlap.
 
+### The palette separates by hue, not just lightness
+
+These were three steps of one blue gradient, on the reasoning that scopes which
+nest should have colours that nest. They were not tellable apart — measured,
+the closest pair sat at ΔE 5.6, barely above the ~2.3 just-noticeable
+threshold. The nesting is already legible from the shapes anyway, one region
+sitting inside another.
+
+They are now neutral / red / blue, widest to narrowest, with wide lightness
+steps as a second cue. The hue axis is red-versus-blue rather than
+blue-versus-green because `modus-operandi-tritanopia` is the theme in use here,
+and blue-versus-green is precisely what a tritanopia palette cannot lean on —
+as is yellow, which is what `buffer` used to be. Measured again, the closest
+pair is now ΔE 16.7, and every pair improved under a Viénot tritanope
+simulation as well. Dark text keeps a 12:1 contrast ratio or better on all
+four, so none of this costs readability.
+
 The sizes are in the prompt as well as on screen, because a subtree is
 routinely taller than the window: the highlight alone would quietly
 under-report what is about to leave the machine.

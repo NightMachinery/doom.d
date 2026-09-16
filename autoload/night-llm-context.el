@@ -116,27 +116,44 @@ ones `night/llm-path-policy' asks about."
 ;; Backgrounds rather than foregrounds, because these mark an extent
 ;; rather than a token, and `:extend' so a multi-line region reads as a
 ;; block instead of a ragged right edge.
+;;
+;; These were three steps of one blue gradient, on the reasoning that the
+;; scopes nest so their colours should too.  They were not tellable apart:
+;; the steps differed almost only in lightness, and the nesting is already
+;; obvious from the shapes, one region sitting inside another.
+;;
+;; The replacement separates them by HUE as well, on the red-blue axis
+;; rather than the blue-green one -- `modus-operandi-tritanopia' is in use
+;; here, and blue-versus-green is exactly what a tritanopia palette cannot
+;; lean on, as is yellow.  So: neutral for the widest, red for the middle,
+;; blue for the narrowest, with wide lightness steps as a second cue for
+;; anyone the hues do not reach.  Red for `buffer' too, deeper, since it
+;; never shares a rendering with the other three.
 (night/defface night/llm-scope-nearby-face
-  '((((background dark))  (:background "#2b2b3b" :extend t))
-    (((background light)) (:background "#ecedf7" :extend t)))
-  "Face for the `nearby' context scope, the widest of the three.")
+  '((((background dark))  (:background "#2f2f36" :extend t))
+    (((background light)) (:background "#eaeaee" :extend t)))
+  "Face for the `nearby' context scope, the widest of the three.
+Neutral: it is the backdrop the narrower ones sit on.")
 
 (night/defface night/llm-scope-subtree-face
-  '((((background dark))  (:background "#343a52" :extend t))
-    (((background light)) (:background "#dee4f6" :extend t)))
-  "Face for the `subtree' context scope.")
+  '((((background dark))  (:background "#5a2a2a" :extend t))
+    (((background light)) (:background "#f8cfcf" :extend t)))
+  "Face for the `subtree' context scope.  Red, against `block''s blue.")
 
 (night/defface night/llm-scope-block-face
-  '((((background dark))  (:background "#414c73" :extend t))
-    (((background light)) (:background "#ccd7f3" :extend t)))
-  "Face for the `block' context scope, the narrowest of the three.")
+  '((((background dark))  (:background "#25406e" :extend t))
+    (((background light)) (:background "#c2d6f8" :extend t)))
+  "Face for the `block' context scope, the narrowest of the three.
+Blue, and the most saturated of the three: it is the innermost region
+and usually the one being sent.")
 
 (night/defface night/llm-scope-buffer-face
-  '((((background dark))  (:background "#4a3a2a" :extend t))
-    (((background light)) (:background "#f6e8d6" :extend t)))
+  '((((background dark))  (:background "#6e2f2f" :extend t))
+    (((background light)) (:background "#f0b9b9" :extend t)))
   "Face for the `buffer' context scope.
-Warm rather than another step of the blue gradient: sending the whole
-file is a different kind of answer, not one more notch of the same one.")
+A deeper red than `subtree''s, and never rendered beside it: `buffer' is
+offered only to Copilot, which can do nothing narrower.  It was warm
+yellow, which is the one hue a tritanopia palette cannot use.")
 
 (defvar night/h-llm-scopes
   '((block   :rank 0 :char ?b :windowed t :face night/llm-scope-block-face
