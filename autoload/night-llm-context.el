@@ -491,7 +491,20 @@ Return the chosen scope, or nil if cancelled."
                              (night/h-llm--scope-get scope :desc))))
                    choices)
                   (when cancel
-                    (list (list ?c "cancel" "send nothing"))))))
+                    ;; ESC as well as `c'.  `read-multiple-choice' answers ESC
+                    ;; with "Invalid choice" and asks again, which is wrong for
+                    ;; a prompt whose whole job is to be easy to back out of --
+                    ;; and ESC is the reflex, not `c'.  It renders the key as
+                    ;; "ESC cancel" rather than inventing a letter, so listing
+                    ;; it costs nothing and advertises the affordance.
+                    ;;
+                    ;; No extra lookup is needed: neither char matches any
+                    ;; scope's :char, so both fall through to nil below, which
+                    ;; is already what cancelling means here.  C-g works too --
+                    ;; it signals quit, and the `unwind-protect' clears the
+                    ;; overlays on the way out.
+                    (list (list ?c "cancel" "send nothing")
+                          (list ?\e "cancel" "send nothing"))))))
             (dolist (choice choices)
               (when (cdr choice)
                 (push (night/h-llm--preview-make (car choice) (cdr choice))
