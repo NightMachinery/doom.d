@@ -112,18 +112,36 @@ ones `night/llm-path-policy' asks about."
     (((background light)) (:background "#ccd7f3" :extend t)))
   "Face for the `block' context scope, the narrowest of the three.")
 
+(night/defface night/llm-scope-buffer-face
+  '((((background dark))  (:background "#4a3a2a" :extend t))
+    (((background light)) (:background "#f6e8d6" :extend t)))
+  "Face for the `buffer' context scope.
+Warm rather than another step of the blue gradient: sending the whole
+file is a different kind of answer, not one more notch of the same one.")
+
 (defvar night/h-llm-scopes
-  '((block   :rank 0 :char ?b :face night/llm-scope-block-face
+  '((block   :rank 0 :char ?b :windowed t :face night/llm-scope-block-face
              :desc "the Org block, or defun, around point")
-    (subtree :rank 1 :char ?s :face night/llm-scope-subtree-face
+    (subtree :rank 1 :char ?s :windowed t :face night/llm-scope-subtree-face
              :desc "the current heading and its children")
-    (nearby  :rank 2 :char ?n :face night/llm-scope-nearby-face
-             :desc "the text around point, as before"))
+    (nearby  :rank 2 :char ?n :windowed t :face night/llm-scope-nearby-face
+             :desc "the text around point, as before")
+    (buffer  :rank 3 :char ?w :windowed nil :face night/llm-scope-buffer-face
+             :desc "the whole buffer, which is what Copilot syncs"))
   "The context scopes, narrowest first.
 
 :rank orders them by width, which is what lets a confirmation granted for
 one scope cover a narrower one without covering a wider one.  :char is
-the key in the chooser, :face the highlight, :desc the one-line gloss.")
+the key in the chooser, :face the highlight, :desc the one-line gloss.
+
+:windowed says whether the scope is also bounded by the context window.
+The first three are -- they narrow a window that was already capped.
+`buffer' is not: Copilot syncs the whole file, and intersecting that with
+the +-1000 window would show a reassuring lie.")
+
+(defvar night/h-llm-scopes-default '(block subtree nearby)
+  "Scopes offered when a caller does not say which it can honour.
+`buffer' is left out: no command that reads a window can promise it.")
 
 (defun night/h-llm--scope-get (scope key)
   "Return KEY of SCOPE in `night/h-llm-scopes'."
@@ -134,6 +152,12 @@ the key in the chooser, :face the highlight, :desc the one-line gloss.")
 An unknown scope ranks widest, so that it never passes for consent that
 was granted to something narrower."
   (or (night/h-llm--scope-get scope :rank) most-positive-fixnum))
+
+(defun night/h-llm--scope-widest (scopes)
+  "Return the widest of SCOPES by `night/h-llm--scope-rank'."
+  (car (last (sort (copy-sequence scopes)
+                   (lambda (a b) (< (night/h-llm--scope-rank a)
+                                    (night/h-llm--scope-rank b)))))))
 
 (defun night/h-llm--scope-effective ()
   "Return the context scope in force in the current buffer."
@@ -154,14 +178,15 @@ Otherwise the text is prefixed with LABEL and shown in FACE."
                        (t text)))))))
 
 (cl-defun night/h-llm--gate-scope (&key (scope nil) (buffer nil) (label "LLM")
-                                        (report nil) (report-error nil))
+                                        (report nil) (report-error nil)
+                                        (scopes nil))
   "Return the scope a command may read in BUFFER, or nil if it may not.
 
 Wraps `night/h-llm--gate' and reports the refusal itself, so that every
 caller is a single nil check rather than its own copy of the three-way
 verdict.  SCOPE, when non-nil, is an explicitly requested scope.  REPORT
 and REPORT-ERROR are passed to `night/h-llm--say'."
-  (let* ((verdict (night/h-llm--gate :buffer buffer :scope scope))
+  (let* ((verdict (night/h-llm--gate :buffer buffer :scope scope :scopes scopes))
          (outcome (car verdict)))
     (cond
      ((eq outcome 'ok) (cdr verdict))
@@ -254,6 +279,11 @@ can never end up widening by accident."
             (goto-char pos)
             (cond
              ((eq scope 'nearby) (cons (point-min) (point-max)))
+             ;; Widened, because `copilot--get-source' widens: a narrowed
+             ;; buffer is not protected, so it must not be reported as if it
+             ;; were.
+             ((eq scope 'buffer)
+              (save-restriction (widen) (cons (point-min) (point-max))))
              ((eq scope 'block)
               (cond
                ((derived-mode-p 'org-mode)
@@ -306,7 +336,11 @@ A nil LIMIT clamps nothing."
 
 The narrower scope takes the higher priority, so the nested highlights
 read innermost-first rather than whichever happened to be drawn last."
-  (let ((overlay (make-overlay (car bounds) (cdr bounds))))
+  (let ((overlay (save-restriction
+                   ;; `buffer' bounds are widened ones, which `make-overlay'
+                   ;; will not accept while the buffer is narrowed.
+                   (widen)
+                   (make-overlay (car bounds) (cdr bounds)))))
     (overlay-put overlay 'face (night/h-llm--scope-get scope :face))
     (overlay-put overlay 'priority (- 100 (night/h-llm--scope-rank scope)))
     ;; Registering here means `night/clear-overlays' (on `doom-escape-hook')
@@ -314,7 +348,7 @@ read innermost-first rather than whichever happened to be drawn last."
     (push overlay night/active-overlays)
     overlay))
 
-(cl-defun night/h-llm--scope-choices (&key (pos nil) (all nil))
+(cl-defun night/h-llm--scope-choices (&key (pos nil) (all nil) (scopes nil))
   "Return the context scopes at POS, narrowest first.
 An alist of (SCOPE . BOUNDS).
 
@@ -322,8 +356,13 @@ BOUNDS is what that scope would actually send -- the scope intersected
 with the context window -- or nil where the scope does not resolve here.
 
 Scopes that do not resolve are dropped unless ALL, which the selectors
-want: you may well be setting `subtree' from a spot that has none yet."
+want: you may well be setting `subtree' from a spot that has none yet.
+
+SCOPES limits which ones are offered, for a caller that cannot honour all
+of them; it defaults to `night/h-llm-scopes-default'.  Only `:windowed'
+scopes are intersected with the context window."
   (let* ((pos (or pos (point)))
+         (scopes (or scopes night/h-llm-scopes-default))
          (window (night/llm-context-bounds :pos pos)))
     (delq nil
           (mapcar
@@ -331,13 +370,19 @@ want: you may well be setting `subtree' from a spot that has none yet."
              (let* ((scope (car entry))
                     (bounds (night/h-llm--scope-bounds scope pos)))
                (cond
-                (bounds (cons scope (night/h-llm--clamp window bounds)))
+                ((not (memq scope scopes)) nil)
+                (bounds
+                 (cons scope
+                       (cond
+                        ((night/h-llm--scope-get scope :windowed)
+                         (night/h-llm--clamp window bounds))
+                        (t bounds))))
                 (all (cons scope nil))
                 (t nil))))
            night/h-llm-scopes))))
 
 (cl-defun night/h-llm--scope-choose (&key (prompt "Send") (pos nil)
-                                          (all nil) (cancel t))
+                                          (all nil) (cancel t) (scopes nil))
   "Ask which context scope to use, highlighting every candidate while asking.
 
 All the candidates are highlighted at once rather than previewed one at a
@@ -351,7 +396,7 @@ about to be sent.
 
 Return the chosen scope, or nil if cancelled."
   (let* ((pos (or pos (point)))
-         (choices (night/h-llm--scope-choices :pos pos :all all))
+         (choices (night/h-llm--scope-choices :pos pos :all all :scopes scopes))
          (overlays nil))
     (cond
      ((null choices) nil)
@@ -417,7 +462,7 @@ match, so that `night/h-llm--gate' is the one that gets to refuse on it."
       (let ((fn (alist-get matcher night/h-llm-policy-predicates)))
         (if fn (funcall fn buffer) t)))))
 
-(cl-defun night/h-llm--gate (&key (buffer nil) (scope nil))
+(cl-defun night/h-llm--gate (&key (buffer nil) (scope nil) (scopes nil))
   "Decide whether a model-facing command may run in BUFFER, per
 `night/llm-path-policy'.
 
@@ -439,9 +484,18 @@ see `night/llm--path-confirmed'."
   (let* ((buffer (or buffer (current-buffer)))
          (case-fold-search nil)
          (explicit scope)
+         (scopes (or scopes night/h-llm-scopes-default))
          (wanted (or scope
-                     (with-current-buffer buffer
-                       (night/h-llm--scope-effective))))
+                     (let ((eff (with-current-buffer buffer
+                                  (night/h-llm--scope-effective))))
+                       (cond
+                        ((memq eff scopes) eff)
+                        ;; A caller that cannot honour the buffer's scope is
+                        ;; judged on the widest thing it *can* do.  Without
+                        ;; this, Copilot -- which only does `buffer' -- would
+                        ;; be waved through by a confirmation granted to FIM
+                        ;; for a 1000-char window.
+                        (t (night/h-llm--scope-widest scopes))))))
          (paths (night/file-path-candidates (buffer-file-name buffer)))
          (rule (cl-find-if
                 (lambda (rule)
@@ -469,6 +523,7 @@ see `night/llm--path-confirmed'."
              (t
               (let ((chosen
                      (night/h-llm--scope-choose
+                      :scopes scopes
                       :prompt (format "%s matches `%s'; send"
                                       (buffer-name buffer) matcher))))
                 (cond
