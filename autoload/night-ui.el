@@ -1,10 +1,14 @@
 ;;;
 (setq night/at-tag-char-regex "[^][[:space:](){};\n\"=]")
 (setq night/at-tag-main-char-regex "[a-zA-Z0-9?!-]")
+;; A dot only between tag characters, so `@Opus5.5' is one tag but the full stop after `@todo.' is not part of it.
+(setq night/at-tag-main-body-regex
+      (concat night/at-tag-main-char-regex
+              "+\\(?:\\." night/at-tag-main-char-regex "+\\)*"))
 (setq night/at-tag-regex
       (concat "\\B\\(@" night/at-tag-char-regex "+\\)"))
 (setq night/at-tag-main-regex
-      (concat "\\B\\(@" night/at-tag-main-char-regex "+\\)"))
+      (concat "\\B\\(@" night/at-tag-main-body-regex "\\)"))
 
 (setq night/great-tag-regex
       ;; "^.*\\(@great\\>\\|:great:\\|@forked\\|:forked:\\|@idea/accepted\\)[^[:space:]]*"
@@ -225,6 +229,19 @@ If PROPERTIES are specified, set them for the created overlay."
 
 (night/highlight-atsign-zsh)
 (night/highlight-org)
+;;;
+;; doom-themes' own rule for org #hashtags and @at-tags allows `.' anywhere in the tag, so it also colours the full stop that ends a sentence. We turn it off and install the same rule with dots only between tag characters, keeping its face picker (which skips links and src blocks).
+(setq doom-themes-org-fontify-special-tags nil)
+(setq night/org-special-tag-regex
+      "\\(?:\\s-\\|^\\)\\(\\([#@]\\)[A-Za-z0-9_-]+\\(?:\\.[A-Za-z0-9_-]+\\)*\\)")
+
+(defun night/org-fontify-special-tags ()
+  (setq org-font-lock-extra-keywords
+        (append org-font-lock-extra-keywords
+                `((,night/org-special-tag-regex
+                   1 (doom-themes--org-tag-face 2) prepend)))))
+
+(add-hook 'org-font-lock-set-keywords-hook #'night/org-fontify-special-tags 90)
 ;;; tests
 ;; jas (@wsw aws) @hi+ @hi? maddah_ali@sharif.edu hi@gmail.com TODO @ XXXX @ja
 ;;a@a
@@ -263,7 +280,7 @@ If PROPERTIES are specified, set them for the created overlay."
           (
            ;; night/at-tag-regex
            ;; ,(concat "@" night/at-tag-char-regex "+")
-           ,(concat "@" night/at-tag-main-char-regex "+")
+           ,(concat "@" night/at-tag-main-body-regex)
            at-tag-face)
           ))
   )
