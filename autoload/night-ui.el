@@ -253,6 +253,8 @@ If PROPERTIES are specified, set them for the created overlay."
   (modify-syntax-entry ?@ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?+ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?? "w" hl-todo--syntax-table)
+  ;; `/' is a symbol character in that table, so an at-tag could not end before one: `@Opus5.5/78' matched only `@Opus5'.
+  (modify-syntax-entry ?/ "." hl-todo--syntax-table)
   (setq hl-todo-highlight-punctuation ":")
   (customize-set-variable 'hl-todo-keyword-faces
         `(
