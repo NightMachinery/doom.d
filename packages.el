@@ -154,6 +154,18 @@
 ;;;
 (package! gnus)
 ;;;
+;; Mail: see docs/email.md. notmuch.el must match the notmuch CLI, so it is
+;; pinned to the tag of the version Homebrew installed. After `brew upgrade
+;; notmuch', re-pin to the new tag's commit and bump
+;; `night/notmuch-pinned-version' in autoload/night-email.el:
+;;   git ls-remote https://git.notmuchmail.org/git/notmuch 'refs/tags/0.40^{}'
+;; brew's own copy is not used because its .elc files are built by brew's
+;; newer Emacs.
+(package! notmuch :pin "cee41bccc054617b0cffe12759b209ff66066563") ; 0.40
+(package! ol-notmuch)
+(package! consult-notmuch)
+(package! org-mime)
+;;;
 (package! org-transclusion)
 ;;;
 (package! ediprolog)

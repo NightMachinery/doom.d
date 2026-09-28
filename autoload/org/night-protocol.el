@@ -20,6 +20,11 @@
            (file+headline ,(concat (getenv "nightNotes") "/org/inbox.org") "URLs")
            "* %a"                       ; %U timestamp
            :immediate-finish t)
+          ;; From a notmuch message; `ol-notmuch' supplies %:subject and %:from.
+          ;; See docs/email.md.
+          ("e" "Email TODO" entry
+           (file+headline ,(concat (getenv "nightNotes") "/org/inbox.org") "Email")
+           "* TODO %:subject (%:from)\n%a\n%?")
           ))
   ;; (setq org-protocol-default-template-key "o")
   )
