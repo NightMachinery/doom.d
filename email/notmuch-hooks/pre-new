@@ -1,0 +1,118 @@
+#!/bin/bash
+# notmuch pre-new hook: make the server's folders agree with the tags, then
+# run mbsync.
+#
+# notmuch tags live only in its database. The server knows only folders and
+# the five standard flags, so the tags that mean "where it is" are turned into
+# file moves here, and mbsync carries the moves to the server:
+#
+#   tag:deleted in INBOX, Sent or Archive     -> Trash
+#   Drafts file of a message tagged deleted   -> removed (a sent or resumed draft)
+#   INBOX without tag:inbox                   -> Archive
+#   Archive with tag:inbox                    -> INBOX
+#   Trash without tag:deleted                 -> Sent if tag:sent, else INBOX
+#
+# A moved file drops its `,U=<uid>' infix and keeps its `:2,FLAGS' suffix. mbsync
+# needs the first (a copied UID would collide), and the second is the read and
+# flagged state.
+#
+# Safety: nothing moves when more than NIGHT_MAIL_MOVE_LIMIT files (default
+# 100) would, since that means the tags are wrong, not that you archived a
+# hundred mails since the last sync. Set it to 0 to lift the limit for one run.
+#
+# See docs/email.md.
+
+set -uo pipefail
+
+hook_dir="$(cd "$(command dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+. "$hook_dir/../bin/night-mail-lib.bash"
+
+if [ -z "${NIGHT_MAIL_LOCKED:-}" ] ; then
+    # A bare `notmuch new'. Take the lock for our part at least.
+    nm_lock 600 || { nm_log "could not take $night_mail_lock"; exit 1; }
+fi
+
+move_limit="${NIGHT_MAIL_MOVE_LIMIT:-100}"
+root="$(nm_mail_root)" || { nm_log "no notmuch mail root"; exit 1; }
+
+# Before anything changes, remember the revision: post-new asks which
+# messages this run touched. No database yet (first run) records 0.
+rev="$(notmuch count --lastmod '*' 2>/dev/null | command cut -f3)"
+printf '%s\n' "${rev:-0}" >| "$night_mail_rev_file"
+
+# Planned moves as parallel arrays; empty DST means remove.
+plan_src=()
+plan_dst=()
+
+# plan ACCOUNT SRC-FOLDER QUERY DST-FOLDER
+# Plan moving the files of messages matching QUERY that sit in SRC-FOLDER.
+# A message can have files in several folders, so only the ones in SRC move.
+plan() {
+    local acct="$1" src="$2" query="$3" dst="$4" f sub base
+    notmuch search --exclude=false --output=files --format=text0 -- \
+            "folder:\"$acct/$src\" and ($query)" 2>/dev/null |
+        {
+            while IFS= read -r -d '' f ; do
+                [ -f "$f" ] || continue
+                [ "$(command dirname "$(command dirname "$f")")" = "$root/$acct/$src" ] || continue
+                sub="$(command basename "$(command dirname "$f")")"  # cur or new
+                base="$(command basename "$f" | command sed -E 's/,U=[0-9]+//')"
+                if [ -n "$dst" ] ; then
+                    printf '%s\0%s\0' "$f" "$root/$acct/$dst/$sub/$base"
+                else
+                    printf '%s\0\0' "$f"
+                fi
+            done
+        }
+}
+
+plan_all() {
+    local acct="$1" s
+    for s in INBOX Sent Archive ; do
+        plan "$acct" "$s" 'tag:deleted' Trash
+    done
+    plan "$acct" Drafts  'tag:deleted' ''
+    # tag:new is excluded so that mail indexed with --no-hooks, which never
+    # got its inbox tag from post-new, is not swept into Archive.
+    plan "$acct" INBOX   'not tag:inbox and not tag:deleted and not tag:new' Archive
+    plan "$acct" Archive 'tag:inbox and not tag:deleted' INBOX
+    plan "$acct" Trash   'not tag:deleted and tag:sent and not tag:inbox' Sent
+    plan "$acct" Trash   'not tag:deleted and not (tag:sent and not tag:inbox)' INBOX
+}
+
+if [ "$rev" ] ; then
+    for acct in $(nm_accounts "$root") ; do
+        while IFS= read -r -d '' src && IFS= read -r -d '' dst ; do
+            plan_src+=("$src")
+            plan_dst+=("$dst")
+        done < <(plan_all "$acct")
+    done
+fi
+
+n="${#plan_src[@]}"
+if [ "$move_limit" -gt 0 ] && [ "$n" -gt "$move_limit" ] ; then
+    nm_log "refusing to move $n files (limit $move_limit); check the tags, or rerun with NIGHT_MAIL_MOVE_LIMIT=0"
+    n=0
+fi
+
+i=0
+while [ "$i" -lt "$n" ] ; do
+    src="${plan_src[$i]}"
+    dst="${plan_dst[$i]}"
+    i=$((i + 1))
+    if [ -z "$dst" ] ; then
+        command rm -f -- "$src" && nm_log "removed ${src#$root/}"
+        continue
+    fi
+    command mkdir -p "$(command dirname "$(command dirname "$dst")")"/{cur,new,tmp}
+    if [ -e "$dst" ] ; then
+        nm_log "not moving ${src#$root/}: ${dst#$root/} exists"
+        continue
+    fi
+    command mv -n -- "$src" "$dst" && nm_log "moved ${src#$root/} -> ${dst#$root/}"
+done
+
+# A network failure must not stop notmuch from indexing what is already here,
+# so mbsync's exit status is logged, not returned.
+mbsync -a -q || nm_log "mbsync failed with status $?"
+exit 0

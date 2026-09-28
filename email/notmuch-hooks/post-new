@@ -1,0 +1,57 @@
+#!/bin/bash
+# notmuch post-new hook: turn what the server did into tags, then back the
+# tags up.
+#
+# pre-new pushed our tags out as folder moves. This is the other direction:
+# a move made on the phone or in webmail shows up as a file in a different
+# folder, and the tags are made to agree with it.
+#
+# `unread' is never added here. With maildir.synchronize_flags, notmuch derives
+# it from the S flag; adding it again would clear S, so mail you read on the
+# phone would come back unread on the server.
+#
+# See docs/email.md.
+
+set -uo pipefail
+
+hook_dir="$(cd "$(command dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+. "$hook_dir/../bin/night-mail-lib.bash"
+
+root="$(nm_mail_root)" || { nm_log "no notmuch mail root"; exit 1; }
+rev="$(command cat "$night_mail_rev_file" 2>/dev/null)"
+changed="lastmod:${rev:-0}.."
+
+rules() {
+    local a
+    for a in $(nm_accounts "$root") ; do
+        cat <<EOF
++deleted -inbox -- folder:"$a/Trash" and not tag:deleted
+-deleted +inbox -- $changed and folder:"$a/INBOX" and tag:deleted and not folder:"$a/Trash"
++inbox -- $changed and folder:"$a/INBOX" and not tag:inbox and not tag:deleted
++inbox -- tag:new and folder:"$a/INBOX"
+-inbox -- tag:inbox and not folder:"$a/INBOX"
++sent -- tag:new and folder:"$a/Sent"
+EOF
+    done
+    printf '%s\n' '-new -- tag:new'
+}
+# In words, per account:
+#   in Trash                             -> deleted  (deleted on the server)
+#   changed, in INBOX, still deleted     -> undeleted (restored on the server)
+#   changed, in INBOX, not in the inbox  -> inbox    (moved back, or a copy of
+#                                                     mail you sent yourself)
+#   in the inbox but not in INBOX        -> archived (moved away on the server)
+#
+# "Changed" means this run touched it: a file of it appeared, vanished or was
+# renamed. So a tag you set in Emacs while this sync was running can be
+# overridden by the server's view; the window is the few seconds of indexing.
+
+rules | notmuch tag --batch || nm_log "notmuch tag --batch failed with status $?"
+
+# Tags are the only thing in the database that the mail files cannot rebuild.
+# Seven rotating dumps, one per weekday; `notmuch restore' reads them back.
+dump_dir="$HOME/.local/share/night-mail/tag-dumps"
+command mkdir -p "$dump_dir" &&
+    notmuch dump --gzip --output="$dump_dir/tags-$(command date +%u).gz" ||
+    nm_log "notmuch dump failed"
+exit 0

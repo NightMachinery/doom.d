@@ -1,0 +1,36 @@
+#!/bin/bash
+# night-mail-sync [--wait SECONDS]: run one full mail sync.
+#
+# This is the one entry point for a sync, used by the LaunchAgent and by
+# `night/mail-sync' in Emacs. It holds the sync lock for the whole of
+# `notmuch new', whose hooks do the real work:
+#
+#   pre-new   moves files between folders by tag, then runs `mbsync -a'
+#   post-new  tags what arrived, then dumps all tags as a backup
+#
+# Without --wait, it exits 75 at once if another sync holds the lock (the
+# LaunchAgent's behaviour: the next tick will catch up). With --wait, it waits
+# up to SECONDS for that sync to finish first.
+#
+# See docs/email.md.
+
+set -uo pipefail
+
+email_bin="$(cd "$(command dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+. "$email_bin/night-mail-lib.bash"
+
+wait=0
+case "${1:-}" in
+    --wait) wait="${2:?--wait needs a number of seconds}" ;;
+    '') ;;
+    *) printf 'usage: %s [--wait SECONDS]\n' "${0##*/}" >&2 ; exit 64 ;;
+esac
+
+if ! nm_lock "$wait" ; then
+    nm_log "another sync holds $night_mail_lock; skipped"
+    exit 75
+fi
+
+# The hooks see this and do not try to take the lock we already hold.
+export NIGHT_MAIL_LOCKED=1
+notmuch new --quiet
