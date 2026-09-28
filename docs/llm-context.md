@@ -306,15 +306,27 @@ buffer, whether any of them may run at all. Its default:
      ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
      ("/\\.netrc\\Z"             . refuse)
      ("/\\.ssh/"                 . refuse)
+     ("/\\.[^/]*_pass\\Z"        . refuse)
+     ("/\\.config/night-mail/"   . refuse)
+     ("\\A(/Users|/home)/[^/]+/Mail/" . refuse)
+     (mail-read                  . refuse)
+     (mail-compose               . confirm)
      ("\\A/private/(tmp|var)/"   . allow)
      ("/notes/private/research/" . allow)
      ("/private/"                . confirm))
 
 Each rule pairs a matcher with a level. A matcher is a PCRE, or a symbol
-naming a predicate in `night/h-llm-policy-predicates` — `encrypted` is the
-only one so far, and resolves to `night/buffer-encrypted-p`. A level is
-`refuse` (decline, naming the rule that said so), `confirm` (ask first) or
-`allow` (send).
+naming a predicate in `night/h-llm-policy-predicates`: `encrypted`
+(`night/buffer-encrypted-p`), `mail-read` (a notmuch message, thread, search
+or hello buffer) and `mail-compose` (a buffer derived from `message-mode`). A
+level is `refuse` (decline, naming the rule that said so), `confirm` (ask
+first) or `allow` (send).
+
+The mail rules exist because mail is other people's words. A message you are
+reading is never sent, and one you are writing asks first, since a reply
+quotes its thread. The `_pass` and `night-mail` rules cover the mail
+account's secrets, and the `Mail/` rule the raw Maildir. See
+[email.md](email.md).
 
 The first matching rule decides, which is what makes exceptions expressible:
 an `allow` rule for `/private/pub/` placed above the `confirm` rule for

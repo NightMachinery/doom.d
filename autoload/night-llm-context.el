@@ -296,6 +296,13 @@ silence is the one failure this whole mechanism exists to prevent."
     ("/\\.authinfo(\\.gpg)?\\Z" . refuse)
     ("/\\.netrc\\Z"             . refuse)
     ("/\\.ssh/"                 . refuse)
+    ;; Mail is other people's words, and the account's secrets sit next to
+    ;; it. See docs/email.md.
+    ("/\\.[^/]*_pass\\Z"        . refuse)
+    ("/\\.config/night-mail/"  . refuse)
+    ("\\A(/Users|/home)/[^/]+/Mail/" . refuse)
+    (mail-read                  . refuse)
+    (mail-compose               . confirm)
     ;; macOS resolves /tmp and /var into /private/, so without this the
     ;; rule below would ask about every scratch file.
     ("\\A/private/(tmp|var)/"    . allow)
@@ -329,8 +336,22 @@ being skipped: a typo here must not quietly widen the policy."
                                     (const allow)))
   :group 'night)
 
+(defun night/h-llm-mail-read-p (buffer)
+  "Non-nil if BUFFER shows mail in notmuch: a message, a thread or a list."
+  (with-current-buffer buffer
+    (and (derived-mode-p 'notmuch-show-mode 'notmuch-tree-mode
+                         'notmuch-search-mode 'notmuch-hello-mode)
+         t)))
+
+(defun night/h-llm-mail-compose-p (buffer)
+  "Non-nil if BUFFER is a message being written; a reply quotes its thread."
+  (with-current-buffer buffer
+    (and (derived-mode-p 'message-mode 'mail-mode) t)))
+
 (defvar night/h-llm-policy-predicates
-  '((encrypted . night/buffer-encrypted-p))
+  '((encrypted    . night/buffer-encrypted-p)
+    (mail-read    . night/h-llm-mail-read-p)
+    (mail-compose . night/h-llm-mail-compose-p))
   "Symbols usable as matchers in `night/llm-path-policy'.
 Each maps to a function of one argument, the buffer to judge.")
 
