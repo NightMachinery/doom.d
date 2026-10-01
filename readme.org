@@ -61,6 +61,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
 
 * Notes
+** Org buffers opening without colors
+*** Intermittent loss of coloring on open is under investigation. The September 24 special-tag rule is a candidate, but synthetic comparisons passed with both rules; a recorded jit-lock redisplay error has no captured stack yet.
+*** See [[file:docs/bugs/org-opening-without-colors.md][diagnosis, proposed fixes, and recovery without rereading the file]].
 ** Mobile line numbers
 *** =emc-mobile= hides line numbers in marked terminal frames except at the final line; desktop buffer settings are preserved. See =docs/mobile-line-numbers.md=.
 *** Copies from those frames use native OSC 52 to reach the terminal client's clipboard. See =docs/mobile-clipboard.md= for the 6000-byte default limit and tmux setup.
