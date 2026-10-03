@@ -158,7 +158,9 @@ of shr, the browser-like renderer notmuch uses by default.
   `org-toggle-link-display` is remapped to in a message) toggles between
   literal links and Org's descriptive display. The choice,
   `night/notmuch-link-display`, holds for every message buffer, open or
-  later, and savehist keeps it across sessions. Org's own command cannot do
+  later, and savehist keeps it across sessions. While links are
+  descriptive, moving point onto one shows its URL in the echo area
+  (`night/h-notmuch-echo-link-url`, a buffer-local `post-command-hook`). Org's own command cannot do
   it here: it works by refontifying, and a notmuch buffer has no Org
   font-lock.
 - If pandoc is missing or fails, or the part is over

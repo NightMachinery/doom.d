@@ -182,7 +182,8 @@ strip them."
         (make-text-button path-start end
                           'action (lambda (_) (night/h-mail-follow-url url))
                           'follow-link t
-                          'help-echo url)
+                          'help-echo url
+                          'night-mail-url url)
         (goto-char end)))
     (let ((pos (point-min)))
       (while (< pos (point-max))
@@ -215,6 +216,25 @@ switches it, and savehist keeps it across sessions.")
     (remove-from-invisibility-spec '(org-link)))
   ;; The text is unchanged, so redisplay would otherwise keep the old view.
   (force-window-update (current-buffer)))
+
+(defvar-local night/h-notmuch-echoed-url nil
+  "The URL `night/h-notmuch-echo-link-url' last showed in this buffer.")
+
+(defun night/h-notmuch-echo-link-url ()
+  "Show the URL of the link at point while links are descriptive.
+Only on arriving at a link, so it does not repeat on every motion, and
+without logging to *Messages*."
+  (let ((url (and (eq night/notmuch-link-display 'descriptive)
+                  (get-text-property (point) 'night-mail-url))))
+    (unless (equal url night/h-notmuch-echoed-url)
+      (setq night/h-notmuch-echoed-url url)
+      (when url
+        (let ((message-log-max nil))
+          (message "%s" url))))))
+
+(defun night/h-notmuch-show-setup-link-echo ()
+  "Echo link URLs in this message buffer; see `night/h-notmuch-echo-link-url'."
+  (add-hook 'post-command-hook #'night/h-notmuch-echo-link-url nil t))
 
 (defun night/notmuch-toggle-link-display ()
   "Toggle HTML mail's links between `[[url][desc]]' and just desc.
@@ -315,6 +335,7 @@ into notes. The buffer is read-only and marked as mail."
 
   (advice-add 'notmuch-poll :override #'night/h-notmuch-poll-async)
   (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
+  (add-hook 'notmuch-show-mode-hook #'night/h-notmuch-show-setup-link-echo)
 
   ;; Of a multipart/alternative, show the HTML (rendered as Org) rather
   ;; than the plain text. multipart/related is an HTML part with its images.
