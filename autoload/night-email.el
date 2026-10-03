@@ -155,12 +155,15 @@ would otherwise strip them."
     ;; unfontified, e.g. ones whose description spans lines.
     (goto-char (point-min))
     (while (re-search-forward org-link-bracket-re nil t)
+      ;; Take everything from the match data first: `org-link-unescape'
+      ;; runs `string-match', which overwrites it.
       (let* ((start (match-beginning 0))
+             (end (match-end 0))
+             (desc (and (match-beginning 2)
+                        (buffer-substring (match-beginning 2) (match-end 2))))
              (url (org-link-unescape (match-string-no-properties 1)))
-             (desc (if (match-beginning 2)
-                       (buffer-substring (match-beginning 2) (match-end 2))
-                     url)))
-        (delete-region start (match-end 0))
+             (desc (or desc url)))
+        (delete-region start end)
         (goto-char start)
         (insert desc)
         (add-face-text-property start (point) 'org-link)
