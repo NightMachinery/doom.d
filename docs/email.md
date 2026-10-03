@@ -121,8 +121,9 @@ on that run, since there are no tags yet to act on.
   the whole sync. The log goes to the buffer ` *night-mail-sync*`.
 - Localleader `c` composes, localleader `/` searches with `consult-notmuch`.
 - HTML mail is shown as Org; see "HTML mail" below. In a message,
-  localleader `h` switches HTML between Org and shr, and localleader `o`
-  opens the message's HTML as an Org buffer.
+  localleader `h` switches HTML between Org and shr, `l` toggles links
+  between `[[url][text]]` and just the text, and `o` opens the message's
+  HTML as an Org buffer.
 - Composing is plain text. In a message, localleader `h` (`org-mime-htmlize`)
   turns Org markup in the body into an HTML part, and localleader `e` edits
   the body in an Org buffer.
@@ -144,11 +145,20 @@ of shr, the browser-like renderer notmuch uses by default.
   Images become their alt text, so tracking pixels vanish, and a link left
   empty by that is dropped. Divs, spans and raw HTML are unwrapped or
   dropped, and ids and styles are cleared so no `:PROPERTIES:` drawers appear.
-- The Org text is fontified in a temporary Org buffer. Each `[[url][text]]`
-  becomes a button showing the text; `RET` on it opens `http(s)` and `mailto`
-  links in the browser or composer, and only shows any other kind. Mail is
-  untrusted, so an `elisp:` or `shell:` link must never run. Faces are copied
-  to `font-lock-face`, because font-lock in the notmuch buffer strips `face`.
+- The Org text is fontified in a temporary Org buffer. Links stay literal,
+  `[[url][text]]`, and each is a button from its URL on: `RET` opens
+  `http(s)` and `mailto` links in the browser or composer, and only shows
+  any other kind. Mail is untrusted, so an `elisp:` or `shell:` link must
+  never run. The button starts at the URL, not the brackets, so that
+  link-hint (`gl`) gives one hint per link rather than one for the button
+  and one for the bare URL. Faces are copied to `font-lock-face`, because
+  font-lock in the notmuch buffer strips `face`.
+- The parts of a link Org would hide carry `invisible org-link`.
+  Localleader `l` (`night/notmuch-toggle-link-display`, also what
+  `org-toggle-link-display` is remapped to in a message) toggles between
+  literal links and Org's descriptive display. Org's own command cannot do
+  it here: it works by refontifying, and a notmuch buffer has no Org
+  font-lock.
 - If pandoc is missing or fails, or the part is over
   `night/notmuch-html-org-max-size`, shr renders it as before.
 - Of a multipart/alternative message, the HTML is shown rather than the plain

@@ -138,17 +138,21 @@ Mail is untrusted, so an `elisp:' or `shell:' link must never run."
 (defun night/h-org-fontify-for-display (org)
   "Return ORG as fontified text with its bracket links turned into buttons.
 
-Each link becomes its description, a button that opens the target via
-`night/h-mail-follow-url'. Hidden emphasis markers are deleted. Faces
-are copied to `font-lock-face', since font-lock in the notmuch buffer
-would otherwise strip them."
+Links stay literal, `[[url][desc]]'. Each is a button that opens the
+target via `night/h-mail-follow-url', and the parts that Org would hide
+carry `invisible org-link', which `night/notmuch-toggle-link-display'
+hides or shows. Hidden emphasis markers are deleted. Faces are copied to
+`font-lock-face', since font-lock in the notmuch buffer would otherwise
+strip them."
   (with-temp-buffer
     (insert org)
-    (let ((org-inhibit-startup t)
-          (org-link-descriptive nil)
-          (org-hide-emphasis-markers t))
-      (delay-mode-hooks (org-mode))
-      (font-lock-ensure))
+    (let ((org-inhibit-startup t))
+      (delay-mode-hooks (org-mode)))
+    ;; Set after `org-mode', not let-bound around it: it makes
+    ;; `org-link-descriptive' buffer-local, which warns under a let.
+    (setq-local org-link-descriptive nil
+                org-hide-emphasis-markers t)
+    (font-lock-ensure)
     (remove-list-of-text-properties
      (point-min) (point-max) '(keymap local-map help-echo mouse-face htmlize-link))
     ;; By regex rather than org's link properties: org leaves some links
@@ -159,22 +163,31 @@ would otherwise strip them."
       ;; runs `string-match', which overwrites it.
       (let* ((start (match-beginning 0))
              (end (match-end 0))
-             (desc (and (match-beginning 2)
-                        (buffer-substring (match-beginning 2) (match-end 2))))
-             (url (org-link-unescape (match-string-no-properties 1)))
-             (desc (or desc url)))
-        (delete-region start end)
-        (goto-char start)
-        (insert desc)
-        (add-face-text-property start (point) 'org-link)
-        (make-text-button start (point)
+             (path-start (match-beginning 1))
+             (desc-start (match-beginning 2))
+             (desc-end (match-end 2))
+             (url (org-link-unescape (match-string-no-properties 1))))
+        ;; Org may read `_x_' in a URL as emphasis and hide the markers;
+        ;; deleting those would corrupt the URL shown.
+        (remove-text-properties start end '(invisible nil))
+        (add-face-text-property start end 'org-link)
+        (if desc-start
+            (progn
+              (put-text-property start desc-start 'invisible 'org-link)
+              (put-text-property desc-end end 'invisible 'org-link))
+          (put-text-property start path-start 'invisible 'org-link)
+          (put-text-property (- end 2) end 'invisible 'org-link))
+        ;; From the URL, not the brackets: link-hint hints a button and a
+        ;; bare URL separately unless they start at the same place.
+        (make-text-button path-start end
                           'action (lambda (_) (night/h-mail-follow-url url))
                           'follow-link t
-                          'help-echo url)))
+                          'help-echo url)
+        (goto-char end)))
     (let ((pos (point-min)))
       (while (< pos (point-max))
         (let ((next (next-single-property-change pos 'invisible nil (point-max))))
-          (if (get-text-property pos 'invisible)
+          (if (eq (get-text-property pos 'invisible) t)
               (delete-region pos next)
             (setq pos next)))))
     (let ((pos (point-min)))
@@ -186,6 +199,19 @@ would otherwise strip them."
     (unless (bolp) (insert "\n"))
     (buffer-string)))
 
+(defun night/notmuch-toggle-link-display ()
+  "Toggle HTML mail's links between `[[url][desc]]' and just desc.
+The notmuch counterpart of `org-toggle-link-display', which is remapped
+to it in `notmuch-show-mode-map'."
+  (interactive)
+  (cond
+   ((assq 'org-link (ensure-list buffer-invisibility-spec))
+    (remove-from-invisibility-spec '(org-link))
+    (message "Links: literal"))
+   (t
+    (add-to-invisibility-spec '(org-link))
+    (message "Links: descriptive"))))
+
 (defun night/h-notmuch-insert-html-as-org (msg part)
   "Insert the text/html PART of MSG as fontified Org; nil if that fails."
   (condition-case err
@@ -193,6 +219,10 @@ would otherwise strip them."
              (org (and (<= (length html) night/notmuch-html-org-max-size)
                        (night/h-html-to-org html))))
         (when org
+          ;; With the default spec t, any `invisible' text is hidden; links
+          ;; start literal, so make the spec a list without `org-link'.
+          (when (eq buffer-invisibility-spec t)
+            (setq buffer-invisibility-spec (list t)))
           (insert (night/h-org-fontify-for-display org))
           t))
     (error
@@ -338,7 +368,10 @@ into notes. The buffer is read-only and marked as mail."
   (map! :map notmuch-show-mode-map
         :localleader
         :desc "HTML in an Org buffer" "o" #'night/notmuch-show-html-in-org
-        :desc "Toggle HTML renderer" "h" #'night/notmuch-toggle-html-renderer))
+        :desc "Toggle HTML renderer" "h" #'night/notmuch-toggle-html-renderer
+        :desc "Toggle link display" "l" #'night/notmuch-toggle-link-display)
+  (define-key notmuch-show-mode-map [remap org-toggle-link-display]
+              #'night/notmuch-toggle-link-display))
 
 (after! (org notmuch)
   ;; `notmuch:id:' links from `org-store-link' and the "e" capture template.
