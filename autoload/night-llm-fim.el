@@ -26,7 +26,7 @@
   (defun night/h-llm-fim--key (variable)
     "Read VARIABLE through z var-get once, then cache it like existing keys."
     (unless (gethash variable night/llm-fim--keys)
-      (puthash variable (or (z var-get variable) "") night/llm-fim--keys))
+      (puthash variable (or (z var-get (identity variable)) "") night/llm-fim--keys))
     (gethash variable night/llm-fim--keys))
 
   (defun night/h-llm-fim--providers-refresh ()
