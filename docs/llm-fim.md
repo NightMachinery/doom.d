@@ -10,34 +10,33 @@ are decided by the scope and the path policy that FIM shares with the ellama
 commands — see `docs/llm-context.md`. `alt+cmd+.` is this same command
 restricted to the current heading.
 
-Everything lives in `autoload/night-llm-fim.el`. `night/llm-fim-get` is the
-transport layer; `night/llm-fim-insert-at-point` is the command;
-`night/h-llm-fim-insert-result` does the insertion and the highlight. The keys are in `autoload/night-ellama.el`, and
-the terminal decoding for `alt+cmd+.` in `night-doom-keybindings.el` with its
-kitty half in `~/scripts/configFiles/kitty/kitty.conf`.
+The front end lives in `autoload/night-llm-fim.el`. `night/llm-fim-get`
+launches the shared Go transport; `night/llm-fim-insert-at-point` is the command;
+`night/h-llm-fim-insert-result` does the insertion and highlight. The keys are in
+`autoload/night-ellama.el`, and the terminal decoding for `alt+cmd+.` is in
+`night-doom-keybindings.el` with its kitty half in
+`~/scripts/configFiles/kitty/kitty.conf`.
 
-There is a zsh twin on `alt+.`, `fim-get` in
-`~/scripts/zshlang/auto-load/others/fim.zsh`, documented at
-`~/scripts/docs/fim.md`. It carries the same provider table and sends the same
-body, so a change to either wants the same change to the other. It is also
-callable from here as `z fim-get <prefix> <suffix>`, should this ever be worth
-collapsing into one implementation.
+The zsh twin on `alt+.` uses [agfi:fim-get], documented in
+`~/scripts/docs/fim.md`. Zsh, Emacs, Hammerspoon, kitty and tmux all send FIM
+requests through `~/scripts/golang/llm_complete`. Provider definitions, request
+bodies, HTTP and error parsing have one implementation. Capturing context,
+cancellation, scope and insertion remain in each front end.
 
 ## Providers
 
-`night/llm-fim-providers` is an alist from a name to a plist. All the FIM APIs
-worth using take the *same* request body — `model`, `prompt`, `suffix`,
-`max_tokens`, `stop`, `temperature` — so an entry only says where to send it
-and how to read the reply:
+`night/llm-fim-providers` is derived from `llm_complete fim providers --json`.
+The picker refreshes it from Go, including optional
+`~/.config/llm_complete/providers.json` overrides. Add or change providers in
+that file rather than editing an Emacs provider table. Its schema is documented
+in `~/scripts/docs/agent-completion.md`.
 
-- `:endpoint` — URL of the FIM completion endpoint
-- `:key-fn` — function returning the API key, or nil for an unauthenticated
-  endpoint such as a local server
-- `:model` — sent as `model`
-- `:extract` — `chat` for `choices[0].message.content` (Mistral) or `text` for
-  `choices[0].text` (OpenAI-style)
-- optional `:max-tokens`, `:stop`, `:temperature` override the corresponding
-  `night/llm-fim-*` default for that provider
+Each provider specifies an endpoint, model, key environment variable name and
+reply shape (`chat` for `choices[0].message.content`, or `text` for
+`choices[0].text`). Provider parameters override Go defaults; explicit call
+arguments and changed Emacs globals override provider parameters. Emacs fetches
+the key by its environment variable name through `z var-get` and caches it.
+The legacy transport derives a `:key-fn` from this same metadata.
 
 Configured:
 
@@ -68,7 +67,7 @@ Mistral/Codestral, DeepSeek, Ollama (`suffix` on `/api/generate`), llama.cpp
 (`/infill` with `input_prefix`/`input_suffix`), and any OpenAI-compatible host
 serving a FIM-trained model — Qwen-Coder, StarCoder2, CodeGemma — through
 legacy `/v1/completions` with `suffix`. The last group needs no new code here,
-only a table entry with `:extract text`.
+only a provider entry with `"extract": "text"`.
 
 No FIM API at all:
 
@@ -151,12 +150,13 @@ where nothing readable comes out of it:
   being evaluated, so the callback was never reached and the code after it was
   unreachable.
 
-The transport follows plz's own split: `:callback` for the completion,
+The callback interface retains plz's split: `:callback` for the completion,
 `:on-error` called like `message` with a human-readable description, and an
-optional `:finally`. Response parsing is one `condition-case` around
-`night/h-llm-fim--extract` rather than a ladder of `if`s.
+optional `:finally`. The Go sentinel sends stdout to the completion callback
+and the single stderr error line to the error callback. The retained v1 parser
+uses one `condition-case` around `night/h-llm-fim--extract`.
 
-`night/h-llm-fim--error-string` renders a `plz-error`: curl failures as
+In v1, `night/h-llm-fim--error-string` renders a `plz-error`: curl failures as
 `curl error N: …`, HTTP failures as the status plus the API's own message.
 For curl error 7, a nonempty proxy variable relevant to the endpoint adds
 `(proxy configured; check M-x night/proxy-status)`. This reveals configuration
@@ -165,10 +165,10 @@ the cause or retry the request. See `docs/proxy-env.md` for confirming the
 route, restoring an intended proxy service, or explicitly disabling stale
 proxy state in a running server.
 
-Providers disagree on where that message lives — Mistral uses `detail` for auth
-and validation failures and `message` elsewhere, DeepSeek uses the OpenAI-shaped
-`error.message` — so `night/h-llm-fim--api-message` tries all three before falling
-back to the raw body.
+The retained v1 parser tries provider-specific message fields. Mistral uses
+`detail` for auth and validation failures and `message` elsewhere; DeepSeek uses
+the OpenAI-shaped `error.message`. `night/h-llm-fim--api-message` tries all three
+before falling back to the raw body.
 
 ## Cancellation and concurrency
 
@@ -181,9 +181,9 @@ The slot is claimed *before* the request is sent, not after: a missing API key
 reports synchronously, and the guard has to recognise that report as current or
 it would be swallowed as stale.
 
-`night/h-llm-fim--cancel` drops the slot first and only then kills the curl
-process. That ordering matters too: killing the process makes `plz` report a
-curl failure, and the handler must already look stale by the time it runs, or
+`night/h-llm-fim--cancel` drops the slot first and only then deletes the transport
+process. That ordering matters too: a killed Go process or v1 curl process can
+report a failure, and the handler must already look stale by the time it runs, or
 every cancellation would announce itself as an error.
 
 Consequences:
@@ -194,17 +194,16 @@ Consequences:
   so that `doom/escape` still performs its normal quit — `doom-escape-hook` runs
   under `run-hook-with-args-until-success`.
 - `:noquery t` keeps a pending request from blocking Emacs exit.
-- `night/llm-fim-timeout` (20s) caps the request. `plz` sets no total timeout by
-  default; only `plz-connect-timeout` applies, and it covers the connect phase
-  alone.
+- `night/llm-fim-timeout` (20s) caps the request in both transports. Go applies
+  a request deadline; v1 passes the total timeout to plz.
 
 ## Options
 
 - `night/llm-fim-provider`, default `codestral`.
 - `night/llm-fim-max-tokens` (64) and `night/llm-fim-stop` (`"\n"`). Together these cap
   the completion at one line *during generation*, rather than truncating a
-  longer one after paying for it. Note that `nil` in a provider entry means
-  "inherit", not "no stop sequence".
+  longer one after paying for it. In Go configuration an absent field inherits;
+  an explicit `null` stop disables stopping.
 - `night/llm-fim-temperature`, default 0.
 - `night/llm-fim-verbose`, default `t`.
 - `night/llm-fim-timeout`, default 20 seconds.
