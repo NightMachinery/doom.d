@@ -199,20 +199,36 @@ strip them."
     (unless (bolp) (insert "\n"))
     (buffer-string)))
 
-(defun night/notmuch-toggle-link-display ()
-  "Toggle HTML mail's links between `[[url][desc]]' and just desc.
-The notmuch counterpart of `org-toggle-link-display', which is remapped
-to it in `notmuch-show-mode-map'."
-  (interactive)
-  (cond
-   ((assq 'org-link (ensure-list buffer-invisibility-spec))
-    (remove-from-invisibility-spec '(org-link))
-    (message "Links: literal"))
-   (t
-    (add-to-invisibility-spec '(org-link))
-    (message "Links: descriptive")))
+(defvar night/notmuch-link-display 'literal
+  "How HTML mail's links show: `literal' (`[[url][desc]]') or `descriptive'.
+One setting for every message buffer; `night/notmuch-toggle-link-display'
+switches it, and savehist keeps it across sessions.")
+
+(defun night/h-notmuch-apply-link-display ()
+  "Show links in the current buffer as `night/notmuch-link-display' says."
+  ;; With the default spec t, any `invisible' text is hidden, `org-link'
+  ;; included; a list hides only what it names.
+  (when (eq buffer-invisibility-spec t)
+    (setq buffer-invisibility-spec (list t)))
+  (if (eq night/notmuch-link-display 'descriptive)
+      (add-to-invisibility-spec '(org-link))
+    (remove-from-invisibility-spec '(org-link)))
   ;; The text is unchanged, so redisplay would otherwise keep the old view.
   (force-window-update (current-buffer)))
+
+(defun night/notmuch-toggle-link-display ()
+  "Toggle HTML mail's links between `[[url][desc]]' and just desc.
+Applies to every message buffer, open or later. The notmuch counterpart
+of `org-toggle-link-display', which is remapped to it in
+`notmuch-show-mode-map'."
+  (interactive)
+  (setq night/notmuch-link-display
+        (if (eq night/notmuch-link-display 'descriptive) 'literal 'descriptive))
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (derived-mode-p 'notmuch-show-mode)
+        (night/h-notmuch-apply-link-display))))
+  (message "Links: %s" night/notmuch-link-display))
 
 (defun night/h-notmuch-insert-html-as-org (msg part)
   "Insert the text/html PART of MSG as fontified Org; nil if that fails."
@@ -221,10 +237,7 @@ to it in `notmuch-show-mode-map'."
              (org (and (<= (length html) night/notmuch-html-org-max-size)
                        (night/h-html-to-org html))))
         (when org
-          ;; With the default spec t, any `invisible' text is hidden; links
-          ;; start literal, so make the spec a list without `org-link'.
-          (when (eq buffer-invisibility-spec t)
-            (setq buffer-invisibility-spec (list t)))
+          (night/h-notmuch-apply-link-display)
           (insert (night/h-org-fontify-for-display org))
           t))
     (error
@@ -393,6 +406,9 @@ into notes. The buffer is read-only and marked as mail."
         :localleader
         :desc "HTML from Org markup" "h" #'org-mime-htmlize
         :desc "Edit body in Org" "e" #'org-mime-edit-mail-in-org-mode))
+
+(after! savehist
+  (add-to-list 'savehist-additional-variables 'night/notmuch-link-display))
 
 (after! org-mime
   ;; Build the HTML part with message-mode's MML, which notmuch sends as is.
