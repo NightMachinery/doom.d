@@ -244,3 +244,30 @@ obsolete aliases for a day or two each, had no consumers outside this
 directory, and the second rename would have left them pointing at shims.
 `night/mistral-fim-model` has no successor at all: the model is the `:model` of
 the selected provider.
+
+## Shared Go transport
+
+The default `night/llm-fim-transport` is `go`. `night/llm-fim-get` launches
+`llm_complete fim` with `make-process`, sends JSON on stdin, and binds the
+provider's key in the child environment. No buffer text or key becomes an
+argument. `night/llm-fim-program` selects the executable. Shell
+[agfi:go-local-dep] builds it from `scripts/golang/llm_complete`.
+
+The provider picker and model display read `fim providers --json`. Provider
+definitions and optional `~/.config/llm_complete/providers.json` overrides live
+in Go. Keys are fetched by the metadata's environment variable name through
+`z var-get` and cached. Clear `night/llm-fim--keys` to refresh cached keys.
+Unchanged global parameter defaults inherit Go configuration; changed globals
+and explicit call arguments override it. An explicit nil token cap disables
+the cap, and explicit nil stop disables stopping.
+
+Cancellation deletes the Go process. The existing pending-request claim,
+context scope, path policy, ghost indicator and insertion behavior stay in
+Emacs. There is no live-server reload in the migration tests. Context logging
+is off for Emacs unless `:log t` is supplied or configuration enables it.
+
+Rollback is `(setq night/llm-fim-transport 'v1)`. The old plz implementation is
+`night/llm-fim-get-v1`; it uses the same provider metadata. The legacy curl
+path can expose its Authorization header in process arguments. Restore `go`
+to return to stdin/environment transport. Go honors HTTP_PROXY, HTTPS_PROXY
+and NO_PROXY; ALL_PROXY alone is insufficient.

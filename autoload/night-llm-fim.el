@@ -5,42 +5,51 @@
   (require 'json)
 
 ;;;
-  (defcustom night/llm-fim-providers
-    '((codestral
-       :endpoint "https://codestral.mistral.ai/v1/fim/completions"
-       :key-fn night/codestral-key-get
-       :model "codestral-latest"
-       :extract chat)
-      (deepseek
-       :endpoint "https://api.deepseek.com/beta/completions"
-       :key-fn night/deepseek-key-get
-       ;; DeepSeek-V4-Pro-0813, the flagship. FIM lives on the /beta base URL
-       ;; and works in non-thinking mode only.
-       :model "deepseek-v4-pro"
-       :extract text)
-      (deepseek-flash
-       :endpoint "https://api.deepseek.com/beta/completions"
-       :key-fn night/deepseek-key-get
-       ;; DeepSeek-V4-Flash-0731. Same FIM support, much lower latency, which
-       ;; is what actually matters for a single line behind a hotkey.
-       :model "deepseek-v4-flash"
-       :extract text))
-    "Alist of FIM providers, mapping a name to a plist.
+  (defcustom night/llm-fim-transport 'go
+    "FIM transport: shared Go binary, or the retained plz implementation."
+    :type '(choice (const go) (const v1)) :group 'night)
 
-All of these APIs take the same request body, so an entry only has to say
-where to send it and how to read the reply:
+  (defcustom night/llm-fim-program "llm_complete"
+    "Shared completion executable, built by the shell's go-local-dep helper."
+    :type 'string :group 'night)
 
-  :endpoint    URL of the FIM completion endpoint.
-  :key-fn      Function returning the API key, or nil for an unauthenticated
-               endpoint such as a local server.
-  :model       Model name sent as `model'.
-  :extract     Shape of the response: `chat' for choices[0].message.content
-               (Mistral) or `text' for choices[0].text (OpenAI-style).
+  (defvar night/llm-fim-providers nil
+    "Compatibility provider metadata refreshed from Go, never a separate table.")
+  (defvar night/llm-fim--keys (make-hash-table :test 'equal))
 
-Optional :max-tokens, :stop and :temperature override the corresponding
-`night/llm-fim-*' defaults for that provider."
-    :type '(alist :key-type symbol :value-type plist)
-    :group 'night)
+  (defun night/h-llm-fim--program ()
+    (or (executable-find night/llm-fim-program)
+        (progn (z h-llm-complete-dep)
+               (or (executable-find night/llm-fim-program)
+                   (error "FIM: llm_complete is not on exec-path")))))
+
+  (defun night/h-llm-fim--key (variable)
+    "Read VARIABLE through z var-get once, then cache it like existing keys."
+    (unless (gethash variable night/llm-fim--keys)
+      (puthash variable (or (z var-get variable) "") night/llm-fim--keys))
+    (gethash variable night/llm-fim--keys))
+
+  (defun night/h-llm-fim--providers-refresh ()
+    (with-temp-buffer
+      (unless (zerop (call-process (night/h-llm-fim--program) nil t nil
+                                  "fim" "providers" "--json"))
+        (error "FIM: cannot read provider metadata"))
+      (let ((json-array-type 'list) (json-object-type 'alist))
+        (setq night/llm-fim-providers
+              (mapcar
+               (lambda (entry)
+                 (let ((key (alist-get 'key_env entry)))
+                   (cons (intern (alist-get 'name entry))
+                         (list :model (alist-get 'model entry)
+                               :endpoint (alist-get 'endpoint entry)
+                               :extract (intern (alist-get 'extract entry))
+                               :key-env key
+                               :key-fn (unless (string-empty-p key)
+                                         (lambda () (night/h-llm-fim--key key)))
+                               :max-tokens (alist-get 'max_tokens entry)
+                               :stop (alist-get 'stop entry)
+                               :temperature (alist-get 'temperature entry)))))
+               (json-read-from-string (buffer-string)))))))
 
   (defcustom night/llm-fim-provider 'codestral
     "Provider in `night/llm-fim-providers' used by `night/llm-fim-insert-at-point'."
@@ -130,12 +139,14 @@ deleted, because a later model may well go back to prepending one."
 ;;;
   (defun night/h-llm-fim--provider (&optional name)
     "Return the plist for provider NAME, defaulting to `night/llm-fim-provider'."
+    (night/h-llm-fim--providers-refresh)
     (let ((name (or name night/llm-fim-provider)))
       (or (alist-get name night/llm-fim-providers)
           (error "night/llm-fim: unknown provider `%s'" name))))
 
   (defun night/h-llm-fim--read-provider (&optional prompt)
     "Read a provider name from `night/llm-fim-providers'."
+    (night/h-llm-fim--providers-refresh)
     (intern
      (completing-read (or prompt "FIM provider: ")
                       (mapcar (lambda (entry) (symbol-name (car entry)))
@@ -263,7 +274,7 @@ The hint reports configuration, not a diagnosis, and exposes no values."
         (format "%s" (or (plz-error-message err) err))))))
 
 ;;;
-  (cl-defun night/llm-fim-get
+  (cl-defun night/llm-fim-get-v1
       (prefix
        &key
        (suffix nil)
@@ -341,6 +352,82 @@ no request was made."
           :else (lambda (err)
                   (funcall on-error "%s" (night/h-llm-fim--error-string err url)))
           :finally finally))))
+
+  (defun night/h-llm-fim--override-p (symbol default)
+    "Whether SYMBOL has an override rather than its ordinary DEFAULT."
+    (or (not (equal (symbol-value symbol) default))
+        (get symbol 'saved-value) (get symbol 'customized-value)))
+
+  (cl-defun night/llm-fim-get
+      (prefix &key suffix provider model
+              (max_tokens nil max-set) (stop nil stop-set)
+              (temperature nil temperature-set) log
+              callback (on-error #'night/h-llm-fim--report-error) finally)
+    "Request through Go with text on stdin and a key in the child environment.
+Explicit arguments override provider configuration. Unchanged global defaults
+are inherited from Go. Returns the cancellable process. Set transport to v1
+for the retained plz path; request-slot claiming and scope gates are unchanged."
+    (if (eq night/llm-fim-transport 'v1)
+        (apply #'night/llm-fim-get-v1 prefix
+               (append (list :suffix suffix :provider provider :model model
+                             :callback callback :on-error on-error :finally finally)
+                       (when max-set (list :max_tokens max_tokens))
+                       (when stop-set (list :stop stop))
+                       (when temperature-set (list :temperature temperature))))
+      (let (output errors process)
+        (condition-case err
+            (let* ((name (or provider night/llm-fim-provider))
+                   (entry (night/h-llm-fim--provider name))
+                   (key-var (plist-get entry :key-env))
+                   (key (unless (string-empty-p key-var)
+                          (night/h-llm-fim--key key-var)))
+                   (process-environment (copy-sequence process-environment))
+                   (request `((provider . ,(symbol-name name))
+                              (prefix . ,prefix) (suffix . ,(or suffix ""))
+                              (source . "emacs"))))
+              (when key (setenv key-var key))
+              (when model (push (cons 'model model) request))
+              (when (or max-set (night/h-llm-fim--override-p 'night/llm-fim-max-tokens 64))
+                (push (cons 'max_tokens (or (if max-set max_tokens night/llm-fim-max-tokens) 0)) request))
+              (when (or stop-set (night/h-llm-fim--override-p 'night/llm-fim-stop "\n"))
+                (push (cons 'stop (if stop-set stop night/llm-fim-stop)) request))
+              (when (or temperature-set (night/h-llm-fim--override-p 'night/llm-fim-temperature 0))
+                (push (cons 'temperature (if temperature-set temperature night/llm-fim-temperature)) request))
+              (when (night/h-llm-fim--override-p 'night/llm-fim-timeout 20)
+                (push (cons 'timeout night/llm-fim-timeout) request))
+              (when (night/h-llm-fim--override-p 'night/llm-fim-strip-leading-space nil)
+                (push (cons 'strip_space (if night/llm-fim-strip-leading-space t json-false)) request))
+              (when log (push '(log . t) request))
+              (setq output (generate-new-buffer " *fim-output*")
+                    errors (generate-new-buffer " *fim-error*"))
+              (setq process
+                    (make-process
+                     :name "llm_complete-fim" :command (list (night/h-llm-fim--program) "fim")
+                     :connection-type 'pipe :coding 'utf-8-unix :noquery t
+                     :buffer output :stderr errors
+                     :sentinel
+                     (lambda (proc _event)
+                       (when (memq (process-status proc) '(exit signal))
+                         (unwind-protect
+                             (if (and (eq (process-status proc) 'exit)
+                                      (zerop (process-exit-status proc)))
+                                 (funcall callback (with-current-buffer output (buffer-string)))
+                               (funcall on-error "%s"
+                                        (with-current-buffer errors
+                                          (let ((text (string-trim (buffer-string))))
+                                            (if (string-empty-p text) "request cancelled" text)))))
+                           (kill-buffer output) (kill-buffer errors)
+                           (when finally (funcall finally)))))))
+              (process-send-string process (json-encode request))
+              (process-send-eof process)
+              process)
+          (error
+           (when (process-live-p process) (delete-process process))
+           (when (buffer-live-p output) (kill-buffer output))
+           (when (buffer-live-p errors) (kill-buffer errors))
+           (funcall on-error "%s" (error-message-string err))
+           (when finally (funcall finally))
+           nil)))))
 
   (comment
    (night/llm-fim-get
@@ -481,7 +568,8 @@ ELAPSED, when given, is the request's duration in seconds."
        (t
         (with-current-buffer buffer
           ;; Off by default; see `night/llm-fim-strip-leading-space'.
-          (when (and night/llm-fim-strip-leading-space
+          (when (and (eq night/llm-fim-transport 'v1)
+                     night/llm-fim-strip-leading-space
                      (string-prefix-p " " result))
             (setq result (substring result 1)))
 
