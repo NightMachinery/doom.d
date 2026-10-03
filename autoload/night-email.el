@@ -210,7 +210,9 @@ to it in `notmuch-show-mode-map'."
     (message "Links: literal"))
    (t
     (add-to-invisibility-spec '(org-link))
-    (message "Links: descriptive"))))
+    (message "Links: descriptive")))
+  ;; The text is unchanged, so redisplay would otherwise keep the old view.
+  (force-window-update (current-buffer)))
 
 (defun night/h-notmuch-insert-html-as-org (msg part)
   "Insert the text/html PART of MSG as fontified Org; nil if that fails."
