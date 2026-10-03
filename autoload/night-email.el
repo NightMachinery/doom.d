@@ -96,12 +96,176 @@ script's log goes to the buffer \" *night-mail-sync*\"."
 `notmuch-poll' blocks Emacs for the whole sync. Advising it covers every
 caller, e.g. `gR' and the hello screen's `G'."
   (night/mail-sync))
+;;; HTML mail as Org
+;; pandoc converts the HTML, email/html-to-org.lua strips layout tables,
+;; images and raw HTML, and the result is fontified as in an Org buffer.
+
+(defvar night/notmuch-html-renderer 'org
+  "How notmuch shows a text/html part: `org' (via pandoc) or `shr'.
+`night/notmuch-toggle-html-renderer' switches it.")
+
+(defvar night/notmuch-html-org-max-size (* 4 1024 1024)
+  "HTML parts larger than this many characters are left to shr.")
+
+(defvar-local night/mail-buffer-p nil
+  "Non-nil in a buffer that holds mail outside notmuch's own modes.
+The LLM policy refuses such buffers like notmuch's; see
+`night/h-llm-mail-read-p'.")
+(put 'night/mail-buffer-p 'permanent-local t)
+
+(defun night/h-html-to-org (html)
+  "Return HTML converted to Org text by pandoc, or nil if pandoc fails."
+  (let ((pandoc (executable-find "pandoc"))
+        (filter (expand-file-name "html-to-org.lua" night/mail-email-dir)))
+    (when pandoc
+      (with-temp-buffer
+        (insert html)
+        (let* ((coding-system-for-read 'utf-8)
+               (coding-system-for-write 'utf-8)
+               (status (call-process-region
+                        (point-min) (point-max) pandoc t '(t nil) nil
+                        "-f" "html" "-t" "org" "--wrap=none"
+                        (concat "--lua-filter=" filter))))
+          (and (eql status 0) (buffer-string)))))))
+
+(defun night/h-mail-follow-url (url)
+  "Open URL if it is a web or mailto link; show any other kind instead.
+Mail is untrusted, so an `elisp:' or `shell:' link must never run."
+  (cond
+   ((string-match-p "\\`\\(https?\\|mailto\\):" url) (browse-url url))
+   (t (message "Not following this link: %s" url))))
+
+(defun night/h-org-fontify-for-display (org)
+  "Return ORG as fontified text with its bracket links turned into buttons.
+
+Each link becomes its description, a button that opens the target via
+`night/h-mail-follow-url'. Hidden emphasis markers are deleted. Faces
+are copied to `font-lock-face', since font-lock in the notmuch buffer
+would otherwise strip them."
+  (with-temp-buffer
+    (insert org)
+    (let ((org-inhibit-startup t)
+          (org-link-descriptive nil)
+          (org-hide-emphasis-markers t))
+      (delay-mode-hooks (org-mode))
+      (font-lock-ensure))
+    (remove-list-of-text-properties
+     (point-min) (point-max) '(keymap local-map help-echo mouse-face htmlize-link))
+    ;; By regex rather than org's link properties: org leaves some links
+    ;; unfontified, e.g. ones whose description spans lines.
+    (goto-char (point-min))
+    (while (re-search-forward org-link-bracket-re nil t)
+      (let* ((start (match-beginning 0))
+             (url (org-link-unescape (match-string-no-properties 1)))
+             (desc (if (match-beginning 2)
+                       (buffer-substring (match-beginning 2) (match-end 2))
+                     url)))
+        (delete-region start (match-end 0))
+        (goto-char start)
+        (insert desc)
+        (add-face-text-property start (point) 'org-link)
+        (make-text-button start (point)
+                          'action (lambda (_) (night/h-mail-follow-url url))
+                          'follow-link t
+                          'help-echo url)))
+    (let ((pos (point-min)))
+      (while (< pos (point-max))
+        (let ((next (next-single-property-change pos 'invisible nil (point-max))))
+          (if (get-text-property pos 'invisible)
+              (delete-region pos next)
+            (setq pos next)))))
+    (let ((pos (point-min)))
+      (while (< pos (point-max))
+        (let ((next (next-single-property-change pos 'face nil (point-max))))
+          (put-text-property pos next 'font-lock-face (get-text-property pos 'face))
+          (setq pos next))))
+    (goto-char (point-max))
+    (unless (bolp) (insert "\n"))
+    (buffer-string)))
+
+(defun night/h-notmuch-insert-html-as-org (msg part)
+  "Insert the text/html PART of MSG as fontified Org; nil if that fails."
+  (condition-case err
+      (let* ((html (notmuch-get-bodypart-text msg part notmuch-show-process-crypto))
+             (org (and (<= (length html) night/notmuch-html-org-max-size)
+                       (night/h-html-to-org html))))
+        (when org
+          (insert (night/h-org-fontify-for-display org))
+          t))
+    (error
+     (message "night/notmuch: HTML to Org failed, using shr: %s" (error-message-string err))
+     nil)))
+
+(defun night/h-notmuch-show-html (orig msg part content-type nth depth button)
+  "Show a text/html part as Org, falling back to ORIG (shr)."
+  (or (and (eq night/notmuch-html-renderer 'org)
+           (night/h-notmuch-insert-html-as-org msg part))
+      (funcall orig msg part content-type nth depth button)))
+
+(defun night/notmuch-toggle-html-renderer ()
+  "Switch HTML mail between Org and shr, which can show images."
+  (interactive)
+  (setq night/notmuch-html-renderer
+        (if (eq night/notmuch-html-renderer 'org) 'shr 'org))
+  (when (derived-mode-p 'notmuch-show-mode)
+    (notmuch-show-refresh-view))
+  (message "HTML mail renders with %s" night/notmuch-html-renderer))
+
+(defun night/h-notmuch-find-html-part (parts)
+  "Return the first text/html part in the MIME tree PARTS, or nil."
+  (seq-some
+   (lambda (part)
+     (let ((content (plist-get part :content)))
+       (cond
+        ((string-equal-ignore-case (or (plist-get part :content-type) "") "text/html") part)
+        ;; A multipart's content is its child parts.
+        ((and (consp content) (plist-get (car content) :content-type))
+         (night/h-notmuch-find-html-part content)))))
+   parts))
+
+(defun night/notmuch-show-html-in-org ()
+  "Open the HTML of the message at point as an Org buffer.
+For what the inline view lacks: folding, `org-store-link', refiling
+into notes. The buffer is read-only and marked as mail."
+  (interactive)
+  (let* ((msg (notmuch-show-get-message-properties))
+         (part (night/h-notmuch-find-html-part (plist-get msg :body)))
+         (org (and part
+                   (night/h-html-to-org
+                    (notmuch-get-bodypart-text msg part notmuch-show-process-crypto))))
+         (oneline (lambda (s) (replace-regexp-in-string "[\n\r]+" " " (or s "")))))
+    (cond
+     ((not part) (user-error "This message has no HTML part"))
+     ((not org) (user-error "pandoc could not convert this message"))
+     (t
+      ;; Read the headers here: they come from text properties of the show buffer.
+      (let ((subject (funcall oneline (notmuch-show-get-subject)))
+            (header (concat
+                     (format "From: %s\nDate: %s\n"
+                             (funcall oneline (notmuch-show-get-from))
+                             (funcall oneline (notmuch-show-get-date)))
+                     (format "[[notmuch:%s][Open in notmuch]]\n\n" (notmuch-show-get-message-id)))))
+        (with-current-buffer (get-buffer-create (format "*mail-org: %s*" subject))
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert (format "#+title: %s\n" subject) header org))
+          (org-mode)
+          (setq night/mail-buffer-p t
+                buffer-read-only t)
+          (set-buffer-modified-p nil)
+          (goto-char (point-min))
+          (pop-to-buffer (current-buffer))))))))
 ;;;
 (after! notmuch
   (setq notmuch-command (or (executable-find "notmuch") "/opt/homebrew/bin/notmuch"))
   (night/h-notmuch-version-check)
 
   (advice-add 'notmuch-poll :override #'night/h-notmuch-poll-async)
+  (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
+
+  ;; Of a multipart/alternative, show the HTML (rendered as Org) rather
+  ;; than the plain text. multipart/related is an HTML part with its images.
+  (setq notmuch-multipart/alternative-discouraged '("text/plain"))
 
   (setq mail-user-agent 'notmuch-user-agent)
 
@@ -156,7 +320,11 @@ caller, e.g. `gR' and the hello screen's `G'."
         :localleader
         :desc "Compose" "c" #'notmuch-mua-new-mail
         :desc "Sync mail" "u" #'night/mail-sync
-        :desc "Search (consult)" "/" #'consult-notmuch))
+        :desc "Search (consult)" "/" #'consult-notmuch)
+  (map! :map notmuch-show-mode-map
+        :localleader
+        :desc "HTML in an Org buffer" "o" #'night/notmuch-show-html-in-org
+        :desc "Toggle HTML renderer" "h" #'night/notmuch-toggle-html-renderer))
 
 (after! (org notmuch)
   ;; `notmuch:id:' links from `org-store-link' and the "e" capture template.

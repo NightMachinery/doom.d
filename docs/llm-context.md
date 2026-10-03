@@ -318,7 +318,8 @@ buffer, whether any of them may run at all. Its default:
 Each rule pairs a matcher with a level. A matcher is a PCRE, or a symbol
 naming a predicate in `night/h-llm-policy-predicates`: `encrypted`
 (`night/buffer-encrypted-p`), `mail-read` (a notmuch message, thread, search
-or hello buffer) and `mail-compose` (a buffer derived from `message-mode`). A
+or hello buffer, or any buffer with `night/mail-buffer-p` set, such as a
+message opened as Org) and `mail-compose` (a buffer derived from `message-mode`). A
 level is `refuse` (decline, naming the rule that said so), `confirm` (ask
 first) or `allow` (send).
 

@@ -111,6 +111,9 @@ on that run, since there are no tags yet to act on.
   `notmuch-poll` is advised to do so, because on its own it blocks Emacs for
   the whole sync. The log goes to the buffer ` *night-mail-sync*`.
 - Localleader `c` composes, localleader `/` searches with `consult-notmuch`.
+- HTML mail is shown as Org; see "HTML mail" below. In a message,
+  localleader `h` switches HTML between Org and shr, and localleader `o`
+  opens the message's HTML as an Org buffer.
 - Composing is plain text. In a message, localleader `h` (`org-mime-htmlize`)
   turns Org markup in the body into an HTML part, and localleader `e` edits
   the body in an Org buffer.
@@ -119,6 +122,37 @@ on that run, since there are no tags yet to act on.
   sender and link under "Email" in the notes inbox.
 - Sent mail is filed in `<account>/Sent` tagged `sent`, drafts in
   `<account>/Drafts`. mbsync uploads both to the server.
+
+## HTML mail
+
+A text/html part is converted by pandoc and shown as fontified Org, in place
+of shr, the browser-like renderer notmuch uses by default.
+`night/h-notmuch-show-html` advises `notmuch-show-insert-part-text/html`:
+
+- pandoc runs with `email/html-to-org.lua`, a filter for what HTML mail is
+  made of. Tables used for page layout (anything but a table of at least two
+  rows and columns of one-paragraph cells) are replaced by their contents.
+  Images become their alt text, so tracking pixels vanish, and a link left
+  empty by that is dropped. Divs, spans and raw HTML are unwrapped or
+  dropped, and ids and styles are cleared so no `:PROPERTIES:` drawers appear.
+- The Org text is fontified in a temporary Org buffer. Each `[[url][text]]`
+  becomes a button showing the text; `RET` on it opens `http(s)` and `mailto`
+  links in the browser or composer, and only shows any other kind. Mail is
+  untrusted, so an `elisp:` or `shell:` link must never run. Faces are copied
+  to `font-lock-face`, because font-lock in the notmuch buffer strips `face`.
+- If pandoc is missing or fails, or the part is over
+  `night/notmuch-html-org-max-size`, shr renders it as before.
+- Of a multipart/alternative message, the HTML is shown rather than the plain
+  text (`notmuch-multipart/alternative-discouraged` is `("text/plain")`). The
+  plain part is still a button away.
+
+Localleader `h` (`night/notmuch-toggle-html-renderer`) switches between Org
+and shr, e.g. for a message whose images matter. Localleader `o`
+(`night/notmuch-show-html-in-org`) opens the message's HTML as a read-only
+Org buffer, for folding, `org-store-link` or copying into notes. That buffer
+sets `night/mail-buffer-p`, so the LLM policy refuses it like any mail view.
+
+On this mailbox's 51 HTML parts the conversion took 50 to 150 ms each.
 
 ## Tags and folders
 

@@ -337,10 +337,12 @@ being skipped: a typo here must not quietly widen the policy."
   :group 'night)
 
 (defun night/h-llm-mail-read-p (buffer)
-  "Non-nil if BUFFER shows mail in notmuch: a message, a thread or a list."
+  "Non-nil if BUFFER shows mail: notmuch's message, thread and list views,
+or a buffer marked `night/mail-buffer-p' (a message opened as Org)."
   (with-current-buffer buffer
-    (and (derived-mode-p 'notmuch-show-mode 'notmuch-tree-mode
-                         'notmuch-search-mode 'notmuch-hello-mode)
+    (and (or (derived-mode-p 'notmuch-show-mode 'notmuch-tree-mode
+                             'notmuch-search-mode 'notmuch-hello-mode)
+             (bound-and-true-p night/mail-buffer-p))
          t)))
 
 (defun night/h-llm-mail-compose-p (buffer)
