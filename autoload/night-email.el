@@ -255,6 +255,11 @@ into notes. The buffer is read-only and marked as mail."
           (set-buffer-modified-p nil)
           (goto-char (point-min))
           (pop-to-buffer (current-buffer))))))))
+
+(defun night/notmuch-inbox ()
+  "Open the inbox: the notmuch search for `tag:inbox'."
+  (interactive)
+  (notmuch-search "tag:inbox"))
 ;;;
 (after! notmuch
   (setq notmuch-command (or (executable-find "notmuch") "/opt/homebrew/bin/notmuch"))
@@ -321,6 +326,12 @@ into notes. The buffer is read-only and marked as mail."
         :desc "Compose" "c" #'notmuch-mua-new-mail
         :desc "Sync mail" "u" #'night/mail-sync
         :desc "Search (consult)" "/" #'consult-notmuch)
+  ;; evil-collection binds `K' to the tag menu, but Doom keeps `K' for
+  ;; `+lookup/documentation' (it is on `evil-collection-key-blacklist'),
+  ;; which has nothing to look up in mail.
+  (map! :map (notmuch-search-mode-map notmuch-tree-mode-map notmuch-show-mode-map)
+        :nv "K" #'notmuch-tag-jump)
+
   (map! :map notmuch-show-mode-map
         :localleader
         :desc "HTML in an Org buffer" "o" #'night/notmuch-show-html-in-org
@@ -349,4 +360,5 @@ into notes. The buffer is read-only and marked as mail."
   ;; Build the HTML part with message-mode's MML, which notmuch sends as is.
   (setq org-mime-library 'mml))
 ;;;
-(night/set-leader-keys "o m" #'notmuch "Mail (notmuch)")
+(night/set-leader-keys "o m" #'night/notmuch-inbox "Mail inbox")
+(night/set-leader-keys "o M" #'notmuch "Mail (notmuch hello)")

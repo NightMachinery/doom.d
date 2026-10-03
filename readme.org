@@ -164,7 +164,7 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** See [[file:docs/proxy-env.md][docs/proxy-env.md]].
 
 ** Email with notmuch
-*** notmuch reads, mbsync keeps =~/Mail= in step with the IMAP server, msmtp sends. =SPC o m= opens it. HTML mail is converted by pandoc and shown as Org. The account's identity lives in the private =~/.config/night-mail/identity.env= and the password in the login Keychain; =email/bin/night-mail-render= fills the templates in =email/templates/= from the former.
+*** notmuch reads, mbsync keeps =~/Mail= in step with the IMAP server, msmtp sends. =SPC o m= opens the inbox, =SPC o M= the hello screen, =J= (in normal state; notmuch's own =j= otherwise) plus a saved search's key jumps to it. HTML mail is converted by pandoc and shown as Org. The account's identity lives in the private =~/.config/night-mail/identity.env= and the password in the login Keychain; =email/bin/night-mail-render= fills the templates in =email/templates/= from the former.
 *** A sync is =email/bin/night-mail-sync=: a lock, then =notmuch new=, whose =pre-new= hook turns the =deleted= and =inbox= tags into folder moves and runs =mbsync -a=, and whose =post-new= hook turns the server's moves back into tags and dumps all tags as a backup. A LaunchAgent runs one every five minutes.
 *** [help:night/mail-sync] runs one asynchronously and refreshes the notmuch buffers; =notmuch-poll= is advised to call it, because on its own it blocks Emacs for the whole sync.
 *** notmuch.el is pinned to the tag of the Homebrew notmuch in =packages.el=; [help:night/h-notmuch-version-check] warns when they drift. Re-pin after =brew upgrade notmuch=.

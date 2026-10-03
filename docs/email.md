@@ -99,14 +99,23 @@ on that run, since there are no tags yet to act on.
 
 ## Using it
 
-- `SPC o m` opens notmuch. The saved searches: inbox, unread, flagged, todo,
-  waiting, sent, drafts, all, trash.
+- `SPC o m` opens the inbox (`night/notmuch-inbox`), `SPC o M` the notmuch
+  hello screen. The saved searches: inbox, unread, flagged, todo, waiting,
+  sent, drafts, all, trash.
 - evil-collection supplies the keys: `RET` opens, `a` archives, `d` toggles
   `deleted`, `!` toggles unread, `=` toggles flagged, `+`/`-` add or remove a
-  tag, `cc` composes, `cr`/`cR` reply to the sender or to all, `J` jumps to a
-  saved search.
-- `k` opens a tag menu (`notmuch-tagging-keys`): archive, delete, flag,
-  unflag, read, unread, todo, done, waiting, no longer waiting.
+  tag, `cc` composes, `cr`/`cR` reply to the sender or to all, `s` searches.
+- `notmuch-jump-search` jumps to a saved search by the search's `:key`: `i`
+  inbox, `u` unread, `f` flagged, `t` todo, `w` waiting, `s` sent, `d`
+  drafts, `a` all, `D` trash. In normal state it is `J` (evil-collection),
+  since `j` moves down a line; in insert or emacs state, e.g. while the
+  hello screen's search field has focus, it is notmuch's own `j`. So `J i`
+  or `j i` opens the inbox. We add no `g` keys for these, because `gs` (avy
+  and link-hint) and `gt` (next tab) are worth keeping.
+- `K` opens a tag menu (`notmuch-tagging-keys`): archive, delete, flag,
+  unflag, read, unread, todo, done, waiting, no longer waiting. evil-collection
+  binds it, but Doom keeps `K` for `+lookup/documentation`, so
+  night-email.el binds it again.
 - `gR`, the hello screen's `G`, and localleader `u` all run `night/mail-sync`.
   `notmuch-poll` is advised to do so, because on its own it blocks Emacs for
   the whole sync. The log goes to the buffer ` *night-mail-sync*`.
