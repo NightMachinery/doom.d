@@ -21,9 +21,11 @@ other.
 Anything built on `plz` therefore follows the frozen environment: the FIM
 commands, `ement`, and the `llm` package behind ellama.
 
-`url.el` ignores the environment and consults the `url-proxy-services` variable
-instead, which is nil here. Anything built on `url.el` — gptel,
-`night/myip-amazon` — therefore goes direct and keeps working.
+`url.el` consults `url-proxy-services` and can lazily import scheme proxy
+variables from the environment into that cache. Clearing the environment alone
+does not remove a proxy it already cached. Packages may also configure their
+own transport, so a working gptel or `night/myip-amazon` call does not establish
+that the environment used by curl is correct.
 
 So the symptom is a subset of network features failing while others are
 obviously fine, which reads like a bug in the failing feature rather than a
@@ -36,11 +38,10 @@ A proxy that has died leaves a distinctive trace:
 
     curl error 7: Failed to connect to host. (0.0s)
 
-Two details identify it. Exit code 7 is "could not connect", and the elapsed
-time is essentially zero — connecting to a closed port on the loopback
-interface is *refused* immediately, where a genuinely unreachable remote host
-would hang until a timeout. A network error that returns instantly is almost
-always local.
+Exit code 7 is "could not connect". Connecting to a closed port on the loopback
+interface is refused immediately, which explains the near-zero duration.
+This is a useful clue, not proof of a proxy failure: a remote refusal can also
+be immediate. Confirm the configured route and whether anything is listening.
 
 The message names no host and no port, which is what makes this expensive to
 diagnose. That loss is in `plz`: it discards curl's stderr and substitutes a
@@ -76,14 +77,20 @@ hand instead:
 
     lsof -nP -iTCP:<port> -sTCP:LISTEN
 
-Nothing in the output means nothing is listening, and every request through that
-proxy will fail in 0.0 seconds.
+No listener means that local proxy cannot accept a connection. An
+unauthenticated request to the provider endpoint can distinguish a transport
+failure from an API failure: an HTTP 401 still proves the route connected.
 
 ## Getting out of it
 
-Either `setenv` the offending variables in the running daemon, or restart the
-daemon from a shell that does not export them. There is no way to make an
-existing process re-read its parent's environment.
+If the proxy is intended, restore its service and retry. This keeps the route
+that Emacs was configured to use. FIM does not retry directly or automatically
+switch providers after a connection failure.
+
+If direct connections or a different proxy are intended, explicitly set the
+desired environment variables in each affected server and update
+`url-proxy-services`, or restart the daemon from the correct shell environment.
+There is no way to make an existing process re-read its parent's environment.
 
 ## The same shape elsewhere
 

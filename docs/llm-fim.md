@@ -158,6 +158,13 @@ optional `:finally`. Response parsing is one `condition-case` around
 
 `night/h-llm-fim--error-string` renders a `plz-error`: curl failures as
 `curl error N: …`, HTTP failures as the status plus the API's own message.
+For curl error 7, a nonempty proxy variable relevant to the endpoint adds
+`(proxy configured; check M-x night/proxy-status)`. This reveals configuration
+without exposing a proxy URL or credentials; it does not claim the proxy is
+the cause or retry the request. See `docs/proxy-env.md` for confirming the
+route, restoring an intended proxy service, or explicitly disabling stale
+proxy state in a running server.
+
 Providers disagree on where that message lives — Mistral uses `detail` for auth
 and validation failures and `message` elsewhere, DeepSeek uses the OpenAI-shaped
 `error.message` — so `night/h-llm-fim--api-message` tries all three before falling

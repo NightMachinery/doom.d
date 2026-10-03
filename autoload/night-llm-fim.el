@@ -233,13 +233,28 @@ Always returns nil so that `doom/escape' still does its usual work."
                 (night/h-llm-fim--truncate message))))
           (night/h-llm-fim--truncate (string-trim body)))))
 
-  (defun night/h-llm-fim--error-string (err)
-    "Render the `plz-error' ERR as a human-readable string."
+  (defun night/h-llm-fim--error-string (err &optional url)
+    "Render the `plz-error' ERR, with a proxy diagnostic hint for URL.
+The hint reports configuration, not a diagnosis, and exposes no values."
     (let ((curl-error (plz-error-curl-error err))
-          (response (plz-error-response err)))
+          (response (plz-error-response err))
+          (proxy-vars
+           (cond
+            ((string-prefix-p "https://" (or url ""))
+             '("https_proxy" "HTTPS_PROXY" "all_proxy" "ALL_PROXY"))
+            ((string-prefix-p "http://" (or url ""))
+             ;; curl deliberately ignores uppercase HTTP_PROXY.
+             '("http_proxy" "all_proxy" "ALL_PROXY")))))
       (cond
        (curl-error
-        (format "curl error %s: %s" (car curl-error) (cdr curl-error)))
+        (concat
+         (format "curl error %s: %s" (car curl-error) (cdr curl-error))
+         (when (and (equal (car curl-error) 7)
+                    (cl-some (lambda (var)
+                               (let ((value (getenv var)))
+                                 (and value (not (string-empty-p value)))))
+                             proxy-vars))
+           " (proxy configured; check M-x night/proxy-status)")))
        (response
         (format "HTTP %s — %s"
                 (plz-response-status response)
@@ -324,7 +339,7 @@ no request was made."
           ;; instead of a body, and the failure surfaces as a wrong-type error
           ;; inside the process sentinel.
           :else (lambda (err)
-                  (funcall on-error "%s" (night/h-llm-fim--error-string err)))
+                  (funcall on-error "%s" (night/h-llm-fim--error-string err url)))
           :finally finally))))
 
   (comment
