@@ -14,7 +14,7 @@ port @NIGHT_MAIL_SMTP_PORT@
 # Port 465 speaks TLS from the first byte; there is no STARTTLS step.
 tls_starttls off
 user @NIGHT_MAIL_USER@
-passwordeval "/usr/bin/security find-internet-password -s @NIGHT_MAIL_HOST@ -a @NIGHT_MAIL_USER@ -w"
+passwordeval "/usr/bin/security find-internet-password -s @NIGHT_MAIL_HOST@ -a @NIGHT_MAIL_USER@ -w '@NIGHT_MAIL_KEYCHAIN@'"
 from @NIGHT_MAIL_ADDRESS@
 
 # Mail From an alias matches no account's `from', so it falls back to this

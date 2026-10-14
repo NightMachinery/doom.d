@@ -7,7 +7,7 @@ Host @NIGHT_MAIL_HOST@
 Port @NIGHT_MAIL_IMAP_PORT@
 User @NIGHT_MAIL_USER@
 # The password lives in the login Keychain, never in a file.
-PassCmd "/usr/bin/security find-internet-password -s @NIGHT_MAIL_HOST@ -a @NIGHT_MAIL_USER@ -w"
+PassCmd "/usr/bin/security find-internet-password -s @NIGHT_MAIL_HOST@ -a @NIGHT_MAIL_USER@ -w '@NIGHT_MAIL_KEYCHAIN@'"
 TLSType IMAPS
 # macOS's SASL library misbehaves with PLAIN; LOGIN is equally safe over TLS.
 AuthMechs LOGIN

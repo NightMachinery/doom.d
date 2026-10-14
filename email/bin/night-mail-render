@@ -57,8 +57,9 @@ NIGHT_MAIL_ROOT="${NIGHT_MAIL_ROOT%/}"
 NIGHT_MAIL_EMAIL_DIR="$email_dir"
 NIGHT_MAIL_STATE_DIR="$HOME/.local/state/night-mail"
 NIGHT_MAIL_LOG_FILE="$HOME/logs/night-mail-sync.log"
+NIGHT_MAIL_KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
-keys='ACCOUNT NAME ADDRESS ALIASES USER HOST IMAP_PORT SMTP_PORT ROOT EMAIL_DIR STATE_DIR LOG_FILE'
+keys='ACCOUNT NAME ADDRESS ALIASES USER HOST IMAP_PORT SMTP_PORT ROOT EMAIL_DIR STATE_DIR LOG_FILE KEYCHAIN'
 for k in $keys ; do
     v="NIGHT_MAIL_$k"
     [ "$k" = ALIASES ] || [ -n "${!v:-}" ] || die "$v is not set in $identity"

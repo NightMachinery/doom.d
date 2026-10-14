@@ -79,7 +79,8 @@ _preflight() {
     [[ -n "$host" && -n "$user" ]] || _die "NIGHT_MAIL_HOST or NIGHT_MAIL_USER is empty in ${IDENTITY}"
 
     # Looks the item up without -w, so the password itself is never printed.
-    /usr/bin/security find-internet-password -s "$host" -a "$user" >/dev/null 2>&1 ||
+    /usr/bin/security find-internet-password -s "$host" -a "$user" \
+        "$HOME/Library/Keychains/login.keychain-db" >/dev/null 2>&1 ||
         _die "no Keychain password for ${user}@${host}; see 'Password' in docs/email.md."
 }
 

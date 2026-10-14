@@ -80,7 +80,7 @@ log in `~/.local/state/night-mail/`, the sync log in
    fill it in, and `chmod 600` it.
 3. Put the password in the Keychain, typing it at the prompt:
 
-       security add-internet-password -U -a USER -s HOST -l 'mail (night-mail)' -w
+       security add-internet-password -U -a USER -s HOST -l 'mail (night-mail)' -w "$HOME/Library/Keychains/login.keychain-db"
 
    Because `security` itself creates the item, it is on the item's access
    list, so mbsync and msmtp (which call `security find-internet-password`)
@@ -301,6 +301,13 @@ pin differ, and `install-night-mail.zsh --check` reports the same.
 - **Sync log**: `~/logs/night-mail-sync.log` for the LaunchAgent, the buffer
   ` *night-mail-sync*` for Emacs. Moves are logged one per line. A quiet log
   means nothing moved and nothing failed.
+- **Password entry not found**: mail tools explicitly search
+  `~/Library/Keychains/login.keychain-db`. A lookup without a Keychain path
+  can fail even when the entry exists there, if the default search list
+  omits it. Re-render older configs with `email/bin/night-mail-render`.
+- **Fetch failures despite “done”**: the pre-new hook logs mbsync failures
+  but allows indexing to finish. Check the sync log for `mbsync failed`;
+  successful local indexing alone does not mean new mail was fetched.
 - **Job state**: `email/install-night-mail.zsh --check`.
 - **mbsync**: `mbsync -l <account>` lists the server's folders. The server's
   personal namespace is `INBOX.`, which mbsync applies itself
