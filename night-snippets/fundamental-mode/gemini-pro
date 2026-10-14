@@ -4,4 +4,4 @@
 # uuid: gem
 # type: command
 # --
-(night/yas-expand-model-tag "Gemini3.1")
+(night/yas-expand-model-tag "Gemini4:Argon")
