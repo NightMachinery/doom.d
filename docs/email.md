@@ -443,6 +443,16 @@ pin differ, and `install-night-mail.zsh --check` reports the same.
   `autoload/night-email.el` in both servers. Changing `SECURITYSESSIONID` or
   the subprocess's PTY setting does not change its actual security session.
 - **Job state**: `email/install-night-mail.zsh --check`.
+- **Mail arrives without a desktop alert**: enable Allow Notifications for
+  Night Mail in System Settings → Notifications, then select Banners or Alerts.
+  The helper's `--diagnose` output uses macOS authorization codes: 1 means
+  denied, 2 means authorized. A denied permission can also make delivery log
+  `terminal-notifier exited with status 4` (timeout). Diagnose from a normal
+  graphical login session; a detached shell can fail to contact the notification
+  service even though the Aqua mail job can. Permission and DND are separate:
+  leave DND policy unchanged unless you explicitly want a bypass rule. Failed
+  alerts are not retried, so verify with a fresh unread inbox arrival after
+  enabling permission.
 - **mbsync**: `mbsync -l <account>` lists the server's folders. The server's
   personal namespace is `INBOX.`, which mbsync applies itself
   (`UseNamespace`), so the far side's `Sent` is `INBOX.Sent`.
