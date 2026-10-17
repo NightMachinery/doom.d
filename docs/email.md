@@ -197,9 +197,10 @@ mail sync continues, and failed/disabled alerts are not retried later. Rule grou
 names control policy and batching, not terminal-notifier's replacement group:
 individual alerts do not replace each other.
 
-Opening the current expanded message in Emacs dismisses its individual desktop
-alert asynchronously. Collapsed messages and other messages in the thread keep
-their alerts. A batch summary disappears only after every message in that batch
+Expanded messages displayed on screen in Emacs dismiss their individual desktop
+alerts asynchronously, including messages away from point in the same thread.
+Collapsed and off-screen messages keep their alerts. A batch summary disappears
+only after every message in that batch
 has been opened; its preview/count is not rewritten as messages are opened.
 Set `night/mail-dismiss-notifications-on-open` to nil to disable this behavior.
 Dismissal uses LaunchServices to reach the graphical login session without
@@ -217,6 +218,11 @@ and rule file. Run `python3 tests/night-mail-notify-test.py` for hermetic policy
 tests and real notmuch hook tests against a synthetic mailbox and fake notifier.
 `emacs -Q --batch -l tests/night-email-sync-test.el` also checks dismissal routing,
 expanded-message selection, and failure isolation.
+Run `emacs -Q --batch -L /path/to/notmuch/emacs -l tests/night-email-dismiss-test.el`
+with the pinned notmuch checkout to exercise the real command hook and message
+properties: an older message at point, a newly arrived expanded message elsewhere
+on screen, a collapsed message, and an off-screen message. The hook scans the
+displayed portion of the thread while preserving point and the user's read tags.
 Email uninstall removes only the LaunchAgent, preserving apps and settings.
 
 ## Using it
@@ -477,6 +483,10 @@ pin differ, and `install-night-mail.zsh --check` reports the same.
   leave DND policy unchanged unless you explicitly want a bypass rule. Failed
   alerts are not retried, so verify with a fresh unread inbox arrival after
   enabling permission.
+- **Alert remains when opening a thread**: opening a thread can display the new
+  message while leaving point on an older message. Dismissal checks all expanded
+  messages on screen after each notmuch command, rather than only the message at
+  point. Reload `autoload/night-email.el` in both Emacs servers after upgrading.
 - **mbsync**: `mbsync -l <account>` lists the server's folders. The server's
   personal namespace is `INBOX.`, which mbsync applies itself
   (`UseNamespace`), so the far side's `Sent` is `INBOX.Sent`.

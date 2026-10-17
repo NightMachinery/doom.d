@@ -107,13 +107,12 @@ caller, e.g. `gR' and the hello screen's `G'."
   (night/mail-sync))
 
 (defcustom night/mail-dismiss-notifications-on-open t
-  "Dismiss Night Mail desktop alerts when their messages are opened in notmuch."
+  "Dismiss Night Mail alerts for expanded messages displayed on screen in notmuch."
   :type 'boolean
   :group 'notmuch)
 
 (defun night/h-mail-dismiss-open-notification (&rest _)
-  "Acknowledge the current expanded message after notmuch displays it.
-Collapsed messages and other messages in the thread keep their alerts."
+  "Acknowledge the expanded message at point without waiting for macOS."
   (when (and night/mail-dismiss-notifications-on-open
              (eq system-type 'darwin)
              (eq major-mode 'notmuch-show-mode))
@@ -131,6 +130,26 @@ Collapsed messages and other messages in the thread keep their alerts."
                :connection-type 'pipe :noquery t :sentinel #'ignore)
               (notmuch-show-set-prop :night-notification-dismissed t))))
       ;; A desktop service failure must never prevent reading mail.
+      (error nil))))
+
+(defun night/h-mail-dismiss-visible-notifications (&rest _)
+  "Acknowledge every expanded message displayed in this notmuch window.
+Opening a thread can display several messages while point stays on the first.
+Collapsed messages and messages outside the window keep their alerts."
+  (when (and night/mail-dismiss-notifications-on-open
+             (eq system-type 'darwin)
+             (eq major-mode 'notmuch-show-mode))
+    (condition-case nil
+        (let ((window (get-buffer-window (current-buffer) t)))
+          (when window
+            (let ((end (window-end window t))
+                  (more t))
+              (save-excursion
+                (goto-char (window-start window))
+                (notmuch-show-move-to-message-top)
+                (while (and more (< (point) end))
+                  (night/h-mail-dismiss-open-notification)
+                  (setq more (notmuch-show-goto-message-next)))))))
       (error nil))))
 ;;; HTML mail as Org
 ;; pandoc converts the HTML, email/html-to-org.lua strips layout tables,
@@ -370,7 +389,8 @@ into notes. The buffer is read-only and marked as mail."
   (night/h-notmuch-version-check)
 
   (advice-add 'notmuch-poll :override #'night/h-notmuch-poll-async)
-  (advice-add 'notmuch-show-command-hook :after #'night/h-mail-dismiss-open-notification)
+  (advice-remove 'notmuch-show-command-hook #'night/h-mail-dismiss-open-notification)
+  (advice-add 'notmuch-show-command-hook :after #'night/h-mail-dismiss-visible-notifications)
   (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
   (add-hook 'notmuch-show-mode-hook #'night/h-notmuch-show-setup-link-echo)
 
