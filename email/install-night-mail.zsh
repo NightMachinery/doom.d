@@ -28,6 +28,7 @@ PLIST_DST="${HOME}/Library/LaunchAgents/${LABEL}.plist"
 LOG_FILE="${HOME}/logs/night-mail-sync.log"
 DOMAIN="gui/$(id -u)"
 BREW_BIN='/opt/homebrew/bin'
+NOTIFY_BUILDER="${NIGHTDIR:-${HOME}/scripts}/macos/notification-apps/build.py"
 
 # --- output helpers -----------------------------------------------------------
 _info() { print -r -- "  $*" }
@@ -71,6 +72,8 @@ _preflight() {
         [[ -x "${BREW_BIN}/${b}" ]] || _die "${BREW_BIN}/${b} is missing; brew install notmuch isync msmtp flock"
     done
     [[ -x "$RENDER" && -x "$SYNC" ]] || _die "the scripts in ${EMAIL_DIR}/bin are missing or not executable."
+    command -v python3 >/dev/null || _die 'python3 is missing; brew install python'
+    [[ -r "$NOTIFY_BUILDER" ]] || _die "missing shared notification bootstrapper: ${NOTIFY_BUILDER}"
 
     [[ -r "$IDENTITY" ]] || _die "no identity file at ${IDENTITY}; copy ${EMAIL_DIR}/identity.env.example"
     local host user
@@ -111,10 +114,20 @@ _check() {
 
     _step 'versions'
     _version_check
+
+    _step 'desktop notifications'
+    command python3 "$NOTIFY_BUILDER" mail --check || _warn 'mail notification app needs attention.'
+    command python3 "${EMAIL_DIR}/bin/night-mail-notify" --check || _warn 'notification rules need attention.'
 }
 
 _install() {
     _preflight
+
+    _step 'bootstrapping desktop notifications'
+    command python3 "${EMAIL_DIR}/bin/night-mail-notify" --init-config ||
+        _warn 'notification rules need attention; mail sync will still work.'
+    command python3 "$NOTIFY_BUILDER" mail ||
+        _warn 'could not install the mail notifier; mail sync will still work.'
 
     _step 'rendering configs'
     "$RENDER" --plist "$PLIST_DST" | command sed 's/^/  /' ||

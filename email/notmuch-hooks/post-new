@@ -22,18 +22,22 @@ rev="$(command cat "$night_mail_rev_file" 2>/dev/null)"
 changed="lastmod:${rev:-0}.."
 
 rules() {
-    local a
+    local a inbox_query=''
     for a in $(nm_accounts "$root") ; do
+        inbox_query="${inbox_query:+$inbox_query or }folder:\"$a/INBOX\""
         cat <<EOF
 +deleted -inbox -- folder:"$a/Trash" and not tag:deleted
 -deleted +inbox -- $changed and folder:"$a/INBOX" and tag:deleted and not folder:"$a/Trash"
 +inbox -- $changed and folder:"$a/INBOX" and not tag:inbox and not tag:deleted
 +inbox -- tag:new and folder:"$a/INBOX"
--inbox -- tag:inbox and not folder:"$a/INBOX"
 +sent -- tag:new and folder:"$a/Sent"
 EOF
     done
-    printf '%s\n' '-new -- tag:new'
+    # `inbox' is a message-wide tag. One account must not remove it from mail
+    # sitting in another account's inbox (or a duplicate in several inboxes).
+    if [[ -n "$inbox_query" ]] ; then
+        printf '%s\n' "-inbox -- tag:inbox and not ($inbox_query)"
+    fi
 }
 # In words, per account:
 #   in Trash                             -> deleted  (deleted on the server)
@@ -46,7 +50,24 @@ EOF
 # renamed. So a tag you set in Emacs while this sync was running can be
 # overridden by the server's view; the window is the few seconds of indexing.
 
-rules | notmuch tag --batch || nm_log "notmuch tag --batch failed with status $?"
+if rules | notmuch tag --batch ; then
+    # Keep `new' until notifications have selected just this indexing run's mail.
+    # Pre-new compares the database UUID with the last indexed baseline. Revision
+    # zero alone cannot distinguish an empty mailbox from a first import.
+    initial_import="$(command cat "$night_mail_initial_file" 2>/dev/null)"
+    if [[ "${initial_import:-1}" == 0 ]] ; then
+        command python3 "$hook_dir/../bin/night-mail-notify" ||
+            nm_log "desktop notifications failed; continuing sync"
+    fi
+else
+    nm_log "notmuch tag --batch failed with status $?; skipping notifications"
+fi
+# Alerts are best effort: a failed/disabled notification never becomes backlog.
+notmuch tag -new -- tag:new || nm_log "clearing the new tag failed"
+database_id="$(command cat "$night_mail_database_id_file" 2>/dev/null)"
+if [[ -n "$database_id" ]] ; then
+    printf '%s\n' "$database_id" >| "$night_mail_notify_db_file"
+fi
 
 # Tags are the only thing in the database that the mail files cannot rebuild.
 # Seven rotating dumps, one per weekday; `notmuch restore' reads them back.

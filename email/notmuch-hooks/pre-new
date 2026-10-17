@@ -37,8 +37,15 @@ root="$(nm_mail_root)" || { nm_log "no notmuch mail root"; exit 1; }
 
 # Before anything changes, remember the revision: post-new asks which
 # messages this run touched. No database yet (first run) records 0.
-rev="$(notmuch count --lastmod '*' 2>/dev/null | command cut -f3)"
+revision_info="$(notmuch count --lastmod '*' 2>/dev/null)"
+rev="$(printf '%s\n' "$revision_info" | command cut -f3)"
+database_id="$(printf '%s\n' "$revision_info" | command cut -f2)"
+previous_database_id="$(command cat "$night_mail_notify_db_file" 2>/dev/null)"
+initial_import=1
+[[ -n "$database_id" && "$database_id" == "$previous_database_id" ]] && initial_import=0
 printf '%s\n' "${rev:-0}" >| "$night_mail_rev_file"
+printf '%s\n' "$initial_import" >| "$night_mail_initial_file"
+printf '%s\n' "$database_id" >| "$night_mail_database_id_file"
 
 # Planned moves as parallel arrays; empty DST means remove.
 plan_src=()

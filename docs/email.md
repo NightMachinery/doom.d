@@ -31,6 +31,10 @@ A LaunchAgent (`com.user.night-mail-sync`) runs a sync every five minutes and
 at login, whether or not Emacs is open. In Emacs, `night/mail-sync` runs one
 on demand, asynchronously.
 
+New unread inbox arrivals also produce configurable desktop notifications from
+`Night Mail.app`, with its own envelope icon and macOS notification settings.
+See "Desktop notifications" below.
+
 ## Where things live
 
 In this repository, under `email/`:
@@ -88,7 +92,9 @@ log in `~/.local/state/night-mail/`, the sync log in
    pseudo-terminal rather than on the command line, where `ps` would show it.
    Wait for each prompt first: `security` flushes pending input when it
    prompts, so text sent early is thrown away and it waits forever.
-4. `email/install-night-mail.zsh`. This renders the configs, creates the
+4. `email/install-night-mail.zsh`. This bootstraps the dedicated notification
+   app using the shared builder in `$NIGHTDIR/macos/notification-apps/` (or
+   `~/scripts/macos/notification-apps/`), renders the configs, creates the
    Maildir root and starts the LaunchAgent, whose first run downloads the
    mail.
 5. `doom sync`, then restart Emacs (or load the new packages by hand).
@@ -96,6 +102,95 @@ log in `~/.local/state/night-mail/`, the sync log in
 The first sync on an empty database downloads everything, indexes it, and
 tags the INBOX mail `inbox` and the Sent mail `sent`. The mover does nothing
 on that run, since there are no tags yet to act on.
+
+## Desktop notifications
+
+`email/install-night-mail.zsh` automatically builds, signs, and registers
+`~/Applications/Night Mail.app`. It shares its builder with the zsh Agent Bells
+app, but each app has its own icon, permission, and alert style. The first install
+requests macOS notification permission and sends a silent setup notification.
+Allow Night Mail in System Settings → Notifications. The existing Homebrew
+terminal-notifier is untouched. Setup needs Python 3.9+ and Apple's Command Line
+Tools. Downloads are cached and checksum-pinned; reruns reuse current builds and
+preserve your previous app if rebuilding fails.
+
+Settings live in `~/.config/night-mail/notifications.json` (or under
+`$XDG_CONFIG_HOME`). Setup creates this file with safe defaults only if absent;
+edits apply on the next sync without restarting Emacs or launchd. The environment
+override `NIGHT_MAIL_NOTIFY_CONFIG` selects another file for a particular run.
+
+The initial configuration is:
+
+```json
+{
+  "defaults": {
+    "enabled": true,
+    "show_details": true,
+    "sound": null,
+    "bypass_dnd": false,
+    "max_individual": 3
+  },
+  "groups": [
+    {"name": "Other mail"}
+  ]
+}
+```
+
+Groups are ordered: the first matching group wins, and omitted settings inherit
+`defaults`. Each matching field (`from`, `subject`) is a case-insensitive Python
+regex; when both are specified, both must match. Headers are decoded first;
+`from` includes the display name and address. Bodies are not searched. The final
+group must omit `match`, making it an unconditional catch-all. Names must be
+unique. For example, replace the groups above with:
+
+```json
+[
+  {
+    "name": "Digests",
+    "match": {"from": "robot@", "subject": "digest"},
+    "enabled": false
+  },
+  {
+    "name": "Urgent",
+    "match": {"subject": "\\burgent\\b"},
+    "sound": "Glass",
+    "bypass_dnd": true
+  },
+  {"name": "Other mail"}
+]
+```
+
+This explicitly opts the Urgent group into DND bypass. The shipped configuration
+has no bypass group: all mail respects DND and is silent by default. Optional
+bypass uses terminal-notifier 2's private macOS API and is best effort; newer
+terminal-notifier versions ignore that option. macOS Focus allowlists and system
+notification settings can also affect delivery.
+
+Each group's `max_individual` (1 to 20, default 3) limits individual sender/subject
+alerts per sync. Larger batches produce one summary with up to that many
+previews. `show_details: false` always produces a count-only summary, keeping
+sender and subject off screen. `sound` is a macOS sound name, `"default"`, or
+`null` for silence. Set `defaults.enabled` to false to disable all groups that
+do not explicitly override it.
+
+Alerts cover newly indexed unread messages in an inbox, excluding spam, deleted
+mail, and drafts. Initial mailbox imports stay silent. Existing unread mail,
+folder moves, duplicate message files, and flag changes do not repeatedly alert.
+`pre-new` compares the database UUID with the previous baseline. The first sync
+after installation or a database rebuild stays silent; an initialized empty
+mailbox can notify on its first later arrival.
+
+`post-new` applies folder tags, runs `email/bin/night-mail-notify` while the `new`
+tag still identifies arrivals, then clears `new` and backs up tags. Notifications
+are best effort: malformed configuration or an unavailable helper is logged,
+mail sync continues, and failed/disabled alerts are not retried later. Rule group
+names control policy and batching, not terminal-notifier's replacement group:
+individual alerts do not replace each other.
+
+`email/install-night-mail.zsh --check` checks the app, signature, authorization,
+and rule file. Run `python3 tests/night-mail-notify-test.py` for hermetic policy
+tests and real notmuch hook tests against a synthetic mailbox and fake notifier.
+Email uninstall removes only the LaunchAgent, preserving apps and settings.
 
 ## Using it
 
@@ -214,6 +309,9 @@ post-new does the reverse, for what the server did, per account:
   INBOX on the phone, or the server's copy of mail you sent yourself.
 - New in INBOX: `inbox`. New in Sent: `sent`.
 - Tagged `inbox` but not in INBOX: `inbox` removed. Archived on the phone.
+
+With several accounts, the final rule checks all inbox folders together. The
+message-wide `inbox` tag is kept while any copy remains in any account's inbox.
 
 "Changed this run" means a file of the message appeared, vanished or was
 renamed during this sync. pre-new records the database revision before it
