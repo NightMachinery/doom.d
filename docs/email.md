@@ -265,6 +265,12 @@ Email uninstall removes only the LaunchAgent, preserving apps and settings.
 
 ## HTML mail
 
+Thread messages appear as a flat newest-first list, independently of the inbox's
+thread sorting. This puts a new reply above its ancestors instead of preserving
+parent-before-child indentation. `night/notmuch-toggle-thread-order` (message
+localleader `s`) switches back to the original reply tree and refreshes message
+buffers. Set `night/notmuch-thread-order` to `threaded` for that default.
+
 A text/html part is converted by pandoc and shown as fontified Org, in place
 of shr, the browser-like renderer notmuch uses by default.
 `night/h-notmuch-show-html` advises `notmuch-show-insert-part-text/html`:
@@ -275,6 +281,12 @@ of shr, the browser-like renderer notmuch uses by default.
   Images become their alt text, so tracking pixels vanish, and a link left
   empty by that is dropped. Divs, spans and raw HTML are unwrapped or
   dropped, and ids and styles are cleared so no `:PROPERTIES:` drawers appear.
+- Nested HTML quotations become one valid outer Org quote block, with deeper
+  levels represented by `>` prefixes. In the inline mail view, quote delimiters
+  are replaced by a `Quoted history · N lines` button. History starts collapsed;
+  activate the button to expand or collapse it. Text and clickable links remain
+  intact. Set `night/mail-collapse-history` to nil to leave history expanded.
+  The standalone Org view uses normal Org block folding for the same history.
 - The Org text is fontified in a temporary Org buffer. Links stay literal,
   `[[url][text]]`, and each is a button from its URL on: `RET` opens
   `http(s)` and `mailto` links in the browser or composer, and only shows

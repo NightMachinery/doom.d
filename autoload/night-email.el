@@ -23,6 +23,42 @@ against the CLI, and email/install-night-mail.zsh reads it from here.")
 (defvar night/h-mail-sync-process nil
   "The running `night/mail-sync' process, if any.")
 
+(defcustom night/notmuch-thread-order 'newest-first
+  "Message order inside a thread: newest-first or the original reply tree."
+  :type '(choice (const newest-first) (const threaded))
+  :group 'notmuch)
+
+(defun night/h-notmuch-order-forest (args)
+  "Order the message forest in ARGS for display without changing its messages."
+  (cond
+   ((eq night/notmuch-thread-order 'newest-first)
+    (list
+     (mapcar
+      (lambda (thread)
+        (let (messages)
+          (cl-labels ((collect (trees)
+                        (dolist (tree trees)
+                          (when (car tree) (push (car tree) messages))
+                          (collect (cadr tree)))))
+            (collect thread))
+          (mapcar (lambda (message) (list message nil))
+                  (cl-stable-sort (nreverse messages) #'>
+                                  :key (lambda (message) (or (plist-get message :timestamp) 0))))))
+      (car args))))
+   (t args)))
+
+(defun night/notmuch-toggle-thread-order ()
+  "Toggle newest-first messages and the original reply tree, then refresh."
+  (interactive)
+  (setq night/notmuch-thread-order
+        (cond ((eq night/notmuch-thread-order 'newest-first) 'threaded)
+              (t 'newest-first)))
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (when (derived-mode-p 'notmuch-show-mode)
+        (notmuch-show-refresh-view t))))
+  (message "Mail thread order: %s" night/notmuch-thread-order))
+
 (defun night/mail-account ()
   "Return the mail account's folder under the notmuch mail root, or nil.
 
@@ -162,6 +198,61 @@ Collapsed messages and messages outside the window keep their alerts."
 (defvar night/notmuch-html-org-max-size (* 4 1024 1024)
   "HTML parts larger than this many characters are left to shr.")
 
+(defcustom night/mail-collapse-history t
+  "Collapse quoted HTML reply history behind a button in mail views."
+  :type 'boolean
+  :group 'notmuch)
+
+(defun night/h-mail-toggle-history (button)
+  "Show or hide the quoted history immediately following BUTTON."
+  (let* ((start (1+ (button-end button)))
+         (id (button-get button 'night-mail-history-id))
+         (hidden (button-get button 'night-mail-history-open))
+         (inhibit-read-only t))
+    (when (eq (get-text-property start 'night-mail-history-id) id)
+      (let ((end (next-single-property-change start 'night-mail-history-id nil (point-max)))
+            (pos start))
+        (while (< pos end)
+          (let* ((next (next-single-property-change pos 'invisible nil end))
+                 (old (get-text-property pos 'invisible))
+                 (values (cond ((listp old) (copy-sequence old)) (t (list old)))))
+            (setq values (delq 'night-mail-history values))
+            (when hidden (push 'night-mail-history values))
+            (put-text-property pos next 'invisible values)
+            (setq pos next)))
+        (button-put button 'night-mail-history-open (not hidden))
+        (force-window-update (current-buffer))))))
+
+(defun night/h-mail-collapse-quote-blocks ()
+  "Replace Org quote wrappers with portable, initially collapsed text buttons."
+  (let ((blocks (org-element-map (org-element-parse-buffer) 'quote-block
+                  (lambda (element)
+                    (list (org-element-property :begin element)
+                          (org-element-property :end element)
+                          (org-element-property :contents-begin element)
+                          (org-element-property :contents-end element))))))
+    (dolist (block (reverse blocks))
+      (pcase-let ((`(,start ,end ,content-start ,content-end) block))
+        (when (and content-start content-end)
+          (let ((history (buffer-substring content-start content-end))
+                (lines (count-lines content-start content-end))
+                (id (make-symbol "mail-history")))
+            (delete-region start end)
+            (goto-char start)
+            (insert (format "Quoted history · %d lines" lines))
+            (let ((button-end (point)))
+              (insert "\n" history)
+              (unless (bolp) (insert "\n"))
+              (put-text-property (1+ button-end) (point) 'night-mail-history-id id)
+              (put-text-property (1- (point)) (point) 'rear-nonsticky
+                                 '(invisible night-mail-history-id))
+              (make-text-button start button-end
+                                'action #'night/h-mail-toggle-history 'follow-link t
+                                'font-lock-face 'link
+                                'help-echo "Show or hide quoted history"
+                                'night-mail-history-id id 'night-mail-history-open t)
+              (night/h-mail-toggle-history (button-at start)))))))))
+
 (defvar-local night/mail-buffer-p nil
   "Non-nil in a buffer that holds mail outside notmuch's own modes.
 The LLM policy refuses such buffers like notmuch's; see
@@ -251,6 +342,8 @@ strip them."
         (let ((next (next-single-property-change pos 'face nil (point-max))))
           (put-text-property pos next 'font-lock-face (get-text-property pos 'face))
           (setq pos next))))
+    (when night/mail-collapse-history
+      (night/h-mail-collapse-quote-blocks))
     (goto-char (point-max))
     (unless (bolp) (insert "\n"))
     (buffer-string)))
@@ -266,6 +359,7 @@ switches it, and savehist keeps it across sessions.")
   ;; included; a list hides only what it names.
   (when (eq buffer-invisibility-spec t)
     (setq buffer-invisibility-spec (list t)))
+  (add-to-invisibility-spec 'night-mail-history)
   (if (eq night/notmuch-link-display 'descriptive)
       (add-to-invisibility-spec '(org-link))
     (remove-from-invisibility-spec '(org-link)))
@@ -373,6 +467,9 @@ into notes. The buffer is read-only and marked as mail."
             (erase-buffer)
             (insert (format "#+title: %s\n" subject) header org))
           (org-mode)
+          (when night/mail-collapse-history
+            (org-element-map (org-element-parse-buffer) 'quote-block
+              (lambda (element) (org-fold-hide-block-toggle t t element))))
           (setq night/mail-buffer-p t
                 buffer-read-only t)
           (set-buffer-modified-p nil)
@@ -389,6 +486,7 @@ into notes. The buffer is read-only and marked as mail."
   (night/h-notmuch-version-check)
 
   (advice-add 'notmuch-poll :override #'night/h-notmuch-poll-async)
+  (advice-add 'notmuch-show-insert-forest :filter-args #'night/h-notmuch-order-forest)
   (advice-remove 'notmuch-show-command-hook #'night/h-mail-dismiss-open-notification)
   (advice-add 'notmuch-show-command-hook :after #'night/h-mail-dismiss-visible-notifications)
   (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
@@ -462,6 +560,7 @@ into notes. The buffer is read-only and marked as mail."
         :localleader
         :desc "HTML in an Org buffer" "o" #'night/notmuch-show-html-in-org
         :desc "Toggle HTML renderer" "h" #'night/notmuch-toggle-html-renderer
+        :desc "Toggle thread order" "s" #'night/notmuch-toggle-thread-order
         :desc "Toggle link display" "l" #'night/notmuch-toggle-link-display)
   (define-key notmuch-show-mode-map [remap org-toggle-link-display]
               #'night/notmuch-toggle-link-display))

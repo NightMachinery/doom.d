@@ -75,3 +75,20 @@ function Table(tbl)
   end
   return out
 end
+
+-- Org quote blocks cannot nest reliably. Keep one outer block per history
+-- section; represent deeper quotations with > prefixes before Org is written.
+function Pandoc(doc)
+  return doc:walk({
+    traverse = 'topdown',
+    BlockQuote = function(quote)
+      quote.content = quote.content:walk({
+        BlockQuote = function(inner)
+          local text = pandoc.write(pandoc.Pandoc(inner.content), 'org', {wrap_text = 'none'})
+          return pandoc.RawBlock('org', text:gsub('([^\n]+)', '> %1'))
+        end
+      })
+      return quote, false
+    end
+  })
+end
