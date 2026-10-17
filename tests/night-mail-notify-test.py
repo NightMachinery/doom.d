@@ -115,12 +115,13 @@ class HookTest(unittest.TestCase):
         self.hooks = self.base / "email/notmuch-hooks"
         self.hooks.mkdir(parents=True)
         (self.base / "email/bin").mkdir()
-        for name in ("bin/night-mail-lib.bash", "bin/night-mail-notify", "notmuch-hooks/pre-new", "notmuch-hooks/post-new"):
+        for name in ("bin/night-mail-lib.bash", "bin/night-mail-notify", "bin/night-mail-sync",
+                     "notmuch-hooks/pre-new", "notmuch-hooks/post-new"):
             shutil.copy2(ROOT / "email" / name, self.base / "email" / name)
         # Bash imports this inert mbsync function for the real pre-new hook.
         # The test must never contact an IMAP server.
         bash_env = self.base / "bash-env"
-        bash_env.write_text("mbsync() { return 0; }\n")
+        bash_env.write_text('mbsync() { return "${TEST_FETCH_EXIT:-0}"; }\n')
         self.config = self.base / "notmuch-config"
         self.config.write_text(f'''[database]
 path={self.root}
@@ -248,6 +249,28 @@ sys.exit(int(os.environ.get("TEST_NOTIFY_EXIT","0")))
         self.sync()
         self.assertEqual(len(self.delivered()), 2)
         self.assertEqual(self.nm("count", "tag:inbox").stdout.strip(), "2")
+
+    def test_worker_reports_fetch_failure_but_still_indexes_and_acknowledges(self):
+        self.sync()
+        self.mail("partial-fetch")
+        self.env["TEST_FETCH_EXIT"] = "1"
+        request = self.revision.with_name("launchd-request")
+        request.write_text("fixture-request\n")
+        worker = self.base / "email/bin/night-mail-sync"
+        result = subprocess.run(["/bin/bash", str(worker), "--launchd"], env=self.env,
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 69, result.stderr)
+        self.assertIn("local mail was indexed", result.stderr)
+        self.assertEqual(self.nm("count", "tag:inbox").stdout.strip(), "1")
+        self.assertEqual(self.nm("count", "tag:new").stdout.strip(), "0")
+        self.assertEqual(request.with_name("launchd-result").read_text().splitlines(),
+                         ["fixture-request", "69"])
+        self.env["TEST_FETCH_EXIT"] = "0"
+        result = subprocess.run(["/bin/bash", str(worker), "--launchd"], env=self.env,
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(request.with_name("launchd-result").read_text().splitlines(),
+                         ["fixture-request", "0"])
 
 
 if __name__ == "__main__":

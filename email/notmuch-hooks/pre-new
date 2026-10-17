@@ -120,6 +120,10 @@ while [ "$i" -lt "$n" ] ; do
 done
 
 # A network failure must not stop notmuch from indexing what is already here,
-# so mbsync's exit status is logged, not returned.
-mbsync -a -q || nm_log "mbsync failed with status $?"
+# so mbsync's exit status is recorded, not returned by this hook. The wrapper
+# reports partial failure after indexing finishes.
+mbsync -a -q
+fetch_status=$?
+printf '%s\n' "$fetch_status" >| "$night_mail_fetch_status_file" || nm_log "could not record fetch status"
+[ "$fetch_status" = 0 ] || nm_log "mbsync failed with status $fetch_status"
 exit 0

@@ -13,6 +13,9 @@ night_mail_rev_file="$night_mail_state_dir/lastmod-before-sync"
 night_mail_initial_file="$night_mail_state_dir/initial-import"
 night_mail_database_id_file="$night_mail_state_dir/database-before-sync"
 night_mail_notify_db_file="$night_mail_state_dir/notification-database"
+night_mail_fetch_status_file="$night_mail_state_dir/fetch-status"
+night_mail_request_file="$night_mail_state_dir/launchd-request"
+night_mail_result_file="$night_mail_state_dir/launchd-result"
 
 nm_log() {
     printf '%s %s: %s\n' "$(command date '+%F %T')" "${0##*/}" "$*" >&2

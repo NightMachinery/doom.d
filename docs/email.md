@@ -29,7 +29,9 @@ hooks do the real work:
 
 A LaunchAgent (`com.user.night-mail-sync`) runs a sync every five minutes and
 at login, whether or not Emacs is open. In Emacs, `night/mail-sync` runs one
-on demand, asynchronously.
+on demand, asynchronously. On macOS it requests a fresh run through that
+LaunchAgent, so credential lookup uses the graphical login session regardless
+of how Emacs was started.
 
 New unread inbox arrivals also produce configurable desktop notifications from
 `Night Mail.app`, with its own envelope icon and macOS notification settings.
@@ -43,6 +45,8 @@ In this repository, under `email/`:
   with `@NIGHT_MAIL_*@` placeholders where the identity goes.
 - `bin/night-mail-render`: fills the templates in from the identity file.
 - `bin/night-mail-sync`: one sync, as described above.
+- `bin/night-mail-request`: asks the installed LaunchAgent for a fresh run and
+  waits for its matching completion status, forwarding that run's log to Emacs.
 - `bin/night-mail-lib.bash`: shared by the sync script and the hooks.
 - `notmuch-hooks/pre-new`, `notmuch-hooks/post-new`: the tag and folder rules.
 - `install-night-mail.zsh`: renders the configs and installs the LaunchAgent;
@@ -214,6 +218,8 @@ Email uninstall removes only the LaunchAgent, preserving apps and settings.
 - `gR`, the hello screen's `G`, and localleader `u` all run `night/mail-sync`.
   `notmuch-poll` is advised to do so, because on its own it blocks Emacs for
   the whole sync. The log goes to the buffer ` *night-mail-sync*`.
+  Fetch failures report `fetch FAILED` even when local indexing succeeds; that
+  partial success still refreshes the mail views.
 - Localleader `c` composes, localleader `/` searches with `consult-notmuch`.
 - HTML mail is shown as Org; see "HTML mail" below. In a message,
   localleader `h` switches HTML between Org and shr, `l` toggles links
@@ -363,6 +369,27 @@ that finds a sync running exits 75 and leaves the work to the next one.
 `night/mail-sync` in Emacs waits up to `night/mail-sync-wait` seconds (600).
 A bare `notmuch new` from a shell takes the lock in pre-new itself.
 
+On macOS, Emacs uses `night-mail-sync --request --wait 600`. This serializes
+requests, assigns a unique token, and starts the existing LaunchAgent without
+killing a running job. If an older sync is already running, its completion does
+not satisfy the request: the requester waits for a run that started after the
+request. The worker's `--launchd` mode publishes the matching token and exit
+status atomically. Timeouts leave any active worker running safely.
+
+`pre-new` records mbsync's status in `~/.local/state/night-mail/fetch-status`.
+The main wrapper returns 69 when fetching failed but indexing succeeded, 75
+when the lock was busy, or notmuch's failure status when indexing failed. It
+clears stale fetch status before each run. Direct `notmuch new` still indexes
+local mail after a fetch failure; use the wrapper for the combined fetch/index
+exit status. The request/result files in that directory contain tokens and
+status codes, not credentials.
+
+Regression checks: `python3 tests/night-mail-request-test.py` covers request
+matching, an already-running sync, launch races, unavailable services, and safe
+timeouts. `emacs -Q --batch -l tests/night-email-sync-test.el` covers command
+routing and partial-failure reporting. The real-notmuch synthetic-mailbox suite
+also verifies indexing and completion acknowledgements after fetch failure.
+
 notmuch.el opens the database per command and waits for the write lock
 rather than failing, so tagging from either Emacs during a sync just pauses
 briefly. Tested with both servers tagging while a sync ran.
@@ -404,8 +431,17 @@ pin differ, and `install-night-mail.zsh --check` reports the same.
   can fail even when the entry exists there, if the default search list
   omits it. Re-render older configs with `email/bin/night-mail-render`.
 - **Fetch failures despite “done”**: the pre-new hook logs mbsync failures
-  but allows indexing to finish. Check the sync log for `mbsync failed`;
-  successful local indexing alone does not mean new mail was fetched.
+  but allows indexing to finish. The wrapper now returns 69 for this partial
+  success, and Emacs reports `fetch FAILED`. Check the sync log for
+  `mbsync failed`; successful local indexing alone does not mean mail was fetched.
+- **GUI-only `PassCmd exited with status 36`**: a graphical Emacs window does
+  not guarantee its children belong to a graphical macOS security session.
+  Processes started through a detached multiplexer can lack Keychain access
+  even when the same lookup works in a terminal daemon. Emacs sync requests go
+  through the Aqua LaunchAgent to use the correct login context. Reinstall with
+  `email/install-night-mail.zsh` after updating the plist, then reload
+  `autoload/night-email.el` in both servers. Changing `SECURITYSESSIONID` or
+  the subprocess's PTY setting does not change its actual security session.
 - **Job state**: `email/install-night-mail.zsh --check`.
 - **mbsync**: `mbsync -l <account>` lists the server's folders. The server's
   personal namespace is `INBOX.`, which mbsync applies itself

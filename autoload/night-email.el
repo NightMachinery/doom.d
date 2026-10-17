@@ -57,11 +57,15 @@ email/bin/night-mail-lib.bash uses. With several, the first one wins."
   "Report how the `night/mail-sync' process PROC ended, and refresh on success."
   (when (memq (process-status proc) '(exit signal))
     (let ((status (process-exit-status proc)))
+      (when (and (memq status '(0 69))
+                 (fboundp 'notmuch-refresh-all-buffers))
+        (notmuch-refresh-all-buffers))
       (cond
        ((zerop status)
-        (when (fboundp 'notmuch-refresh-all-buffers)
-          (notmuch-refresh-all-buffers))
         (message "night/mail-sync: done"))
+       ((= status 69)
+        (message "night/mail-sync: fetch FAILED; local mail indexed; see the buffer %S"
+                 (buffer-name (process-buffer proc))))
        (t
         (message "night/mail-sync: failed with status %s; see the buffer %S"
                  status (buffer-name (process-buffer proc))))))))
@@ -70,9 +74,11 @@ email/bin/night-mail-lib.bash uses. With several, the first one wins."
   "Sync mail in the background, then refresh every notmuch buffer.
 
 Runs email/bin/night-mail-sync, which moves files by tag, runs mbsync,
-indexes and tags. A sync already running (the LaunchAgent's, or another
-Emacs's) is waited for, up to `night/mail-sync-wait' seconds. The
-script's log goes to the buffer \" *night-mail-sync*\"."
+indexes and tags. On macOS, requests a fresh run through the installed
+LaunchAgent so Keychain access uses the graphical login session.
+Waits up to `night/mail-sync-wait' seconds; the script's log goes to
+the buffer \" *night-mail-sync*\". Fetch failure is reported even when
+indexing local mail succeeds."
   (interactive)
   (cond
    ((process-live-p night/h-mail-sync-process)
@@ -85,9 +91,12 @@ script's log goes to the buffer \" *night-mail-sync*\"."
             (make-process
              :name "night-mail-sync"
              :buffer buf
-             :command (list "/bin/bash"
-                            (expand-file-name "bin/night-mail-sync" night/mail-email-dir)
-                            "--wait" (number-to-string night/mail-sync-wait))
+             :command (append
+                       (list "/bin/bash"
+                             (expand-file-name "bin/night-mail-sync" night/mail-email-dir))
+                       (when (eq system-type 'darwin) '("--request"))
+                       (list "--wait" (number-to-string night/mail-sync-wait)))
+             :connection-type 'pipe
              :noquery t
              :sentinel #'night/h-mail-sync-sentinel))))))
 

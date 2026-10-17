@@ -11,6 +11,7 @@
     <array>
         <string>/bin/bash</string>
         <string>@NIGHT_MAIL_EMAIL_DIR@/bin/night-mail-sync</string>
+        <string>--launchd</string>
     </array>
 
     <!-- Every five minutes, and once at login. A tick that finds another
@@ -19,6 +20,8 @@
     <integer>300</integer>
     <key>RunAtLoad</key>
     <true/>
+    <key>LimitLoadToSessionType</key>
+    <string>Aqua</string>
 
     <key>EnvironmentVariables</key>
     <dict>

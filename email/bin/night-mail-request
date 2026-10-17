@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Request and await a fresh sync in the logged-in user's mail LaunchAgent."""
+import argparse
+import fcntl
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import time
+import uuid
+
+LABEL = "com.user.night-mail-sync"
+
+
+def launchctl(*args):
+    return subprocess.run(["/bin/launchctl", *args], capture_output=True, text=True, timeout=15)
+
+
+def atomic_text(filename, text):
+    temporary = filename.with_name(filename.name + f".tmp.{os.getpid()}")
+    try:
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w") as stream:
+            stream.write(text)
+        temporary.replace(filename)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def running(job):
+    return bool(re.search(r"^\s*(?:pid = \d+|state = (?:running|spawn scheduled))", job.stdout, re.MULTILINE))
+
+
+def request(wait):
+    state = Path.home() / ".local/state/night-mail"
+    state.mkdir(parents=True, exist_ok=True)
+    domain = f"gui/{os.getuid()}/{LABEL}"
+    deadline = time.monotonic() + wait
+    with (state / "request.lock").open("a") as lock:
+        while True:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("timed out waiting for another mail request")
+                time.sleep(0.1)
+        job = launchctl("print", domain)
+        if job.returncode or "--launchd" not in job.stdout:
+            raise RuntimeError("mail LaunchAgent is missing or outdated; run email/install-night-mail.zsh")
+        log = Path.home() / "logs/night-mail-sync.log"
+        offset = log.stat().st_size if log.exists() else 0
+        token = uuid.uuid4().hex
+        atomic_text(state / "launchd-request", token + "\n")
+        result = state / "launchd-result"
+        next_check = 0
+        while time.monotonic() < deadline:
+            try:
+                fields = result.read_text().splitlines()
+            except FileNotFoundError:
+                fields = []
+            if len(fields) == 2 and fields[0] == token and fields[1].isdigit():
+                if log.exists():
+                    with log.open("rb") as stream:
+                        size = log.stat().st_size
+                        stream.seek(max(0, size - 65536, offset if size >= offset else 0))
+                        sys.stdout.write(stream.read().decode("utf-8", errors="replace"))
+                return int(fields[1]) if 0 <= int(fields[1]) <= 255 else 1
+            if time.monotonic() >= next_check:
+                job = launchctl("print", domain)
+                if job.returncode:
+                    raise RuntimeError("mail LaunchAgent disappeared during the sync")
+                if not running(job):
+                    kicked = launchctl("kickstart", domain)
+                    if kicked.returncode:
+                        # A periodic tick can start the worker between print and
+                        # kickstart. Wait for it rather than treating that race
+                        # as a failed fetch or restarting an active mail worker.
+                        latest = launchctl("print", domain)
+                        if latest.returncode or not running(latest):
+                            raise RuntimeError("could not start mail LaunchAgent; run email/install-night-mail.zsh --check")
+                next_check = time.monotonic() + 1
+            time.sleep(0.1)
+        # Never kill the worker on timeout: it may be moving mail or indexing.
+        raise TimeoutError("timed out awaiting mail sync; the LaunchAgent may still be running")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wait", type=int, default=600)
+    args = parser.parse_args()
+    if args.wait <= 0:
+        parser.error("--wait must be positive")
+    try:
+        return request(args.wait)
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+        print(f"night-mail-request: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

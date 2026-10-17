@@ -1,5 +1,5 @@
 #!/bin/bash
-# night-mail-sync [--wait SECONDS]: run one full mail sync.
+# night-mail-sync [--request | --launchd] [--wait SECONDS]: run one full mail sync.
 #
 # This is the one entry point for a sync, used by the LaunchAgent and by
 # `night/mail-sync' in Emacs. It holds the sync lock for the whole of
@@ -11,6 +11,9 @@
 # Without --wait, it exits 75 at once if another sync holds the lock (the
 # LaunchAgent's behaviour: the next tick will catch up). With --wait, it waits
 # up to SECONDS for that sync to finish first.
+# --request asks the Aqua LaunchAgent to run in the graphical Keychain context;
+# --launchd publishes the matching request's completion status. Exit 69 means
+# fetching failed but local indexing completed.
 #
 # See docs/email.md.
 
@@ -20,11 +23,23 @@ email_bin="$(cd "$(command dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 . "$email_bin/night-mail-lib.bash"
 
 wait=0
-case "${1:-}" in
-    --wait) wait="${2:?--wait needs a number of seconds}" ;;
-    '') ;;
-    *) printf 'usage: %s [--wait SECONDS]\n' "${0##*/}" >&2 ; exit 64 ;;
-esac
+request=0
+launchd=0
+while [ "$#" -gt 0 ] ; do
+    case "$1" in
+        --wait) wait="${2:?--wait needs a number of seconds}" ; shift ;;
+        --request) request=1 ;;
+        --launchd) launchd=1 ;;
+        *) printf 'usage: %s [--request | --launchd] [--wait SECONDS]\n' "${0##*/}" >&2 ; exit 64 ;;
+    esac
+    shift
+done
+[[ "$wait" =~ ^[0-9]+$ ]] || { nm_log "--wait must be a nonnegative integer"; exit 64; }
+if [ "$request" = 1 ] ; then
+    [ "$launchd" = 0 ] || { nm_log "--request and --launchd are mutually exclusive"; exit 64; }
+    [ "$wait" -gt 0 ] || wait=600
+    exec python3 "$email_bin/night-mail-request" --wait "$wait"
+fi
 
 if ! nm_lock "$wait" ; then
     nm_log "another sync holds $night_mail_lock; skipped"
@@ -33,4 +48,25 @@ fi
 
 # The hooks see this and do not try to take the lock we already hold.
 export NIGHT_MAIL_LOCKED=1
+request_id=''
+if [ "$launchd" = 1 ] ; then
+    request_id="$(command cat "$night_mail_request_file" 2>/dev/null)"
+fi
+# A previous run's result must never turn a skipped/failed pre-new into success.
+printf '%s\n' 125 >| "$night_mail_fetch_status_file"
 notmuch new --quiet
+status=$?
+if [ "$status" = 0 ] ; then
+    fetch_status="$(command cat "$night_mail_fetch_status_file" 2>/dev/null)"
+    if [ "${fetch_status:-125}" != 0 ] ; then
+        nm_log "fetch failed (status ${fetch_status:-unknown}); local mail was indexed"
+        status=69
+    fi
+fi
+if [ "$launchd" = 1 ] && [ -n "$request_id" ] ; then
+    result_tmp="${night_mail_result_file}.tmp.$$"
+    ( umask 077; printf '%s\n%s\n' "$request_id" "$status" >| "$result_tmp" ) &&
+        command mv -f -- "$result_tmp" "$night_mail_result_file" ||
+        nm_log "could not publish the sync result"
+fi
+exit "$status"
