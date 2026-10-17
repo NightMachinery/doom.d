@@ -138,7 +138,9 @@ The initial configuration is:
     "show_details": true,
     "sound": null,
     "bypass_dnd": false,
-    "max_individual": 3
+    "max_individual": 3,
+    "preview_chars": 300,
+    "preview_lines": 3
   },
   "groups": [
     {"name": "Other mail"}
@@ -176,10 +178,21 @@ bypass uses terminal-notifier 2's private macOS API and is best effort; newer
 terminal-notifier versions ignore that option. macOS Focus allowlists and system
 notification settings can also affect delivery.
 
-Each group's `max_individual` (1 to 20, default 3) limits individual sender/subject
-alerts per sync. Larger batches produce one summary with up to that many
-previews. `show_details: false` always produces a count-only summary, keeping
-sender and subject off screen. `sound` is a macOS sound name, `"default"`, or
+Individual alerts use the subject as `-title`, sender as `-subtitle`, and a
+newline-joined body excerpt as `-message`. No constant app or rule-group name
+uses the title line. `preview_chars` (0 to 1000, default 300) and `preview_lines`
+(1 to 10, default 3) bound the excerpt; set `preview_chars` to 0 for header-only
+alerts. These settings inherit and can be overridden by each group. Plain text
+is preferred, with a local HTML-to-text fallback. Quoted history, HTML scripts
+and styles, and standard signature text are omitted from previews. Only the
+first 256 KiB of a selected message file is read, and attachments are not used.
+A missing or malformed body falls back to the header alert. Bodies are neither
+regex inputs nor stored in the dismissal registry or logs.
+
+Each group's `max_individual` (1 to 20, default 3) limits individual alerts per
+sync. Larger batches use the count as title, group as subtitle, and up to that
+many subject/sender previews in the body. `show_details: false` always produces
+a count-only summary and does not read message files. `sound` is a macOS sound name, `"default"`, or
 `null` for silence. Set `defaults.enabled` to false to disable all groups that
 do not explicitly override it.
 

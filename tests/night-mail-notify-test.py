@@ -38,11 +38,11 @@ class PolicyTest(unittest.TestCase):
                     {"id": "normal", "from": "robot@example.org", "subject": "Normal"}]
         items = list(notify.notifications(messages, groups))
         self.assertEqual(len(items), 2)
-        self.assertIn("urgent", items[0][0])
+        self.assertEqual("URGENT", items[0][0])
         self.assertTrue(items[0][3]["bypass_dnd"])
         self.assertFalse(items[1][3]["bypass_dnd"])
         self.assertEqual(items[0][3]["sound"], "Glass")
-        self.assertIn("rest", items[1][0])
+        self.assertEqual("rest", items[1][3]["name"])
 
     def test_validation(self):
         for groups in ([], [{"name": "a", "match": {"from": "x"}}],
@@ -52,6 +52,8 @@ class PolicyTest(unittest.TestCase):
                        [{"name": "a", "match": {"from": "x"}}, {"name": "a"}],
                        [{"name": "a", "bypass_dnd": "false"}],
                        [{"name": "a", "max_individual": True}],
+                       [{"name": "a", "preview_chars": -1}],
+                       [{"name": "a", "preview_lines": 0}],
                        [{"name": "a", "typo": True}]):
             with self.subTest(groups=groups), self.assertRaises(ValueError):
                 self.config(groups)
@@ -65,12 +67,43 @@ class PolicyTest(unittest.TestCase):
         messages = [{"id": str(i), "from": "", "subject": ""} for i in range(4)]
         items = list(notify.notifications(messages[:3], groups))
         self.assertEqual(len(items), 3)
-        self.assertEqual(items[0][1:3], ("Unknown sender", "(No subject)"))
+        self.assertEqual(items[0][:3], ("(No subject)", "Unknown sender", ""))
         items = list(notify.notifications(messages, groups))
         self.assertEqual(len(items), 1)
-        self.assertIn("4 new unread messages", items[0][2])
+        self.assertEqual("4 new unread messages", items[0][0])
         groups[0]["show_details"] = False
-        self.assertEqual(list(notify.notifications(messages[:1], groups))[0][2], "1 new unread message")
+        self.assertEqual(list(notify.notifications(messages[:1], groups))[0][:3],
+                         ("1 new unread message", "Other mail", ""))
+
+    def test_preview_decodes_mime_and_excludes_attachments_quotes_and_signature(self):
+        from email.message import EmailMessage
+        mail = EmailMessage()
+        mail.set_content("First line.\nSecond line.\n> Old reply\n-- \nSignature\n", charset="utf-8")
+        mail.add_attachment(b"Do not show attachment", maintype="text", subtype="plain", filename="notes.txt")
+        filename = Path(self.tmp.name) / "mime"
+        filename.write_bytes(mail.as_bytes())
+        message = {"id": "preview", "from": "Sender", "subject": "Subject", "filenames": [str(filename)]}
+        settings = notify.load_config(self.filename)[0]
+        self.assertEqual(list(notify.notifications([message], [settings]))[0][:3],
+                         ("Subject", "Sender", "First line.\nSecond line."))
+        settings["preview_chars"] = 10
+        self.assertEqual(notify.body_preview(message, settings), "First lin…")
+        settings["preview_chars"] = 0
+        with patch.object(notify.Path, "open", side_effect=AssertionError("preview disabled")):
+            self.assertEqual(notify.body_preview(message, settings), "")
+        settings["show_details"] = False
+        with patch.object(notify, "body_preview", side_effect=AssertionError("count-only")):
+            self.assertEqual(list(notify.notifications([message], [settings]))[0][0], "1 new unread message")
+
+    def test_html_preview_line_limit_and_unavailable_file(self):
+        filename = Path(self.tmp.name) / "html"
+        filename.write_text("Content-Type: text/html; charset=utf-8\n\n"
+                            "<style>hidden</style><p>First &amp; new</p><p>Second</p>"
+                            "<blockquote>Old reply<script>hidden</script></blockquote><p>Third</p>")
+        settings = dict(notify.DEFAULTS, preview_lines=2)
+        message = {"filenames": [str(filename)]}
+        self.assertEqual(notify.body_preview(message, settings), "First & new\nSecond…")
+        self.assertEqual(notify.body_preview({"filenames": [str(filename) + "-missing"]}, settings), "")
 
     def test_groups_batch_independently(self):
         groups = self.config([{"name": "a", "match": {"from": "a"}, "max_individual": 1}, {"name": "b"}])
@@ -249,6 +282,10 @@ sys.exit(int(os.environ.get("TEST_NOTIFY_EXIT","0")))
         self.sync()
         self.assertEqual(len(self.delivered()), 1)
         self.assertNotIn("-ignoreDnD", self.delivered()[0])
+        alert = self.delivered()[0]
+        self.assertEqual(alert[alert.index("-title") + 1], "\\[Important] $(printf inert)")
+        self.assertEqual(alert[alert.index("-subtitle") + 1], "\\fixture@example.org")
+        self.assertEqual(alert[alert.index("-message") + 1], "\\Body.")
         self.assertEqual(self.nm("count", "tag:new").stdout.strip(), "0")
         self.sync()
         self.nm("tag", "+flagged", "--", "*")

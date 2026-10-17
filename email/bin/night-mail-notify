@@ -3,9 +3,12 @@
 import argparse
 from collections import defaultdict
 from contextlib import contextmanager
+from email import policy
 from email.header import decode_header, make_header
+from email.parser import BytesParser
 import fcntl
 import hashlib
+from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
@@ -17,7 +20,8 @@ import tempfile
 import time
 
 DEFAULTS = {"enabled": True, "show_details": True, "sound": None,
-            "bypass_dnd": False, "max_individual": 3}
+            "bypass_dnd": False, "max_individual": 3,
+            "preview_chars": 300, "preview_lines": 3}
 DEFAULT_CONFIG = {"defaults": DEFAULTS, "groups": [{"name": "Other mail"}]}
 
 
@@ -43,6 +47,10 @@ def validate_settings(settings, context):
             raise ValueError(f"{context}.{key}: expected a boolean")
         if key == "max_individual" and (type(value) is not int or not 1 <= value <= 20):
             raise ValueError(f"{context}.max_individual: expected an integer from 1 to 20")
+        if key == "preview_chars" and (type(value) is not int or not 0 <= value <= 1000):
+            raise ValueError(f"{context}.preview_chars: expected an integer from 0 to 1000")
+        if key == "preview_lines" and (type(value) is not int or not 1 <= value <= 10):
+            raise ValueError(f"{context}.preview_lines: expected an integer from 1 to 10")
         if key == "sound" and value is not None and (not isinstance(value, str) or not value.strip()):
             raise ValueError(f"{context}.sound: expected a sound name or null")
 
@@ -117,6 +125,71 @@ def clean(text, limit=200):
     text = re.sub(r"[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]", " ", text)
     text = " ".join(text.split())
     return text if len(text) <= limit else text[:limit - 1] + "…"
+
+
+class HTMLPreview(HTMLParser):
+    """Plain local text only: no network, scripts, styles, or quoted history."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts, self.hidden = [], 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ("script", "style", "head", "blockquote"):
+            self.hidden += 1
+        if not self.hidden and tag in ("p", "div", "br", "li", "tr", "h1", "h2", "h3"):
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in ("script", "style", "head", "blockquote"):
+            self.hidden = max(0, self.hidden - 1)
+        if not self.hidden and tag in ("p", "div", "li", "tr"):
+            self.parts.append("\n")
+
+    def handle_data(self, data):
+        if not self.hidden:
+            self.parts.append(data)
+
+
+def body_preview(message, settings):
+    chars, lines = settings["preview_chars"], settings["preview_lines"]
+    if not chars:
+        return ""
+    for filename in message.get("filenames", []):
+        try:
+            # Only selected arrivals reach here. MIME parsing is local and
+            # bounded even if the original mail contains enormous attachments.
+            with Path(filename).open("rb") as stream:
+                raw = stream.read(256 * 1024)
+            mail = BytesParser(policy=policy.default).parsebytes(raw)
+            part = mail.get_body(preferencelist=("plain", "html"))
+            if part is None:
+                continue
+            payload = part.get_payload(decode=True) or b""
+            try:
+                text = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+            except LookupError:
+                text = payload.decode("utf-8", errors="replace")
+            if part.get_content_type() == "text/html":
+                parser = HTMLPreview()
+                parser.feed(text)
+                text = "".join(parser.parts)
+            meaningful = []
+            for line in text.splitlines():
+                if line.strip() == "--":
+                    break
+                if line.lstrip().startswith(">") or re.match(r"^On .+wrote:\s*$", line, re.I):
+                    continue
+                value = clean(line, 1000)
+                if value:
+                    meaningful.append(value)
+            preview = "\n".join(meaningful[:lines])
+            if len(preview) > chars or len(meaningful) > lines:
+                preview = preview[:chars - 1].rstrip() + "…"
+            return preview
+        except (OSError, ValueError, TypeError, UnicodeError):
+            # A vanished or malformed message still gets its header alert.
+            continue
+    return ""
 
 
 def message_token(message_id):
@@ -210,6 +283,7 @@ def candidates():
         headers = message["headers"]
         unique[message["id"]] = {"id": message["id"], "from": decode(headers.get("From", "")),
                                   "subject": decode(headers.get("Subject", "")),
+                                  "filenames": message.get("filename", []),
                                   "timestamp": message.get("timestamp", 0)}
     return sorted(unique.values(), key=lambda message: message["timestamp"], reverse=True)
 
@@ -224,20 +298,20 @@ def notifications(messages, groups):
                 break
     for index, batch in batches.items():
         group = groups[index]
-        title = "Night Mail · " + clean(group["name"], 80)
         limit = group["max_individual"]
         if group["show_details"] and len(batch) <= limit:
             for message in batch:
-                yield (title, clean(message["from"]) or "Unknown sender",
-                       clean(message["subject"]) or "(No subject)", group,
+                yield (clean(message["subject"]) or "(No subject)",
+                       clean(message["from"]) or "Unknown sender", body_preview(message, group), group,
                        [message_token(message["id"])])
         else:
-            body = f"{len(batch)} new unread message" + ("s" if len(batch) != 1 else "")
+            title = f"{len(batch)} new unread message" + ("s" if len(batch) != 1 else "")
+            body = ""
             if group["show_details"]:
-                previews = [clean(m["from"], 60) + ": " + (clean(m["subject"], 100) or "(No subject)")
+                previews = [(clean(m["subject"], 100) or "(No subject)") + "\n" + clean(m["from"], 60)
                             for m in batch[:limit]]
-                body += "\n" + "\n".join(previews)
-            yield (title, "", body, group, [message_token(m["id"]) for m in batch])
+                body = "\n".join(previews)
+            yield (title, clean(group["name"], 80), body, group, [message_token(m["id"]) for m in batch])
 
 
 def deliver(items, state):
