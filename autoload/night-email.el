@@ -105,6 +105,33 @@ indexing local mail succeeds."
 `notmuch-poll' blocks Emacs for the whole sync. Advising it covers every
 caller, e.g. `gR' and the hello screen's `G'."
   (night/mail-sync))
+
+(defcustom night/mail-dismiss-notifications-on-open t
+  "Dismiss Night Mail desktop alerts when their messages are opened in notmuch."
+  :type 'boolean
+  :group 'notmuch)
+
+(defun night/h-mail-dismiss-open-notification (&rest _)
+  "Acknowledge the current expanded message after notmuch displays it.
+Collapsed messages and other messages in the thread keep their alerts."
+  (when (and night/mail-dismiss-notifications-on-open
+             (eq system-type 'darwin)
+             (eq major-mode 'notmuch-show-mode))
+    (condition-case nil
+        (when (and (notmuch-show-message-visible-p)
+                   (not (notmuch-show-get-prop :night-notification-dismissed)))
+          (let ((id (notmuch-show-get-message-id t)))
+            (when (and (stringp id) (not (string-empty-p id)))
+              (make-process
+               :name "night-mail-dismiss"
+               :buffer nil
+               :command (list (or (executable-find "python3") "/usr/bin/python3")
+                              (expand-file-name "bin/night-mail-notify" night/mail-email-dir)
+                              "--dismiss" (secure-hash 'sha256 (encode-coding-string id 'utf-8)))
+               :connection-type 'pipe :noquery t :sentinel #'ignore)
+              (notmuch-show-set-prop :night-notification-dismissed t))))
+      ;; A desktop service failure must never prevent reading mail.
+      (error nil))))
 ;;; HTML mail as Org
 ;; pandoc converts the HTML, email/html-to-org.lua strips layout tables,
 ;; images and raw HTML, and the result is fontified as in an Org buffer.
@@ -343,6 +370,7 @@ into notes. The buffer is read-only and marked as mail."
   (night/h-notmuch-version-check)
 
   (advice-add 'notmuch-poll :override #'night/h-notmuch-poll-async)
+  (advice-add 'notmuch-show-command-hook :after #'night/h-mail-dismiss-open-notification)
   (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
   (add-hook 'notmuch-show-mode-hook #'night/h-notmuch-show-setup-link-echo)
 

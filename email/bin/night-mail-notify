@@ -2,7 +2,10 @@
 """Best-effort desktop alerts for this indexing run's new inbox messages."""
 import argparse
 from collections import defaultdict
+from contextlib import contextmanager
 from email.header import decode_header, make_header
+import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -10,6 +13,8 @@ import re
 import signal
 import subprocess
 import sys
+import tempfile
+import time
 
 DEFAULTS = {"enabled": True, "show_details": True, "sound": None,
             "bypass_dnd": False, "max_individual": 3}
@@ -114,6 +119,73 @@ def clean(text, limit=200):
     return text if len(text) <= limit else text[:limit - 1] + "…"
 
 
+def message_token(message_id):
+    return hashlib.sha256(message_id.encode("utf-8")).hexdigest()
+
+
+def alert_id(tokens):
+    return "night-mail-" + message_token("\n".join(sorted(tokens)))
+
+
+@contextmanager
+def alert_state():
+    """Serialize posting and dismissal; persist hashes only, never mail headers."""
+    directory = Path.home() / ".local/state/night-mail"
+    directory.mkdir(parents=True, exist_ok=True)
+    filename = directory / "notification-alerts.json"
+    with (directory / "notification-alerts.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            state = json.loads(filename.read_text())
+        except FileNotFoundError:
+            state = {}
+        except json.JSONDecodeError:
+            raise ValueError("invalid notification-alerts.json; remove it to reset dismissal tracking") from None
+        if (not isinstance(state, dict) or any(
+                not re.fullmatch(r"night-mail-[0-9a-f]{64}", key)
+                or not isinstance(entry, dict)
+                or not isinstance(entry.get("created"), (int, float))
+                or not isinstance(entry.get("messages"), list)
+                or not entry["messages"]
+                or any(not isinstance(token, str) or not re.fullmatch(r"[0-9a-f]{64}", token)
+                       for token in entry["messages"])
+                for key, entry in state.items())):
+            raise ValueError("invalid notification-alerts.json; remove it to reset dismissal tracking")
+        cutoff = time.time() - 30 * 86400
+        state = {key: entry for key, entry in state.items() if entry["created"] >= cutoff}
+        try:
+            yield state
+        finally:
+            # Bound history even when the user never opens an alerted message.
+            recent = sorted(state, key=lambda key: state[key]["created"], reverse=True)[:1000]
+            with tempfile.NamedTemporaryFile(mode="w", dir=directory, delete=False) as stream:
+                temporary = Path(stream.name)
+                try:
+                    json.dump({key: state[key] for key in recent}, stream)
+                    stream.write("\n")
+                    stream.close()
+                    temporary.replace(filename)
+                finally:
+                    temporary.unlink(missing_ok=True)
+
+
+def dismiss(token, state):
+    """Remove only alerts fully acknowledged by opening their messages."""
+    app = Path.home() / "Applications/Night Mail.app"
+    for identifier, entry in list(state.items()):
+        if token not in entry["messages"]:
+            continue
+        remaining = [value for value in entry["messages"] if value != token]
+        if remaining:
+            entry["messages"] = remaining
+        else:
+            # LaunchServices supplies the Aqua session even for detached GUI
+            # Emacs. -g preserves focus; -n gives each removal its own process.
+            run(["/usr/bin/open", "-g", "-n", "-W", "-a", app,
+                 "--args", "-remove", identifier], timeout=12)
+            del state[identifier]
+
+
 def message_objects(tree):
     if isinstance(tree, list):
         for child in tree:
@@ -136,7 +208,7 @@ def candidates():
     unique = {}
     for message in message_objects(tree):
         headers = message["headers"]
-        unique[message["id"]] = {"from": decode(headers.get("From", "")),
+        unique[message["id"]] = {"id": message["id"], "from": decode(headers.get("From", "")),
                                   "subject": decode(headers.get("Subject", "")),
                                   "timestamp": message.get("timestamp", 0)}
     return sorted(unique.values(), key=lambda message: message["timestamp"], reverse=True)
@@ -157,29 +229,32 @@ def notifications(messages, groups):
         if group["show_details"] and len(batch) <= limit:
             for message in batch:
                 yield (title, clean(message["from"]) or "Unknown sender",
-                       clean(message["subject"]) or "(No subject)", group)
+                       clean(message["subject"]) or "(No subject)", group,
+                       [message_token(message["id"])])
         else:
             body = f"{len(batch)} new unread message" + ("s" if len(batch) != 1 else "")
             if group["show_details"]:
                 previews = [clean(m["from"], 60) + ": " + (clean(m["subject"], 100) or "(No subject)")
                             for m in batch[:limit]]
                 body += "\n" + "\n".join(previews)
-            yield (title, "", body, group)
+            yield (title, "", body, group, [message_token(m["id"]) for m in batch])
 
 
-def deliver(items):
+def deliver(items, state):
     helper = Path.home() / "Applications/Night Mail.app/Contents/MacOS/terminal-notifier"
-    for title, subtitle, body, group in items:
+    for title, subtitle, body, group, tokens in items:
+        identifier = alert_id(tokens)
         # The leading backslash stops NSUserDefaults from parsing email text as a
         # plist; terminal-notifier removes exactly that first backslash.
         args = [str(helper), "-title", "\\" + title, "-subtitle", "\\" + subtitle,
-                "-message", "\\" + body]
+                "-message", "\\" + body, "-group", identifier]
         if group["sound"]:
             args.extend(["-sound", "\\" + group["sound"]])
         if group["bypass_dnd"]:
             args.append("-ignoreDnD")
         try:
             run(args, timeout=12)
+            state[identifier] = {"messages": sorted(set(tokens)), "created": time.time()}
         except (OSError, RuntimeError) as error:
             print(f"night-mail-notify: {error}", file=sys.stderr)
 
@@ -189,11 +264,20 @@ def main():
     parser.add_argument("--init-config", action="store_true")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--initial-import", action="store_true")
+    parser.add_argument("--dismiss", metavar="MESSAGE_HASH",
+                        help="dismiss alerts acknowledged by this SHA-256 message ID")
     args = parser.parse_args()
+    if args.dismiss and not re.fullmatch(r"[0-9a-f]{64}", args.dismiss):
+        parser.error("--dismiss requires a SHA-256 message ID")
     filename = config_path()
     signal.signal(signal.SIGALRM, time_limit)
     signal.alarm(45)
     try:
+        # Dismissal works even if the user has since disabled or broken policy.
+        if args.dismiss:
+            with alert_state() as state:
+                dismiss(args.dismiss, state)
+            return 0
         if args.init_config:
             filename.parent.mkdir(parents=True, exist_ok=True)
             try:
@@ -208,7 +292,8 @@ def main():
         if args.check or args.init_config:
             print(f"notification configuration valid: {filename}")
         elif not args.initial_import and any(group["enabled"] for group in groups):
-            deliver(notifications(candidates(), groups))
+            with alert_state() as state:
+                deliver(notifications(candidates(), groups), state)
         return 0
     except (OSError, ValueError, RuntimeError, NotificationTimeout) as error:
         print(f"night-mail-notify: {filename}: {error}", file=sys.stderr)

@@ -118,6 +118,12 @@ terminal-notifier is untouched. Setup needs Python 3.9+ and Apple's Command Line
 Tools. Downloads are cached and checksum-pinned; reruns reuse current builds and
 preserve your previous app if rebuilding fails.
 
+Normal alerts and dismissal use Apple's current notification API; only explicit
+DND bypass uses the pinned upstream legacy implementation. The bootstrapper
+requests permission in the graphical login session after installation or a
+rebuild and checks the actual app result. It cannot approve the macOS prompt or
+silently change a denied permission, banner style, or Focus setting.
+
 Settings live in `~/.config/night-mail/notifications.json` (or under
 `$XDG_CONFIG_HOME`). Setup creates this file with safe defaults only if absent;
 edits apply on the next sync without restarting Emacs or launchd. The environment
@@ -191,9 +197,26 @@ mail sync continues, and failed/disabled alerts are not retried later. Rule grou
 names control policy and batching, not terminal-notifier's replacement group:
 individual alerts do not replace each other.
 
+Opening the current expanded message in Emacs dismisses its individual desktop
+alert asynchronously. Collapsed messages and other messages in the thread keep
+their alerts. A batch summary disappears only after every message in that batch
+has been opened; its preview/count is not rewritten as messages are opened.
+Set `night/mail-dismiss-notifications-on-open` to nil to disable this behavior.
+Dismissal uses LaunchServices to reach the graphical login session without
+taking focus, and only targets Night Mail, leaving Agent Bells untouched.
+
+This applies to alerts posted after installing dismissal support. The private
+`~/.local/state/night-mail/notification-alerts.json` tracks hashes of message IDs
+and alert IDs, with no sender, subject, body, or raw message IDs. Posting and
+dismissal share a lock, and tracking is limited to 1,000 alerts from the last
+30 days. Disabling notifications or changing the regex rules does not prevent
+dismissal of alerts already tracked. Dismissal failures never block reading mail.
+
 `email/install-night-mail.zsh --check` checks the app, signature, authorization,
 and rule file. Run `python3 tests/night-mail-notify-test.py` for hermetic policy
 tests and real notmuch hook tests against a synthetic mailbox and fake notifier.
+`emacs -Q --batch -l tests/night-email-sync-test.el` also checks dismissal routing,
+expanded-message selection, and failure isolation.
 Email uninstall removes only the LaunchAgent, preserving apps and settings.
 
 ## Using it
@@ -446,10 +469,11 @@ pin differ, and `install-night-mail.zsh --check` reports the same.
 - **Mail arrives without a desktop alert**: enable Allow Notifications for
   Night Mail in System Settings → Notifications, then select Banners or Alerts.
   The helper's `--diagnose` output uses macOS authorization codes: 1 means
-  denied, 2 means authorized. A denied permission can also make delivery log
-  `terminal-notifier exited with status 4` (timeout). Diagnose from a normal
-  graphical login session; a detached shell can fail to contact the notification
-  service even though the Aqua mail job can. Permission and DND are separate:
+  denied, 2 means authorized. Normal delivery now exits 3 for missing permission;
+  older helper builds and the optional legacy bypass path can instead time out
+  with `terminal-notifier exited with status 4`. The installer checks through
+  the graphical login session; invoking a helper directly from a detached shell
+  can fail to contact the notification service. Permission and DND are separate:
   leave DND policy unchanged unless you explicitly want a bypass rule. Failed
   alerts are not retried, so verify with a fresh unread inbox arrival after
   enabling permission.

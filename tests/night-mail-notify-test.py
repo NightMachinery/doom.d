@@ -33,9 +33,9 @@ class PolicyTest(unittest.TestCase):
             {"name": "quiet", "match": {"from": "robot@", "subject": "digest"}, "enabled": False},
             {"name": "urgent", "match": {"subject": "urgent"}, "bypass_dnd": True},
             {"name": "rest"}], {"sound": "Glass"})
-        messages = [{"from": "ROBOT@example.org", "subject": "Urgent DIGEST"},
-                    {"from": "human@example.org", "subject": "URGENT"},
-                    {"from": "robot@example.org", "subject": "Normal"}]
+        messages = [{"id": "quiet", "from": "ROBOT@example.org", "subject": "Urgent DIGEST"},
+                    {"id": "urgent", "from": "human@example.org", "subject": "URGENT"},
+                    {"id": "normal", "from": "robot@example.org", "subject": "Normal"}]
         items = list(notify.notifications(messages, groups))
         self.assertEqual(len(items), 2)
         self.assertIn("urgent", items[0][0])
@@ -62,7 +62,7 @@ class PolicyTest(unittest.TestCase):
     def test_defaults_missing_headers_and_bursts(self):
         groups = notify.load_config(self.filename)
         self.assertFalse(groups[0]["bypass_dnd"])
-        messages = [{"from": "", "subject": ""}] * 4
+        messages = [{"id": str(i), "from": "", "subject": ""} for i in range(4)]
         items = list(notify.notifications(messages[:3], groups))
         self.assertEqual(len(items), 3)
         self.assertEqual(items[0][1:3], ("Unknown sender", "(No subject)"))
@@ -74,21 +74,85 @@ class PolicyTest(unittest.TestCase):
 
     def test_groups_batch_independently(self):
         groups = self.config([{"name": "a", "match": {"from": "a"}, "max_individual": 1}, {"name": "b"}])
-        messages = [{"from": "a", "subject": "A"}] * 2 + [{"from": "b", "subject": "B"}]
+        messages = [{"id": str(i), "from": "a", "subject": "A"} for i in range(2)]
+        messages.append({"id": "b", "from": "b", "subject": "B"})
         self.assertEqual(len(list(notify.notifications(messages, groups))), 2)
 
     def test_decoding_literal_arguments_and_dnd(self):
         self.assertEqual(notify.decode("=?utf-8?b?0J/RgNC40LLQtdGC?="), "Привет")
         group = dict(notify.DEFAULTS)
         calls = []
+        state = {}
+        tokens = [notify.message_token("fixture@example.org")]
         with patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)):
-            notify.deliver([("[title]", "-sender", '$(printf inert) "quoted"', group)])
+            notify.deliver([("[title]", "-sender", '$(printf inert) "quoted"', group, tokens)], state)
             group = dict(group, bypass_dnd=True, sound="Glass")
-            notify.deliver([("title", "sender", "subject", group)])
+            notify.deliver([("title", "sender", "subject", group, tokens)], state)
         self.assertNotIn("-ignoreDnD", calls[0])
         self.assertIn("-ignoreDnD", calls[1])
         self.assertIn('\\$(printf inert) "quoted"', calls[0])
         self.assertEqual(notify.clean("a\n\x1bb\u202ec"), "a b c")
+        self.assertEqual(calls[0][-2:], ["-group", notify.alert_id(tokens)])
+        self.assertNotIn("fixture@example.org", json.dumps(state))
+
+    def test_opening_message_only_removes_its_alert(self):
+        groups = notify.load_config(self.filename)
+        messages = [{"id": str(i), "from": "fixture", "subject": "subject"} for i in range(2)]
+        state, calls = {}, []
+        with patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)):
+            notify.deliver(notify.notifications(messages, groups), state)
+            first = notify.message_token("0")
+            notify.dismiss(first, state)
+            self.assertEqual(len(state), 1)
+            self.assertEqual(calls[-1][-2:], ["-remove", notify.alert_id([first])])
+            self.assertEqual(calls[-1][:4], ["/usr/bin/open", "-g", "-n", "-W"])
+            self.assertIn("Night Mail.app", str(calls[-1]))
+            self.assertNotIn("ALL", calls[-1])
+            self.assertNotIn("-ignoreDnD", calls[-1])
+            before = len(calls)
+            notify.dismiss(first, state)
+            notify.dismiss(notify.message_token("unrelated"), state)
+            self.assertEqual(len(calls), before)
+
+    def test_summary_waits_for_all_messages_to_be_opened(self):
+        for details in (True, False):
+            groups = self.config([{"name": "rest", "show_details": details}])
+            messages = [{"id": str(i), "from": "fixture", "subject": "subject"} for i in range(4)]
+            state, calls = {}, []
+            with patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)):
+                notify.deliver(notify.notifications(messages, groups), state)
+                for i in range(3):
+                    notify.dismiss(notify.message_token(str(i)), state)
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(len(state), 1)
+                notify.dismiss(notify.message_token("3"), state)
+                self.assertEqual(calls[-1][-2:], ["-remove", calls[0][-1]])
+                self.assertFalse(state)
+
+    def test_failed_delivery_and_removal_do_not_lose_tracking(self):
+        state = {}
+        token = notify.message_token("fixture")
+        with patch.object(notify, "run", side_effect=RuntimeError("fixture failure")):
+            notify.deliver([("title", "sender", "subject", dict(notify.DEFAULTS), [token])], state)
+            self.assertFalse(state)
+            state[notify.alert_id([token])] = {"messages": [token], "created": 1}
+            with self.assertRaises(RuntimeError):
+                notify.dismiss(token, state)
+            self.assertEqual(len(state), 1)
+
+    def test_dismissal_state_is_private_bounded_and_header_free(self):
+        with patch.object(notify.Path, "home", return_value=Path(self.tmp.name)):
+            with notify.alert_state() as state:
+                for i in range(1002):
+                    token = notify.message_token(str(i))
+                    state[notify.alert_id([token])] = {"messages": [token], "created": notify.time.time()}
+                token = notify.message_token("expired")
+                state[notify.alert_id([token])] = {"messages": [token], "created": 0}
+            filename = Path(self.tmp.name) / ".local/state/night-mail/notification-alerts.json"
+            self.assertEqual(filename.stat().st_mode & 0o777, 0o600)
+            with notify.alert_state() as state:
+                self.assertLessEqual(len(state), 1000)
+                self.assertNotIn(notify.alert_id([token]), state)
 
     def test_config_creation_preserves_user_file(self):
         env = dict(os.environ, NIGHT_MAIL_NOTIFY_CONFIG=str(self.filename))
@@ -249,6 +313,28 @@ sys.exit(int(os.environ.get("TEST_NOTIFY_EXIT","0")))
         self.sync()
         self.assertEqual(len(self.delivered()), 2)
         self.assertEqual(self.nm("count", "tag:inbox").stdout.strip(), "2")
+
+    def test_indexed_alerts_can_be_dismissed_after_new_tags_are_cleared(self):
+        self.sync()
+        self.mail("opened")
+        self.mail("unopened")
+        self.sync()
+        self.assertEqual(self.nm("count", "tag:new").stdout.strip(), "0")
+        calls = []
+        # Dismissal must still work after a policy edit becomes invalid.
+        self.policy.write_text("invalid JSON")
+        token = notify.message_token("opened@fixture.invalid")
+        with patch.object(notify.Path, "home", return_value=self.home), \
+                patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)), \
+                patch.object(notify.sys, "argv", ["night-mail-notify", "--dismiss", token]), \
+                patch.object(notify.signal, "alarm"), patch.dict(os.environ, self.env):
+            self.assertEqual(notify.main(), 0)
+            with notify.alert_state() as state:
+                self.assertEqual(len(state), 1)
+                remaining = list(state.values())[0]["messages"]
+                self.assertEqual(remaining, [notify.message_token("unopened@fixture.invalid")])
+        self.assertEqual(calls[0][-2:], ["-remove", notify.alert_id([token])])
+        self.assertEqual(len(calls), 1)
 
     def test_worker_reports_fetch_failure_but_still_indexes_and_acknowledges(self):
         self.sync()
