@@ -152,6 +152,8 @@ move COUNT - 1 screen lines forward first."
     :n
     "s l" #'link-hint-open-link
     :n
+    "s L" #'link-hint-copy-link
+    :n
     "l" #'org-open-at-point-global)
    :nvo
    "g s 9" #'night/avy-goto-opening-paren
