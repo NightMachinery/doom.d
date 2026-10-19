@@ -480,6 +480,29 @@ into notes. The buffer is read-only and marked as mail."
   "Open the inbox: the notmuch search for `tag:inbox'."
   (interactive)
   (notmuch-search "tag:inbox"))
+
+(defun night/mail-open-from-notification (&rest ids)
+  "Show the mail of a clicked desktop alert in a raised graphical frame.
+
+IDS are the alert's message IDs: one opens its thread, several open a
+search for them, and none (a batch too large to list) opens the unread
+inbox. `email/bin/night-mail-notify --open' calls this through the GUI
+server. Returns t."
+  (require 'notmuch)
+  (let* ((graphic (seq-filter #'display-graphic-p (cons (selected-frame) (frame-list))))
+         (frame (or (seq-find (lambda (f) (eq (frame-visible-p f) t)) graphic)
+                    (car graphic)
+                    (make-frame))))
+    (make-frame-visible frame)
+    (select-frame frame)
+    (if (cdr ids)
+        (notmuch-search (mapconcat #'notmuch-id-to-query ids " or "))
+      (if ids
+          (notmuch-show (notmuch-id-to-query (car ids)))
+        (notmuch-search "tag:inbox and tag:unread")))
+    ;; Activates Emacs itself, so no window-manager permission is needed.
+    (select-frame-set-input-focus frame)
+    t))
 ;;;
 (after! notmuch
   (setq notmuch-command (or (executable-find "notmuch") "/opt/homebrew/bin/notmuch"))

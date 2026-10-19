@@ -219,6 +219,20 @@ Set `night/mail-dismiss-notifications-on-open` to nil to disable this behavior.
 Dismissal uses LaunchServices to reach the graphical login session without
 taking focus, and only targets Night Mail, leaving Agent Bells untouched.
 
+Clicking an alert raises the GUI Emacs server's frame and shows the mail: the
+message's thread for an individual alert, a search for exactly the batched
+messages for a summary, or the unread inbox when a batch has more than 50
+messages. Each alert carries `night-mail-notify --open -- MESSAGE-ID...` as its
+click action; the app runs it without a shell. `--open` finds `emacsclient` on
+launchd's minimal `PATH` plus Homebrew's, and evaluates
+`night/mail-open-from-notification` on `$EMACS_GUI_SOCKET_NAME`, by default
+`${NIGHT_SOCKETS_DIR:-~/.local/state}/emacs-servers/server_gui`. Emacs raises
+itself, so no Accessibility permission is involved. If that server is not
+running, the click does nothing beyond dismissing the alert. Raw message IDs
+are part of the alert's macOS record (next to its subject and sender), never of
+the dismissal registry below. Only alerts posted after a rebuild of the app
+have a click action; rerun `email/install-night-mail.zsh` after pulling.
+
 This applies to alerts posted after installing dismissal support. The private
 `~/.local/state/night-mail/notification-alerts.json` tracks hashes of message IDs
 and alert IDs, with no sender, subject, body, or raw message IDs. Posting and
@@ -229,7 +243,7 @@ dismissal of alerts already tracked. Dismissal failures never block reading mail
 `email/install-night-mail.zsh --check` checks the app, signature, authorization,
 and rule file. Run `python3 tests/night-mail-notify-test.py` for hermetic policy
 tests and real notmuch hook tests against a synthetic mailbox and fake notifier.
-`emacs -Q --batch -l tests/night-email-sync-test.el` also checks dismissal routing,
+`emacs -Q --batch -l tests/night-email-sync-test.el` also checks click routing, dismissal routing,
 expanded-message selection, and failure isolation.
 Run `emacs -Q --batch -L /path/to/notmuch/emacs -l tests/night-email-dismiss-test.el`
 with the pinned notmuch checkout to exercise the real command hook and message

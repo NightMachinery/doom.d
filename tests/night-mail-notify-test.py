@@ -116,16 +116,17 @@ class PolicyTest(unittest.TestCase):
         group = dict(notify.DEFAULTS)
         calls = []
         state = {}
-        tokens = [notify.message_token("fixture@example.org")]
+        ids = ["fixture@example.org"]
+        tokens = [notify.message_token(ids[0])]
         with patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)):
-            notify.deliver([("[title]", "-sender", '$(printf inert) "quoted"', group, tokens)], state)
+            notify.deliver([("[title]", "-sender", '$(printf inert) "quoted"', group, ids)], state)
             group = dict(group, bypass_dnd=True, sound="Glass")
-            notify.deliver([("title", "sender", "subject", group, tokens)], state)
+            notify.deliver([("title", "sender", "subject", group, ids)], state)
         self.assertNotIn("-ignoreDnD", calls[0])
         self.assertIn("-ignoreDnD", calls[1])
         self.assertIn('\\$(printf inert) "quoted"', calls[0])
         self.assertEqual(notify.clean("a\n\x1bb\u202ec"), "a b c")
-        self.assertEqual(calls[0][-2:], ["-group", notify.alert_id(tokens)])
+        self.assertEqual(calls[0][calls[0].index("-group") + 1], notify.alert_id(tokens))
         self.assertNotIn("fixture@example.org", json.dumps(state))
 
     def test_opening_message_only_removes_its_alert(self):
@@ -159,8 +160,34 @@ class PolicyTest(unittest.TestCase):
                 self.assertEqual(len(calls), 1)
                 self.assertEqual(len(state), 1)
                 notify.dismiss(notify.message_token("3"), state)
-                self.assertEqual(calls[-1][-2:], ["-remove", calls[0][-1]])
+                self.assertEqual(calls[-1][-2:], ["-remove", calls[0][calls[0].index("-group") + 1]])
                 self.assertFalse(state)
+
+    def test_click_opens_alerted_messages_without_a_shell(self):
+        group = dict(notify.DEFAULTS)
+        calls = []
+        many = [str(i) for i in range(notify.MAX_CLICK_IDS + 1)]
+        with patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)):
+            notify.deliver([("t", "s", "b", group, ["$(printf inert)@x"]),
+                            ("t", "s", "b", group, many)], {})
+        argv = [json.loads(call[call.index("-onClick") + 1][1:]) for call in calls]
+        self.assertEqual(argv[0][0], notify.sys.executable)
+        self.assertEqual(argv[0][2:], ["--open", "--", "$(printf inert)@x"])
+        self.assertEqual(argv[1][2:], ["--open", "--"])  # Too many: unread inbox.
+
+    def test_open_quotes_ids_for_the_gui_server(self):
+        calls = []
+        env = {"EMACS_GUI_SOCKET_NAME": "/fixture/server_gui", "PATH": self.tmp.name}
+        client = Path(self.tmp.name) / "emacsclient"
+        client.write_text("#!/bin/sh\n")
+        client.chmod(0o755)
+        with patch.dict(os.environ, env), \
+                patch.object(notify, "run", side_effect=lambda args, **kwargs: calls.append(args)):
+            notify.open_in_emacs(['a"b\\c@x', "plain@x", "bad\0@x"])
+            notify.open_in_emacs([])
+        self.assertEqual(calls[0][:4], [str(client), "--socket-name", "/fixture/server_gui", "--eval"])
+        self.assertEqual(calls[0][4], '(night/mail-open-from-notification "a\\"b\\\\c@x" "plain@x")')
+        self.assertEqual(calls[1][4], "(night/mail-open-from-notification)")
 
     def test_failed_delivery_and_removal_do_not_lose_tracking(self):
         state = {}

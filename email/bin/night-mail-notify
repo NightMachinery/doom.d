@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -23,6 +24,8 @@ DEFAULTS = {"enabled": True, "show_details": True, "sound": None,
             "bypass_dnd": False, "max_individual": 3,
             "preview_chars": 300, "preview_lines": 3}
 DEFAULT_CONFIG = {"defaults": DEFAULTS, "groups": [{"name": "Other mail"}]}
+# A click on a larger batch opens the unread inbox instead of listing its IDs.
+MAX_CLICK_IDS = 50
 
 
 class NotificationTimeout(Exception):
@@ -303,7 +306,7 @@ def notifications(messages, groups):
             for message in batch:
                 yield (clean(message["subject"]) or "(No subject)",
                        clean(message["from"]) or "Unknown sender", body_preview(message, group), group,
-                       [message_token(message["id"])])
+                       [message["id"]])
         else:
             title = f"{len(batch)} new unread message" + ("s" if len(batch) != 1 else "")
             body = ""
@@ -311,17 +314,23 @@ def notifications(messages, groups):
                 previews = [(clean(m["subject"], 100) or "(No subject)") + "\n" + clean(m["from"], 60)
                             for m in batch[:limit]]
                 body = "\n".join(previews)
-            yield (title, clean(group["name"], 80), body, group, [message_token(m["id"]) for m in batch])
+            yield (title, clean(group["name"], 80), body, group, [m["id"] for m in batch])
 
 
 def deliver(items, state):
     helper = Path.home() / "Applications/Night Mail.app/Contents/MacOS/terminal-notifier"
-    for title, subtitle, body, group, tokens in items:
+    for title, subtitle, body, group, ids in items:
+        tokens = [message_token(message_id) for message_id in ids]
         identifier = alert_id(tokens)
+        # The app runs this argv on click, without a shell.
+        on_click = [sys.executable, str(Path(__file__).resolve()), "--open", "--"]
+        if len(ids) <= MAX_CLICK_IDS:
+            on_click.extend(ids)
         # The leading backslash stops NSUserDefaults from parsing email text as a
         # plist; terminal-notifier removes exactly that first backslash.
         args = [str(helper), "-title", "\\" + title, "-subtitle", "\\" + subtitle,
-                "-message", "\\" + body, "-group", identifier]
+                "-message", "\\" + body, "-group", identifier,
+                "-onClick", "\\" + json.dumps(on_click)]
         if group["sound"]:
             args.extend(["-sound", "\\" + group["sound"]])
         if group["bypass_dnd"]:
@@ -333,6 +342,25 @@ def deliver(items, state):
             print(f"night-mail-notify: {error}", file=sys.stderr)
 
 
+def elisp_string(text):
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def open_in_emacs(ids):
+    """Show clicked mail in the graphical Emacs server and raise its frame."""
+    socket = os.environ.get("EMACS_GUI_SOCKET_NAME") or str(
+        Path(os.environ.get("NIGHT_SOCKETS_DIR") or Path.home() / ".local/state")
+        / "emacs-servers/server_gui")
+    # A click runs with launchd's minimal PATH.
+    search = os.pathsep.join([os.environ.get("PATH", ""), "/opt/homebrew/bin", "/usr/local/bin"])
+    client = shutil.which("emacsclient", path=search)
+    if not client:
+        raise RuntimeError("emacsclient not found")
+    form = " ".join(["(night/mail-open-from-notification"]
+                    + [elisp_string(i) for i in ids if i and "\0" not in i]) + ")"
+    run([client, "--socket-name", socket, "--eval", form])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--init-config", action="store_true")
@@ -340,7 +368,19 @@ def main():
     parser.add_argument("--initial-import", action="store_true")
     parser.add_argument("--dismiss", metavar="MESSAGE_HASH",
                         help="dismiss alerts acknowledged by this SHA-256 message ID")
+    parser.add_argument("--open", action="store_true",
+                        help="show the message IDs of a clicked alert in the GUI Emacs server")
+    parser.add_argument("ids", nargs="*", metavar="MESSAGE_ID", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.ids and not args.open:
+        parser.error("message IDs are only accepted with --open")
+    if args.open:
+        try:
+            open_in_emacs(args.ids)
+            return 0
+        except (OSError, RuntimeError) as error:
+            print(f"night-mail-notify: --open: {error}", file=sys.stderr)
+            return 1
     if args.dismiss and not re.fullmatch(r"[0-9a-f]{64}", args.dismiss):
         parser.error("--dismiss requires a SHA-256 message ID")
     filename = config_path()
