@@ -320,7 +320,10 @@ of shr, the browser-like renderer notmuch uses by default.
   any other kind. Mail is untrusted, so an `elisp:` or `shell:` link must
   never run. The button starts at the URL, not the brackets, so that
   link-hint (`gl`) gives one hint per link rather than one for the button
-  and one for the bare URL. Faces are copied to `font-lock-face`, because
+  and one for the bare URL. That hint belongs to a `night-mail-url` link-hint
+  type, ranked ahead of `button`, because the button spans `url][text]]` and
+  link-hint's generic button copy (`SPC s L`) would take all of it. Faces are
+  copied to `font-lock-face`, because
   font-lock in the notmuch buffer strips `face`.
 - The parts of a link Org would hide carry `invisible org-link`.
   Localleader `l` (`night/notmuch-toggle-link-display`, also what

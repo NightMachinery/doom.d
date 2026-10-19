@@ -63,4 +63,19 @@
       (should (= (with-temp-buffer (insert org) (count-matches "#\\+begin_quote" (point-min) (point-max))) 1))
       (should (string-match-p "> .*https://example.org" org)))))
 
+(ert-deftest night-mail-link-hint-yields-the-url-not-the-button-text ()
+  (with-temp-buffer
+    (insert "Hi " (night/h-org-fontify-for-display "[[https://example.org/a_b?x=1][Sign in]]"))
+    (goto-char (point-min))
+    (cl-letf (((symbol-function 'link-hint--next-property)
+               (lambda (prop bound)
+                 (let ((pos (next-single-property-change (point) prop nil bound)))
+                   (and pos (< pos bound) pos)))))
+      (goto-char (night/h-link-hint-next-mail-url (point-max))))
+    ;; The generic button label is what link-hint used to copy.
+    (should (string-suffix-p "][Sign in]]" (button-label (button-at (point)))))
+    (should (equal (night/h-link-hint-mail-url-at-point) "https://example.org/a_b?x=1"))
+    (search-forward "Sign")
+    (should (equal (night/h-link-hint-mail-url-at-point) "https://example.org/a_b?x=1"))))
+
 (ert-run-tests-batch-and-exit)

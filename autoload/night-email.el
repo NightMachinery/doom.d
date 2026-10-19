@@ -348,6 +348,26 @@ strip them."
     (unless (bolp) (insert "\n"))
     (buffer-string)))
 
+(defun night/h-link-hint-next-mail-url (bound)
+  "Return the start of the next rendered mail link before BOUND."
+  (link-hint--next-property 'night-mail-url bound))
+
+(defun night/h-link-hint-mail-url-at-point ()
+  "Return the URL of the rendered mail link at point, or nil."
+  (get-text-property (point) 'night-mail-url))
+
+(after! link-hint
+  ;; A rendered link's button spans `url][desc]]', and link-hint's generic
+  ;; `button' type copies the whole button text. This type yields the URL
+  ;; alone, and wins over `button' at the same position by coming first.
+  (link-hint-define-type 'night-mail-url
+    :next #'night/h-link-hint-next-mail-url
+    :at-point-p #'night/h-link-hint-mail-url-at-point
+    :vars '(notmuch-show-mode)
+    :open #'night/h-mail-follow-url
+    :copy #'kill-new)
+  (add-to-list 'link-hint-types 'link-hint-night-mail-url))
+
 (defvar night/notmuch-link-display 'literal
   "How HTML mail's links show: `literal' (`[[url][desc]]') or `descriptive'.
 One setting for every message buffer; `night/notmuch-toggle-link-display'
