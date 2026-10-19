@@ -36,6 +36,15 @@
     (night/disable-line-numbers))
   (add-hook 'sdcv-mode-hook #'night/sdcv-startup)
 
+  (defun night/sdcv-pin-buffer-directory (&rest _)
+    "Point the sdcv buffer at a directory that exists.
+`sdcv-search-detail' starts sdcv from that buffer, which keeps the
+`default-directory' it was created in. Once that directory is deleted,
+every search fails with \"Setting current directory\"."
+    (with-current-buffer (get-buffer-create sdcv-buffer-name)
+      (setq default-directory (expand-file-name "~/"))))
+  (advice-add 'sdcv-search-detail :before #'night/sdcv-pin-buffer-directory)
+
   (defun night/sdcv-search-pointer (&optional word)
     "Get current word.
 And display complete translations in other buffer."
