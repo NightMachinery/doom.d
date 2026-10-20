@@ -25,7 +25,7 @@ that requirement. If recovery fails, the command returns an error with no Org
 output. Publication details and PDF links are retained when available; missing
 citation counts are omitted and zero counts are preserved.
 
-The drawer records source and successful-fetch time, key-reference count,
+The drawer records successful-fetch time, key-reference count,
 explicit open-access status, and a separate publication-update date when one
 is supplied. Open access adds no heading tag. A supplied TLDR appears in a
 labeled quote block before the full abstract, inside the same folded
