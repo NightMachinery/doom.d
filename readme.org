@@ -25,7 +25,7 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 ***** Uses the shell converter through BrishGarden. Failed or empty arXiv API requests fall back to validated abstract-page metadata. See [[file:docs/arxiv-to-org.md][arXiv conversion]].
 
 **** [help:night/semantic-scholar-to-org]
-***** Resolves arXiv links to Semantic Scholar automatically. Uses the API when configured, then DeepSeek, public page data, or HTML retrieval. Successful notes include authors and a full abstract; page data needs no key. See [[file:docs/semantic-scholar-to-org.md][retrieval options]].
+***** Resolves arXiv links to Semantic Scholar automatically. The native Go helper tries keyless page data first, then API and extraction fallbacks. Notes include authors, a full abstract, and a supplied TLDR block before the abstract. See [[file:docs/semantic-scholar-to-org.md][retrieval options]].
 
 **** [help:night/paste-yank-html]
 ***** [agfi:pbpaste-html]
