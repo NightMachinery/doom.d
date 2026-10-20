@@ -21,6 +21,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** [help:night/org-link-browser-current]
 ***** Converts Google search URLs to =search:= Org links, including UTF-8 queries such as Persian text. See [[file:docs/org-link-browser-current.md][docs/org-link-browser-current.md]].
 
+**** [help:night/arxiv-to-org]
+***** Uses the shell converter through BrishGarden. Failed or empty arXiv API requests fall back to validated abstract-page metadata. See [[file:docs/arxiv-to-org.md][arXiv conversion]].
+
 **** [help:night/paste-yank-html]
 ***** [agfi:pbpaste-html]
 
