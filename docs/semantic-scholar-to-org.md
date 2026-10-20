@@ -4,7 +4,8 @@
 `semantic-scholar-to-org` through BrishGarden and inserts the returned Org.
 
 arXiv inputs are resolved to the correct Semantic Scholar paper through Semantic
-Scholar's HTTP redirect. The source remains Semantic Scholar; URL identification
+Scholar's HTTP redirect. Page-data canonical-ID mappings are followed as well.
+The source remains Semantic Scholar; URL identification
 uses no LLM or search.
 
 The shell wrapper delegates fetching, normalization, and rendering to the
@@ -12,7 +13,8 @@ native Go `org-paper-metadata` helper, built automatically on first use.
 The old Lisp formatter and Python parser are deprecated compatibility shims.
 
 `semantic_scholar_scraper=auto` tries public page data first, then the configured
-Graph API, configured DeepSeek Fetch, and finally `full-html2`. Backend failures
+Graph API and configured DeepSeek Fetch. HTML retrieval is disabled by default;
+select `full-html2` explicitly to use it. Backend failures
 are reported through `ecgray`. The first attempt needs no key.
 
 Use `semantic_scholar_scraper=page-data` for direct retrieval without either key.
@@ -34,7 +36,10 @@ labeled quote block before the full abstract, inside the same folded
 For existing notes, `org-paper-metadata-updater '<directory-root>'` previews
 refreshes of paper headings, skipping entries fetched within seven days.
 Add `--diff` for a patch or `--write` to apply changes. Loose links are ignored;
-personal prose, custom properties, and unrelated subheadings are preserved.
+personal prose, custom properties (including `url`), and unrelated subheadings
+are preserved. Legacy abstracts are refreshed without changing saved BibTeX.
+The updater reports each fetch before it starts and limits retrieval to one
+minute per paper by default.
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
 
