@@ -9,13 +9,20 @@ uses no LLM or search.
 
 When a Semantic Scholar key is configured, the API is tried first. Its failures
 are reported with `ecgray`. `semantic_scholar_scraper=auto` (default) then uses
-DeepSeek first when its key is available, falling back to `full-html2` only if
-needed. Set it to `deepseek` or `full-html2` to select one backend explicitly.
-Without a Semantic Scholar key, the API is skipped.
+DeepSeek first when its key is available, recovering incomplete results through
+Semantic Scholar's public page data before trying `full-html2`. Without a
+DeepSeek key it starts with page data. Without a Semantic Scholar key, the
+Graph API is skipped.
 
-Missing citation counts are omitted. DeepSeek summaries are labeled `@summary`.
-If a page exposes only its title and reference count, the function reports partial
-metadata and omits unavailable fields and empty abstract sections.
+Use `semantic_scholar_scraper=page-data` for direct retrieval without either key.
+The other selections are `deepseek` (with page-data recovery, no browser) and
+`full-html2` (HTML first, then page-data recovery).
+
+Successful conversions require a title, authors, and a full abstract. Title-only
+pages, TLDRs, social previews, and related-paper descriptions cannot satisfy
+that requirement. If recovery fails, the command returns an error with no Org
+output. Publication details and PDF links are retained when available; missing
+citation counts are omitted and zero counts are preserved.
 
 The implementation, regressions, and detailed usage live under `$NIGHTDIR`:
 
