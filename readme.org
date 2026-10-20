@@ -24,6 +24,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** [help:night/arxiv-to-org]
 ***** Uses the shell converter through BrishGarden. Failed or empty arXiv API requests fall back to validated abstract-page metadata. See [[file:docs/arxiv-to-org.md][arXiv conversion]].
 
+**** [help:night/semantic-scholar-to-org]
+***** Converts public paper pages without a Semantic Scholar API key, with DeepSeek Fetch as a fallback when its key is configured. See [[file:docs/semantic-scholar-to-org.md][usage and summary labeling]].
+
 **** [help:night/paste-yank-html]
 ***** [agfi:pbpaste-html]
 
