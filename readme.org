@@ -1,5 +1,9 @@
 #+TITLE: My Emacs Doom Config
 
+* Project files
+=TASKS.org= appears in Projectile file pickers even when Git ignores it.
+See [[file:docs/projectile.md][Projectile configuration and search limitations]].
+
 * Dependencies
 ** =ugrep=
 ** =fd=

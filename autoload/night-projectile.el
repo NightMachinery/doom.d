@@ -24,8 +24,9 @@
   (setq projectile-dirconfig-comment-prefix "#")
   ;;
   (setq projectile-enable-caching nil)
-  ;; (setq projectile-indexing-method 'hybrid)
-  (setq projectile-indexing-method 'alien)
+  ;; Hybrid applies Projectile's unignore rules after external indexing.
+  (setq projectile-indexing-method 'hybrid)
+  (add-to-list 'projectile-globally-unignored-files "TASKS.org")
 ;;;
   (defun night/h-advice-projectile-invalidate-cache (original-fn &rest args)
   "Advise `projectile-invalidate-cache' to not call `recentf-cleanup'."
