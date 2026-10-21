@@ -86,6 +86,9 @@ TLDR, counts and dates remain. Missing fields do not erase saved data; failures
 warn and retain SS metadata. Use `--dblp-metadata=false` to disable enrichment,
 or `semantic_scholar_dblp_metadata=n`. `--no-bibtex` keeps this enrichment active
 without retrieving citation text. Recent entries retain the weekly skip.
+A confirmed DBLP export bot challenge produces one notice and skips that export
+for the rest of the run. SPARQL enrichment and DOI/SS citations stay active;
+missing records do not disable DBLP, and genuine final failures still warn.
 
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
