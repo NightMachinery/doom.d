@@ -35,10 +35,16 @@ plain quote block before the full abstract, inside the same folded
 is available. Its
 `:orgPaperMetadataGenerated: bibtex` property identifies tool-managed citations.
 Use `--no-bibtex` to skip export and output, or `--bibtex` to enable it explicitly.
-BibTeX comes from Semantic Scholar’s anonymous Graph batch export with
-`fields=citationStyles`; no key is needed or sent. Citations are never
-synthesized. Export failures warn and omit new sections while preserving saved
-citations. Stdin JSON parsing remains offline.
+BibTeX defaults to DBLP, then DOI, then Semantic Scholar, using the resolved
+paper’s exact external IDs. A published DOI takes precedence over a DBLP CoRR
+preprint. Anonymous Semantic Scholar enrichment supplies the IDs and a cached
+fallback citation. No title search, fuzzy matching or LLM identification is used.
+DBLP direct exports can recover through configured DeepSeek Fetch; returned
+BibTeX must match the requested DBLP key. `--bibtex-browser` opts into bounded
+`full-html2` recovery from DBLP’s official Trier mirror; it is disabled by
+default. Bot checks, errors and missing IDs fall through. Citations are never
+synthesized. If every provider fails, the helper warns and omits new sections
+while preserving saved citations. Stdin JSON parsing remains offline.
 
 For existing notes, `org-paper-metadata-updater '<directory-root>'` previews
 refreshes of paper headings, skipping entries fetched within seven days.
@@ -60,9 +66,13 @@ arXiv drawer links become versionless URLs that refer to the latest version,
 including on recent entries without retrieval or a new timestamp. Heading URLs,
 prose and saved BibTeX are unaffected by URL normalization.
 
-Only public identifiers/URLs leave the machine. `--scraper page-data` confines
-metadata and citation requests to Semantic Scholar; configured DeepSeek can
-receive public URLs in automatic mode. Note text and local paths stay local.
+Only public identifiers/URLs leave the machine. `--scraper page-data` selects
+Semantic Scholar metadata; citation providers are independent. To confine all
+requests to Semantic Scholar, add `--bibtex-source semantic-scholar`. Other
+citation selections are `auto`, `dblp`, and `doi`, also configurable through
+`semantic_scholar_bibtex_source`. Automatic citations may contact DBLP, DOI
+registration agencies and configured DeepSeek Fetch. Note text and local paths
+stay local. JSON includes `bibtexSource`; Org drawers do not add that property.
 
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
