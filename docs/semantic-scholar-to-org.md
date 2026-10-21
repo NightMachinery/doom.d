@@ -70,11 +70,22 @@ prose and saved BibTeX are unaffected by URL normalization.
 
 Only public identifiers/URLs leave the machine. `--scraper page-data` selects
 Semantic Scholar metadata; citation providers are independent. To confine all
-requests to Semantic Scholar, add `--bibtex-source semantic-scholar`. Other
+requests to Semantic Scholar, add
+`--bibtex-source semantic-scholar --dblp-metadata=false`. Other
 citation selections are `auto`, `dblp`, and `doi`, also configurable through
 `semantic_scholar_bibtex_source`. Automatic citations may contact DBLP, DOI
 registration agencies and configured DeepSeek Fetch. Note text and local paths
 stay local. JSON includes `bibtexSource`; Org drawers do not add that property.
+
+DBLP publication metadata enrichment is enabled by default through its SPARQL
+JSON API, independently of BibTeX. Exact DOI matches can replace a preprint key
+with the published record. Available fields include canonical title and ordered
+authors, publication year, venue, publication type, full proceedings title,
+publisher, pages, volume/issue, series, ISBN/ISSN and a DBLP URL. SS abstract,
+TLDR, counts and dates remain. Missing fields do not erase saved data; failures
+warn and retain SS metadata. Use `--dblp-metadata=false` to disable enrichment,
+or `semantic_scholar_dblp_metadata=n`. `--no-bibtex` keeps this enrichment active
+without retrieving citation text. Recent entries retain the weekly skip.
 
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
