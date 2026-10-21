@@ -41,8 +41,10 @@ preprint. Anonymous Semantic Scholar enrichment supplies the IDs and a cached
 fallback citation. No title search, fuzzy matching or LLM identification is used.
 DBLP direct exports can recover through configured DeepSeek Fetch; returned
 BibTeX must match the requested DBLP key. `--bibtex-browser` opts into bounded
-`full-html2` recovery from DBLP’s official Trier mirror; it is disabled by
-default. Bot checks, errors and missing IDs fall through. Citations are never
+`full-html2` recovery from DBLP’s official Trier mirror as a last resort after
+programmatic sources and optional DeepSeek fail; it is disabled by default.
+Missing DOIs are resolved from exact DBLP keys through its official SPARQL API
+before publisher export. Bot checks, errors and missing IDs fall through. Citations are never
 synthesized. If every provider fails, the helper warns and omits new sections
 while preserving saved citations. Stdin JSON parsing remains offline.
 
