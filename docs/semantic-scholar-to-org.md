@@ -31,7 +31,9 @@ The drawer records successful-fetch time, key-reference count,
 explicit open-access status, and a separate publication-update date when one
 is supplied. Open access adds no heading tag. A supplied TLDR appears in a
 labeled quote block before the full abstract, inside the same folded
-`@abstract` heading.
+`@abstract` heading. A folded `@bibtex` sibling follows it by default. Its
+`:orgPaperMetadataGenerated: bibtex` property identifies generated citations.
+Use `--no-bibtex` to omit it, or `--bibtex` to enable it explicitly.
 
 For existing notes, `org-paper-metadata-updater '<directory-root>'` previews
 refreshes of paper headings, skipping entries fetched within seven days.
@@ -39,7 +41,11 @@ Add `--diff` for a patch or `--write` to apply changes. Loose links are ignored;
 personal prose, custom properties (including `url`), and unrelated subheadings
 are preserved. Legacy abstracts are refreshed without changing saved BibTeX.
 The updater reports each fetch before it starts and limits retrieval to one
-minute per paper by default.
+minute per paper by default. `--no-bibtex` removes only marked generated
+citations, including from recent entries without fetching metadata. Notes or
+IDs added beneath that heading survive cleanup. Recognizable legacy citation
+blocks move unchanged into folded, unmarked `@bibtex` sections; those are
+preserved by `--no-bibtex`.
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
 
@@ -53,4 +59,4 @@ The implementation, regressions, and detailed usage live under `$NIGHTDIR`:
 
 Run `brishz-restart` after shell changes. The Elisp wrapper needs no reload.
 
-Verified by @OpenAI on 2026-10-20.
+Verified by @OpenAI on 2026-10-21.
