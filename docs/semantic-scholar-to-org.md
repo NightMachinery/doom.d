@@ -90,6 +90,14 @@ A confirmed DBLP export bot challenge produces one notice and skips that export
 for the rest of the run. SPARQL enrichment and DOI/SS citations stay active;
 missing records do not disable DBLP, and genuine final failures still warn.
 
+Actual HTTP requests are spaced by at least one second per service, including
+redirects and retries. Semantic Scholar's website and API share one budget
+throughout a run. HTTP 429 and server errors receive up to two retries with
+backoff and honor longer `Retry-After` values. Cooldowns survive failed requests
+and carry across papers and fallbacks, within cancellation and paper deadlines.
+The updater's `--interval` controls paper starts separately. Request budgets
+are local to one invocation; opt-in browser/shell retrieval is outside them.
+
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
 
