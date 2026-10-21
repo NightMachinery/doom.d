@@ -30,10 +30,15 @@ citation counts are omitted and zero counts are preserved.
 The drawer records successful-fetch time, key-reference count,
 explicit open-access status, and a separate publication-update date when one
 is supplied. Open access adds no heading tag. A supplied TLDR appears in a
-labeled quote block before the full abstract, inside the same folded
-`@abstract` heading. A folded `@bibtex` sibling follows it by default. Its
-`:orgPaperMetadataGenerated: bibtex` property identifies generated citations.
-Use `--no-bibtex` to omit it, or `--bibtex` to enable it explicitly.
+plain quote block before the full abstract, inside the same folded
+`@abstract` heading. A folded `@bibtex` sibling follows when a source citation
+is available. Its
+`:orgPaperMetadataGenerated: bibtex` property identifies tool-managed citations.
+Use `--no-bibtex` to skip export and output, or `--bibtex` to enable it explicitly.
+BibTeX comes from Semantic Scholar’s anonymous Graph batch export with
+`fields=citationStyles`; no key is needed or sent. Citations are never
+synthesized. Export failures warn and omit new sections while preserving saved
+citations. Stdin JSON parsing remains offline.
 
 For existing notes, `org-paper-metadata-updater '<directory-root>'` previews
 refreshes of paper headings, skipping entries fetched within seven days.
@@ -43,9 +48,22 @@ are preserved. Legacy abstracts are refreshed without changing saved BibTeX.
 The updater reports each fetch before it starts and limits retrieval to one
 minute per paper by default. `--no-bibtex` removes only marked generated
 citations, including from recent entries without fetching metadata. Notes or
-IDs added beneath that heading survive cleanup. Recognizable legacy citation
+IDs added beneath that heading survive cleanup. Old marked `@misc` citations
+with the retired serializer’s key pattern are removed even from recent entries
+or after a failed fetch. A successful citation export replaces them on refresh. Recognizable legacy
+citation
 blocks move unchanged into folded, unmarked `@bibtex` sections; those are
 preserved by `--no-bibtex`.
+Known venues use abbreviations such as `@ECAI`, with old generated long tags
+replaced on refresh. Personal tags survive anywhere in the heading. Recognized
+arXiv drawer links become versionless URLs that refer to the latest version,
+including on recent entries without retrieval or a new timestamp. Heading URLs,
+prose and saved BibTeX are unaffected by URL normalization.
+
+Only public identifiers/URLs leave the machine. `--scraper page-data` confines
+metadata and citation requests to Semantic Scholar; configured DeepSeek can
+receive public URLs in automatic mode. Note text and local paths stay local.
+
 The updater uses the same Go package directly. Its detailed usage is in
 `$NIGHTDIR/docs/org-paper-metadata-updater.md`.
 
