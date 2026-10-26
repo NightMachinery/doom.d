@@ -88,8 +88,11 @@ log in `~/.local/state/night-mail/`, the sync log in
    fill it in, and `chmod 600` it.
 3. Put the password in the Keychain, typing it at the prompt:
 
-       security add-internet-password -U -a USER -s HOST -l 'mail (night-mail)' -w "$HOME/Library/Keychains/login.keychain-db"
+       security add-internet-password -U -a USER -s HOST -l 'mail (night-mail)' -w
 
+   First confirm `security default-keychain -d user` names the login Keychain.
+   Keep `-w` last so `security` prompts for the password; a following argument
+   would be treated as the password. The add command uses that default Keychain.
    Because `security` itself creates the item, it is on the item's access
    list, so mbsync and msmtp (which call `security find-internet-password`)
    read it without a dialog. To script this, feed the password through a
