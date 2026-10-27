@@ -70,11 +70,13 @@ DIRNAME is the full directory path."
        base)))                          ; Fallback to original name on error
 
   ;; Add our style via advice
-  (defun night/uniquify-get-proposed-name-advice (orig-fun base dirname &optional depth original-dirname)
+  (defun night/uniquify-get-proposed-name-advice (orig-fun base dirname &rest args)
     "Advice to add always-forward style to uniquify.
-Calls original function for other styles."
+Calls original function for other styles.
+ARGS are passed through unchanged: Emacs 31 dropped the fourth
+ORIGINAL-DIRNAME parameter, so a fixed arity breaks on one version or the other."
     (let ((orig
-           (funcall orig-fun base dirname depth original-dirname)))
+           (apply orig-fun base dirname args)))
       (cond
        ((and
          (eq night/h-uniquify-buffer-name-style 'always-forward)
