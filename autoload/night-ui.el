@@ -1,6 +1,6 @@
 ;;;
 (setq night/at-tag-char-regex "[^][[:space:](){};\n\"=]")
-(setq night/at-tag-main-char-regex "[a-zA-Z0-9?!-]")
+(setq night/at-tag-main-char-regex "[a-zA-Z0-9?!%-]")
 ;; A dot only between tag characters, so `@Opus5.5' is one tag but the full stop after `@todo.' is not part of it.
 (setq night/at-tag-main-body-regex
       (concat night/at-tag-main-char-regex
@@ -233,7 +233,7 @@ If PROPERTIES are specified, set them for the created overlay."
 ;; doom-themes' own rule for org #hashtags and @at-tags allows `.' anywhere in the tag, so it also colours the full stop that ends a sentence. We turn it off and install the same rule with dots only between tag characters, keeping its face picker (which skips links and src blocks).
 (setq doom-themes-org-fontify-special-tags nil)
 (setq night/org-special-tag-regex
-      "\\(?:\\s-\\|^\\)\\(\\([#@]\\)[A-Za-z0-9_-]+\\(?:\\.[A-Za-z0-9_-]+\\)*\\)")
+      "\\(?:\\s-\\|^\\)\\(\\([#@]\\)[A-Za-z0-9_%-]+\\(?:\\.[A-Za-z0-9_%-]+\\)*\\)")
 
 (defun night/org-fontify-special-tags ()
   (setq org-font-lock-extra-keywords
@@ -253,6 +253,7 @@ If PROPERTIES are specified, set them for the created overlay."
   (modify-syntax-entry ?@ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?+ "w" hl-todo--syntax-table)
   (modify-syntax-entry ?? "w" hl-todo--syntax-table)
+  (modify-syntax-entry ?% "w" hl-todo--syntax-table)
   ;; `/' is a symbol character in that table, so an at-tag could not end before one: `@Opus5.5/78' matched only `@Opus5'.
   (modify-syntax-entry ?/ "." hl-todo--syntax-table)
   (setq hl-todo-highlight-punctuation ":")

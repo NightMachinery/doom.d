@@ -71,6 +71,8 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
 
 * Notes
+** At-tags
+*** Percent signs belong to tags such as =@25%= and =@12.5%=. See [[file:docs/at-tags.md][at-tag highlighting]].
 ** Org buffers opening without colors
 *** Intermittent loss of coloring on open is under investigation. The September 24 special-tag rule is a candidate, but synthetic comparisons passed with both rules; a recorded jit-lock redisplay error has no captured stack yet.
 *** See [[file:docs/bugs/org-opening-without-colors.md][diagnosis, proposed fixes, and recovery without rereading the file]].
