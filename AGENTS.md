@@ -26,6 +26,14 @@ or simple lists.
 
 After finishing development, use `emc-eval` AND `withemcgui emc-eval` to re-load all changed Elisp files so that the running servers always run up-to-date code.
 
+Pulls do this for you. `githooks/post-merge` and `githooks/post-rewrite` run `githooks/reload-emacs`, which loads the changed `night-*.el` and `autoload/` files into every server under `~/.local/state/emacs-servers/`, and only reports the files that need a restart (`init.el`, `packages.el`, `config.el`, `night-loader.el`). So after pushing, a `git pull --ff-only` on the other Mac also updates its servers. Each clone links the hooks once:
+
+```zsh
+for h in post-merge post-rewrite; do ln -s ../../githooks/$h ~/doom.d/.git/hooks/$h; done
+```
+
+`DOOM_RELOAD=0 git pull` skips the reload; `DOOM_RELOAD=dry` only says what it would load.
+
 ### A reload is not a clean load
 
 Three things it will not do, all of which present as "my new code does not

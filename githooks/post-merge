@@ -1,0 +1,3 @@
+#!/bin/sh
+# After a merging or fast-forwarding pull: reload the changed Elisp into the running Emacs servers.
+exec "$(git rev-parse --show-toplevel)/githooks/reload-emacs" ORIG_HEAD HEAD

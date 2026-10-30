@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""Load the Elisp files that changed between two commits into every running Emacs server.
+
+    githooks/reload-emacs [OLD [NEW]]        default: ORIG_HEAD HEAD
+
+The post-merge and post-rewrite hooks call this after a pull, so a pull on any Mac brings
+its running servers (the daemon and the GUI one, under ~/.local/state/emacs-servers/) up to
+date. Only files the config loads are reloaded: top-level night-*.el and autoload/**.el.
+init.el and packages.el need `doom sync` and a restart; config.el and night-loader.el
+rerun the whole config. For those it says so instead. A reload is not a clean load (see
+AGENTS.md): edited defvars keep their old values, and deleted definitions stay defined.
+
+It never fails the git command that ran it. DOOM_RELOAD=0 skips it; DOOM_RELOAD=dry
+prints what it would load without touching any server.
+"""
+import os
+import stat
+import subprocess
+import sys
+from pathlib import Path
+
+NEEDS_RESTART = {'init.el': 'run `doom sync` and restart Emacs',
+                 'packages.el': 'run `doom sync` and restart Emacs',
+                 'config.el': 'restart Emacs, or run night/load-config',
+                 'night-loader.el': 'restart Emacs, or run night/load-config'}
+SOCKETS = Path.home() / '.local/state/emacs-servers'
+TIMEOUT = 30
+
+
+def say(text):
+    print(f'doom.d reload: {text}', file=sys.stderr)
+
+
+def git(*args):
+    return subprocess.run(['git', *args], capture_output=True, text=True, check=True).stdout
+
+
+def loadable(path):
+    return path.endswith('.el') and ((path.startswith('night-') and '/' not in path) or path.startswith('autoload/'))
+
+
+def elisp_string(text):
+    return '"' + text.replace('\\', '\\\\').replace('"', '\\"') + '"'
+
+
+def main():
+    mode = os.environ.get('DOOM_RELOAD', '1')
+    if mode == '0':
+        return
+    old, new = (sys.argv[1:] + ['ORIG_HEAD', 'HEAD'][len(sys.argv) - 1:])[:2]
+    top = Path(git('rev-parse', '--show-toplevel').strip())
+    changed = [p for p in git('diff', '--name-only', '--diff-filter=AMR', '-z', old, new).split('\0') if p]
+    gone = [p for p in git('diff', '--name-only', '--diff-filter=D', '-z', old, new).split('\0') if loadable(p)]
+
+    for path in changed:
+        if path in NEEDS_RESTART:
+            say(f'{path} changed: {NEEDS_RESTART[path]}')
+    for path in gone:
+        say(f'{path} was deleted: its definitions stay loaded until Emacs restarts')
+    files = [str(top / p) for p in changed if loadable(p) and p not in NEEDS_RESTART]
+    if not files:
+        return
+
+    servers = sorted(s for s in SOCKETS.glob('*') if stat.S_ISSOCK(s.lstat().st_mode)) if SOCKETS.is_dir() else []
+    if mode == 'dry':
+        say(f'would load {len(files)} file(s) into {[s.name for s in servers]}: {files}')
+        return
+    if not servers:
+        say(f'{len(files)} file(s) changed, but no Emacs server is running')
+        return
+
+    form = ('(let (failed) (dolist (f (list ' + ' '.join(elisp_string(f) for f in files) + ')) '
+            '(condition-case err (load f nil t) '
+            '(error (push (format "%s: %s" (file-name-nondirectory f) (error-message-string err)) failed)))) '
+            '(prin1-to-string (nreverse failed)))')
+    for server in servers:
+        try:
+            r = subprocess.run(['emacsclient', '-s', str(server), '-e', form],
+                               capture_output=True, text=True, timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            say(f'{server.name}: no answer within {TIMEOUT} s; reload it by hand')
+            continue
+        except FileNotFoundError:
+            say('emacsclient is not on PATH')
+            return
+        out = (r.stdout or r.stderr).strip()
+        if r.returncode != 0:
+            say(f'{server.name}: {out or "emacsclient failed"}')
+        elif out in ('"nil"', '"()"'):
+            say(f'{server.name}: loaded {len(files)} file(s)')
+        else:
+            say(f'{server.name}: loaded with errors {out}')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:  # a hook must never fail the pull
+        say(f'skipped: {e}')

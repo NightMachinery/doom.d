@@ -1,0 +1,4 @@
+#!/bin/sh
+# After a rebasing pull ($1 is "rebase"; "amend" changes nothing upstream): reload the changed Elisp.
+[ "$1" = rebase ] || exit 0
+exec "$(git rev-parse --show-toplevel)/githooks/reload-emacs" ORIG_HEAD HEAD
