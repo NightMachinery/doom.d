@@ -71,6 +71,8 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 **** See [[file:docs/audiofile-mpv-server.md][docs/audiofile-mpv-server.md]].
 
 * Notes
+** Bookmarks
+*** =SPC b m= saves a file bookmark without a position. Use =C-u SPC b m= or =M-x night/bookmark-set-with-position= to save the current location. See [[file:docs/bookmarks.md][bookmark behavior]].
 ** At-tags
 *** Percent signs belong to tags such as =@25%= and =@12.5%=. See [[file:docs/at-tags.md][at-tag highlighting]].
 ** Org buffers opening without colors

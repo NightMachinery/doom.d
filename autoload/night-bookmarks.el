@@ -16,6 +16,42 @@
   (night/bookmark-reset-file)
 ;;;
   (setq bookmark-save-flag 1)
+;;;
+  (defvar night/h-bookmark-file-only nil
+    "Non-nil while creating a bookmark without a saved file location.")
+
+  (defun night/h-bookmark-without-position (record)
+    "Remove file location data from RECORD when creating a file bookmark.
+Special handlers retain their data because their locations may be essential."
+    (when (and night/h-bookmark-file-only
+               (bookmark-prop-get record 'filename)
+               (memq (bookmark-prop-get record 'handler)
+                     '(nil bookmark-default-handler)))
+      (dolist (property '(position front-context-string rear-context-string))
+        (setcdr record (assq-delete-all property (cdr record)))))
+    record)
+
+  (defun night/h-bookmark-set (original &optional name no-overwrite with-position)
+    "Create file bookmarks without a saved location by default.
+Interactively, a prefix argument records the position and context instead
+of keeping duplicate names.  Lisp callers retain NO-OVERWRITE semantics.
+WITH-POSITION is also used by `night/bookmark-set-with-position'."
+    (interactive (list nil nil current-prefix-arg))
+    (let ((night/h-bookmark-file-only (not with-position))
+          ;; Without a position, a fringe mark would imply a saved location.
+          (bookmark-fringe-mark (and with-position bookmark-fringe-mark)))
+      (funcall original name no-overwrite)))
+
+  (defun night/bookmark-set-with-position ()
+    "Set a bookmark that records the current position and context.
+This is equivalent to calling `bookmark-set' interactively with a prefix."
+    (interactive)
+    (let ((current-prefix-arg '(4)))
+      (call-interactively #'bookmark-set)))
+
+  (advice-add #'bookmark-make-record :filter-return
+              #'night/h-bookmark-without-position)
+  (advice-add #'bookmark-set :around #'night/h-bookmark-set)
   (comment ;; @deprecated way of doing the above
    (defun night/h-bookmark-save-for-advice (&rest args)
      (bookmark-save))
