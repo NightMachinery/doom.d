@@ -497,6 +497,26 @@ into notes. The buffer is read-only and marked as mail."
           (goto-char (point-min))
           (pop-to-buffer (current-buffer))))))))
 
+;;; Search buffers
+;; Background tints mark unread and flagged threads, so the per-field
+;; colors (dates, authors, tags) stay readable.
+
+(defface night/notmuch-search-unread
+  '((((class color) (background light)) :weight bold :background "#ccdfff" :extend t)
+    (((class color) (background dark)) :weight bold :background "#242679" :extend t)
+    (t :weight bold))
+  "Face for unread threads in notmuch search buffers.
+The tints are Modus's subtle blue backgrounds."
+  :group 'notmuch-faces)
+
+(defface night/notmuch-search-flagged
+  '((((class color) (background light)) :background "#ffcfbf" :extend t)
+    (((class color) (background dark)) :background "#620f2a" :extend t))
+  "Face for flagged threads in notmuch search buffers.
+Its background wins over `night/notmuch-search-unread', whose bold then
+marks a thread that is both. The tints are Modus's subtle red backgrounds."
+  :group 'notmuch-faces)
+
 (defun night/notmuch-inbox ()
   "Open the inbox: the notmuch search for `tag:inbox'."
   (interactive)
@@ -541,6 +561,11 @@ server. Returns t."
   (setq notmuch-multipart/alternative-discouraged '("text/plain"))
 
   (setq mail-user-agent 'notmuch-user-agent)
+
+  ;; Earlier entries win per attribute: flagged's background, unread's bold.
+  (setq notmuch-search-line-faces
+        '(("flagged" . night/notmuch-search-flagged)
+          ("unread" . night/notmuch-search-unread)))
 
   ;; Tags that mean "where it is" (inbox, deleted) become folder moves on the
   ;; server at the next sync; see email/notmuch-hooks/pre-new.

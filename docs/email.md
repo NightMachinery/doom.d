@@ -260,6 +260,11 @@ Email uninstall removes only the LaunchAgent, preserving apps and settings.
 - `SPC o m` opens the inbox (`night/notmuch-inbox`), `SPC o M` the notmuch
   hello screen. The saved searches: inbox, unread, flagged, todo, waiting,
   sent, drafts, all, trash.
+- In search buffers, unread threads are bold on a pale blue background and
+  flagged threads sit on a pale red one; a thread that is both is bold on red.
+  Backgrounds rather than text colors keep the date, author and tag colors
+  readable. The faces are `night/notmuch-search-unread` and
+  `night/notmuch-search-flagged`, applied through `notmuch-search-line-faces`.
 - evil-collection supplies the keys: `RET` opens, `a` archives, `d` toggles
   `deleted`, `!` toggles unread, `=` toggles flagged, `+`/`-` add or remove a
   tag, `cc` composes, `cr`/`cR` reply to the sender or to all, `s` searches.
