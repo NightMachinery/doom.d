@@ -277,6 +277,13 @@ Email uninstall removes only the LaunchAgent, preserving apps and settings.
   on `notmuch-search-append-result` and `notmuch-search-process-sentinel`).
   Tests: `emacs -Q --batch -L /path/to/notmuch/emacs -l
   tests/night-email-search-test.el`.
+- Tagging in a thread, including marking it read by opening it, redraws that
+  thread's line in the search it was opened from
+  (`night/h-notmuch-redraw-parent-line` on `notmuch-after-tag-hook`, one
+  `notmuch search thread:…` per change). notmuch alone redraws a line only
+  for tags changed from the search buffer, so a read thread kept its unread
+  tint until a refresh. Removed tags show as removed, as they do after
+  tagging in the search buffer.
 - evil-collection supplies the keys: `RET` opens, `a` archives, `d` toggles
   `deleted`, `!` toggles unread, `=` toggles flagged, `+`/`-` add or remove a
   tag, `cc` composes, `cr`/`cR` reply to the sender or to all, `s` searches.

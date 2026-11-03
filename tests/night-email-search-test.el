@@ -110,3 +110,37 @@ TARGET is the thread a refresh asks point to stay on."
                 notmuch-search-query-string "from:someone")
           (should (night/h-notmuch-search-grouped-p)))
       (kill-buffer buffer))))
+
+(ert-deftest night-mail-reading-a-thread-redraws-its-search-line ()
+  (let ((search (night-test/search "tag:inbox"))
+        (night/notmuch-grouped-queries nil))
+    (unwind-protect
+        (with-temp-buffer
+          (let ((major-mode 'notmuch-show-mode)
+                queried)
+            (setq notmuch-show-parent-buffer search
+                  notmuch-show-thread-id "thread:b")
+            (cl-letf (((symbol-function 'notmuch-call-notmuch-sexp)
+                       (lambda (&rest args)
+                         (setq queried (car (last args)))
+                         (list (night-test/result '("b"))))))
+              (night/h-notmuch-redraw-parent-line))
+            (should (equal queried "thread:b"))
+            ;; Still in place, no longer tinted, and the removal is shown.
+            (should (equal (night-test/threads search) '("d" "b" "f" "c" "a" "e")))
+            (should (null (night-test/line-faces search "b")))
+            (with-current-buffer search
+              (let ((result (notmuch-search-get-result
+                             (night/h-notmuch-search-thread-position "b"))))
+                (should (equal (plist-get result :tags) '("inbox")))
+                (should (member "unread" (plist-get result :orig-tags)))))))
+      (kill-buffer search))))
+
+(ert-deftest night-mail-redraw-ignores-views-not-opened-from-a-search ()
+  (with-temp-buffer
+    (let ((major-mode 'notmuch-show-mode))
+      (setq notmuch-show-parent-buffer nil
+            notmuch-show-thread-id "id:someone@example.org")
+      (cl-letf (((symbol-function 'notmuch-call-notmuch-sexp)
+                 (lambda (&rest _) (error "Should not query"))))
+        (should-not (night/h-notmuch-redraw-parent-line))))))

@@ -583,6 +583,43 @@ Runs before `notmuch-search-process-sentinel' ends the buffer."
           (dolist (result (cl-stable-sort results #'< :key #'night/h-notmuch-search-group))
             (notmuch-search-append-result result)))))))
 
+(defun night/h-notmuch-search-thread-position (thread)
+  "Return the start of THREAD's line in this search buffer, or nil."
+  (save-excursion
+    (goto-char (point-min))
+    (cl-loop until (eobp)
+             when (equal (plist-get (notmuch-search-get-result) :thread) thread)
+             return (point)
+             do (forward-line 1))))
+
+(defun night/h-notmuch-redraw-parent-line ()
+  "Redraw this thread's line in the search buffer it was opened from.
+On `notmuch-after-tag-hook'. notmuch redraws a search line only for tag
+changes made in the search buffer itself, so a thread read here would
+otherwise still look unread there until a refresh. The line keeps its
+place, and its `:orig-tags', so removed tags show as removed."
+  (when (and (derived-mode-p 'notmuch-show-mode)
+             (buffer-live-p notmuch-show-parent-buffer)
+             (stringp notmuch-show-thread-id)
+             (string-prefix-p "thread:" notmuch-show-thread-id))
+    (condition-case err
+        (let ((thread (string-remove-prefix "thread:" notmuch-show-thread-id))
+              (fresh (car (notmuch-call-notmuch-sexp
+                           "search" "--format=sexp" "--format-version=5" "--exclude=false"
+                           notmuch-show-thread-id))))
+          (with-current-buffer notmuch-show-parent-buffer
+            (let ((pos (and fresh (derived-mode-p 'notmuch-search-mode)
+                            (night/h-notmuch-search-thread-position thread))))
+              (when pos
+                (save-excursion
+                  (notmuch-search-update-result
+                   (plist-put (copy-sequence (notmuch-search-get-result pos))
+                              :tags (plist-get fresh :tags))
+                   pos))))))
+      ;; A stale line is cosmetic; it must never get in the way of tagging.
+      (error (message "night/notmuch: could not redraw the search line: %s"
+                      (error-message-string err))))))
+
 (defun night/notmuch-search-toggle-grouping ()
   "Toggle ordering this search by `night/notmuch-search-groups', then refresh.
 The choice holds for this buffer across refreshes."
@@ -630,6 +667,7 @@ server. Returns t."
   (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
   (advice-add 'notmuch-search-append-result :around #'night/h-notmuch-search-hold-result)
   (advice-add 'notmuch-search-process-sentinel :before #'night/h-notmuch-search-release-results)
+  (add-hook 'notmuch-after-tag-hook #'night/h-notmuch-redraw-parent-line)
   (add-hook 'notmuch-show-mode-hook #'night/h-notmuch-show-setup-link-echo)
 
   ;; Of a multipart/alternative, show the HTML (rendered as Org) rather
