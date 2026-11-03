@@ -517,6 +517,80 @@ Its background wins over `night/notmuch-search-unread', whose bold then
 marks a thread that is both. The tints are Modus's subtle red backgrounds."
   :group 'notmuch-faces)
 
+;; A grouped search holds its results until notmuch finishes, then inserts
+;; them ordered by group. notmuch's own insertion does the rest, so
+;; refreshing keeps point on the same thread. Retagging a line redraws it
+;; in place; it moves to its new group on the next refresh.
+
+(defcustom night/notmuch-search-groups
+  '(("unread" "flagged") ("unread") ("flagged"))
+  "Tag sets that order a grouped notmuch search, from the top.
+A thread goes in the first group whose tags it all carries, and threads
+in none come last. Each group keeps notmuch's date order."
+  :type '(repeat (repeat string))
+  :group 'notmuch)
+
+(defcustom night/notmuch-grouped-queries '("tag:inbox")
+  "Queries whose search buffers are ordered by `night/notmuch-search-groups'.
+`night/notmuch-search-toggle-grouping' overrides this for one buffer."
+  :type '(repeat string)
+  :group 'notmuch)
+
+(defvar-local night/notmuch-search-grouped 'auto
+  "Whether this search buffer is grouped: t, nil, or `auto'.
+`auto' groups it when its query is in `night/notmuch-grouped-queries'.
+Permanent, since every refresh re-runs `notmuch-search-mode'.")
+(put 'night/notmuch-search-grouped 'permanent-local t)
+
+(defvar-local night/h-notmuch-search-held nil
+  "Results of a grouped search, newest last, held until the search ends.")
+
+(defvar night/h-notmuch-search-releasing nil
+  "Non-nil while held results are inserted, so they pass the hold.")
+
+(defun night/h-notmuch-search-grouped-p ()
+  "Non-nil if the current search buffer is grouped."
+  (cond
+   ((eq night/notmuch-search-grouped 'auto)
+    (and (member notmuch-search-query-string night/notmuch-grouped-queries) t))
+   (t night/notmuch-search-grouped)))
+
+(defun night/h-notmuch-search-group (result)
+  "Return the index in `night/notmuch-search-groups' of RESULT's group."
+  (let ((tags (plist-get result :tags)))
+    (or (cl-position-if (lambda (group) (cl-subsetp group tags :test #'equal))
+                        night/notmuch-search-groups)
+        (length night/notmuch-search-groups))))
+
+(defun night/h-notmuch-search-hold-result (orig result)
+  "Hold RESULT in a grouped search buffer; insert it with ORIG otherwise."
+  (cond
+   ((and (not night/h-notmuch-search-releasing) (night/h-notmuch-search-grouped-p))
+    (push result night/h-notmuch-search-held))
+   (t (funcall orig result))))
+
+(defun night/h-notmuch-search-release-results (proc _event)
+  "Insert the results PROC's grouped search held, ordered by group.
+Runs before `notmuch-search-process-sentinel' ends the buffer."
+  (let ((buffer (process-buffer proc)))
+    (when (and (memq (process-status proc) '(exit signal))
+               (buffer-live-p buffer))
+      (with-current-buffer buffer
+        (let ((results (nreverse night/h-notmuch-search-held))
+              (night/h-notmuch-search-releasing t)
+              (inhibit-read-only t))
+          (setq night/h-notmuch-search-held nil)
+          (dolist (result (cl-stable-sort results #'< :key #'night/h-notmuch-search-group))
+            (notmuch-search-append-result result)))))))
+
+(defun night/notmuch-search-toggle-grouping ()
+  "Toggle ordering this search by `night/notmuch-search-groups', then refresh.
+The choice holds for this buffer across refreshes."
+  (interactive)
+  (setq night/notmuch-search-grouped (not (night/h-notmuch-search-grouped-p)))
+  (notmuch-search-refresh-view)
+  (message "Mail search grouping: %s" (if night/notmuch-search-grouped "on" "off")))
+
 (defun night/notmuch-inbox ()
   "Open the inbox: the notmuch search for `tag:inbox'."
   (interactive)
@@ -554,6 +628,8 @@ server. Returns t."
   (advice-remove 'notmuch-show-command-hook #'night/h-mail-dismiss-open-notification)
   (advice-add 'notmuch-show-command-hook :after #'night/h-mail-dismiss-visible-notifications)
   (advice-add 'notmuch-show-insert-part-text/html :around #'night/h-notmuch-show-html)
+  (advice-add 'notmuch-search-append-result :around #'night/h-notmuch-search-hold-result)
+  (advice-add 'notmuch-search-process-sentinel :before #'night/h-notmuch-search-release-results)
   (add-hook 'notmuch-show-mode-hook #'night/h-notmuch-show-setup-link-echo)
 
   ;; Of a multipart/alternative, show the HTML (rendered as Org) rather
@@ -624,6 +700,10 @@ server. Returns t."
   ;; which has nothing to look up in mail.
   (map! :map (notmuch-search-mode-map notmuch-tree-mode-map notmuch-show-mode-map)
         :nv "K" #'notmuch-tag-jump)
+
+  (map! :map notmuch-search-mode-map
+        :localleader
+        :desc "Toggle unread-first grouping" "s" #'night/notmuch-search-toggle-grouping)
 
   (map! :map notmuch-show-mode-map
         :localleader

@@ -265,6 +265,18 @@ Email uninstall removes only the LaunchAgent, preserving apps and settings.
   Backgrounds rather than text colors keep the date, author and tag colors
   readable. The faces are `night/notmuch-search-unread` and
   `night/notmuch-search-flagged`, applied through `notmuch-search-line-faces`.
+- The inbox lists threads in four bands: unread and flagged, unread, flagged,
+  then the rest, each newest first (`night/notmuch-search-groups`). Retagging
+  a line (`!`, `=`, `a`) redraws it in place, and it moves to its new band on
+  the next refresh, so the list does not jump while you work through it.
+  Refreshing keeps point on the same thread, which may now be in another
+  band. Localleader `s` in a search buffer toggles the bands for that buffer,
+  across refreshes; `night/notmuch-grouped-queries` lists the queries banded
+  by default. notmuch's CLI sorts only by date, so a banded buffer holds the
+  results until the search ends and then inserts them in band order (advice
+  on `notmuch-search-append-result` and `notmuch-search-process-sentinel`).
+  Tests: `emacs -Q --batch -L /path/to/notmuch/emacs -l
+  tests/night-email-search-test.el`.
 - evil-collection supplies the keys: `RET` opens, `a` archives, `d` toggles
   `deleted`, `!` toggles unread, `=` toggles flagged, `+`/`-` add or remove a
   tag, `cc` composes, `cr`/`cR` reply to the sender or to all, `s` searches.
