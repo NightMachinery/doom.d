@@ -36,6 +36,8 @@
       (search-forward "Quoted history")
       (let ((button (button-at (1- (point)))))
         (should button)
+        ;; Without font-lock, as in notmuch buffers, only `face' shows.
+        (should (eq (get-text-property (1- (point)) 'face) 'link))
         (search-forward "Old reply")
         (let ((text-position (1- (point))))
           (should (invisible-p text-position))

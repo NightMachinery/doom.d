@@ -27,13 +27,23 @@
 (setq tab-always-indent t)
 
 ;;;
+(defvar night/hl-todo-exclude-modes
+  '(notmuch-hello-mode notmuch-search-mode notmuch-tree-mode notmuch-show-mode)
+  "Modes where `night/generic-hook-fn' leaves `hl-todo-mode' off.
+
+hl-todo highlights through font-lock keywords. In a mode with no
+font-lock keywords of its own, they turn font-lock on, and font-lock
+then deletes the `face' properties the mode drew its text with:
+notmuch lost every face this way.")
+
 (defun night/generic-hook-fn ()
   (interactive)
   ;; (flyspell-mode-off) ; managed at init.el modules
   ;; (add-to-list 'company-backends 'company-dabbrev-code nil) ; they add other backends in front of it which makes this useless
   ;; (night/highlight-atsign) ; bug: This hook might get called multiple times on a single buffer, and that can cause pollution.
 
-  (hl-todo-mode)
+  (unless (seq-some #'derived-mode-p night/hl-todo-exclude-modes)
+    (hl-todo-mode))
 
   (when (fboundp 'smartparens-global-mode)
     (smartparens-global-mode -1))

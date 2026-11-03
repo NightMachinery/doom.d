@@ -326,8 +326,8 @@ of shr, the browser-like renderer notmuch uses by default.
   and one for the bare URL. That hint belongs to a `night-mail-url` link-hint
   type, ranked ahead of `button`, because the button spans `url][text]]` and
   link-hint's generic button copy (`SPC s L`) would take all of it. Faces are
-  copied to `font-lock-face`, because
-  font-lock in the notmuch buffer strips `face`.
+  also copied to `font-lock-face`, which survives if font-lock is ever turned
+  on in a notmuch buffer; see "Mail views without any styling" below.
 - The parts of a link Org would hide carry `invisible org-link`.
   Localleader `l` (`night/notmuch-toggle-link-display`, also what
   `org-toggle-link-display` is remapped to in a message) toggles between
@@ -517,6 +517,15 @@ pin differ, and `install-night-mail.zsh --check` reports the same.
   `autoload/night-email.el` in both servers. Changing `SECURITYSESSIONID` or
   the subprocess's PTY setting does not change its actual security session.
 - **Job state**: `email/install-night-mail.zsh --check`.
+- **Mail views without any styling** (no bold unread lines, no colored
+  flags, dates or tags): something turned font-lock on in the notmuch
+  buffer. notmuch draws with `face` text properties and has no font-lock
+  keywords of its own, so once a minor mode adds keywords, font-lock deletes
+  every `face` as it fontifies. hl-todo did this: `night/generic-hook-fn`
+  (`autoload/night-config.el`) turns it on in every buffer, so notmuch's modes
+  are listed in `night/hl-todo-exclude-modes`. To check a buffer,
+  `(list font-lock-keywords (get-text-property (point-min) 'face))` should
+  give no keywords and a face.
 - **Mail arrives without a desktop alert**: enable Allow Notifications for
   Night Mail in System Settings → Notifications, then select Banners or Alerts.
   The helper's `--diagnose` output uses macOS authorization codes: 1 means

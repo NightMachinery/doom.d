@@ -248,7 +248,7 @@ Collapsed messages and messages outside the window keep their alerts."
                                  '(invisible night-mail-history-id))
               (make-text-button start button-end
                                 'action #'night/h-mail-toggle-history 'follow-link t
-                                'font-lock-face 'link
+                                'face 'link 'font-lock-face 'link
                                 'help-echo "Show or hide quoted history"
                                 'night-mail-history-id id 'night-mail-history-open t)
               (night/h-mail-toggle-history (button-at start)))))))))
@@ -287,9 +287,10 @@ Mail is untrusted, so an `elisp:' or `shell:' link must never run."
 Links stay literal, `[[url][desc]]'. Each is a button that opens the
 target via `night/h-mail-follow-url', and the parts that Org would hide
 carry `invisible org-link', which `night/notmuch-toggle-link-display'
-hides or shows. Hidden emphasis markers are deleted. Faces are copied to
-`font-lock-face', since font-lock in the notmuch buffer would otherwise
-strip them."
+hides or shows. Hidden emphasis markers are deleted. Faces are also
+copied to `font-lock-face', which survives if font-lock is ever turned
+on in the notmuch buffer: font-lock strips `face', as hl-todo once did
+there (see `night/hl-todo-exclude-modes')."
   (with-temp-buffer
     (insert org)
     (let ((org-inhibit-startup t))
