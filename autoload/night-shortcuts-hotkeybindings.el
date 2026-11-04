@@ -67,6 +67,11 @@
 ;;;
 (global-set-key (kbd "H-C-M-e") 'insert-char)
 
+(defun night/insert-euro ()
+  "Insert a euro sign at point without changing Evil state."
+  (interactive)
+  (insert "€"))
+
 (night/set-leader-keys "z s" 'save-some-buffers)
 ;;;
 (map!
@@ -79,6 +84,9 @@
 ; Use C-DEL to delete with more control
 ;;;
 (after! evil
+  ;; Option+Shift+2 on a US macOS keyboard arrives as Meta+@.
+  (map! :ni "M-@" #'night/insert-euro)
+
   (evil-define-motion evil-beginning-of-line-or-visual-line (count)
     "Move the cursor to the first character of the current screen
 line if `visual-line-mode' is active and
