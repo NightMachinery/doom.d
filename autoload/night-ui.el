@@ -19,6 +19,7 @@
 (setq night/CR-tag-regex (concat "\\(@CR\\>\\)" night/at-tag-char-regex "*"))
 (setq night/done-tag-regex (concat "\\(@done\\>\\)" night/at-tag-char-regex "*"))
 (setq night/moved-tag-regex (concat "\\(@moved\\>\\)" night/at-tag-char-regex "*"))
+(setq night/retired-tag-regex (concat "\\(@retired\\>\\)" night/at-tag-char-regex "*"))
 
 
 ;; white-green background: #e9f2eb
@@ -69,6 +70,14 @@
                                ;; :background "GreenYellow"
                                ;; :background "Green"
                                :weight bold))) "")
+(night/defface retired-face
+  '((((background dark)) (:foreground "#C0C5CE"
+                          :background "#3B3F4C"
+                          :weight bold))
+    (((background light)) (:foreground "#4C566A"
+                           :background "#E0E4EC"
+                           :weight bold)))
+  "Face for `@retired' tags.")
 ;;;
 (defun night/disable-line-numbers ()
   (interactive)
@@ -321,7 +330,8 @@ It removes the previous highlights before applying new ones."
            (,night/CR-tag-regex CR-face)
            (,night/done-tag-regex done-face)
            (,night/urgent-tag-regex urgent-face)
-           (,night/moved-tag-regex moved-face)))
+           (,night/moved-tag-regex moved-face)
+           (,night/retired-tag-regex retired-face)))
       (let ((regex (car item))
             (face (cadr item)))
         (let ((hlt-overlays nil))

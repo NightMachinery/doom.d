@@ -37,9 +37,9 @@
                        (push ov hlt-overlays)
                        (push (list (match-string 0) face) recorded)))))))
       (with-temp-buffer
-        (insert "@great @CR @done @urgent @moved\n")
+        (insert "@great @CR @done @urgent @moved @retired\n")
         (night/highlight-background)
-        (should (= (length recorded) 5))
+        (should (= (length recorded) 6))
         (dolist (entry recorded)
           (let ((face (cadr entry)))
             (should (symbolp face))
