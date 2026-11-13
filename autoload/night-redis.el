@@ -42,6 +42,19 @@ the past."
         (unless (string-empty-p password)
           password)))))
 
+(defun night/redis--cleanup-process (&optional proc)
+  "Delete PROC (default `eredis--current-process') and kill its buffer."
+  (let* ((target (or proc
+                     (and (boundp 'eredis--current-process)
+                          eredis--current-process)))
+         (buffer (and (processp target) (process-buffer target))))
+    (when (processp target)
+      (set-process-query-on-exit-flag target nil)
+      (ignore-errors (eredis-delete-process target)))
+    (when (buffer-live-p buffer)
+      (let ((kill-buffer-query-functions nil))
+        (kill-buffer buffer)))))
+
 (defun night/redis-connect ()
   "Connect to redis, AUTH, and confirm with PING.
 
@@ -51,27 +64,35 @@ to be a separate command; without it every call returns the string \"NOAUTH
 Authentication required.\" as if it were data, because eredis parses error
 replies exactly like status replies. See docs/redis-eredis-auth.md."
   (interactive)
-  (condition-case err
-      (let ((proc (eredis-connect "localhost" 6379)))
-        (setq redis-connection-0 proc)
-        (if-let ((password (night/redis-password)))
-            (let ((reply (eredis-auth password)))
-              ;; A server with no requirepass answers AUTH with an error; that
-              ;; is fine, the PING below is what decides.
-              (unless (or (equal reply "OK")
-                          (and (stringp reply)
-                               (s-prefix? "ERR Client sent AUTH" reply)))
-                (warn "night/redis-connect: AUTH failed: %s" reply)))
-          (warn "night/redis-connect: no password in %s, skipping AUTH"
-                night/redis-auth-file))
-        (let* ((pong (eredis-ping))
-               (connected (equal pong "PONG")))
-          (unless connected
-            (warn "night/redis-connect: PING returned %S" pong))
-          (and connected proc)))
-    (error
-     (warn "night/redis-connect: %s" (error-message-string err))
-     nil)))
+  (night/redis--cleanup-process)
+  (let (proc)
+    (condition-case err
+        (progn
+          (setq proc (eredis-connect "localhost" 6379))
+          (setq redis-connection-0 proc)
+          (if-let ((password (night/redis-password)))
+              (let ((reply (eredis-auth password)))
+                ;; A server with no requirepass answers AUTH with an error; that
+                ;; is fine, the PING below is what decides.
+                (unless (or (equal reply "OK")
+                            (and (stringp reply)
+                                 (s-prefix? "ERR Client sent AUTH" reply)))
+                  (warn "night/redis-connect: AUTH failed: %s" reply)))
+            (warn "night/redis-connect: no password in %s, skipping AUTH"
+                  night/redis-auth-file))
+          (let* ((pong (eredis-ping))
+                 (connected (equal pong "PONG")))
+            (unless connected
+              (warn "night/redis-connect: PING returned %S" pong)
+              (night/redis--cleanup-process proc)
+              (setq redis-connection-0 nil))
+            (and connected proc)))
+      (error
+       (when proc
+         (night/redis--cleanup-process proc))
+       (setq redis-connection-0 nil)
+       (warn "night/redis-connect: %s" (error-message-string err))
+       nil))))
 
 (defun night/redis-reconnect ()
   "Drop the current eredis connection and connect again, with AUTH.
@@ -133,13 +154,100 @@ offer.  Fragile by nature: if eredis ever defines a real error symbol,
 switch to that and delete this.")
 
 (defun night/redis--not-connected-error-p (err)
-  "Non-nil if ERR is eredis complaining that there is no connection."
-  (and (eq (car-safe err) 'error)
-       (let ((message (car-safe (cdr-safe err))))
-         (and (stringp message)
-              (string-match-p
-               (regexp-quote night/redis--not-connected-message)
-               message)))))
+  "Non-nil if ERR indicates a missing or dropped Redis connection."
+  (or (and (eq (car-safe err) 'args-out-of-range)
+           (equal (cdr-safe err) '("" 0)))
+      (and (eq (car-safe err) 'error)
+           (let ((message (car-safe (cdr-safe err))))
+             (and (stringp message)
+                  (or (string-match-p
+                       (regexp-quote night/redis--not-connected-message)
+                       message)
+                      (string-match-p
+                       "\\`Process .* not running\\'\\|Broken pipe\\|Connection reset by peer"
+                       message)))))))
+
+(defun night/eredis-parse-response--empty (response)
+  "Treat nil or empty RESP buffer slices as incomplete instead of crashing."
+  (when (or (null response)
+            (and (stringp response) (zerop (length response))))
+    '(incomplete . 0)))
+
+(defun night/eredis-get-response (process)
+  "Read and parse one RESP reply from PROCESS.
+Fixes upstream `eredis-get-response' crashing with `args-out-of-range'
+when the buffer slice is empty (e.g., on EOF / broken peer) and avoids
+spinning `eredis-max-retries' times when PROCESS has closed or timed out."
+  (let ((buffer (process-buffer process))
+        (response-start (or (process-get process 'response-start) 1))
+        (tries 0)
+        (done nil)
+        (resp nil))
+    (unless (buffer-live-p buffer)
+      (night/redis--cleanup-process process)
+      (error "%s" night/redis--not-connected-message))
+    (with-current-buffer buffer
+      (while (and (< tries eredis-max-retries)
+                  (not done))
+        (let ((got-output (accept-process-output process eredis-response-timeout nil 1))
+              (raw (buffer-substring response-start (point-max))))
+          (cond
+           ((zerop (length raw))
+            (cond
+             ((not (process-live-p process))
+              (night/redis--cleanup-process process)
+              (error "%s" night/redis--not-connected-message))
+             ((not got-output)
+              ;; Timed out with zero bytes while process is open: drop the
+              ;; unresponsive socket so callers fail fast instead of sleeping
+              ;; `eredis-max-retries' * `eredis-response-timeout' seconds.
+              (night/redis--cleanup-process process)
+              (error "redis response timed out"))
+             (t
+              (cl-incf tries))))
+           (t
+            (pcase-let ((`(,message . ,length)
+                         (eredis-parse-response raw)))
+              (if (eq message 'incomplete)
+                  (if (not (process-live-p process))
+                      (progn
+                        (night/redis--cleanup-process process)
+                        (error "%s" night/redis--not-connected-message))
+                    (cl-incf tries)
+                    (message "Incomplete message, will retry. (Attempt %d)" tries))
+                (setq resp message
+                      done t)
+                (process-put process 'response-start (+ response-start length)))))))))
+    (unless done
+      (night/redis--cleanup-process process)
+      (error "Response did not complete"))
+    resp))
+
+(defun night/eredis-command-returning--cleanup (orig-fn command &rest args)
+  "Clean up a dead process if ORIG-FN fails due to a broken socket."
+  (let* ((last-arg (car (last args)))
+         (process (if (processp last-arg)
+                      last-arg
+                    (and (boundp 'eredis--current-process)
+                         eredis--current-process))))
+    (condition-case err
+        (apply orig-fn command args)
+      (error
+       (when (and (processp process)
+                  (or (not (process-live-p process))
+                      (night/redis--not-connected-error-p err)))
+         (night/redis--cleanup-process process))
+       (signal (car err) (cdr err))))))
+
+(with-eval-after-load 'eredis
+  (advice-add #'eredis-parse-response :before-until #'night/eredis-parse-response--empty)
+  (advice-add #'eredis-get-response :override #'night/eredis-get-response)
+  (advice-add #'eredis-command-returning :around #'night/eredis-command-returning--cleanup))
+
+(defvar night/redis--reconnecting-p nil
+  "Non-nil while `night/redis--call-with-reconnect' is reconnecting and retrying.
+Prevents nested reconnect loops even if `night/redis-connect' or a callee
+misbehaves.")
 
 (defun night/redis--call-with-reconnect (fn)
   "Call FN; if the connection is dead, reconnect once and call it again.
@@ -157,16 +265,19 @@ checked wrappers below and signal `night/redis-error' there.  That
 separation is what makes the retry safe: a wrong password cannot put
 this into a loop, because it does not look like a failure to this code.
 
-The retry is exactly one.  `night/redis-connect' does not signal when
-redis is down, so a second attempt fails the same way and propagates,
-rather than reconnecting forever."
-  (condition-case err
+The retry is exactly one.  The second `funcall' runs outside the
+`condition-case' and under `night/redis--reconnecting-p', so even a
+buggy reconnect or nested wrapper cannot loop."
+  (if night/redis--reconnecting-p
       (funcall fn)
-    (error
-     (unless (night/redis--not-connected-error-p err)
-       (signal (car err) (cdr err)))
-     (night/redis-connect)
-     (funcall fn))))
+    (condition-case err
+        (funcall fn)
+      (error
+       (unless (night/redis--not-connected-error-p err)
+         (signal (car err) (cdr err)))
+       (let ((night/redis--reconnecting-p t))
+         (night/redis-connect)
+         (funcall fn))))))
 
 (defmacro night/redis-with-reconnect (&rest body)
   "Run BODY, reconnecting once and retrying if the connection is dead.
@@ -234,7 +345,7 @@ Sleep for SLEEP seconds between retries."
 (defun night/redis-unlock (key)
   "Release the lock on KEY."
   (let ((lock-key (night/redis-lock-key key)))
-    (eredis-del lock-key)))
+    (night/redis-with-reconnect (eredis-del lock-key))))
 
 (cl-defmacro with-redis-lock ((&key key-name (timeout nil)) &body body)
   "Execute BODY holding a Redis lock on KEY-NAME, with an optional TIMEOUT.

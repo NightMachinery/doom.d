@@ -21,7 +21,8 @@ ordinary strings, so without this an unauthenticated connection returned
 \"NOAUTH Authentication required.\" and it was used as the password."
     (when password-use-redis
       (condition-case nil
-          (let ((value (eredis-hget password-redis-hash key)))
+          (let ((value (night/redis-with-reconnect
+                         (eredis-hget password-redis-hash key))))
             (when (and (stringp value)
                        (not (string-empty-p value))
                        (not (night/redis--error-reply-p value)))
@@ -48,21 +49,24 @@ ordinary strings, so without this an unauthenticated connection returned
     "Add password to Redis cache if available, otherwise to local cache."
     (if password-use-redis
         (progn
-          (eredis-hset password-redis-hash key password)
+          (night/redis-with-reconnect
+            (eredis-hset password-redis-hash key password))
           nil)
       (password-cache-add key password)))
 
   (defun password-cache-remove-redis (key)
     "Remove password indexed by KEY from Redis cache or local cache."
     (if password-use-redis
-        (eredis-hdel password-redis-hash key)
+        (night/redis-with-reconnect
+          (eredis-hdel password-redis-hash key))
       (password-cache-remove key)))
 
   (defun password-reset-redis ()
     "Clear both the Redis and local password cache."
     (interactive)
     (if password-use-redis
-        (eredis-del password-redis-hash))
+        (night/redis-with-reconnect
+          (eredis-del password-redis-hash)))
     (password-reset))
 
   (defun password-read-redis (prompt &optional key)

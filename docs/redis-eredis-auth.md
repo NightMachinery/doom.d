@@ -86,13 +86,27 @@ there, outside the retry's reach. Wrapping the check too would make a wrong
 password look retryable, and it would loop.
 
 **The retry is exactly one.** `night/redis-connect` does not signal when redis
-is genuinely down, so a second attempt fails the same way and propagates instead
-of reconnecting forever.
+is genuinely down, the retry `funcall` sits outside the `condition-case`, and
+`night/redis--reconnecting-p` blocks nested reconnects, so even a broken
+reconnect or second attempt propagates instead of looping.
+
+**Half-closed sockets crash `eredis-parse-response` on `""`.** When redis or
+the OS closes an idle connection before Emacs reads EOF, `process-status` is
+still `open` until the next `accept-process-output` sees EOF with zero bytes in
+the buffer. Upstream `eredis-get-response` passes `""` to
+`eredis-parse-response`, which runs `(elt "" 0)` and signals
+`args-out-of-range "" 0` rather than `"redis not connected"`. `autoload/night-redis.el`
+advises `eredis-parse-response` (`night/eredis-parse-response--empty`),
+overrides `eredis-get-response` (`night/eredis-get-response`) to detect dead or
+timed-out processes and clean them up, and cleans up failed processes on
+`eredis-command-returning` errors (`night/eredis-command-returning--cleanup`) so
+`night/redis--call-with-reconnect` recovers cleanly.
 
 Recognising the condition is the fragile part: eredis raises a plain `error`
 whose message is "redis not connected" and offers nothing more structured, so
-`night/redis--not-connected-error-p` matches that string. If eredis ever defines
-a real error symbol, switch to it.
+`night/redis--not-connected-error-p` matches that string (plus broken-pipe /
+not-running process errors and `args-out-of-range "" 0`). If eredis ever
+defines a real error symbol, switch to it.
 
 The connect lives in `autoload/night-redis.el` rather than `night-basic.el`,
 because `night-loader.el` loads `night-basic.el` first and the auth helpers
