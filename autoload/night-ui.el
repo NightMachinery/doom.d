@@ -317,11 +317,11 @@ It removes the previous highlights before applying new ones."
     (dolist
         (item
          ;; @duplicateCode/e637f800f6aefb7d629b8e5dad00aa36
-         `((,night/great-tag-regex 'zsh-macro)
-           (,night/CR-tag-regex 'CR-face)
-           (,night/done-tag-regex 'done-face)
-           (,night/urgent-tag-regex 'urgent-face)
-           (,night/moved-tag-regex 'moved-face)))
+         `((,night/great-tag-regex zsh-macro)
+           (,night/CR-tag-regex CR-face)
+           (,night/done-tag-regex done-face)
+           (,night/urgent-tag-regex urgent-face)
+           (,night/moved-tag-regex moved-face)))
       (let ((regex (car item))
             (face (cadr item)))
         (let ((hlt-overlays nil))

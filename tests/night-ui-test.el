@@ -1,0 +1,50 @@
+;;; tests/night-ui-test.el -*- lexical-binding: t; -*-
+(setq native-comp-enable-subr-trampolines nil)
+(require 'ert)
+(require 'cl-lib)
+
+(defmacro after! (_packages &rest body) `(progn ,@body))
+(defmacro comment (&rest _body) nil)
+(defmacro add-hook! (&rest _) nil)
+(defmacro night/defface (face spec &optional doc &rest args)
+  `(defface ,face ,spec ,doc ,@args))
+
+(provide 'ov)
+(provide 'hl-todo)
+(provide 'evil-terminal-cursor-changer)
+(defun evil-terminal-cursor-changer-activate () nil)
+(defvar hl-todo--syntax-table (make-syntax-table))
+(defvar hl-todo-highlight-punctuation nil)
+(defvar hl-todo-keyword-faces nil)
+
+(cl-letf (((symbol-function 'night/highlight-atsign-zsh) #'ignore)
+          ((symbol-function 'night/highlight-org) #'ignore))
+  (load (expand-file-name "../autoload/night-ui.el"
+                          (file-name-directory (or load-file-name buffer-file-name)))
+        nil t))
+
+(ert-deftest night/highlight-background-passes-face-symbols-not-quotes ()
+  "Each highlight rule passes a face symbol, never a `(quote ...)` form."
+  (let ((recorded nil)
+        (hlt-overlays nil))
+    (cl-letf (((symbol-function 'hlt-highlight-regexp-region)
+               (lambda (beg end regexp face &rest _args)
+                 (save-excursion
+                   (goto-char beg)
+                   (while (re-search-forward regexp end t)
+                     (let ((ov (make-overlay (match-beginning 0) (match-end 0))))
+                       (overlay-put ov 'face face)
+                       (push ov hlt-overlays)
+                       (push (list (match-string 0) face) recorded)))))))
+      (with-temp-buffer
+        (insert "@great @CR @done @urgent @moved\n")
+        (night/highlight-background)
+        (should (= (length recorded) 5))
+        (dolist (entry recorded)
+          (let ((face (cadr entry)))
+            (should (symbolp face))
+            (should (facep face))))
+        (dolist (ov (overlays-in (point-min) (point-max)))
+          (let ((face (overlay-get ov 'face)))
+            (should (symbolp face))
+            (should-not (consp face))))))))
