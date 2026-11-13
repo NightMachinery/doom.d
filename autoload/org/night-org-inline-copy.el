@@ -264,16 +264,15 @@ Otherwise, do nothing (return nil). Intended for use as a DWIM action."
   (defun night/org-inline-copy--around-dwim (orig-fn &rest args)
     "Around advice to inject copying behavior into ORIG-FN with ARGS."
     (if (derived-mode-p 'org-mode)
-        (condition-case err
-            (if (night/org-inline-copy--maybe-copy-at-point)
-                ;; We handled it; skip original DWIM.
-                nil
-              ;; Otherwise, fall back to original DWIM.
-              (apply orig-fn args))
-          (error
-           (message "night/org-inline-copy error: %s"
-                    (error-message-string err))
-           (apply orig-fn args)))
+        (let ((handled
+               (condition-case err
+                   (night/org-inline-copy--maybe-copy-at-point)
+                 (error
+                  (message "night/org-inline-copy error: %s"
+                           (error-message-string err))
+                  nil))))
+          (unless handled
+            (apply orig-fn args)))
       (apply orig-fn args)))
 
   ;; Only advise if Doom's DWIM exists.
