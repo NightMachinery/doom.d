@@ -79,6 +79,9 @@ Create a helper function `night/z-var-get` which, when brish is available (`nigh
 *** =SPC b m= saves a file bookmark without a position. Use =C-u SPC b m= or =M-x night/bookmark-set-with-position= to save the current location. See [[file:docs/bookmarks.md][bookmark behavior]].
 ** At-tags
 *** Percent signs belong to tags such as =@25%= and =@12.5%=. See [[file:docs/at-tags.md][at-tag highlighting]].
+** Org archiving and =@retired=
+*** [help:night/h-org-archive-subtree-around] advises =org-archive-subtree= (called by =org-archive-subtree-default=) to rebuild parent headings in the archive file and save according to [help:night/org-archive-save-mode] (default =auto= for source and archive buffers only).
+*** =\sa= runs =org-archive-subtree-default= and =\sA= runs [help:night/org-toggle-retired-tag] to toggle =@retired= in the heading title. See [[file:docs/org-archive.md][docs/org-archive.md]].
 ** Org buffers opening without colors
 *** Intermittent loss of coloring on open is under investigation. The September 24 special-tag rule is a candidate, but synthetic comparisons passed with both rules; a recorded jit-lock redisplay error has no captured stack yet.
 *** See [[file:docs/bugs/org-opening-without-colors.md][diagnosis, proposed fixes, and recovery without rereading the file]].

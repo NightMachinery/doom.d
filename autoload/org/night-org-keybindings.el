@@ -196,6 +196,8 @@ buffer."
         "lm" #'night/org-link-hear-get
         "lM" #'night/org-link-mpv-get
         "rp" #'night/org-paste-with-files
+        :desc "Archive subtree" "sa" #'org-archive-subtree-default
+        :desc "Toggle @retired tag" "sA" #'night/org-toggle-retired-tag
         ;; "yi" #'night/org-value-at-point
         )
   (setq org-startup-folded
