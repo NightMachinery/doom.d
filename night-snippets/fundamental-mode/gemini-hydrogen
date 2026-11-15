@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: gemini-hydrogen
+# key: gemh
+# uuid: gemh
+# type: command
+# --
+(night/yas-expand-model-tag "Gemini4:Hydrogen")
