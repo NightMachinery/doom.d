@@ -23,6 +23,9 @@ The optional offer scan uses the original Gmail profile's OAuth grant and keeps
 its own successful-check timestamp. Its local `offer-scan/query` file contains
 the search terms. The scan starts with one day of mail and caps catch-up at
 seven days, independently of the account selected in Emacs.
+Qualifying offers go to the Telegram heart destination as rich Markdown, with
+redemption links, an original Gmail link when available, and expandable English
+excerpts.
 
 ## The three layers
 

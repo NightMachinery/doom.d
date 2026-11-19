@@ -5,6 +5,7 @@ import argparse
 import base64
 import datetime as dt
 import fcntl
+from html import escape
 from html.parser import HTMLParser
 import json
 import math
@@ -148,6 +149,17 @@ def current_run(state, token):
     return pending
 
 
+def gmail_link(message_id, thread_id):
+    """Link to an exact Message-ID search, falling back to the Gmail thread."""
+    root = 'https://mail.google.com/mail/u/0/'
+    message_id = message_id.strip().strip('<>')
+    if re.fullmatch(r'[^\s<>]+@[^\s<>]+', message_id):
+        return root + '#search/' + quote('rfc822msgid:' + message_id, safe='')
+    if re.fullmatch(r'[0-9a-fA-F]+', thread_id):
+        return root + '#all/' + thread_id
+    return ''
+
+
 def open_message(state, token, message_id):
     pending = current_run(state, token)
     received = pending['candidates'].get(message_id)
@@ -156,10 +168,13 @@ def open_message(state, token, message_id):
     result = {'id': message_id, 'expired': True}
     if fresh(received):
         with gmail() as session:
-            message = request(session, '/' + message_id, format='full', fields='internalDate,payload')
+            message = request(session, '/' + message_id, format='full', fields='internalDate,threadId,payload')
         if fresh(int(message['internalDate'])):
             payload = message['payload']
             headers = {h['name'].lower(): h['value'] for h in payload.get('headers', [])}
+            link = gmail_link(headers.get('message-id', ''), message.get('threadId', ''))
+            if link:
+                pending.setdefault('sources', {})[message_id] = link
             result = {
                 'id': message_id,
                 'received': dt.datetime.fromtimestamp(received / 1000, dt.timezone.utc).isoformat(),
@@ -169,7 +184,7 @@ def open_message(state, token, message_id):
             }
     if message_id not in pending['opened']:
         pending['opened'].append(message_id)
-        save(state)
+    save(state)
     print(json.dumps(result, ensure_ascii=False))
 
 
@@ -185,6 +200,16 @@ def positive_amount(offer, name):
     if type(amount) not in {float, int} or not math.isfinite(amount) or amount < 0:
         raise ValueError(f'{name} must be a non-negative number')
     return amount
+
+
+def markdown(text):
+    """Keep email-derived text literal in Telegram's rich Markdown parser."""
+    return re.sub(r'([\\`*_{}\[\]()#+.!|~$-])', r'\\\1', escape(text, quote=False))
+
+
+def markdown_link(label, url):
+    destination = quote(url, safe=':/?#[]@!$&\'*,;=+%~-._')
+    return f'[{label}]({destination})'
 
 
 def render_offers(offers, pending, sent):
@@ -217,22 +242,33 @@ def render_offers(offers, pending, sent):
             continue
         discount = ' / '.join(part for part in [f'{percent:g}%' if percent else '', f'€{eur:g}' if eur else ''] if part)
         value = field(offer, 'price')
-        block = (f'  - Discount: {discount}' + (f' ({value})' if value else '') + '\n'
-                 f'  - Code: {code or "None required"}\n'
-                 f'  - Expiry: {expiry}\n'
-                 f'  - Conditions: {terms}\n'
-                 f'  - Links: {", ".join(links) if links else "None stated"}')
-        heading, blocks = groups.setdefault(merchant.casefold(), (merchant, {}))
+        excerpt = field(offer, 'english_excerpt')
+        if not excerpt or len(excerpt) > 850:
+            raise ValueError('Include a concise English excerpt of the source offer')
+        actions = [markdown_link('Redeem offer' if i == 1 else f'Redeem option {i}', link)
+                   for i, link in enumerate(links, 1)]
+        gmail_url = pending.get('sources', {}).get(source)
+        if gmail_url:
+            actions.append(markdown_link('Open in Gmail', gmail_url))
+        lines = [f'  - **Discount:** {discount}' + (f' ({markdown(value)})' if value else '')]
+        if code:
+            lines.append(f'  - **Code:** {markdown(code)}')
+        lines += [f'  - **Expiry:** {markdown(expiry)}', f'  - **Conditions:** {markdown(terms)}']
+        if actions:
+            lines.append('  - ' + ' · '.join(actions))
+        lines += ['', '  <details><summary>Offer details in English</summary>', '',
+                  '  ' + markdown(excerpt), '', '  </details>']
+        block = '\n'.join(lines)
+        _, blocks = groups.setdefault(merchant.casefold(), (merchant, {}))
         blocks[key] = block
     for merchant, blocks in groups.values():
-        yield f'- {merchant}\n' + '\n'.join(blocks.values()), list(blocks)
+        yield f'- **{markdown(merchant)}**\n' + '\n\n'.join(blocks.values()), list(blocks)
 
 
 def notify(text):
-    # Treat the message as one argument. Disable the local fallback for this task.
-    command = ('(( ${+functions[notif-tlg-heart]} )) && [[ -n ${tlg_heart-} ]] || exit 1\n'
-               'function notif { return 1; }\n'
-               'notif-tlg-heart "$1"')
+    # Use the same destination as notif-tlg-heart and send the rich source as data.
+    command = ('[[ -n ${tlg_heart-} ]] || exit 1\n'
+               'command tsend --parse-mode=rich -- "${tlg_heart}" "$1"')
     shell = next(path for path in ('/opt/homebrew/bin/zsh', '/usr/local/bin/zsh', '/bin/zsh')
                  if os.access(path, os.X_OK))
     result = subprocess.run([shell, '-lc', command, 'gmail-offers', text], capture_output=True, timeout=60)
