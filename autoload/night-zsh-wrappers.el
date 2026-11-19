@@ -95,7 +95,7 @@
                   (unless (process-live-p process)
                     (goto-char (point-min))
                     (json-parse-buffer :object-type 'alist)))
-              ((file-error json-parse-error) nil))
+              ((file-error json-error) nil))
           (when (and process (process-live-p process))
             (delete-process process))
           (kill-buffer stderr))))))
@@ -122,17 +122,17 @@
   (condition-case nil
       (let* ((snapshot
               (z eval
-                 "info=$(hear-get user-data/night/org-music 2>/dev/null) || info='{}'
-path=$(command printf '%s' \"$info\" | jq -r '.path // empty' 2>/dev/null)
-if [[ -n \"$path\" ]]; then
-    path=$(ntag-recoverpath \"$path\") || path=$(command printf '%s' \"$info\" | jq -r '.path')
+                 "org_music_info=$(hear-get user-data/night/org-music 2>/dev/null) || org_music_info='{}'
+org_music_path=$(command printf '%s' \"${org_music_info}\" | jq -r '.path // empty' 2>/dev/null)
+if [[ -n \"${org_music_path}\" ]]; then
+    org_music_path=$(ntag-recoverpath \"${org_music_path}\") || org_music_path=$(command printf '%s' \"${org_music_info}\" | jq -r '.path')
 else
-    info='{}'
-    path=$(hear-get 2>/dev/null) || path=''
+    org_music_info='{}'
+    org_music_path=$(hear-get 2>/dev/null) || org_music_path=''
 fi
-if [[ -n \"$path\" ]]; then
-    target=$(command printf '%s' \"$path\" | path-abbrev-to-music-dir | org-escape-link)
-    command printf '%s' \"$info\" | jq -c --arg target \"$target\" '. + {target: $target}'
+if [[ -n \"${org_music_path}\" ]]; then
+    org_music_target=$(command printf '%s' \"${org_music_path}\" | path-abbrev-to-music-dir | org-escape-link)
+    command printf '%s' \"${org_music_info}\" | jq -c --arg target \"${org_music_target}\" '. + {target: $target}'
 fi"))
              (info (json-parse-string snapshot :object-type 'alist))
              (target (alist-get 'target info)))

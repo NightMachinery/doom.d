@@ -13,3 +13,5 @@ MPV produces ordinary `audiofile:` links. Telegram produces
 Telegram requires `tdesktop-cli`, with local media information enabled to
 create the link and media playback enabled to follow it. MPV timestamps
 come from the `org_music_recency.lua` script in the MPV config.
+The smart command falls back to the current MPV track when Purple is
+unavailable, including when MPV is paused.
