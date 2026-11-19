@@ -64,13 +64,77 @@
    (z p-org-fanfic))
   (night/bell-link))
 
+(defun night/h-purple-music-token-p (token)
+  "Check that TOKEN is an opaque Purple music bookmark."
+  (let ((case-fold-search nil))
+    (and (stringp token)
+         (string-match-p (rx string-start (= 32 (any "0-9a-f")) string-end)
+                         token))))
+
+(defun night/h-purple-music-call (timeout &rest args)
+  "Read one Purple CLI response for ARGS, waiting up to TIMEOUT seconds."
+  (when-let ((cli (executable-find "tdesktop-cli")))
+    (with-temp-buffer
+      (let* ((stderr (generate-new-buffer " *purple-music-error*"))
+             (default-directory temporary-file-directory)
+             (deadline (+ (float-time) timeout))
+             process)
+        (unwind-protect
+            (condition-case nil
+                (progn
+                  (setq process (make-process :name "purple-music"
+                                              :buffer (current-buffer)
+                                              :stderr stderr
+                                              :command (append (list cli "--json" "media") args)
+                                              :connection-type 'pipe
+                                              :coding 'utf-8-unix
+                                              :noquery t
+                                              :sentinel #'ignore))
+                  (while (and (process-live-p process) (< (float-time) deadline))
+                    (accept-process-output process (max 0 (- deadline (float-time)))))
+                  (unless (process-live-p process)
+                    (goto-char (point-min))
+                    (json-parse-buffer :object-type 'alist)))
+              ((file-error json-parse-error) nil))
+          (when (and process (process-live-p process))
+            (delete-process process))
+          (kill-buffer stderr))))))
+
+(defun night/h-purple-org-music-link (result)
+  "Format an Org bookmark from a Purple music RESULT."
+  (let ((token (alist-get 'token result)))
+    (when (night/h-purple-music-token-p token)
+      (require 'ol)
+      (let ((label (mapconcat
+                    #'identity
+                    (delq nil (mapcar (lambda (name)
+                                       (and (stringp name)
+                                            (not (string-empty-p name))
+                                            (replace-regexp-in-string "[[:cntrl:]]" " " name)))
+                                     (list (alist-get 'title result)
+                                           (alist-get 'performer result))))
+                    " — ")))
+        (org-link-make-string (concat "purpleaudio:" token)
+                              (unless (string-empty-p label) label))))))
+
+(defun night/h-org-link-hear-file ()
+  "Return the Org link for the file playing through MPV."
+  (condition-case nil
+      (let ((path (z eval hear-get | path-abbrev-to-music-dir | org-escape-link)))
+        (when (and (stringp path) (not (string-empty-p path)))
+          (concat "[[audiofile:" path "]]")))
+    (error nil)))
+
 (defun night/org-link-hear-get ()
+  "Save a link to the current Purple or MPV music."
   (interactive)
-  (night/insert-for-yank-and-save
-   (concat
-    "[[audiofile:"
-    (z eval hear-get | path-abbrev-to-music-dir | org-escape-link)
-    "]]")))
+  (let* ((result (alist-get 'result (night/h-purple-music-call 0.35 "music-link")))
+         (purple (night/h-purple-org-music-link result))
+         (link (or (and (equal (alist-get 'state result) "playing") purple)
+                   (night/h-org-link-hear-file)
+                   purple)))
+    (cond (link (night/insert-for-yank-and-save link))
+          (t (message "Nothing is playing in Purple or MPV")))))
 
 (defun night/org-link-mpv-get ()
   (interactive)

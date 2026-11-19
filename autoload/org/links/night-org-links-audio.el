@@ -13,6 +13,19 @@ exists, alerts if it does not, and picks the player by extension."
     (night/hear (night/path-unabbrev path)))
 
   (org-link-set-parameters "audiofile" :follow #'night/org-link-audiofile-follow)
+  (defun night/org-link-purpleaudio-follow (token _arg)
+    "Play the Purple music bookmark TOKEN while keeping focus in Emacs."
+    (unless (night/h-purple-music-token-p token)
+      (user-error "Invalid Purple music link"))
+    (let ((reply (night/h-purple-music-call 2.25 "play-music-link" token)))
+      (cond ((eq (alist-get 'accepted (alist-get 'result reply)) t)
+             (message "Purple playback requested"))
+            (t (user-error "%s"
+                           (or (alist-get 'message (alist-get 'error reply))
+                               "Purple is unavailable"))))))
+
+  (org-link-set-parameters "purpleaudio" :follow #'night/org-link-purpleaudio-follow)
+
   ;;;
   (cl-defun night/audiofile-link-get-current-line (&key (open-link-p nil))
     "Check if the current line contains an 'audiofile' link and return the path.
