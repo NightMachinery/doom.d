@@ -14,6 +14,7 @@ See [[file:docs/keyboard-shortcuts.md][Keyboard shortcuts]] for behavior and lay
 ** =fzf=
 ** =notmuch=, =isync= (=mbsync=), =msmtp=, =flock=
 *** For mail: =brew install notmuch isync msmtp flock=, then =email/install-night-mail.zsh=. See [[file:docs/email.md][docs/email.md]].
+*** On a Mac with the local Lieer profile, =M-x night/gmail= opens the separate Gmail inbox.
 
 ** Environment Variables
 *** =nightNotes=

@@ -5,6 +5,20 @@ by msmtp. Everything is in this repository except the account's identity and
 its password: the identity lives in a private file, and the password in the
 macOS login Keychain. Doom's `:email` module is not used.
 
+## Personal Gmail
+
+`M-x night/gmail` opens the Gmail inbox in a separate Emacs window using Doom's
+installed Notmuch package. The local Lieer profile under
+`~/.local/share/night-gmail/` has its own Maildir, Notmuch index and OAuth
+credentials. Lieer maps Gmail labels to Notmuch tags through the Gmail API.
+Open the existing inbox with the regular Notmuch commands.
+
+The Gmail profile starts with manual, download-only sync. Run
+`~/.local/share/night-gmail/night-gmail pull` in Terminal, then refresh the Gmail
+window with `M-x notmuch-refresh-this-buffer`. Initial setup and OAuth recovery
+are documented in `~/.local/share/night-gmail/README.md` on the configured Mac.
+See also the [Lieer setup guide](https://github.com/gauteh/lieer).
+
 ## The three layers
 
 - **Reader**: notmuch.el, the Emacs client for notmuch. notmuch indexes the
