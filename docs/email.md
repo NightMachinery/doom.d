@@ -22,10 +22,12 @@ pull for a new address downloads its history. Terminal users can also run
 The optional offer scan uses the original Gmail profile's OAuth grant and keeps
 its own successful-check timestamp. Its local `offer-scan/query` file contains
 the search terms. The scan starts with one day of mail and caps catch-up at
-seven days, independently of the account selected in Emacs.
+seven days, independently of the account selected in Emacs. Streaming offers
+are excluded. Live cinema, theater and other in-person events remain eligible.
 Qualifying offers go to the Telegram heart destination as rich Markdown, with
-redemption links, an original Gmail link when available, and expandable English
-excerpts.
+redemption links and an original Gmail link when available. Expand the English
+details to see the offer terms and up to two relevant public product photos
+from the email, when available.
 
 ## The three layers
 

@@ -22,6 +22,8 @@ ROOT = Path(os.environ.get('NIGHT_GMAIL_HOME', Path.home() / '.local/share/night
 STATE = ROOT / 'offer-scan'
 DAY = 86400
 API = 'https://gmail.googleapis.com/gmail/v1/users/{}/messages'
+PHOTO_LABEL = 'Product photo'
+PHOTO_LINE = f'  ![{PHOTO_LABEL}]('
 
 
 def gmail():
@@ -89,9 +91,10 @@ def fetch(state, probe=False):
 
 
 class EmailHTML(HTMLParser):
-    def __init__(self):
+    def __init__(self, images):
         super().__init__(convert_charrefs=True)
         self.text = []
+        self.images = images
         self.hidden = None
 
     def handle_starttag(self, tag, attrs):
@@ -99,9 +102,16 @@ class EmailHTML(HTMLParser):
             self.hidden = tag
         if not self.hidden and tag in {'br', 'p', 'li', 'tr', 'div'}:
             self.text.append('\n')
-        link = dict(attrs).get('href')
-        if not self.hidden and tag == 'a' and link and valid_link(link):
+        if self.hidden:
+            return
+        attrs = dict(attrs)
+        link = attrs.get('href')
+        if tag == 'a' and link and valid_link(link):
             self.text.append(f' [Link: {link}] ')
+        if tag == 'img':
+            url = public_image_url(attrs)
+            if url and url not in self.images:
+                self.images[url] = ' '.join((attrs.get('alt') or '').split())[:160]
 
     def handle_endtag(self, tag):
         if self.hidden == tag:
@@ -120,11 +130,29 @@ def valid_link(link):
         return False
 
 
-def body_text(part):
+def public_image_url(attrs):
+    src = attrs.get('src') or ''
+    # Product photos use public asset URLs. Do not embed personalized URLs,
+    # tracking pixels, or addresses that the sender's browser must resolve.
+    if len(src) > 1024 or not re.fullmatch(
+        r'https://(?:[a-z0-9-]+\.)+[a-z]{2,}/[a-z0-9._~%/()-]+\.(?:jpe?g|png|webp)', src, re.I
+    ):
+        return ''
+    host = urlsplit(src).hostname
+    if host.endswith(('.local', '.localhost', '.internal', '.lan', '.test', '.invalid', '.example')):
+        return ''
+    for name in ('width', 'height'):
+        size = re.fullmatch(r'([0-9]{1,5})(?:px)?', (attrs.get(name) or '').strip(), re.I)
+        if size and int(size[1]) < 96:
+            return ''
+    return src
+
+
+def body_text(part, images):
     headers = {item['name'].lower(): item['value'] for item in part.get('headers', [])}
     if part.get('filename') or 'attachment' in headers.get('content-disposition', '').lower():
         return []
-    contents = [text for child in part.get('parts', []) for text in body_text(child)]
+    contents = [text for child in part.get('parts', []) for text in body_text(child, images)]
     mime = part.get('mimeType')
     data = part.get('body', {}).get('data')
     if mime not in {'text/plain', 'text/html'} or not data:
@@ -136,7 +164,7 @@ def body_text(part):
     except LookupError:
         text = raw.decode('utf-8', errors='replace')
     if mime == 'text/html':
-        parser = EmailHTML()
+        parser = EmailHTML(images)
         parser.feed(text)
         text = ''.join(parser.text)
     return contents + [text]
@@ -175,12 +203,17 @@ def open_message(state, token, message_id):
             link = gmail_link(headers.get('message-id', ''), message.get('threadId', ''))
             if link:
                 pending.setdefault('sources', {})[message_id] = link
+            images = {}
+            body = '\n\n'.join(body_text(payload, images))
+            pending.setdefault('images', {})[message_id] = list(images)
             result = {
                 'id': message_id,
                 'received': dt.datetime.fromtimestamp(received / 1000, dt.timezone.utc).isoformat(),
                 'subject': headers.get('subject', ''),
                 'sender': headers.get('from', ''),
-                'body': '\n\n'.join(body_text(payload)),
+                'body': body,
+                'images': [{'id': i, 'url': url, 'alt': alt}
+                           for i, (url, alt) in enumerate(images.items(), 1)],
             }
     if message_id not in pending['opened']:
         pending['opened'].append(message_id)
@@ -257,12 +290,28 @@ def render_offers(offers, pending, sent):
         if actions:
             lines.append('  - ' + ' · '.join(actions))
         lines += ['', '  <details><summary>Offer details in English</summary>', '',
-                  '  ' + markdown(excerpt), '', '  </details>']
+                  '  ' + markdown(excerpt), '']
+        image_ids = offer.get('image_ids', [])
+        if isinstance(image_ids, list):
+            images = pending.get('images', {}).get(source, [])
+            selected = list(dict.fromkeys(i for i in image_ids if type(i) is int and 1 <= i <= len(images)))
+            for image_id in selected[:2]:
+                lines += ['  !' + markdown_link(PHOTO_LABEL, images[image_id - 1]), '']
+        lines.append('  </details>')
         block = '\n'.join(lines)
         _, blocks = groups.setdefault(merchant.casefold(), (merchant, {}))
         blocks[key] = block
     for merchant, blocks in groups.values():
         yield f'- **{markdown(merchant)}**\n' + '\n\n'.join(blocks.values()), list(blocks)
+
+
+def without_photos(text):
+    return '\n'.join(line for line in text.split('\n') if not line.startswith(PHOTO_LINE))
+
+
+def telegram_batch_fits(text):
+    return (len(text) <= 32768 and text.count('\n' + PHOTO_LINE) <= 50
+            and len(without_photos(text).encode('utf-16-le')) // 2 <= 3900)
 
 
 def notify(text):
@@ -271,7 +320,19 @@ def notify(text):
                'command tsend --parse-mode=rich -- "${tlg_heart}" "$1"')
     shell = next(path for path in ('/opt/homebrew/bin/zsh', '/usr/local/bin/zsh', '/bin/zsh')
                  if os.access(path, os.X_OK))
-    result = subprocess.run([shell, '-lc', command, 'gmail-offers', text], capture_output=True, timeout=60)
+    args = [shell, '-lc', command, 'gmail-offers']
+    result = subprocess.run(args + [text], capture_output=True, timeout=60)
+    # A confirmed Telegram media rejection is safe to retry without photos.
+    # A transport failure may have delivered the first request already.
+    if result.returncode and re.search(
+        rb'(?m)^tsend: Cannot send a rich message to .*?(?:WEBPAGE_CURL_FAILED|WEBPAGE_MEDIA_EMPTY|MEDIA_INVALID|'
+        rb'PHOTO_INVALID|IMAGE_PROCESS_FAILED|RICH_MESSAGE_INVALID|CHAT_SEND_PHOTOS_FORBIDDEN|'
+        rb'WebpageCurlFailedError|MediaInvalidError|PhotoInvalid\w*Error|ChatSendPhotosForbiddenError|'
+        rb'failed to get HTTP URL content|wrong type of the web page content)', result.stderr, re.I
+    ):
+        plain = without_photos(text)
+        if plain != text:
+            result = subprocess.run(args + [plain], capture_output=True, timeout=60)
     if result.returncode:
         raise RuntimeError('Telegram delivery failed')
 
@@ -296,10 +357,12 @@ def complete_scan(state, token, offers):
     batches = []
     text, keys = '', []
     for block, block_keys in render_offers(offers, pending, sent):
-        if len(block.encode('utf-16-le')) // 2 > 3900:
+        if not telegram_batch_fits(block):
+            block = without_photos(block)
+        if not telegram_batch_fits(block):
             raise ValueError('A merchant summary is too long for Telegram')
         joined = '\n'.join(filter(None, [text, block]))
-        if len(joined.encode('utf-16-le')) // 2 > 3900:
+        if not telegram_batch_fits(joined):
             batches.append((text, keys))
             text, keys = block, block_keys
         else:
