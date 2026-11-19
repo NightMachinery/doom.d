@@ -1,0 +1,157 @@
+#!/bin/bash
+# Manage independent Lieer profiles using the laptop's existing virtualenv.
+set -euo pipefail
+umask 077
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+unset NOTMUCH_DATABASE NOTMUCH_PROFILE
+
+root="${NIGHT_GMAIL_HOME:-${HOME}/.local/share/night-gmail}"
+gmi="${root}/venv/bin/gmi"
+[[ -x "${gmi}" && -f "${root}/notmuch.conf" ]] || {
+    printf 'Set up the local Lieer installation first (see docs/email.md).\n' >&2
+    exit 2
+}
+
+fail() {
+    printf '%s\n' "$*" >&2
+    exit 2
+}
+
+account_key() {
+    local address
+    address=$(printf '%s' "$1" | command tr '[:upper:]' '[:lower:]')
+    [[ "${address}" =~ ^[a-z0-9][a-z0-9._-]*@(gmail|googlemail)\.com$ ]] ||
+        fail 'Enter the full Gmail account address.'
+    local username="${address%@*}"
+    printf '%s@gmail.com\n' "${username//./}"
+}
+
+default_account=$(command notmuch --config="${root}/notmuch.conf" config get user.primary_email)
+default_key=$(account_key "${default_account}")
+
+profile_dir() {
+    if [[ "$1" == "${default_key}" ]]; then
+        printf '%s\n' "${root}"
+    else
+        printf '%s/accounts/%s\n' "${root}" "$1"
+    fi
+}
+
+activate() {
+    local temporary
+    temporary=$(command mktemp "${root}/.active.XXXXXXXX")
+    printf '%s\n' "$1" > "${temporary}"
+    command mv -f "${temporary}" "${root}/active-account"
+}
+
+initialize_profile() {
+    local directory="$1" address="$2"
+    command mkdir -p "${directory}/mail" "${directory}/hooks"
+    if [[ ! -f "${directory}/notmuch.conf" ]]; then
+        cat > "${directory}/notmuch.conf" <<EOF
+[database]
+path=${directory}/mail
+hook_dir=${directory}/hooks
+[user]
+name=Gmail
+primary_email=${address}
+[new]
+tags=
+ignore=/.*[.](json|lock|bak)\$/
+[search]
+exclude_tags=trash;spam
+[maildir]
+synchronize_flags=false
+EOF
+    fi
+    command notmuch --config="${directory}/notmuch.conf" new --no-hooks
+    if [[ ! -f "${directory}/mail/gmail/.gmailieer.json" ]]; then
+        NOTMUCH_CONFIG="${directory}/notmuch.conf" "${gmi}" init --no-auth -C "${directory}/mail/gmail" -- "${address}"
+    fi
+}
+
+case "${1:-}" in
+    accounts)
+        for directory in "${root}" "${root}"/accounts/*; do
+            [[ -s "${directory}/mail/gmail/.credentials.gmailieer.json" ]] || continue
+            command notmuch --config="${directory}/notmuch.conf" config get user.primary_email
+        done
+        exit
+        ;;
+    select)
+        [[ $# == 2 ]] || fail 'Usage: night-gmail select ADDRESS'
+        key=$(account_key "$2")
+        directory=$(profile_dir "${key}")
+        [[ -s "${directory}/mail/gmail/.credentials.gmailieer.json" ]] || fail 'Authorize that account first.'
+        activate "${key}"
+        exit
+        ;;
+    login)
+        [[ $# == 2 ]] || fail 'Usage: night-gmail login ADDRESS'
+        key=$(account_key "$2")
+        directory=$(profile_dir "${key}")
+        address=$(printf '%s' "$2" | command tr '[:upper:]' '[:lower:]')
+        staging=$(command mktemp -d "${root}/.login.XXXXXXXX")
+        trap 'command rm -rf -- "${staging}"' EXIT
+        initialize_profile "${staging}" "${address}"
+        NOTMUCH_CONFIG="${staging}/notmuch.conf" "${gmi}" auth -C "${staging}/mail/gmail"
+        credentials="${staging}/mail/gmail/.credentials.gmailieer.json"
+        "${root}/venv/bin/python" - "${credentials}" "${key}" <<'PY'
+import sys
+
+from google.auth.transport.requests import AuthorizedSession
+from google.oauth2.credentials import Credentials
+
+credentials = Credentials.from_authorized_user_file(sys.argv[1])
+with AuthorizedSession(credentials) as session:
+    response = session.get('https://gmail.googleapis.com/gmail/v1/users/me/profile', timeout=20)
+    response.raise_for_status()
+address = response.json()['emailAddress'].lower()
+username, domain = address.rsplit('@', 1)
+if domain not in {'gmail.com', 'googlemail.com'} or username.replace('.', '') + '@gmail.com' != sys.argv[2]:
+    sys.exit('Google authorized a different account. Sign in again and select the requested account.')
+PY
+        initialize_profile "${directory}" "${address}"
+        command mv -f "${credentials}" "${directory}/mail/gmail/.credentials.gmailieer.json"
+        activate "${key}"
+        exit
+        ;;
+esac
+
+key="${default_key}"
+if [[ -s "${root}/active-account" ]]; then
+    key=$(account_key "$(<"${root}/active-account")")
+fi
+directory=$(profile_dir "${key}")
+mailbox="${directory}/mail/gmail"
+export NOTMUCH_CONFIG="${directory}/notmuch.conf"
+
+case "${1:-}" in
+    authorize)
+        shift
+        exec "${gmi}" auth -C "${mailbox}" "$@"
+        ;;
+    pull)
+        [[ -s "${mailbox}/.credentials.gmailieer.json" ]] || fail 'Use night-gmail login ADDRESS first.'
+        exec "${gmi}" pull -C "${mailbox}"
+        ;;
+    emacs)
+        emacs_version=$(command emacs -Q --batch --eval '(princ emacs-version)')
+        notmuch_lisp="${EMACSDIR:-${HOME}/.emacs.d}/.local/straight/build-${emacs_version}/notmuch"
+        [[ -f "${notmuch_lisp}/notmuch.elc" || -f "${notmuch_lisp}/notmuch.el" ]] ||
+            fail "Could not find Doom's Notmuch package at ${notmuch_lisp}."
+        exec emacs -Q --name Gmail -L "${notmuch_lisp}" --eval '
+          (progn
+            (setq frame-title-format "Gmail"
+                  notmuch-poll-script ""
+                  notmuch-search-oldest-first nil
+                  message-send-mail-function
+                  (lambda () (user-error "Sending is disabled in the Gmail reader")))
+            (require (quote notmuch))
+            (setq frame-title-format (concat "Gmail — " (car (notmuch-user-emails))))
+            (notmuch-search "tag:inbox"))'
+        ;;
+    *)
+        fail 'Usage: night-gmail {emacs|accounts|login ADDRESS|select ADDRESS|authorize|pull}'
+        ;;
+esac

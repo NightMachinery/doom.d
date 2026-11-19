@@ -7,17 +7,22 @@ macOS login Keychain. Doom's `:email` module is not used.
 
 ## Personal Gmail
 
-`M-x night/gmail` opens the Gmail inbox in a separate Emacs window using Doom's
-installed Notmuch package. The local Lieer profile under
-`~/.local/share/night-gmail/` has its own Maildir, Notmuch index and OAuth
-credentials. Lieer maps Gmail labels to Notmuch tags through the Gmail API.
-Open the existing inbox with the regular Notmuch commands.
+`M-x night/gmail` opens the selected Gmail inbox in a separate Emacs window
+using Doom's installed Notmuch package. `M-x night/gmail-login` authorizes an
+address in the browser and opens its inbox. `M-x night/gmail-switch-account`
+selects an already authorized account. Each address has its own Maildir,
+Notmuch index and OAuth credentials under `~/.local/share/night-gmail/`.
+Lieer maps Gmail labels to Notmuch tags through the Gmail API.
 
-The Gmail profile starts with manual, download-only sync. Run
-`~/.local/share/night-gmail/night-gmail pull` in Terminal, then refresh the Gmail
-window with `M-x notmuch-refresh-this-buffer`. Initial setup and OAuth recovery
-are documented in `~/.local/share/night-gmail/README.md` on the configured Mac.
-See also the [Lieer setup guide](https://github.com/gauteh/lieer).
+The Gmail profile uses download-only sync. Run `M-x night/gmail-pull` in Doom,
+then refresh the Gmail window with `M-x notmuch-refresh-this-buffer`. The first
+pull for a new address downloads its history. Terminal users can also run
+`~/.local/share/night-gmail/night-gmail pull`. See the [Lieer setup guide](https://github.com/gauteh/lieer).
+
+The optional offer scan uses the original Gmail profile's OAuth grant and keeps
+its own successful-check timestamp. Its local `offer-scan/query` file contains
+the search terms. The scan starts with one day of mail and caps catch-up at
+seven days, independently of the account selected in Emacs.
 
 ## The three layers
 
