@@ -283,7 +283,7 @@ def finish_window(state, through):
     save(state)
 
 
-def finish(state, token, offers):
+def complete_scan(state, token, offers):
     pending = current_run(state, token)
     if set(pending['opened']) != set(pending['candidates']):
         raise ValueError('Open each selected message before completing the scan')
@@ -320,9 +320,10 @@ def main():
     open_cmd = sub.add_parser('open')
     open_cmd.add_argument('token')
     open_cmd.add_argument('message_id')
-    finish_cmd = sub.add_parser('finish')
-    finish_cmd.add_argument('token')
-    finish_cmd.add_argument('--offers', type=Path)
+    complete_cmd = sub.add_parser('email-complete-offer-scan', aliases=['finish'],
+                                  help='Deliver qualifying offers and save the checkpoint.')
+    complete_cmd.add_argument('token')
+    complete_cmd.add_argument('--offers', type=Path)
     args = parser.parse_args()
     os.umask(0o077)
     STATE.mkdir(mode=0o700, exist_ok=True)
@@ -335,7 +336,7 @@ def main():
         elif args.command == 'open':
             open_message(state, args.token, args.message_id)
         else:
-            finish(state, args.token, json.loads(args.offers.read_text()) if args.offers else [])
+            complete_scan(state, args.token, json.loads(args.offers.read_text()) if args.offers else [])
 
 
 if __name__ == '__main__':
