@@ -193,7 +193,7 @@ buffer."
         :nvi "lP" #'night/org-img-unused-trs
         "la" #'night/semantic-scholar-to-org
         "lA" #'night/arxiv-to-org
-        "lm" #'night/org-link-hear-get
+        :desc "Link most recent music" "lm" #'night/org-link-hear-smart
         "lM" #'night/org-link-mpv-get
         "rp" #'night/org-paste-with-files
         :desc "Archive subtree" "sa" #'org-archive-subtree-default

@@ -117,24 +117,77 @@
         (org-link-make-string (concat "purpleaudio:" token)
                               (unless (string-empty-p label) label))))))
 
-(defun night/h-org-link-hear-file ()
-  "Return the Org link for the file playing through MPV."
+(defun night/h-org-link-hear-mpv-candidate ()
+  "Return the current MPV link and its playback time, when known."
   (condition-case nil
-      (let ((path (z eval hear-get | path-abbrev-to-music-dir | org-escape-link)))
-        (when (and (stringp path) (not (string-empty-p path)))
-          (concat "[[audiofile:" path "]]")))
+      (let* ((snapshot
+              (z eval
+                 "info=$(hear-get user-data/night/org-music 2>/dev/null) || info='{}'
+path=$(command printf '%s' \"$info\" | jq -r '.path // empty' 2>/dev/null)
+if [[ -n \"$path\" ]]; then
+    path=$(ntag-recoverpath \"$path\") || path=$(command printf '%s' \"$info\" | jq -r '.path')
+else
+    info='{}'
+    path=$(hear-get 2>/dev/null) || path=''
+fi
+if [[ -n \"$path\" ]]; then
+    target=$(command printf '%s' \"$path\" | path-abbrev-to-music-dir | org-escape-link)
+    command printf '%s' \"$info\" | jq -c --arg target \"$target\" '. + {target: $target}'
+fi"))
+             (info (json-parse-string snapshot :object-type 'alist))
+             (target (alist-get 'target info)))
+        (when (and (stringp target) (not (string-empty-p target)))
+          (list :link (concat "[[audiofile:" target "]]")
+                :time (alist-get 'last_played_ms info)
+                :state (alist-get 'state info))))
     (error nil)))
 
-(defun night/org-link-hear-get ()
-  "Save a link to the current Purple or MPV music."
-  (interactive)
+(defun night/h-org-link-hear-tlg-candidate ()
+  "Return the current Telegram link and its playback time, when known."
   (let* ((result (alist-get 'result (night/h-purple-music-call 0.35 "music-link")))
-         (purple (night/h-purple-org-music-link result))
-         (link (or (and (equal (alist-get 'state result) "playing") purple)
-                   (night/h-org-link-hear-file)
-                   purple)))
+         (link (night/h-purple-org-music-link result)))
+    (when link
+      (list :link link :time (alist-get 'last_played_ms result)
+            :state (alist-get 'state result)))))
+
+(defun night/h-org-link-hear-recent (mpv telegram)
+  "Pick the more recent playable candidate between MPV and TELEGRAM."
+  (let ((mpv-time (plist-get mpv :time))
+        (telegram-time (plist-get telegram :time)))
+    (cond ((null mpv) telegram)
+          ((null telegram) mpv)
+          ((and (numberp mpv-time) (> mpv-time 0)
+                (numberp telegram-time) (> telegram-time 0)
+                (/= mpv-time telegram-time))
+           (if (> telegram-time mpv-time) telegram mpv))
+          ((equal (plist-get telegram :state) "playing") telegram)
+          (t mpv))))
+
+(defun night/org-link-hear-mpv ()
+  "Save an Org link to the current MPV track."
+  (interactive)
+  (let ((link (plist-get (night/h-org-link-hear-mpv-candidate) :link)))
     (cond (link (night/insert-for-yank-and-save link))
-          (t (message "Nothing is playing in Purple or MPV")))))
+          (t (user-error "No current MPV track")))))
+
+(defun night/org-link-hear-tlg ()
+  "Save an Org link to the current Telegram track in Purple."
+  (interactive)
+  (let ((link (plist-get (night/h-org-link-hear-tlg-candidate) :link)))
+    (cond (link (night/insert-for-yank-and-save link))
+          (t (user-error "No current Telegram track in Purple")))))
+
+(defun night/org-link-hear-smart ()
+  "Save a link to the track most recently started or resumed."
+  (interactive)
+  (let ((link (plist-get (night/h-org-link-hear-recent
+                         (night/h-org-link-hear-mpv-candidate)
+                         (night/h-org-link-hear-tlg-candidate))
+                        :link)))
+    (cond (link (night/insert-for-yank-and-save link))
+          (t (user-error "No current MPV or Telegram track")))))
+
+(defalias 'night/org-link-hear-get #'night/org-link-hear-smart)
 
 (defun night/org-link-mpv-get ()
   (interactive)
