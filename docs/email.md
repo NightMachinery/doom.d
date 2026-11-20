@@ -22,12 +22,18 @@ pull for a new address downloads its history. Terminal users can also run
 The optional offer scan uses the original Gmail profile's OAuth grant and keeps
 its own successful-check timestamp. Its local `offer-scan/query` file contains
 the search terms. The scan starts with one day of mail and caps catch-up at
-seven days, independently of the account selected in Emacs. Streaming offers
-are excluded. Live cinema, theater and other in-person events remain eligible.
+seven days, independently of the account selected in Emacs. Streaming offers,
+video game deals, and Keepa alerts are skipped. In-person cinema and theater
+offers remain eligible.
 Qualifying offers go to the Telegram heart destination as rich Markdown, with
 redemption links and an original Gmail link when available. Expand the English
 details to see the offer terms and up to two relevant public product photos
 from the email, when available.
+
+The scanner keeps a local record of confirmed deliveries in `offer-scan/state.json`.
+It compares the merchant, what is discounted, the savings and redemption terms
+across messages so reminders of the same offer stay silent. Every normal scan
+prunes records seven days after their stated expiry, even when no mail matches.
 
 ## The three layers
 

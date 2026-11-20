@@ -4,6 +4,7 @@
 import argparse
 import base64
 import datetime as dt
+from email.utils import parseaddr
 import fcntl
 from html import escape
 from html.parser import HTMLParser
@@ -14,6 +15,7 @@ from pathlib import Path
 import re
 import subprocess
 import time
+import unicodedata
 from urllib.parse import quote, urlsplit
 from uuid import uuid4
 
@@ -21,6 +23,7 @@ from uuid import uuid4
 ROOT = Path(os.environ.get('NIGHT_GMAIL_HOME', Path.home() / '.local/share/night-gmail'))
 STATE = ROOT / 'offer-scan'
 DAY = 86400
+OFFER_HISTORY_GRACE = dt.timedelta(days=7)
 API = 'https://gmail.googleapis.com/gmail/v1/users/{}/messages'
 PHOTO_LABEL = 'Product photo'
 PHOTO_LINE = f'  ![{PHOTO_LABEL}]('
@@ -61,6 +64,19 @@ def fresh(timestamp):
     return timestamp >= time.time_ns() // 1_000_000 - 7 * DAY * 1000
 
 
+def keepa_alert(headers):
+    sender = next((h['value'] for h in headers if h['name'].lower() == 'from'), '')
+    domain = parseaddr(sender)[1].rpartition('@')[2].casefold()
+    return domain == 'keepa.com' or domain.endswith('.keepa.com')
+
+
+def prune_history(state):
+    cutoff = dt.datetime.now(dt.timezone.utc) - OFFER_HISTORY_GRACE
+    if 'delivered_offers' in state:
+        state['delivered_offers'] = [offer for offer in state['delivered_offers']
+                                     if dt.datetime.fromisoformat(offer['expires']) > cutoff]
+
+
 def fetch(state, probe=False):
     now = int(time.time())
     start, query = query_window(state.get('checkpoint'), now)
@@ -71,9 +87,11 @@ def fetch(state, probe=False):
             page = request(session, **args)
             for hit in page.get('messages', []):
                 message_id = hit['id']
-                details = request(session, '/' + message_id, format='metadata', fields='internalDate')
+                details = request(session, '/' + message_id, format='metadata',
+                                  metadataHeaders='From', fields='internalDate,payload/headers')
                 received = int(details['internalDate'])
-                if start * 1000 <= received < now * 1000 and fresh(received):
+                if (start * 1000 <= received < now * 1000 and fresh(received)
+                        and not keepa_alert(details.get('payload', {}).get('headers', []))):
                     candidates[message_id] = received
             if 'nextPageToken' not in page:
                 break
@@ -82,10 +100,12 @@ def fetch(state, probe=False):
     if probe:
         print(json.dumps({'candidates': len(candidates)}))
     elif candidates:
+        prune_history(state)
         pending = {'token': uuid4().hex, 'through': now, 'candidates': candidates, 'opened': []}
         state['pending'] = pending
         save(state)
-        print(json.dumps({'token': pending['token'], 'ids': list(candidates)}))
+        print(json.dumps({'token': pending['token'], 'ids': list(candidates),
+                          'delivered_offers': state.get('delivered_offers', [])}, ensure_ascii=False))
     else:
         finish_window(state, now)
 
@@ -235,6 +255,28 @@ def positive_amount(offer, name):
     return amount
 
 
+def normalize_offer_text(text):
+    return ' '.join(re.findall(r'[^\W_]+', unicodedata.normalize('NFKC', text).casefold()))
+
+
+def delivery_record(offer, merchant, terms, percent, eur, deadline, code):
+    return {
+        'merchant': normalize_offer_text(merchant),
+        'scope': normalize_offer_text(field(offer, 'offer_scope') or terms),
+        'percent': float(percent),
+        'eur': float(eur),
+        'redemption': offer['redemption'],
+        'code': unicodedata.normalize('NFKC', code).casefold(),
+        'expires': deadline.astimezone(dt.timezone.utc).isoformat(),
+    }
+
+
+def delivery_key(record):
+    # A reminder can extend a still-live offer without otherwise changing it.
+    return json.dumps({key: value for key, value in record.items() if key != 'expires'},
+                      sort_keys=True, ensure_ascii=False)
+
+
 def markdown(text):
     """Keep email-derived text literal in Telegram's rich Markdown parser."""
     return re.sub(r'([\\`*_{}\[\]()#+.!|~$-])', r'\\\1', escape(text, quote=False))
@@ -245,9 +287,12 @@ def markdown_link(label, url):
     return f'[{label}]({destination})'
 
 
-def render_offers(offers, pending, sent):
+def render_offers(offers, pending, state):
     groups = {}
     now = dt.datetime.now(dt.timezone.utc)
+    seen = {delivery_key(record) for record in state.get('delivered_offers', [])
+            if dt.datetime.fromisoformat(record['expires']) > now}
+    legacy_sent = state.get('sent', {})
     for offer in offers:
         source = offer['id']
         if source not in pending['opened'] or not fresh(pending['candidates'][source]):
@@ -270,9 +315,12 @@ def render_offers(offers, pending, sent):
             for link in links
         ):
             raise ValueError('Invalid offer summary fields')
-        key = json.dumps([source, merchant.casefold(), deadline.isoformat(), code])
-        if key in sent:
+        legacy_key = json.dumps([source, merchant.casefold(), deadline.isoformat(), code])
+        record = delivery_record(offer, merchant, terms, percent, eur, deadline, code)
+        key = delivery_key(record)
+        if key in seen or legacy_key in legacy_sent:
             continue
+        seen.add(key)
         discount = ' / '.join(part for part in [f'{percent:g}%' if percent else '', f'€{eur:g}' if eur else ''] if part)
         value = field(offer, 'price')
         excerpt = field(offer, 'english_excerpt')
@@ -299,10 +347,11 @@ def render_offers(offers, pending, sent):
                 lines += ['  !' + markdown_link(PHOTO_LABEL, images[image_id - 1]), '']
         lines.append('  </details>')
         block = '\n'.join(lines)
-        _, blocks = groups.setdefault(merchant.casefold(), (merchant, {}))
-        blocks[key] = block
-    for merchant, blocks in groups.values():
-        yield f'- **{markdown(merchant)}**\n' + '\n\n'.join(blocks.values()), list(blocks)
+        _, blocks, records = groups.setdefault(record['merchant'], (merchant, [], []))
+        blocks.append(block)
+        records.append(record)
+    for merchant, blocks, records in groups.values():
+        yield f'- **{markdown(merchant)}**\n' + '\n\n'.join(blocks), records
 
 
 def without_photos(text):
@@ -338,6 +387,7 @@ def notify(text):
 
 
 def finish_window(state, through):
+    prune_history(state)
     state['checkpoint'] = through
     state.pop('pending', None)
     state.pop('sent', None)
@@ -350,28 +400,25 @@ def complete_scan(state, token, offers):
         raise ValueError('Open each selected message before completing the scan')
     if not isinstance(offers, list):
         raise ValueError('Expected a JSON array of offers')
-    sent = state.setdefault('sent', {})
-    for key, stamp in list(sent.items()):
-        if not fresh(stamp):
-            del sent[key]
+    prune_history(state)
     batches = []
-    text, keys = '', []
-    for block, block_keys in render_offers(offers, pending, sent):
+    text, delivered = '', []
+    for block, records in render_offers(offers, pending, state):
         if not telegram_batch_fits(block):
             block = without_photos(block)
         if not telegram_batch_fits(block):
             raise ValueError('A merchant summary is too long for Telegram')
         joined = '\n'.join(filter(None, [text, block]))
         if not telegram_batch_fits(joined):
-            batches.append((text, keys))
-            text, keys = block, block_keys
+            batches.append((text, delivered))
+            text, delivered = block, records
         else:
-            text, keys = joined, keys + block_keys
+            text, delivered = joined, delivered + records
     if text:
-        batches.append((text, keys))
-    for text, keys in batches:
+        batches.append((text, delivered))
+    for text, records in batches:
         notify(text)
-        sent.update({key: pending['candidates'][json.loads(key)[0]] for key in keys})
+        state.setdefault('delivered_offers', []).extend(records)
         save(state)
     finish_window(state, pending['through'])
 
