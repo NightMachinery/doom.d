@@ -14,6 +14,14 @@
 
 (setq doom-localleader-key "\\")
 (setq doom-localleader-alt-key "M-\\")
+;; `,' is a second localleader in normal, visual and motion states, as in the
+;; agent-desk dashboard: it acts as whatever `doom-localleader-key' is bound to
+;; in the current buffer. It takes `,' from `evil-snipe-repeat-reverse'
+;; (repeat the last f/t/s backwards); `;' still repeats forwards.
+(general-define-key
+ :states '(normal visual motion)
+ :keymaps 'override
+ "," (general-key doom-localleader-key :state 'normal))
 
 (define-key global-map [remap swiper] nil)
 
